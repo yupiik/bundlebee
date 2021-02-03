@@ -39,7 +39,7 @@
         <artifactId>yupiik-tools-maven-plugin</artifactId>
         <version>1.0.5</version>
         <configuration>
-          <siteBase>//yupiik.github.com/bundlebee</siteBase>
+          <siteBase>//yupiik.github.io/bundlebee</siteBase>
           <logoText>Yupiik BundleBee</logoText>
           <indexText>Yupiik BundleBee</indexText>
           <indexSubTitle>A light Java Kubernetes package manager.</indexSubTitle>
