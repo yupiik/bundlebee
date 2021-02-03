@@ -1,39 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/alveoli.html</loc>
+        <loc>//yupiik..github.com/bundlebee/alveoli.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/commands.html</loc>
+        <loc>//yupiik..github.com/bundlebee/commands/index.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/commands/index.html</loc>
+        <loc>//yupiik..github.com/bundlebee/commands.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/getting-started.html</loc>
+        <loc>//yupiik..github.com/bundlebee/getting-started.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/how-it-works.html</loc>
+        <loc>//yupiik..github.com/bundlebee/how-it-works.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/user-configuration.html</loc>
+        <loc>//yupiik..github.com/bundlebee/user-configuration.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/commands/apply.configuration.html</loc>
+        <loc>//yupiik..github.com/bundlebee/commands/apply.configuration.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/commands/help.configuration.html</loc>
+        <loc>//yupiik..github.com/bundlebee/commands/help.configuration.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
     <url>
-        <loc>//yupiik.gitlab.io/bundlebee/alveoli/postgres-local-io-yupiik-alveoli-postgres-local-1-0-0-SNAPSHOT.html</loc>
+        <loc>//yupiik..github.com/bundlebee/alveoli/postgres-local-io-yupiik-alveoli-postgres-local-1-0-0-SNAPSHOT.html</loc>
         <lastmod>2021-02-03</lastmod>
     </url>
 </urlset>
