@@ -254,7 +254,7 @@ $(document).ready(function () {
 
   function loadSearchIndex() {
       return new Promise(function(ok, ko) {
-          $.getJSON('//yupiik.github.com/bundlebee/search.json', function(index) {
+          $.getJSON('//yupiik.github.io/bundlebee/search.json', function(index) {
               ok(window.minisiteFuseFactory ? window.minisiteFuseFactory(index) : new Fuse(index, {
                   shouldSort: true,
                   includeMatches: true,
