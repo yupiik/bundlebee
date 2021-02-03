@@ -58,7 +58,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                             ":minisite-index: 400\n" +
                             ":minisite-index-title: Alveoli\n" +
                             ":minisite-index-description: Available alveoli/recipes/deployments.\n" +
-                            ":minisite-index-icon: terminal\n" +
+                            ":minisite-index-icon: puzzle-piece\n" +
                             "\n" +
                             "\n" +
                             docs.stream()
