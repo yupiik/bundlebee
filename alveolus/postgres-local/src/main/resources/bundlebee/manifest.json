@@ -1,0 +1,48 @@
+{
+  "alveoli": [
+    {
+      "//": "Setup \"${project.artifactId}\" which runs a PostgreSQL instance usable by other applications.",
+      "name": "${project.groupId}:${project.artifactId}:${project.version}",
+      "descriptors": [
+        {
+          "name": "${project.groupId}_${project.artifactId}.configmap",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.persistencevolume",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.persistencevolumeclaim",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.service",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.statefulset",
+          "interpolate": true
+        }
+      ],
+      "placeholdersDoc": [
+        {
+          "name": "postgres-local.db",
+          "description": "The default database name in the PostgreSQL instance."
+        },
+        {
+          "name": "postgres-local.username",
+          "description": "The default user PostgreSQL username."
+        },
+        {
+          "name": "postgres-local.password",
+          "description": "The default user PostgreSQL password."
+        },
+        {
+          "name": "postgres-local.mountPath",
+          "description": "Where to persist data - using a hostPath mounting point by default."
+        }
+      ]
+    }
+  ]
+}

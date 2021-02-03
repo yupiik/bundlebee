@@ -1,0 +1,22 @@
+= User Configuration
+
+BundleBee supports a user configuration.
+It means you change some defaults for your local setup creating a file `~/.bundlebeerc`.
+
+The syntax is a standard properties one.
+
+Here are the supported configurations:
+
+include::content/_partials/generated/documentation/bundlebee-core.adoc[]
+
+TIP: this also applies for command configuration so you can also force some defaults for your most used commands this way.
+
+== Custom configuration
+
+You can also set a custom configuration file using `--config-file`.
+This enables to run a command with a custom set of configuration:
+
+[source,bash]
+----
+bundlebee --config-file mysetup.properties command --myarg value
+----

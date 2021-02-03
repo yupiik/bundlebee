@@ -1,0 +1,22 @@
+[
+  {
+    "request": {
+      "method": "GET",
+      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmap/test-config"
+    },
+    "response": {
+      "status": 404,
+      "payload": "{}"
+    }
+  },
+  {
+    "request": {
+      "method": "POST",
+      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmap?fieldManager=kubectl-client-side-apply"
+    },
+    "response": {
+      "status": 201,
+      "payload": "{}"
+    }
+  }
+]

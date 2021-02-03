@@ -1,0 +1,15 @@
+target
+.idea
+*.iws
+*.ipr
+*.iml
+.settings
+.classpath
+.project
+ignored.*
+generated
+bundlebee-documentation/src/main/minisite/content/commands
+bundlebee-documentation/src/main/minisite/content/commands.adoc
+bundlebee-documentation/src/main/minisite/content/alveoli
+bundlebee-documentation/src/main/minisite/content/alveoli.adoc
+
