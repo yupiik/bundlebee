@@ -1,0 +1,123 @@
+= Getting Started
+:minisite-index: 100
+:minisite-index-title: Getting Started
+:minisite-index-description: How to get started with the project.
+:minisite-index-icon: play
+
+[abstract]
+BundleBee is a light Java package manager for Kubernetes applications.
+This page explains how to get started with it.
+
+== Installation
+
+TBD once deployed (github releases? central? install.sh.).
+
+== Create your first alveolus
+
+=== Pre-requisite
+
+BundleBee assumes it is installed itself indeed but depending how you package your alveolus it can require Java (>= 8) and Maven.
+If they are not installed on your system, we encourage you to use link:https://sdkman.io/[sdkman] to do so.
+
+TIP: this can be replaced by any zip packager and is not a strong requirement.
+
+[[start_with_maven]]
+=== Start with a maven project
+
+There are a ton of ways to create a maven projects but here is the simplest one:
+
+[source,bash]
+----
+mvn archetype:generate \
+    -DgroupId=com.company \
+    -DartifactId=my-app-alveolus \
+    -DarchetypeArtifactId=maven-archetype-quickstart \
+    -DarchetypeVersion=1.4 \
+    -DinteractiveMode=false
+----
+
+Then you can go in `my-app-alveolus/`.
+You can run `mvn package` to ensure your java/maven setup is correct.
+
+At that stage we can start working on our alveolus but if you want to be "purist" you can clean up the default skaffolded project: `rm -Rf src/test/ src/main/java/`.
+
+To start working on our alveolus, we will create `src/main/resources/bundlebee` folder: `mkdir -p src/main/resources/bundlebee`.
+
+At that stage your project should look like:
+
+[source]
+----
+.
+├── pom.xml
+└── src
+    └── main
+        └── resources
+            └── bundlebee
+----
+
+To describe an application, you have to create a `manifest.json` file in this `bundlebee` folder:
+
+[source,json]
+.src/main/resources/bundlebee/manifest.json
+----
+TODO
+----
+
+And add the referenced Kubernetes descriptor in `kubernetes` subfolder:
+
+[source,yaml]
+.src/main/resources/bundlebee/kubernetes/hello-world.yaml
+----
+TODO
+----
+
+Now you can install your alveolus: `mvn install`.
+
+This will create a `target/my-app-alveolus-1.0-SNAPSHOT.jar` file which is the entry point to deploy your application.
+
+Now you can deploy this executing `bundlebee apply --from com.company:my-app-alveolus:1.0-SNAPSHOT` --descriptor hello.
+
+And that's it, now hello world application should be up and running in your Kubernetes cluster.
+
+TIP: it is more than encouraged to name the kubernetes descriptor based on the project unique identifier.
+For example `<groupId>.<artifactId>.<alveolus_name>.yaml`.
+It will avoid conflicts when multiple alveolus are in the same classpath using native java mode and not file driven mode.
+
+=== Start from scratch (without Java and Maven)
+
+In this part we will reuse the descriptors of xref:#start_with_maven[Start with maven] section so we will just show how to bundle without Java/Maven the alveolus.
+
+The overall goal is to create a zip containing the `manifest.json` and the Kubernetes descriptor.
+Here is a small script helping to do that:
+
+[source,bash]
+----
+#! /bin/bash
+
+base="my-app-alveolus" <1>
+mkdir -p "$base/bundlebee/" "$base/bundlebee/kubernetes/" <2>
+----
+
+<.> The name of the project (will create a root directory with this name)
+<.> Create the alveolus structure
+
+Now you can copy the descriptors as in xref:#start_with_maven[Start with maven] section in `my-app-alveolus/bundlebee/` folder.
+
+Once done we just have to bundle it as a zip. One option on UNIx system is to use this command:
+
+[source,bash]
+----
+#! /bin/bash
+
+base="my-app-alveolus" <1>
+
+cd "$base"
+zip "$base.zip" -r . <2>
+----
+
+<.> Reuse the same setup than in previous script
+<.> Create a zip containing the alveolus structure using `zip` command
+
+And that's it.
+
+TIP: this trick to create a zip can be adapted to any language (javascript, typescript, go, python, ruby, ...) and enables to bundle an alveolus in any build tool very easily.

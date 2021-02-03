@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>bundlebee</artifactId>
+    <groupId>io.yupiik</groupId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>bundlebee-documentation</artifactId>
+  <name>BundleBee :: Documentation</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.xbean</groupId>
+      <artifactId>xbean-finder-shaded</artifactId>
+      <version>4.18</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- alveoli to ensure reactor is correct -->
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>postgres-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin> <!-- mvn [compile] yupiik-tools:serve-minisite -e -->
+        <groupId>io.yupiik.maven</groupId>
+        <artifactId>yupiik-tools-maven-plugin</artifactId>
+        <version>1.0.5</version>
+        <configuration>
+          <siteBase>//yupiik.gitlab.io/bundlebee</siteBase>
+          <logoText>Yupiik BundleBee</logoText>
+          <indexText>Yupiik BundleBee</indexText>
+          <indexSubTitle>A light Java Kubernetes package manager.</indexSubTitle>
+          <customScripts>
+            &lt;script&gt;
+            document.querySelector('div.site-logo > a').href =
+              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            &lt;/script&gt;
+          </customScripts>
+          <preActions>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.ConfigurationGenerator</type>
+              <configuration>
+                <module>bundlebee-core.*</module>
+                <exclude>io.yupiik.bundlebee.core.command.impl</exclude>
+              </configuration>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.AlveoliConfigurationGenerator</type>
+              <configuration>
+                <version>${project.version}</version>
+              </configuration>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.CommandConfigurationGenerator</type>
+              <configuration>
+                <module>bundlebee-core.*</module>
+              </configuration>
+            </action>
+            <action>
+              <type>jsonschema</type>
+              <configuration>
+                <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
+                <type>JSON</type>
+                <pretty>true</pretty>
+                <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
+                <to>
+                  ${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.json
+                </to>
+                <title>Manifest Descriptor</title>
+                <description>BundleBee manifest descriptor.</description>
+              </configuration>
+            </action>
+            <action>
+              <type>jsonschema</type>
+              <configuration>
+                <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
+                <type>ADOC</type>
+                <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
+                <to>
+                  ${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.adoc
+                </to>
+                <title>Manifest Descriptor</title>
+                <description>BundleBee manifest descriptor.</description>
+              </configuration>
+            </action>
+          </preActions>
+          <git>
+            <ignore>true</ignore>
+          </git>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile> <!--  by default we want changes we do in the project to be reflected in the doc even without building it  -->
+      <id>generate-content-but-not-site</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.yupiik.maven</groupId>
+            <artifactId>yupiik-tools-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>buildDoc</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>minisite</goal>
+                </goals>
+                <configuration>
+                  <skipRendering>true</skipRendering>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile> <!--  mvn clean package -Pgh-pages  -->
+      <id>gh-pages</id>
+      <properties>
+        <minisite.serverId>github.com</minisite.serverId>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.yupiik.maven</groupId>
+            <artifactId>yupiik-tools-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>gh-pages</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>minisite</goal>
+                </goals>
+                <configuration>
+                  <git>
+                    <ignore>false</ignore>
+                    <noJekyll>true</noJekyll>
+                    <serverId>${minisite.serverId}</serverId>
+                    <branch>refs/heads/gh-pages</branch>
+                    <url>https://github.com/yupiik/bundlebee.git</url>
+                  </git>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

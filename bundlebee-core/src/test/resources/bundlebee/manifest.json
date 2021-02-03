@@ -1,0 +1,25 @@
+{
+  "alveoli": [
+    {
+      "name": "ApplyCommandTest.apply",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d1"
+        }
+      ]
+    },
+    {
+      "name": "ApplyCommandTest.withdep",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d2"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.apply"
+        }
+      ]
+    }
+  ]
+}

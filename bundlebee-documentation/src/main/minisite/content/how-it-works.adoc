@@ -1,0 +1,114 @@
+= How it works
+:minisite-index: 200
+:minisite-index-title: How it works
+:minisite-index-description: How BundleBee works.
+:minisite-index-icon: car-battery
+
+[abstract]
+BundleBee is a light Java package manager for Kubernetes applications.
+This page explains how to get started with it.
+
+== Overall architecture
+
+One of the BundleBee goals is to inherit from the well known and supported Apache Maven infrastructure.
+In other words, the goal is to be able to reuse Maven registries (central, custom nexus, artifactory, ...) to store application descriptors.
+It also leverage the well know java packaging (jar or zip) to ensure a strong storage reliability in these systems.
+
+One direct benefit is that it becomes very easy to have an immutable system once deployed and therefore a better tracability of what is deployed.
+
+Overall, BundleBee will manipulate what we call `alveolus` which are basically just a set of descriptors.
+An `alveolus` is a zip or a jar which is structured this way:
+
+[source]
+----
+.root
+ `- bundlebee <1>
+      |- manifest.json <2>
+      `- kubernetes <3>
+           |- my-descriptor-1.yaml
+           `- my-descriptor-2.yaml
+----
+
+<.> A `bundlebee` folder contains all the descriptors
+<.> A `manifest.json` contains the list of application or library this alveolus provides
+<.> A `kubenetes` folder contains the list of descriptors used by alveoli
+
+== Manifest
+
+Manifest is the central point of the system.
+It provides the unique identifier of your recipe (application/library) and what to do to set it up.
+
+Here is its configuration specification:
+
+include::content/_partials/generated/jsonschema/manifest.descriptor.adoc[leveloffset=+2]
+
+=== JSON-Schema
+
+If you use JSON-Schema facilities in your preferred editor, here is the raw JSON-Schema for the manifest descriptor:
+
+[source,json]
+----
+include::content/_partials/generated/jsonschema/manifest.descriptor.json[]
+----
+
+== Deployment and Dependency Management
+
+A manifest can reference descriptors in other alveoli, it just requires to reference them to let bundlebee find them.
+
+There are mainly two ways to deploy an alveolus:
+
+. Classpath mode: you put all your zip/jar in the classpath. This mode requires there is no conflict between descriptor names (which is the recommended practise) and it will never look for external descriptors.
+It is typically a recommended mode to avoid network I/O except with the Kubernetes cluster.
+. Fetch mode: in this mode, a missing descriptor in the classpath will look for `descriptor.location` and lookup the jar/zip referenced by this location (generally a maven coordinate in the form `groupId:artifactId:version`).
+It will first use your local Maven repository but can download the jar/zip if missing locally.
+Then the jar/zip is read and descriptors are looked up from there.
+This mode is nicer when depending on a lot of external alveoli but requires I/O to grab the dependencies.
+
+== Customize descriptors
+
+Indeed, you can bundle all your stack and hardcode your configuration or create one alveolus per environment.
+This is one option which works well and enable to version its configuration.
+
+However, for testing purposes, it is also neat to be able to patch descriptors on the fly.
+For that you can use `descriptor.patches` in the manifest which will transitively enable to patch the descriptors - even the ones you don't own - using JSON-Patch and interpolations.
+
+Here are some examples.
+
+[source,json]
+.Patch using CLI option
+----
+{
+  "alveoli": [
+    {
+      "name": "com.company.alveoli:my-app:${project.version}",
+      "descriptors": [
+        {
+          "name": "com.company.alveoli_my-app.configmap"
+        },
+        // ...
+      ],
+      "patches": [ <1>
+        "descriptorName": "com.company.other_alveolus.configmap", <2>
+        "interpolate": true, <3>
+        "patch": [ <4>
+          {
+            "op": "replace",
+            "path": "data",
+            "value": {
+              "my.config.value": "{{my.arg:-defaultValue}}" <5>
+            }
+          }
+        ]
+      ]
+    }
+  ]
+}
+----
+
+<.> We add to the alveolus a list of patches to apply on some descriptors
+<.> We reference the descriptor to patch
+<.> We enable interpolation from Microprofile Config (which include CLI args)
+<.> We define the JSON-Patch to use (optional, interpolation will also interpolate the descriptor if designed to be interpolated)
+<.> We use an interpolation in the configuration in the JSON-Patch `replace` operation which replaces the data of the referenced `ConfigMap`
+
+TIP: this mecanism is very useful for `ConfigMap` descriptors but also `PersistenceVolume` since you can now patch `/spec/hostPath `easily too.

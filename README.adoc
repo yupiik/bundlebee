@@ -1,0 +1,3 @@
+= Yupiik BundleBee
+
+See https://yupiik.gitlab.io/bundlebee/.
