@@ -144,4 +144,40 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>native</id>
+      <build>
+        <plugins>
+          <plugin> <!-- mvn package arthur:native-image -Pnative -->
+            <groupId>org.apache.geronimo.arthur</groupId>
+            <artifactId>arthur-maven-plugin</artifactId>
+            <version>1.0.1</version>
+            <executions>
+              <execution>
+                <id>native</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>native-image</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <graalVersion>20.3.0.r11</graalVersion>
+              <attach>true</attach> <!-- classifier=arthur -->
+              <output>${project.build.directory}/${project.artifactId}</output>
+              <main>io.yupiik.bundlebee.core.BundleBee</main>
+              <customOptions>
+                <customOption>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</customOption>
+              </customOptions>
+              <graalExtensions>
+                <graalExtension>openwebbeans</graalExtension>
+              </graalExtensions>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
