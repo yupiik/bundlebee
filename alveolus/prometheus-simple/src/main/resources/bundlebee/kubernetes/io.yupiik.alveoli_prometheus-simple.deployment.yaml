@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus_simple-deployment
+  labels:
+    app: prometheus_simple
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus_simple
+  template:
+    metadata:
+      labels:
+        app: prometheus_simple
+    spec:
+      containers:
+        - name: prometheus
+          image: {{prometheus-simple.image:-quay.io/prometheus/prometheus:v1.0.1}}
+          envFrom:
+            - configMapRef:
+                name: prometheus_simple-config
+          ports:
+            - containerPort: 9090
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10

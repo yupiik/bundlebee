@@ -123,9 +123,9 @@ public class AlveoliConfigurationGenerator implements Runnable {
                             throw new IllegalStateException(e);
                         }
                         log.info("Created " + target);
+                        final var desc = Character.toLowerCase(description.charAt(0)) + description.substring(1).trim();
                         return artifactId + " xref:alveoli/" + fileName + '[' + it.getName() + "]: " +
-                                Character.toLowerCase(description.charAt(0)) + description.substring(1) +
-                                (description.endsWith(".") ? "" : ".");
+                                desc + (desc.endsWith(".") ? "" : ".");
                     })
                     .collect(toList());
         } catch (final IOException e) {
@@ -153,6 +153,13 @@ public class AlveoliConfigurationGenerator implements Runnable {
                                 .map(JsonValue::asJsonObject)
                                 .collect(toMap(o -> o.getString("name"), identity())) :
                         Map.of());
+        placeholders.forEach(p -> {
+            if (!p.getName().startsWith(artifactId)) {
+                throw new IllegalArgumentException("" +
+                        "Built-in alveolus must use the artifactId as placeholder prefix (naming convention). " +
+                        p + " does not respect that (" + artifactId + " expected).");
+            }
+        });
         return "= " + alveolus.getName() + "\n" +
                 "\n" +
                 description +

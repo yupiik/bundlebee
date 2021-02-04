@@ -17,8 +17,7 @@
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.service",
-          "interpolate": true
+          "name": "${project.groupId}_${project.artifactId}.service"
         },
         {
           "name": "${project.groupId}_${project.artifactId}.statefulset",
