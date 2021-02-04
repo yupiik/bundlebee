@@ -13,6 +13,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
@@ -50,9 +51,12 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
+import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ForkJoinPool;
@@ -67,6 +71,7 @@ import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.summingInt;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
 
 @Log
@@ -81,10 +86,13 @@ public class KubeClient {
     @Inject
     private Yaml2JsonConverter yaml2json;
 
-
     @Inject
     @BundleBee
     private Jsonb jsonb;
+
+    @Inject
+    @BundleBee
+    private JsonBuilderFactory jsonBuilderFactory;
 
     @Inject
     @Description("Kubeconfig location. " +
@@ -118,7 +126,7 @@ public class KubeClient {
                 .build();
     }
 
-    public CompletionStage<?> apply(final String descriptorContent, final String ext) {
+    public CompletionStage<?> apply(final String descriptorContent, final String ext, final boolean injectTimeLabel) {
         final var json = "json".equals(ext) ?
                 jsonb.fromJson(descriptorContent.trim(), JsonValue.class) :
                 yaml2json.convert(JsonValue.class, descriptorContent.trim());
@@ -127,20 +135,20 @@ public class KubeClient {
                 return all(
                         json.asJsonArray().stream()
                                 .map(JsonValue::asJsonObject)
-                                .map(it -> doApply(it)
+                                .map(it -> doApply(it, injectTimeLabel)
                                         // small trick to type it and make all() working
                                         .thenApply(ignored -> 1))
                                 .collect(toList()),
                         summingInt(i -> i),
                         true);
             case OBJECT:
-                return doApply(json.asJsonObject());
+                return doApply(json.asJsonObject(), injectTimeLabel);
             default:
                 throw new IllegalArgumentException("Unsupported json type for apply: " + json);
         }
     }
 
-    private CompletionStage<?> doApply(final JsonObject desc) {
+    private CompletionStage<?> doApply(final JsonObject rawDesc, final boolean injectTimeLabel) {
         // apply logic is a "create or replace" one
         // so first thing we have to do is to test if the resource exists, and if not create it
         // for that we will need to extract the resource "kind" and "name" (id):
@@ -159,6 +167,7 @@ public class KubeClient {
         //          'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>?fieldManager=kubectl-client-side-apply'
         //          <descriptor>
         // end
+        final var desc = !injectTimeLabel ? rawDesc : injectTimestampLabel(rawDesc);
 
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT);
         final var metadata = desc.getJsonObject("metadata");
@@ -213,6 +222,60 @@ public class KubeClient {
                                 });
                     }
                 });
+    }
+
+    private JsonObject injectTimestampLabel(final JsonObject rawDesc) {
+        return jsonBuilderFactory.createObjectBuilder(
+                rawDesc.entrySet().stream()
+                        .flatMap(entry -> {
+                            final var timestampLabelName = "bundlebee.timestamp";
+                            final var value = Long.toString(Instant.now().toEpochMilli());
+
+                            if ("metadata".equals(entry.getKey())) {
+                                final var metadata = entry.getValue().asJsonObject();
+                                if (metadata.containsKey("labels")) {
+                                    return mergeTimestampLabel(entry, value, metadata);
+                                }
+                                // no labels, just add ours
+                                return Stream.of(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), jsonBuilderFactory.createObjectBuilder(
+                                        Stream.concat(
+                                                metadata.entrySet().stream(),
+                                                Stream.of(new AbstractMap.SimpleImmutableEntry<>("labels", jsonBuilderFactory.createObjectBuilder()
+                                                        .add(timestampLabelName, value)
+                                                        .build())))
+                                                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                                        .build()));
+                            }
+                            return Stream.of(entry);
+                        })
+                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .build();
+    }
+
+    private Stream<Map.Entry<String, JsonValue>> mergeTimestampLabel(
+            final Map.Entry<String, JsonValue> entry, final String value,
+            final JsonObject metadata) {
+        return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
+                entry.getKey(),
+                jsonBuilderFactory.createObjectBuilder(
+                        metadata.entrySet().stream()
+                                .flatMap(metadataEntry -> {
+                                    if ("labels".equals(metadataEntry.getKey())) {
+                                        return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
+                                                metadataEntry.getKey(),
+                                                jsonBuilderFactory.createObjectBuilder(Stream.concat(
+                                                        metadataEntry.getValue().asJsonObject().entrySet().stream()
+                                                                .filter(e -> !"bundlebee.timestamp".equals(e.getKey())),
+                                                        Stream.of(new AbstractMap.SimpleImmutableEntry<>("labels", jsonBuilderFactory.createObjectBuilder()
+                                                                .add("bundlebee.timestamp", value)
+                                                                .build())))
+                                                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                                                        .build()));
+                                    }
+                                    return Stream.of(metadataEntry);
+                                })
+                                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                        .build()));
     }
 
     private HttpClient.Builder doConfigure(final HttpClient.Builder builder) {

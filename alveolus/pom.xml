@@ -16,6 +16,7 @@
 
   <modules>
     <module>postgres-local</module>
+    <module>elasticsearch-local</module>
   </modules>
 
   <build>

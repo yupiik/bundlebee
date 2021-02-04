@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch-local
+  labels:
+    app: elasticsearch-local
+spec:
+  serviceName: "elasticsearch-local"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch-local
+  template:
+    metadata:
+      labels:
+        app: elasticsearch-local
+    spec:
+      initContainers:
+        - name: chmod-es-data-folder-workaround
+          image: alpine:latest
+          command:
+            - chown
+            - -R
+            - 1000:1000
+            - /usr/share/elasticsearch/data
+          volumeMounts:
+            - name: pv-data
+              mountPath: /usr/share/elasticsearch/data
+      containers:
+        - name: elasticsearch
+          image: "{{elasticsearch-local.image:-elasticsearch:7.10.1}}"
+          envFrom:
+            - configMapRef:
+                name: elasticsearch-local-config
+          ports:
+            - containerPort: 9200
+              name: elasticsearch
+          volumeMounts:
+            - name: pv-data
+              mountPath: /usr/share/elasticsearch/data
+      volumes:
+        - name: pv-data
+          persistentVolumeClaim:
+            claimName: elasticsearch-pv-claim
