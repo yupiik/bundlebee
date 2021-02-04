@@ -5,6 +5,7 @@ import io.yupiik.bundlebee.core.test.CommandExecutor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import javax.json.Json;
 import java.util.stream.Stream;
 
 import static java.util.logging.Level.INFO;

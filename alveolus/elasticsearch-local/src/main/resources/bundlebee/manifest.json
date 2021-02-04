@@ -1,0 +1,52 @@
+{
+  "alveoli": [
+    {
+      "//": "Setup \"${project.artifactId}\" which runs an Elasticsearch instance usable by other applications.",
+      "name": "${project.groupId}:${project.artifactId}:${project.version}",
+      "descriptors": [
+        {
+          "name": "${project.groupId}_${project.artifactId}.configmap",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.persistencevolume",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.persistencevolumeclaim",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.service",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.statefulset",
+          "interpolate": true
+        }
+      ],
+      "placeholdersDoc": [
+        {
+          "name": "elasticsearch-local.image",
+          "description": "The elasticsearch image to use."
+        },
+        {
+          "name": "elasticsearch-local.discoveryType",
+          "description": "The discovery to use, default is for a single node so if you patch the descriptors to make it a cluster, ensure to tune it."
+        },
+        {
+          "name": "elasticsearch-local.clusterName",
+          "description": "The Elasticsearch cluster name."
+        },
+        {
+          "name": "elasticsearch-local.javaOpts",
+          "description": "The ES_JAVA_OPTS value."
+        },
+        {
+          "name": "elasticsearch-local.mountPath",
+          "description": "Where to store Elasticsearch data on the host."
+        }
+      ]
+    }
+  ]
+}

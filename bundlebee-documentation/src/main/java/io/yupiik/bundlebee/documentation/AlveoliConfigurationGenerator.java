@@ -75,7 +75,6 @@ public class AlveoliConfigurationGenerator implements Runnable {
 
     private List<String> generateAndReturnLinks(final Path base, final Path alveolusRoot, final Jsonb jsonb) {
         final var links = new ArrayList<String>();
-        final var docFormatter = new DocEntryFormatter();
         try {
             Files.walkFileTree(alveolusRoot, new SimpleFileVisitor<>() {
                 @Override
@@ -106,23 +105,27 @@ public class AlveoliConfigurationGenerator implements Runnable {
                     .map(it -> {
                         final var fileName = artifactId + "-" + it.getName().replaceAll("[^a-zA-Z0-9\\-_]", "-") + ".adoc";
                         final var target = alveoliOutputBase.resolve(fileName);
+                        final var rawAlveolusSpec = json.getJsonArray("alveoli").stream()
+                                .map(JsonValue::asJsonObject)
+                                .filter(item -> Objects.equals(it.getName(), item.getString("name")))
+                                .findFirst()
+                                .orElseThrow();
+                        final var description = rawAlveolusSpec.containsKey("//") ? rawAlveolusSpec.getString("//").trim() + '\n' : "";
                         try {
                             Files.writeString(
                                     target,
                                     toAlveolusDoc(
                                             it, manifest.getParent(),
-                                            json.getJsonArray("alveoli").stream()
-                                                    .map(JsonValue::asJsonObject)
-                                                    .filter(item -> Objects.equals(it.getName(), item.getString("name")))
-                                                    .findFirst()
-                                                    .orElseThrow(),
-                                            artifactId),
+                                            rawAlveolusSpec,
+                                            artifactId, description),
                                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         } catch (final IOException e) {
                             throw new IllegalStateException(e);
                         }
                         log.info("Created " + target);
-                        return artifactId + " xref:alveoli/" + fileName + '[' + it.getName() + ']';
+                        return artifactId + " xref:alveoli/" + fileName + '[' + it.getName() + "]: " +
+                                Character.toLowerCase(description.charAt(0)) + description.substring(1) +
+                                (description.endsWith(".") ? "" : ".");
                     })
                     .collect(toList());
         } catch (final IOException e) {
@@ -141,7 +144,8 @@ public class AlveoliConfigurationGenerator implements Runnable {
     private String toAlveolusDoc(final Manifest.Alveolus alveolus,
                                  final Path bundleBeeFolder,
                                  final JsonObject rawAlveolusSpec,
-                                 final String artifactId) {
+                                 final String artifactId,
+                                 final String description) {
         final var placeholders = findPlaceholders(
                 bundleBeeFolder, alveolus,
                 rawAlveolusSpec.containsKey("placeholdersDoc") ?
@@ -151,7 +155,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                         Map.of());
         return "= " + alveolus.getName() + "\n" +
                 "\n" +
-                (rawAlveolusSpec.containsKey("//") ? rawAlveolusSpec.getString("//").trim() + '\n' : "") +
+                description +
                 "\n" +
                 "== Maven Dependency\n" +
                 "\n" +

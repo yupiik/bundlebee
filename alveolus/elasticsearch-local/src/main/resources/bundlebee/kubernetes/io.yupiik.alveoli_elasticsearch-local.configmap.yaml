@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-local-config
+  labels:
+    app: elasticsearch-local
+data:
+  discovery.type: "{{elasticsearch-local.discoveryType:-single-node}}"
+  cluster.name: "{{elasticsearch-local.clusterName:-elasticsearch-local}}"
+  ES_JAVA_OPTS: "{{elasticsearch-local.javaOpts:--Dbundlebee=true}}"

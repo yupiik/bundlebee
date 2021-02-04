@@ -30,6 +30,11 @@
       <artifactId>postgres-local</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>elasticsearch-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

@@ -62,6 +62,12 @@ public class ApplyCommand implements Executable {
     @ConfigProperty(name = "bundlebee.apply.from", defaultValue = "auto")
     private String from;
 
+
+    @Inject
+    @Description("If `true`, a `bundlebee.timestamp` label will be injected into the descritors with current date before applying the descriptor.")
+    @ConfigProperty(name = "bundlebee.apply.injectTimestamp", defaultValue = "false")
+    private boolean injectTimestamp;
+
     @Inject
     private KubeClient kube;
 
@@ -188,7 +194,7 @@ public class ApplyCommand implements Executable {
                             log.finest(() -> "Applying " + descriptors);
                             return all(descriptors.stream()
                                     .map(it -> prepare(it, currentPatches))
-                                    .map(it -> kube.apply(it.getContent(), it.getExtension()))
+                                    .map(it -> kube.apply(it.getContent(), it.getExtension(), injectTimestamp))
                                     .collect(toList()), toList(), true);
                         }));
     }

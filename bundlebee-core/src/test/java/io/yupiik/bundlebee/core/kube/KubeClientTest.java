@@ -35,7 +35,7 @@ class KubeClientTest {
                 "  namespace: default\n" +
                 "data:\n" +
                 "  foo: bar" +
-                "", "yaml").toCompletableFuture().get();
+                "", "yaml", false).toCompletableFuture().get();
 
         final var mocks = spyingResponseLocator.getFound();
         assertEquals(2, mocks.size());

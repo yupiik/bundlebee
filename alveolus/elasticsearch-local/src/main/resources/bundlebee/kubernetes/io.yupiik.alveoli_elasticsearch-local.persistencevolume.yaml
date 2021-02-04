@@ -1,0 +1,16 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: elasticsearch-pv-volume
+  labels:
+    type: local
+    app: elasticsearch-local
+  finalizers: []
+spec:
+  storageClassName: local-storage
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "{{elasticsearch-local.mountPath:-/data/elasticsearch-local}}"
