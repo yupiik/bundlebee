@@ -2,7 +2,7 @@
   {
     "request": {
       "method": "GET",
-      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmap/test-config"
+      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmaps/test-config"
     },
     "response": {
       "status": 404,
@@ -12,7 +12,7 @@
   {
     "request": {
       "method": "POST",
-      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmap?fieldManager=kubectl-client-side-apply"
+      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmaps?fieldManager=kubectl-client-side-apply"
     },
     "response": {
       "status": 201,

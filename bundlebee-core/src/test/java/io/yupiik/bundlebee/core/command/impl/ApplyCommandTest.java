@@ -38,7 +38,7 @@ class ApplyCommandTest {
         final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.apply"));
         assertEquals("" +
                 "Starting to deploy 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=service) for namespace 'default'\n" +
+                "Applying 's' (kind=services) for namespace 'default'\n" +
                 "", logs);
 
         // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
@@ -54,8 +54,8 @@ class ApplyCommandTest {
         assertEquals("" +
                 "Starting to deploy 'ApplyCommandTest.withdep'\n" +
                 "Starting to deploy 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=service) for namespace 'default'\n" +
-                "Applying 's2' (kind=service) for namespace 'default'\n" +
+                "Applying 's' (kind=services) for namespace 'default'\n" +
+                "Applying 's2' (kind=services) for namespace 'default'\n" +
                 "", logs);
 
         // ensure the expected number of requests was done - apply itself was tested in KubeClientTest

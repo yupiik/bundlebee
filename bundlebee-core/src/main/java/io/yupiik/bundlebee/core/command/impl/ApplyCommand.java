@@ -26,6 +26,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,6 +38,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
@@ -53,20 +56,32 @@ import static java.util.stream.Collectors.toList;
 @Dependent
 public class ApplyCommand implements Executable {
     @Inject
-    @Description("Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath.")
+    @Description("Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. " +
+            "If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, " +
+            "this will default to it instead of using classpath deployment.")
     @ConfigProperty(name = "bundlebee.apply.alveolus", defaultValue = "auto")
     private String alveolus;
+
+    @Inject
+    @Description("Manifest to load to start to deploy. This optional setting mainly enables to use dependencies easily. " +
+            "Ignored if set to `skip`.")
+    @ConfigProperty(name = "bundlebee.apply.manifest", defaultValue = "skip")
+    private String manifest;
 
     @Inject
     @Description("Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath.")
     @ConfigProperty(name = "bundlebee.apply.from", defaultValue = "auto")
     private String from;
 
-
     @Inject
     @Description("If `true`, a `bundlebee.timestamp` label will be injected into the descritors with current date before applying the descriptor.")
     @ConfigProperty(name = "bundlebee.apply.injectTimestamp", defaultValue = "false")
     private boolean injectTimestamp;
+
+    @Inject
+    @Description("If `true` it will log more information than usual.")
+    @ConfigProperty(name = "bundlebee.apply.verbose", defaultValue = "false")
+    private boolean verbose;
 
     @Inject
     private KubeClient kube;
@@ -115,6 +130,27 @@ public class ApplyCommand implements Executable {
     public CompletionStage<?> execute() {
         final var cache = new ConcurrentHashMap<String, CompletionStage<ArchiveReader.Archive>>();
         final var patches = Map.<String, Collection<Manifest.Patch>>of();
+        if (!"skip".equals(manifest)) {
+            final var manifest = manifestReader.readManifest(() -> {
+                try {
+                    return Files.newInputStream(Paths.get(this.manifest));
+                } catch (final IOException e) {
+                    throw new IllegalArgumentException(e);
+                }
+            });
+            if (manifest.getAlveoli() == null) {
+                throw new IllegalArgumentException("No alveoli in manifest '" + manifest + "'");
+            }
+            if (manifest.getAlveoli().size() == 1 && "auto".equals(alveolus)) {
+                alveolus = manifest.getAlveoli().iterator().next().getName();
+            }
+            return deploy(
+                    manifest.getAlveoli().stream()
+                            .filter(it -> Objects.equals(alveolus, it.getName()))
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException("Didn't find alveolus '" + alveolus + "' in '" + manifest + "'")),
+                    patches, cache);
+        }
         if ("auto".equals(alveolus)) {
             log.info("Auto deploying the classpath, this can be dangerous if you don't fully control your classpath");
             return all(
@@ -127,16 +163,23 @@ public class ApplyCommand implements Executable {
         if (from == null || "auto".equals(from)) {
             return deploy(findAlveolusInClasspath(alveolus), patches, cache);
         }
-        return findAlveolus(alveolus, cache)
+        return findAlveolus(from, alveolus, cache)
                 .thenCompose(it -> deploy(it, patches, cache));
     }
 
-    private CompletionStage<Manifest.Alveolus> findAlveolus(final String alveolus,
+    private CompletionStage<Manifest.Alveolus> findAlveolus(final String from, final String alveolus,
                                                             final ConcurrentMap<String, CompletionStage<ArchiveReader.Archive>> cache) {
         return loadArchive(from, cache)
                 .thenApply(archive -> requireNonNull(requireNonNull(archive.getManifest(), "No manifest found in " + from)
                         .getAlveoli(), "No alveolus in manifest of " + from).stream()
                         .filter(it -> Objects.equals(it.getName(), alveolus))
+                        .peek(it -> {
+                            if (it.getDescriptors() != null) {
+                                it.getDescriptors().stream()
+                                        .filter(d -> d.getLocation() == null)
+                                        .forEach(d -> d.setLocation(from));
+                            }
+                        })
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("" +
                                 "No alveolus '" + this.alveolus + "' found, available in '" + from + "': " +
@@ -178,7 +221,7 @@ public class ApplyCommand implements Executable {
                             if (it.getLocation() == null) {
                                 return deploy(findAlveolusInClasspath(it.getName()), currentPatches, cache);
                             }
-                            return findAlveolus(it.getName(), cache)
+                            return findAlveolus(it.getLocation(), it.getName(), cache)
                                     .thenCompose(alveolus -> deploy(alveolus, currentPatches, cache));
                         })
                         .map(it -> it.thenApply(ignored -> 1)) // just to match the signature of all()
@@ -207,31 +250,34 @@ public class ApplyCommand implements Executable {
     }
 
     private LoadedDescriptor prepare(final LoadedDescriptor desc, final Map<String, Collection<Manifest.Patch>> patches) {
-        final var descPatches = patches.get(desc.configuration.getName());
-        if (descPatches == null || descPatches.isEmpty()) {
-            return desc;
-        }
         var content = desc.getContent();
-        for (final Manifest.Patch patch : descPatches) {
-            if (patch.isInterpolate()) {
-                content = substitutor.replace(content);
-            }
-            if (patch.getPatch() != null) {
-                final JsonArray array;
-                if (patch.isInterpolate()) { // interpolate patch too, if not desired the patch can be split in 2
-                    array = jsonb.fromJson(substitutor.replace(patch.getPatch().toString()), JsonArray.class);
-                } else {
-                    array = patch.getPatch();
+
+        final var descPatches = patches.get(desc.configuration.getName());
+        if (descPatches != null && !descPatches.isEmpty()) {
+            for (final Manifest.Patch patch : descPatches) {
+                if (patch.isInterpolate()) {
+                    content = substitutor.replace(content);
                 }
-                final var jsonPatch = jsonProvider.createPatch(array);
-                final var structure = "json".equals(desc.getExtension()) ?
-                        jsonb.fromJson(content.trim(), JsonStructure.class) :
-                        yaml2json.convert(JsonStructure.class, content.trim());
-                content = jsonPatch.apply(structure).toString();
+                if (patch.getPatch() != null) {
+                    final JsonArray array;
+                    if (patch.isInterpolate()) { // interpolate patch too, if not desired the patch can be split in 2
+                        array = jsonb.fromJson(substitutor.replace(patch.getPatch().toString()), JsonArray.class);
+                    } else {
+                        array = patch.getPatch();
+                    }
+                    final var jsonPatch = jsonProvider.createPatch(array);
+                    final var structure = "json".equals(desc.getExtension()) ?
+                            jsonb.fromJson(content.trim(), JsonStructure.class) :
+                            yaml2json.convert(JsonStructure.class, content.trim());
+                    content = jsonPatch.apply(structure).toString();
+                }
             }
         }
         if (desc.getConfiguration().isInterpolate()) {
             content = substitutor.replace(content);
+        }
+        if (verbose && log.isLoggable(Level.INFO)) {
+            log.info("Prepared descriptor " + desc.getConfiguration().getName() + ":\n" + content);
         }
         return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension());
     }
