@@ -169,14 +169,16 @@ public class KubeClient {
         // end
         final var desc = !injectTimeLabel ? rawDesc : injectTimestampLabel(rawDesc);
 
-        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT);
+        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
         final var fieldManager = "?fieldManager=kubectl-client-side-apply";
-        final var baseUri = baseApi + "/api/v1/namespaces/" + namespace + "/" + kindLowerCased;
+        final var baseUri = baseApi + findApiPrefix(kindLowerCased) +
+                (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
+                "/" + kindLowerCased;
         return client.sendAsync(setAuth.apply(
                 HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
                         .GET()
@@ -198,10 +200,12 @@ public class KubeClient {
                                         .header("Content-Type", "application/strategic-merge-patch+json")
                                         .header("Accept", "application/json"))
                                         .build(),
-                                HttpResponse.BodyHandlers.discarding())
+                                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                                 .thenApply(response -> {
                                     if (response.statusCode() != 200) {
-                                        throw new IllegalStateException("Can't patch " + name + " (" + kindLowerCased + "): " + response);
+                                        throw new IllegalStateException("" +
+                                                "Can't patch " + name + " (" + kindLowerCased + "): " + response + "\n" +
+                                                response.body());
                                     }
                                     return response;
                                 });
@@ -213,15 +217,51 @@ public class KubeClient {
                                         .header("Content-Type", "application/json")
                                         .header("Accept", "application/json"))
                                         .build(),
-                                HttpResponse.BodyHandlers.discarding())
+                                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                                 .thenApply(response -> {
                                     if (response.statusCode() != 201) {
-                                        throw new IllegalStateException("Can't patch " + name + " (" + kindLowerCased + "): " + response);
+                                        throw new IllegalStateException(
+                                                "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +
+                                                        response.body());
+                                    } else {
+                                        log.info(() -> "Created " + name + " (" + kindLowerCased + ") successfully");
                                     }
                                     return response;
                                 });
                     }
                 });
+    }
+
+    private boolean isSkipNameSpace(final String kindLowerCased) {
+        switch (kindLowerCased) {
+            case "nodes":
+            case "persistentvolumes":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private String findApiPrefix(final String kindLowerCased) {
+        switch (kindLowerCased) {
+            case "deployments":
+            case "statefulsets":
+            case "daemonsets":
+            case "replicasets":
+            case "controllerrevisions":
+                return "/apis/apps/v1";
+            case "cronjobs":
+                return "/apis/batch/v1beta1";
+            case "apiservices":
+                return "/apis/apiregistration.k8s.io/v1";
+            case "customresourcedefinitions":
+                return "/apis/apiextensions.k8s.io/v1beta1";
+            case "mutatingwebhookconfigurations":
+            case "validatingwebhookconfigurations":
+                return "/apis/admissionregistration.k8s.io/v1";
+            default:
+                return "/api/v1";
+        }
     }
 
     private JsonObject injectTimestampLabel(final JsonObject rawDesc) {
@@ -358,6 +398,8 @@ public class KubeClient {
             } else {
                 this.baseApi = "http://" + server;
             }
+        } else if (server != null) {
+            this.baseApi = server;
         }
         if (this.baseApi.endsWith("/")) {
             this.baseApi = this.baseApi.substring(0, this.baseApi.length() - 1);
