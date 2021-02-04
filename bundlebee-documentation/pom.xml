@@ -35,6 +35,16 @@
       <artifactId>elasticsearch-local</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>zipkin-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>prometheus-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

@@ -17,6 +17,8 @@
   <modules>
     <module>postgres-local</module>
     <module>elasticsearch-local</module>
+    <module>zipkin-simple</module>
+    <module>prometheus-simple</module>
   </modules>
 
   <build>

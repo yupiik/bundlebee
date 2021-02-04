@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zipkin_simple-deployment
+  labels:
+    app: zipkin_simple
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zipkin_simple
+  template:
+    metadata:
+      labels:
+        app: zipkin_simple
+    spec:
+      containers:
+        - name: zipkin
+          image: {{zipkin-simple.image:-openzipkin/zipkin:2.23}}
+          envFrom:
+            - configMapRef:
+                name: zipkin_simple-config
+          ports:
+            - containerPort: 9411
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9411
+            initialDelaySeconds: 5
+            periodSeconds: 10

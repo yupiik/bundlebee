@@ -1,0 +1,26 @@
+{
+  "alveoli": [
+    {
+      "//": "Prometheus local/dev setup. Will be available on http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT).",
+      "name": "${project.groupId}:${project.artifactId}:${project.version}",
+      "descriptors": [
+        {
+          "name": "${project.groupId}_${project.artifactId}.configmap"
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.deployment",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.service"
+        }
+      ],
+      "placeholdersDoc": [
+        {
+          "name": "prometheus-simple.image",
+          "description": "The image to use."
+        }
+      ]
+    }
+  ]
+}
