@@ -100,7 +100,9 @@ public final class BundleBee {
         return directMapping.entrySet().stream()
                 .flatMap(it -> it.getKey().startsWith("bundlebee.") ?
                         Stream.of(it) : Stream.of(it, new AbstractMap.SimpleImmutableEntry<>("bundlebee." + cmd + "." + it.getKey(), it.getValue())))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .flatMap(it -> !it.getKey().contains("-") ?
+                        Stream.of(it) : Stream.of(it, new AbstractMap.SimpleImmutableEntry<>(it.getKey().replace('-', '.'), it.getValue())))
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
     }
 
     private static void setupUserConfig() {

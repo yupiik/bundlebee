@@ -15,26 +15,15 @@
  */
 package io.yupiik.bundlebee.core.http;
 
-import lombok.RequiredArgsConstructor;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.io.IOException;
-import java.net.Authenticator;
-import java.net.CookieHandler;
-import java.net.ProxySelector;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.net.http.WebSocket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -42,59 +31,12 @@ import java.util.logging.Logger;
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
 
-@RequiredArgsConstructor
-public class LoggingClient extends HttpClient {
+public class LoggingClient extends DelegatingClient {
     private final Logger logger;
-    private final HttpClient delegate;
 
-    @Override
-    public Optional<CookieHandler> cookieHandler() {
-        return delegate.cookieHandler();
-    }
-
-    @Override
-    public Optional<Duration> connectTimeout() {
-        return delegate.connectTimeout();
-    }
-
-    @Override
-    public Redirect followRedirects() {
-        return delegate.followRedirects();
-    }
-
-    @Override
-    public Optional<ProxySelector> proxy() {
-        return delegate.proxy();
-    }
-
-    @Override
-    public SSLContext sslContext() {
-        return delegate.sslContext();
-    }
-
-    @Override
-    public SSLParameters sslParameters() {
-        return delegate.sslParameters();
-    }
-
-    @Override
-    public Optional<Authenticator> authenticator() {
-        return delegate.authenticator();
-    }
-
-    @Override
-    public Version version() {
-        return delegate.version();
-    }
-
-    @Override
-    public Optional<Executor> executor() {
-        return delegate.executor();
-    }
-
-    @Override
-    public WebSocket.Builder newWebSocketBuilder() {
-        return delegate.newWebSocketBuilder();
+    public LoggingClient(final Logger logger, final HttpClient delegate) {
+        super(delegate);
+        this.logger = logger;
     }
 
     @Override

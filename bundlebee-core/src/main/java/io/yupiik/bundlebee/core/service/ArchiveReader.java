@@ -28,6 +28,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -40,6 +42,9 @@ import static java.util.stream.Collectors.toMap;
 public class ArchiveReader {
     @Inject
     private ManifestReader manifestReader;
+
+    @Inject
+    private MavenResolver mvn;
 
     public Archive read(final Path zipLocation) {
         log.finest(() -> "Reading " + zipLocation);
@@ -65,11 +70,26 @@ public class ArchiveReader {
         }
     }
 
+    public Cache newCache() {
+        return new Cache();
+    }
+
     private String readAll(final ZipFile zip, final ZipEntry entry) {
         try (final BufferedReader reader = new BufferedReader(new InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8))) {
             return reader.lines().collect(joining("\n"));
         } catch (final IOException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    @Data
+    @Vetoed
+    public class Cache {
+        private final Map<String, CompletionStage<Archive>> cache = new ConcurrentHashMap<>();
+
+        public CompletionStage<Archive> loadArchive(final String coords) {
+            return cache.computeIfAbsent(coords, k -> mvn.findOrDownload(k)
+                    .thenApply(ArchiveReader.this::read));
         }
     }
 

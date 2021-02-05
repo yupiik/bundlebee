@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.kube;
 
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.http.DryRunClient;
 import io.yupiik.bundlebee.core.http.LoggingClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
@@ -138,6 +139,14 @@ public class KubeClient {
     @ConfigProperty(name = "bundlebee.kube.verbose", defaultValue = "false")
     private boolean verbose;
 
+    @Inject
+    @Description("" +
+            "If `true` http requests/responses are skipped. " +
+            "Note that dry run implies verbose=true for the http client. " +
+            "Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload.")
+    @ConfigProperty(name = "bundlebee.kube.dryRun", defaultValue = "false")
+    private boolean dryRun;
+
     private Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
 
     @PostConstruct
@@ -145,7 +154,9 @@ public class KubeClient {
         client = doConfigure(HttpClient.newBuilder()
                 .executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool)))
                 .build();
-        if (verbose) {
+        if (dryRun) {
+            client = new LoggingClient(log, new DryRunClient(client));
+        } else if (verbose) {
             client = new LoggingClient(log, client);
         }
     }
