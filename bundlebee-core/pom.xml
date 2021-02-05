@@ -164,6 +164,13 @@
   <profiles>
     <profile>
       <id>native</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.geronimo.arthur.knights</groupId>
+          <artifactId>openwebbeans-knight</artifactId>
+          <version>1.0.1</version>
+        </dependency>
+      </dependencies>
       <build>
         <plugins>
           <plugin> <!-- mvn package arthur:native-image -Pnative -->
