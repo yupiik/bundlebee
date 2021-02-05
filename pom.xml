@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2021 - Yupiik SAS - https://www.yupiik.com
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -10,6 +27,7 @@
   <packaging>pom</packaging>
   <name>BundleBee</name>
   <description>A light Kubernetes package manager inheriting from Apache Maven infrastructure.</description>
+  <url>https://github.com/yupiik/bundlebee</url>
 
   <properties>
     <owb.version>2.0.21</owb.version>
@@ -70,13 +88,209 @@
             <bundlebee.maven.repositories.downloads.enabled>false</bundlebee.maven.repositories.downloads.enabled>
             <bundlebee.kube.api>https://kubernetes.bundlebee.yupiik.test</bundlebee.kube.api>
             <bundlebee.kube.validateSSL>false</bundlebee.kube.validateSSL>
-            <jdk.internal.httpclient.disableHostnameVerification>true</jdk.internal.httpclient.disableHostnameVerification>
+            <jdk.internal.httpclient.disableHostnameVerification>true
+            </jdk.internal.httpclient.disableHostnameVerification>
             <kubeconfig>explicit</kubeconfig>
             <java.util.logging.manager>io.yupiik.logging.jul.YupiikLogManager</java.util.logging.manager>
             <org.talend.__shade__.io.netty.noUnsafe>true</org.talend.__shade__.io.netty.noUnsafe>
           </systemPropertyVariables>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>4.0.rc2</version>
+        <executions>
+          <execution>
+            <id>check-license</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <inherited>false</inherited>
+        <configuration>
+          <aggregate>true</aggregate>
+          <inlineHeader><![CDATA[Copyright (c) ${year} - ${organization.name} - ${organization.url}
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+]]></inlineHeader><!--
+          <headerDefinitions>
+            <headerDefinition>${maven.multiModuleProjectDirectory}/src/license/header_format.xml
+            </headerDefinition>
+          </headerDefinitions-->
+          <properties>
+            <organization.name>Yupiik SAS</organization.name>
+            <organization.url>https://www.yupiik.com</organization.url>
+            <year>2021</year>
+          </properties>
+          <mapping>
+            <adoc>DOUBLESLASH_STYLE</adoc>
+          </mapping>
+          <includes>
+            <include>**/*.properties</include>
+            <include>**/*.java</include>
+            <include>**/*.xml</include>
+            <include>**/*.yaml</include>
+          </includes>
+          <excludes>
+            <exclude>LICENSE</exclude>
+            <exclude>**/*.adoc</exclude>
+            <exclude>**/*.idea</exclude>
+            <exclude>**/target/**</exclude>
+            <exclude>**/generated/**</exclude>
+            <exclude>**/minisite/**</exclude>
+            <exclude>**/.m2/**</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.8</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <source>11</source>
+          <doclint>none</doclint>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.0.0-M1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin><!--  mvn ossindex:audit -->
+        <groupId>org.sonatype.ossindex.maven</groupId>
+        <artifactId>ossindex-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>audit-dependencies</id>
+            <phase/>
+            <goals>
+              <goal>audit</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scope>compile,runtime</scope>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://github.com/yupiik/yupiik-logging/blob/master/LICENSE</url>
+      <distribution>may be downloaded from the Maven repository</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Romain Manni-Bucau</name>
+      <id>rmannibucau</id>
+      <roles>
+        <role>Contributor</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <name>Francois Papon</name>
+      <id>fpapon</id>
+      <roles>
+        <role>Contributor</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/yupiik/bundlebee.git</connection>
+    <developerConnection>scm:git:https://github.com/yupiik/bundlebee.git</developerConnection>
+    <url>https://github.com/yupiik/bundlebee.git</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 </project>
