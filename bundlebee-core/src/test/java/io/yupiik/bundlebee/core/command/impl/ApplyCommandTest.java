@@ -52,7 +52,7 @@ class ApplyCommandTest {
 
         final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.apply"));
         assertEquals("" +
-                "Starting to deploy 'ApplyCommandTest.apply'\n" +
+                "Deploying 'ApplyCommandTest.apply'\n" +
                 "Applying 's' (kind=services) for namespace 'default'\n" +
                 "", logs);
 
@@ -67,8 +67,8 @@ class ApplyCommandTest {
 
         final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withdep"));
         assertEquals("" +
-                "Starting to deploy 'ApplyCommandTest.withdep'\n" +
-                "Starting to deploy 'ApplyCommandTest.apply'\n" +
+                "Deploying 'ApplyCommandTest.withdep'\n" +
+                "Deploying 'ApplyCommandTest.apply'\n" +
                 "Applying 's' (kind=services) for namespace 'default'\n" +
                 "Applying 's2' (kind=services) for namespace 'default'\n" +
                 "", logs);

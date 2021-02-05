@@ -79,17 +79,20 @@ public class CommandConfigurationGenerator implements Runnable {
                 .map(command -> {
                     try {
                         final Executable instance = command.asSubclass(Executable.class).getConstructor().newInstance();
-                        final var prefix = Pattern.compile("^bundlebee\\." + instance.name() + "\\."); // see io.yupiik.bundlebee.core.BundleBee.toProperties
+                        final var name = instance.name();
+                        final var prefix = Pattern.compile("^bundlebee\\." + name + "\\."); // see io.yupiik.bundlebee.core.BundleBee.toProperties
                         final var config = new ClassFinder(command).findAnnotatedFields(ConfigProperty.class).stream()
                                 .map(it -> formatter.format(it, k -> prefix.matcher(k).replaceAll("")))
                                 .sorted() // by key name to ensure it is deterministic
                                 .collect(joining("\n\n"));
-                        final var conf = base.resolve(instance.name() + ".configuration.adoc");
+                        final var conf = base.resolve(name + ".configuration.adoc");
                         java.nio.file.Files.writeString(
                                 conf,
-                                "= " + instance.name() + "\n" +
+                                "= " + Character.toUpperCase(name.charAt(0)) + name.substring(1) + "\n" +
                                         "\n" +
                                         instance.description() + "\n" +
+                                        "\n" +
+                                        "Name: `" + name + "`.\n" +
                                         "\n" +
                                         "== Configuration\n" +
                                         "\n" +
