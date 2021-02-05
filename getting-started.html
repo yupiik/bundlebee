@@ -66,8 +66,53 @@ This page explains how to get started with it.
 <div class="sect1">
 <h2 id="_installation">Installation</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>TBD once deployed (github releases? central? install.sh.).</p>
+<div class="sect2">
+<h3 id="_java_mode">Java  Mode</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Ensure to use java &gt;= 11.0.7 (previous Java 11 versions can work but have an issue with TLS HTTP client you can hit).</p>
+</li>
+<li>
+<p>Download the <code>bundlebee-core</code> fat har:</p>
+</li>
+<li>
+<p>You can now run it with the command: ``.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_binary">Binary</h3>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+as of today, no release of BundleBee are on central yet so this script does not yet work.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+this only works for linux amd64 computers.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="sh" class="language-sh hljs">curl https://yupiik.github.io/bundlebee/install/install.sh | bash</code></pre>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -137,7 +182,18 @@ You can run <code>mvn package</code> to ensure your java/maven setup is correct.
 <div class="listingblock">
 <div class="title">src/main/resources/bundlebee/manifest.json</div>
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">TODO</code></pre>
+<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+  "alveoli": [
+    {
+      "name": "hello",
+      "descriptors": [
+        {
+          "name": "hello-world"
+        }
+      ]
+    }
+  ]
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -146,7 +202,44 @@ You can run <code>mvn package</code> to ensure your java/maven setup is correct.
 <div class="listingblock">
 <div class="title">src/main/resources/bundlebee/kubernetes/hello-world.yaml</div>
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="yaml" class="language-yaml hljs">TODO</code></pre>
+<pre class="highlightjs highlight"><code data-lang="yaml" class="language-yaml hljs">apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-deployment
+  labels:
+    app: hello
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hello
+  template:
+    metadata:
+      labels:
+        app: hello
+    spec:
+      containers:
+        - name: hello
+          image: hello-world:latest
+          envFrom:apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-kubernetes
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: hello-kubernetes
+  template:
+    metadata:
+      labels:
+        app: hello-kubernetes
+    spec:
+      containers:
+      - name: hello-kubernetes
+        image: paulbouwer/hello-kubernetes:1.8
+        ports:
+        - containerPort: 8080</code></pre>
 </div>
 </div>
 <div class="paragraph">
