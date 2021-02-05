@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+set -e
 
 CENTRAL="https://repo.maven.apache.org/maven2/"
 GROUP_ID="io/yupiik"
@@ -70,7 +71,7 @@ fi
 # install
 #
 
-echo "Ensure $BUNDLEBEE_DIR exists..."
+echo "Ensuring $BUNDLEBEE_DIR exists..."
 mkdir -p "$BUNDLEBEE_DIR/bin"
 
 base="$CENTRAL/$GROUP_ID/$ARTIFACT_ID"
