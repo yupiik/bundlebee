@@ -38,7 +38,7 @@ jobs:
         with:
           java-version: '11.0.9'
       - name: Build
-        run: mvn install
+        run: mvn install -Pnative
       - name: Remove Snapshots Before Caching
         run: find /home/runner/work/bundlebee/bundlebee/.m2 -name '*SNAPSHOT' | xargs rm -Rf
   security_audit:

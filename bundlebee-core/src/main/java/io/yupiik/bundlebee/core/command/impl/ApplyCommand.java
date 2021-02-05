@@ -222,7 +222,7 @@ public class ApplyCommand implements Executable {
                                       final ConcurrentMap<String, CompletionStage<ArchiveReader.Archive>> cache) {
         log.info(() -> "Starting to deploy '" + from.getName() + "'");
         if (from.getDescriptors() == null) { // we tolerate empty for testing purses for now
-            final CompletableFuture<?> promise = new CompletableFuture<>();
+            final CompletableFuture<Integer> promise = new CompletableFuture<>();
             promise.completeExceptionally(new IllegalArgumentException("No descriptor for alveolus '" + from.getName() + "'"));
             return promise;
         }
@@ -253,7 +253,7 @@ public class ApplyCommand implements Executable {
                             return all(descriptors.stream()
                                     .map(it -> prepare(it, currentPatches))
                                     .map(it -> kube.apply(it.getContent(), it.getExtension(), injectTimestamp))
-                                    .collect(toList()), toList(), true);
+                                    .collect(toList()), counting(), true);
                         }));
     }
 

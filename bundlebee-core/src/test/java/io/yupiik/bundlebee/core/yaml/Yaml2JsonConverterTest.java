@@ -41,12 +41,38 @@ class Yaml2JsonConverterTest {
         final var loaded = converter.convert(KubeConfig.class, yaml);
 
         // the String.join/split(,) are just there to make the diff easier to read when this test fails
-        final var actual = String.join("\n", ("KubeConfig(" +
-                "apiVersion=v1, kind=Config, currentContext=minikube, " +
-                "clusters=[KubeConfig.NamedCluster(" +
-                "name=minikube, cluster=KubeConfig.Cluster(server=https://192.168.49.2:8443, certificateAuthority=minikube/ca.crt, certificateAuthorityData=null, insecureSkipTlsVerify=false, extensions=[KubeConfig.NamedExtension(name=cluster_info, extension=KubeConfig.Extension(values={provider=minikube.sigs.k8s.io, version=v1.17.0, last-update=Tue, 02 Feb 2021 16:29:29 CET}))]))], " +
-                "contexts=[KubeConfig.NamedContext(name=minikube, context=KubeConfig.Context(cluster=minikube, namespace=default, user=minikube, certificateAuthority=null, extensions=[KubeConfig.NamedExtension(name=context_info, extension=KubeConfig.Extension(values={provider=minikube.sigs.k8s.io, version=v1.17.0, last-update=Tue, 02 Feb 2021 16:29:29 CET}))]))], " +
-                "users=[KubeConfig.NamedUser(name=minikube, user=KubeConfig.User(username=null, password=null, token=null, tokenFile=null, clientCertificate=minikube/profiles/minikube/client.crt, clientCertificateData=null, clientKey=minikube/profiles/minikube/client.key, clientKeyData=null))])")
+        final var actual = String.join("\n", ("KubeConfig(apiVersion=v1\n" +
+                " kind=Config\n" +
+                " currentContext=minikube\n" +
+                " clusters=[KubeConfig.NamedCluster(name=minikube\n" +
+                " cluster=KubeConfig.Cluster(server=https://192.168.49.2:8443\n" +
+                " certificateAuthority=minikube/ca.crt\n" +
+                " certificateAuthorityData=null\n" +
+                " insecureSkipTlsVerify=false\n" +
+                " extensions=[KubeConfig.NamedExtension(name=cluster_info\n" +
+                " extension={\"last-update\":\"Tue\n" +
+                " 02 Feb 2021 16:29:29 CET\"\n" +
+                "\"provider\":\"minikube.sigs.k8s.io\"\n" +
+                "\"version\":\"v1.17.0\"})]))]\n" +
+                " contexts=[KubeConfig.NamedContext(name=minikube\n" +
+                " context=KubeConfig.Context(cluster=minikube\n" +
+                " namespace=default\n" +
+                " user=minikube\n" +
+                " certificateAuthority=null\n" +
+                " extensions=[KubeConfig.NamedExtension(name=context_info\n" +
+                " extension={\"last-update\":\"Tue\n" +
+                " 02 Feb 2021 16:29:29 CET\"\n" +
+                "\"provider\":\"minikube.sigs.k8s.io\"\n" +
+                "\"version\":\"v1.17.0\"})]))]\n" +
+                " users=[KubeConfig.NamedUser(name=minikube\n" +
+                " user=KubeConfig.User(username=null\n" +
+                " password=null\n" +
+                " token=null\n" +
+                " tokenFile=null\n" +
+                " clientCertificate=minikube/profiles/minikube/client.crt\n" +
+                " clientCertificateData=null\n" +
+                " clientKey=minikube/profiles/minikube/client.key\n" +
+                " clientKeyData=null))])")
                 .split(","));
         final var expected = String.join("\n", loaded.toString().split(","));
         assertEquals(actual, expected);

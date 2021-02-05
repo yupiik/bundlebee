@@ -16,16 +16,10 @@
 package io.yupiik.bundlebee.core.kube;
 
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.johnzon.mapper.JohnzonAny;
 
+import javax.json.JsonObject;
 import javax.json.bind.annotation.JsonbProperty;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import static lombok.AccessLevel.NONE;
 
 @Data
 public class KubeConfig {
@@ -41,24 +35,28 @@ public class KubeConfig {
 
     @Data
     public static class NamedExtension {
+        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
         private String name;
-        private Extension extension;
+        private JsonObject extension;
     }
 
     @Data
     public static class NamedCluster {
+        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
         private String name;
         private Cluster cluster;
     }
 
     @Data
     public static class NamedContext {
+        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
         private String name;
         private Context context;
     }
 
     @Data
     public static class NamedUser {
+        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
         private String name;
         private User user;
     }
@@ -110,17 +108,5 @@ public class KubeConfig {
         private boolean insecureSkipTlsVerify;
 
         private List<NamedExtension> extensions;
-    }
-
-    @Data
-    public static class Extension {
-        @Setter(NONE)
-        @Getter(NONE)
-        @JohnzonAny
-        private Map<String, Object> values = new TreeMap<>();
-
-        public Map<String, Object> values() {
-            return values;
-        }
     }
 }
