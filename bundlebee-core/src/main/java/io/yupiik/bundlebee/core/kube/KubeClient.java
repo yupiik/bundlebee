@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.kube;
 
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.http.LoggingClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
 import lombok.AllArgsConstructor;
@@ -84,7 +85,7 @@ import static java.util.Locale.ROOT;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.summingInt;
+import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
@@ -132,6 +133,11 @@ public class KubeClient {
     @ConfigProperty(name = "bundlebee.kube.namespace", defaultValue = "default")
     private String namespace;
 
+    @Inject
+    @Description("If `true` http requests/responses to Kubernetes will be logged.")
+    @ConfigProperty(name = "bundlebee.kube.verbose", defaultValue = "false")
+    private boolean verbose;
+
     private Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
 
     @PostConstruct
@@ -139,12 +145,21 @@ public class KubeClient {
         client = doConfigure(HttpClient.newBuilder()
                 .executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool)))
                 .build();
+        if (verbose) {
+            client = new LoggingClient(log, client);
+        }
     }
 
     public CompletionStage<?> apply(final String descriptorContent, final String ext, final boolean injectTimeLabel) {
+        if (verbose) {
+            log.info(() -> "Applying descriptor\n" + descriptorContent);
+        }
         final var json = "json".equals(ext) ?
                 jsonb.fromJson(descriptorContent.trim(), JsonValue.class) :
                 yaml2json.convert(JsonValue.class, descriptorContent.trim());
+        if (verbose) {
+            log.info(() -> "Loaded descriptor(s)\n" + json);
+        }
         switch (json.getValueType()) {
             case ARRAY:
                 return all(
@@ -154,7 +169,7 @@ public class KubeClient {
                                         // small trick to type it and make all() working
                                         .thenApply(ignored -> 1))
                                 .collect(toList()),
-                        summingInt(i -> i),
+                        counting(),
                         true);
             case OBJECT:
                 return doApply(json.asJsonObject(), injectTimeLabel);
@@ -194,6 +209,11 @@ public class KubeClient {
         final var baseUri = baseApi + findApiPrefix(kindLowerCased) +
                 (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
                 "/" + kindLowerCased;
+
+        if (verbose) {
+            log.info(() -> "Will apply descriptor " + rawDesc + " on " + baseUri);
+        }
+
         return client.sendAsync(setAuth.apply(
                 HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
                         .GET()
@@ -201,6 +221,9 @@ public class KubeClient {
                         .build(),
                 HttpResponse.BodyHandlers.discarding())
                 .thenCompose(findResponse -> {
+                    if (verbose) {
+                        log.info(findResponse::toString);
+                    }
                     if (findResponse.statusCode() > 404) {
                         throw new IllegalStateException("Invalid HTTP response: " + findResponse);
                     }
@@ -217,6 +240,9 @@ public class KubeClient {
                                         .build(),
                                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                                 .thenApply(response -> {
+                                    if (verbose) {
+                                        log.info(response::toString);
+                                    }
                                     if (response.statusCode() != 200) {
                                         throw new IllegalStateException("" +
                                                 "Can't patch " + name + " (" + kindLowerCased + "): " + response + "\n" +
@@ -234,6 +260,9 @@ public class KubeClient {
                                         .build(),
                                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                                 .thenApply(response -> {
+                                    if (verbose) {
+                                        log.info(response::toString);
+                                    }
                                     if (response.statusCode() != 201) {
                                         throw new IllegalStateException(
                                                 "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +

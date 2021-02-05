@@ -236,6 +236,7 @@ public class MavenResolver {
         if (!canDownload) {
             throw new IllegalStateException("Download are disabled so can't download '" + url + "'");
         }
+        log.info(() -> "Downloading " + url);
         return client.sendAsync(
                 HttpRequest.newBuilder()
                         .GET()

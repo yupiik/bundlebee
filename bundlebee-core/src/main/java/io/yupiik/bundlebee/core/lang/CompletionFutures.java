@@ -23,6 +23,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Collector;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -31,6 +33,8 @@ import static lombok.AccessLevel.PRIVATE;
 @Vetoed
 @NoArgsConstructor(access = PRIVATE)
 public final class CompletionFutures {
+    private static final Logger LOGGER = Logger.getLogger(CompletionFutures.class.getName());
+
     public static <T> CompletionStage<T> handled(final Supplier<CompletionStage<T>> provider) {
         try {
             return provider.get();
@@ -46,6 +50,7 @@ public final class CompletionFutures {
                                                    final Collector<T, A, R> collector,
                                                    final boolean failOnError) {
         if (promises.isEmpty()) {
+            LOGGER.finest(() -> "Skipping execution since there is no promise");
             return completedFuture(collector.finisher().apply(collector.supplier().get()));
         }
 
@@ -55,13 +60,15 @@ public final class CompletionFutures {
         final var errors = new IllegalStateException("Invalid execution");
         final var remaining = new AtomicInteger(promises.size());
         final var result = new CompletableFuture<R>();
+
+        LOGGER.finest(() -> "Aggregating " + promises.size() + " promises, aggregation id=" + System.identityHashCode(result));
         promises.forEach(promise -> promise.whenComplete((res, err) -> {
+            LOGGER.finest(() -> "Got result, aggregation id=" + System.identityHashCode(result) + ", error=" + err + ", result=" + res);
             synchronized (agg) {
                 if (err == null) {
-                    synchronized (agg) {
-                        accumulator.accept(agg, res);
-                    }
+                    accumulator.accept(agg, res);
                 } else {
+                    LOGGER.log(Level.SEVERE, err.getMessage(), err);
                     errors.addSuppressed(err);
                 }
                 if (remaining.decrementAndGet() == 0) {

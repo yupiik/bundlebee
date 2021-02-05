@@ -182,15 +182,27 @@
             </executions>
             <configuration>
               <graalVersion>20.3.0.r11</graalVersion>
-              <attach>true</attach> <!-- classifier=arthur -->
+              <attach>true</attach>
+              <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
               <output>${project.build.directory}/${project.artifactId}</output>
               <main>io.yupiik.bundlebee.core.BundleBee</main>
+              <buildStaticImage>false</buildStaticImage>
               <customOptions>
                 <customOption>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</customOption>
+                <customOption>-Djava.net.preferIPv4Stack=true</customOption>
+                <customOption>--enable-http</customOption>
+                <customOption>--enable-https</customOption>
               </customOptions>
               <graalExtensions>
                 <graalExtension>openwebbeans</graalExtension>
               </graalExtensions>
+              <extensionProperties>
+                <!-- to keep reflection meta for jsonb models without listing them (manifest + kubeconfig) -->
+                <extension.annotation.custom.annotations.properties>
+                  io.yupiik.bundlebee.core.configuration.Description:allDeclaredConstructors=true|allDeclaredMethods=true|allDeclaredFields=true,
+                  javax.json.bind.annotation.JsonbProperty:allDeclaredConstructors=true|allDeclaredMethods=true|allDeclaredFields=true
+                </extension.annotation.custom.annotations.properties>
+              </extensionProperties>
             </configuration>
           </plugin>
         </plugins>
