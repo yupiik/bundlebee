@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+set -e
 
 CENTRAL="https://repo.maven.apache.org/maven2/"
 GROUP_ID="io/yupiik"
@@ -70,14 +71,14 @@ fi
 # install
 #
 
-echo "Ensure $BUNDLEBEE_DIR exists..."
+echo "Ensuring $BUNDLEBEE_DIR exists..."
 mkdir -p "$BUNDLEBEE_DIR/bin"
 
 base="$CENTRAL/$GROUP_ID/$ARTIFACT_ID"
-last_release="$(curl -s "$base/maven-metadata.xml" -o - | grep latest | head -n 1 | sed 's/.*>\([^<]*\)<.*/\1/')"
+last_release="$(curl --fail  --silent "$base/maven-metadata.xml" -o - | grep latest | head -n 1 | sed 's/.*>\([^<]*\)<.*/\1/')"
 
 echo "Downloading yupiik BundleBee..."
-curl --location --progress-bar "$base/$last_release/$ARTIFACT_ID-$last_release-Linux-amd64.bin" > "$BUNDLEBEE_DIR/bin/bundlebee"
+curl --fail --location --progress-bar "$base/$last_release/$ARTIFACT_ID-$last_release-Linux-amd64.bin" > "$BUNDLEBEE_DIR/bin/bundlebee"
 
 echo -e "\n\n\nBundleBee installed!\nYou can now add $BUNDLEBEE_DIR/bin to your PATH variable (in your ~/bashrc or so).\n\n"
 
