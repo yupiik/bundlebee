@@ -182,7 +182,7 @@
     <profile>
       <id>native</id>
       <dependencies>
-        <dependency>
+        <dependency> <!-- to drop upgrading to 1.0.2 our plugin -->
           <groupId>org.apache.geronimo.arthur.knights</groupId>
           <artifactId>openwebbeans-knight</artifactId>
           <version>1.0.1</version>
