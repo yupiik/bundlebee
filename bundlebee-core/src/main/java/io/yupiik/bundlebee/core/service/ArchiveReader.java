@@ -70,6 +70,8 @@ public class ArchiveReader {
         }
     }
 
+    // for now it is a per command storage but later on we can use a singleton at the condition of handling eviction
+    // for long running cli instances
     public Cache newCache() {
         return new Cache();
     }

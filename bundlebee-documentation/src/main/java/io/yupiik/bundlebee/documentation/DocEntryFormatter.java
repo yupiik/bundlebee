@@ -35,13 +35,17 @@ public class DocEntryFormatter {
         if (key.isEmpty()) {
             key = it.getDeclaringClass().getName() + "." + it.getName();
         }
+        final var defaultValue = annotation.defaultValue();
         return "" +
                 nameMapper.apply(key) + " (`" + key.replaceAll("[^A-Za-z0-9]", "_").toUpperCase(ROOT) + "`" + ")::\n" +
                 (desc.endsWith(".") ?
                         desc :
                         (desc + '.')) +
-                (!ConfigProperty.UNCONFIGURED_VALUE.equals(annotation.defaultValue()) ?
-                        (" Default value: `" + annotation.defaultValue().replace("\n", "\\\n") + "`") :
+                (!ConfigProperty.UNCONFIGURED_VALUE.equals(defaultValue) ?
+                        (" Default value: " +
+                                (!defaultValue.contains("\n") ?
+                                        "`" + defaultValue + "`" :
+                                        "\n[source]\n----\n" + defaultValue + "\n----")) :
                         "");
     }
 }

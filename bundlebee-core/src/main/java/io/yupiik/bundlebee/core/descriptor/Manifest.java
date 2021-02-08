@@ -34,6 +34,12 @@ public class Manifest {
                 "`<groupId>:<artifactId>:<version>` using maven filtering but it is not enforced.")
         private String name;
 
+        @Description("" +
+                "If name does not follow `<groupId>:<artifactId>:<version>` naming (i.e. version can't be extracted from the name) " +
+                "then you can specify the version there. " +
+                "Note that if set, this is used in priority (explicit versus deduced).")
+        private String version;
+
         @Description("List of descriptors to install for this alveolus. This is required even if an empty array.")
         private List<Descriptor> descriptors;
 

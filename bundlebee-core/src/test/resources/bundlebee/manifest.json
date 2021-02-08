@@ -20,6 +20,42 @@
           "name": "ApplyCommandTest.apply"
         }
       ]
+    },
+    {
+      "name": "DeleteCommandTest.deleteMaven",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d2"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.apply"
+        }
+      ]
+    },
+    {
+      "name": "RollbackCommandTest.first",
+      "version":"1.2.3",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d0"
+        }
+      ]
+    },
+    {
+      "name": "RollbackCommandTest.second",
+      "version":"1.2.4",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d2"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.apply"
+        }
+      ]
     }
   ]
 }
