@@ -122,7 +122,9 @@ public class RollbackCommand implements Executable {
                 "* Run apply command for previous version\n" +
                 "\n" +
                 "IMPORTANT: this command only uses releases when it guesses the versions, it does not handles SNAPSHOTs. " +
-                "If you want to rollback to a snapshot, ensure to configure `previous*` properties.";
+                "If you want to rollback to a snapshot, ensure to configure `previous*` properties.\n" +
+                "\n" +
+                "TIP: this is equivalent to `apply` and `delete` commands successfully. For now it is recommended to do both manually.";
     }
 
     @Override
