@@ -76,9 +76,11 @@ mkdir -p "$BUNDLEBEE_DIR/bin"
 
 base="$CENTRAL/$GROUP_ID/$ARTIFACT_ID"
 last_release="$(curl --fail  --silent "$base/maven-metadata.xml" -o - | grep latest | head -n 1 | sed 's/.*>\([^<]*\)<.*/\1/')"
+binary="$BUNDLEBEE_DIR/bin/bundlebee"
 
 echo "Downloading yupiik BundleBee..."
-curl --fail --location --progress-bar "$base/$last_release/$ARTIFACT_ID-$last_release-Linux-amd64.bin" > "$BUNDLEBEE_DIR/bin/bundlebee"
+curl --fail --location --progress-bar "$base/$last_release/$ARTIFACT_ID-$last_release-Linux-amd64.bin" > "$binary" && \
+  chmod +x "$binary"
 
 echo -e "\n\n\nBundleBee installed!\nYou can now add $BUNDLEBEE_DIR/bin to your PATH variable (in your ~/bashrc or so).\n\n"
 

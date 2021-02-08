@@ -56,8 +56,8 @@ class DeleteCommandTest {
             assertEquals("" +
                     "Deleting 'DeleteCommandTest.deleteMaven'\n" +
                     "Deleting 'ApplyCommandTest.apply'\n" +
-                    "Deleting 's' (kind=services) for namespace 'default'\n" +
                     "Deleting 's2' (kind=services) for namespace 'default'\n" +
+                    "Deleting 's' (kind=services) for namespace 'default'\n" +
                     "", logs);
             assertEquals(2, spyingResponseLocator.getFound().size());
         }
@@ -70,8 +70,8 @@ class DeleteCommandTest {
             assertEquals("" +
                     "Deleting 'DeleteCommandTest.deleteMaven'\n" +
                     "Deleting 'ApplyCommandTest.apply'\n" +
-                    "Deleting 's' (kind=services) for namespace 'default'\n" +
                     "Deleting 's2' (kind=services) for namespace 'default'\n" +
+                    "Deleting 's' (kind=services) for namespace 'default'\n" +
                     "", logs);
             assertEquals(2, spyingResponseLocator.getFound().size());
         }

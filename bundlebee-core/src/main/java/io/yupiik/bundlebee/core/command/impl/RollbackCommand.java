@@ -150,6 +150,7 @@ public class RollbackCommand implements Executable {
             return guessPreviousVersion(alveolus, cache);
         }
         return alveolusHandler
+                // todo: can be found from alveolus.location too
                 .findRootAlveoli(previousFrom, previousManifest, previousAlveolus)
                 .thenApply(list -> {
                     if (list.size() != 1) {
@@ -161,7 +162,8 @@ public class RollbackCommand implements Executable {
                 });
     }
 
-    private CompletionStage<Manifest.Alveolus> guessPreviousVersion(final Manifest.Alveolus alveolus, final ArchiveReader.Cache cache) {
+    private CompletionStage<Manifest.Alveolus> guessPreviousVersion(final Manifest.Alveolus alveolus,
+                                                                    final ArchiveReader.Cache cache) {
         final var name = alveolus.getName();
         log.info(() -> "Looking for previous version of '" + name + "'" +
                 (alveolus.getVersion() != null ? " (version=" + alveolus.getVersion() + ")" : ""));
