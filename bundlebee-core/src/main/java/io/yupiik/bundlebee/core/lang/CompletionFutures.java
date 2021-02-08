@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 
 import javax.enterprise.inject.Vetoed;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -43,6 +44,52 @@ public final class CompletionFutures {
             future.completeExceptionally(re);
             return future;
         }
+    }
+
+    // CompletableFuture.allOf() fails if any fails, here we enable to still return a result
+    public static CompletionStage<?> chain(final Iterator<Supplier<CompletionStage<?>>> promises,
+                                           final boolean stopOnError) {
+        final var result = new CompletableFuture<>();
+        if (!promises.hasNext()) {
+            result.complete(true);
+            return result;
+        }
+        try {
+            promises.next().get()
+                    .thenCompose(done -> chain(promises, stopOnError))
+                    .whenComplete((r, e) -> {
+                        if (e != null) {
+                            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                            if (stopOnError || !promises.hasNext()) {
+                                result.completeExceptionally(e);
+                            } else {
+                                chain(promises, false).whenComplete((r2, e2) -> {
+                                    if (e2 != null) {
+                                        LOGGER.log(Level.SEVERE, e2.getMessage(), e2);
+                                        result.completeExceptionally(e2);
+                                    } else {
+                                        result.complete(r2);
+                                    }
+                                });
+                            }
+                        } else {
+                            result.complete(r);
+                        }
+                    });
+        } catch (final RuntimeException re) {
+            if (stopOnError || !promises.hasNext()) {
+                result.completeExceptionally(re);
+            } else {
+                chain(promises, false).whenComplete((r, e) -> {
+                    if (e != null) {
+                        result.completeExceptionally(e);
+                    } else {
+                        result.complete(r);
+                    }
+                });
+            }
+        }
+        return result;
     }
 
     // CompletableFuture.allOf() fails if any fails, here we enable to still return a result

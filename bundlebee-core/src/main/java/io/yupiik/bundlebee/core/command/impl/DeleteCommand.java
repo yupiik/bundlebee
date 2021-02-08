@@ -27,9 +27,14 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 
 @Log
@@ -95,9 +100,25 @@ public class DeleteCommand implements Executable {
     }
 
     public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest.Alveolus it) {
+        final var toDelete = new ArrayList<AlveolusHandler.LoadedDescriptor>();
         return visitor.executeOnAlveolus(
                 "Deleting", it, null,
-                (ctx, desc) -> kube.delete(desc.getContent(), desc.getExtension()),
-                cache);
+                (ctx, desc) -> {
+                    synchronized (toDelete) { // it is concurrent but we mainly want owner order here so "ok"
+                        toDelete.add(desc);
+                    }
+                    return completedFuture(true);
+                },
+                cache)
+                .thenApply(done -> { // owner first
+                    Collections.reverse(toDelete);
+                    return toDelete;
+                })
+                .thenCompose(descs -> chain(
+                        descs.stream()
+                                .map(desc -> (Supplier<CompletionStage<?>>) () -> kube.delete(desc.getContent(), desc.getExtension()))
+                                .collect(toList())
+                                .iterator(),
+                        true));
     }
 }

@@ -55,8 +55,8 @@ class RollbackCommandTest {
         assertEquals("" +
                 "Deleting 'RollbackCommandTest.second'\n" +
                 "Deleting 'ApplyCommandTest.apply'\n" +
-                "Deleting 's' (kind=services) for namespace 'default'\n" +
                 "Deleting 's2' (kind=services) for namespace 'default'\n" +
+                "Deleting 's' (kind=services) for namespace 'default'\n" +
                 "Deploying 'RollbackCommandTest.first'\n" +
                 "Applying 's0' (kind=services) for namespace 'default'\n" +
                 "", logs);

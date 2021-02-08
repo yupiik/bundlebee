@@ -230,7 +230,7 @@ public class KubeClient {
                                 .add("kind", "DeleteOptions")
                                 .add("apiVersion", "v1")
                                 // todo: .add("gracePeriodSeconds", config)
-                                .add("orphanDependents", true)
+                                // .add("orphanDependents", true) // this one is deprecated, this is why we use propagationPolicy too
                                 .add("propagationPolicy", metadata.containsKey("bundlebee.delete.propagationPolicy") ?
                                         metadata.getString("bundlebee.delete.propagationPolicy") :
                                         defaultPropagationPolicy)
@@ -239,7 +239,13 @@ public class KubeClient {
                         .header("Content-Type", "application/json")
                         .header("Accept", "application/json"))
                         .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                .thenApply(it -> {
+                    if (it.statusCode() == 422) {
+                        log.warning("Invalid deletion on " + uri + ":\n" + it.body());
+                    }
+                    return it;
+                });
     }
 
     private CompletionStage<?> doApply(final JsonObject rawDesc, final Map<String, String> customLabels) {
