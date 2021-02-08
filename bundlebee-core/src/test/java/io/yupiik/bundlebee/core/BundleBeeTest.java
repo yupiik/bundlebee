@@ -37,7 +37,7 @@ class BundleBeeTest {
         final var missingCommand = executor.wrap(INFO, () -> new BundleBee().launch("missing"));
         Stream.of(noArg, explicitHelp, missingCommand)
                 .forEach(content -> {
-                    assertTrue(content.contains("  - help: Print help.\n"), content);
+                    assertTrue(content.contains("  - help: print help.\n"), content);
                 });
 
         // missing command has an additional error message

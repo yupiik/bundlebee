@@ -17,6 +17,7 @@ package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -41,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -88,8 +90,10 @@ public class MavenResolver {
     @BundleBee
     private HttpClient client;
 
-    private SAXParserFactory factory;
+    @Getter
     private Path m2;
+
+    private SAXParserFactory factory;
     private final ConcurrentMap<String, Semaphore> locks = new ConcurrentHashMap<>();
 
     @PostConstruct
@@ -102,6 +106,10 @@ public class MavenResolver {
         factory = SAXParserFactory.newInstance();
         factory.setNamespaceAware(false);
         factory.setValidating(false);
+    }
+
+    public void findM2() {
+
     }
 
     public CompletionStage<Path> findOrDownload(final String url) {
@@ -143,6 +151,19 @@ public class MavenResolver {
                     log.log(FINEST, error.getMessage());
                     return List.of();
                 });
+    }
+
+    public GavParser extractGav(final InputStream metadata) {
+        final GavParser handler = new GavParser();
+        try {
+            final SAXParser parser = factory.newSAXParser();
+            parser.parse(metadata, handler);
+            return handler;
+        } catch (final RuntimeException e) {
+            throw e;
+        } catch (final Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private String removeRepoIfPresent(final String url) {
@@ -453,6 +474,54 @@ public class MavenResolver {
 
         @Override
         public void endElement(final String uri, final String localName, final String qName) {
+            text = null;
+        }
+    }
+
+    @NoArgsConstructor(access = PRIVATE)
+    public static class GavParser extends DefaultHandler {
+        @Getter
+        private String group;
+
+        @Getter
+        private String artifact;
+
+        @Getter
+        private String version;
+
+        private final LinkedList<String> tags = new LinkedList<>();
+        private StringBuilder text;
+
+        @Override
+        public void startElement(final String uri, final String localName,
+                                 final String qName, final Attributes attributes) {
+            if ("groupId".equals(qName) || "artifactId".equals(qName) || "version".equals(qName)) {
+                text = new StringBuilder();
+            }
+            tags.add(qName);
+        }
+
+        @Override
+        public void characters(final char[] ch, final int start, final int length) {
+            if (text != null) {
+                text.append(new String(ch, start, length));
+            }
+        }
+
+        @Override
+        public void endElement(final String uri, final String localName, final String qName) {
+            tags.removeLast();
+            if ("groupId".equals(qName) && "project".equals(tags.getLast())) {
+                group = text.toString().trim();
+            } else if ("artifactId".equals(qName) && "project".equals(tags.getLast())) {
+                artifact = text.toString().trim();
+            } else if ("version".equals(qName) && "project".equals(tags.getLast())) {
+                version = text.toString().trim();
+            } else if ("version".equals(qName) && "parent".equals(tags.getLast()) && tags.size() == 2 && version == null) {
+                version = text.toString().trim();
+            } else if ("groupId".equals(qName) && "parent".equals(tags.getLast()) && tags.size() == 2 && group == null) {
+                group = text.toString().trim();
+            }
             text = null;
         }
     }

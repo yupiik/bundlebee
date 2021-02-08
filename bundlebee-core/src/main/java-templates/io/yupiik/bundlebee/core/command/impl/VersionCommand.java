@@ -15,7 +15,6 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-
 import io.yupiik.bundlebee.core.command.Executable;
 import lombok.extern.java.Log;
 
