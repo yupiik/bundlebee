@@ -15,6 +15,7 @@
  */
 package io.yupiik.bundlebee.documentation;
 
+import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -41,7 +42,7 @@ public class DocEntryFormatter {
                 (desc.endsWith(".") ?
                         desc :
                         (desc + '.')) +
-                (!ConfigProperty.UNCONFIGURED_VALUE.equals(defaultValue) ?
+                (!ConfigProperty.UNCONFIGURED_VALUE.equals(defaultValue) && !Executable.UNSET.equals(defaultValue) ?
                         (" Default value: " +
                                 (!defaultValue.contains("\n") ?
                                         "`" + defaultValue + "`" :

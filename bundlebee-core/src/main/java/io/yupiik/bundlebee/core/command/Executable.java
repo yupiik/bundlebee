@@ -18,6 +18,8 @@ package io.yupiik.bundlebee.core.command;
 import java.util.concurrent.CompletionStage;
 
 public interface Executable {
+    String UNSET = "<to-set>";
+
     String name();
 
     String description();

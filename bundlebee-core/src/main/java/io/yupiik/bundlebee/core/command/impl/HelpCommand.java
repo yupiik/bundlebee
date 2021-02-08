@@ -61,14 +61,21 @@ public class HelpCommand implements Executable {
                 "  BundleBee is a light Kubernetes package manager. Available commands:\n" +
                 "\n" +
                 executables.stream()
-                        .map(executable -> "" +
-                                "  - " + executable.name() + ": " + executable.description() + "\n" +
-                                findParameters(executable).map(p -> "" +
-                                        "    " + p.getName() +
-                                        (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue() + ")" : "") + ": " +
-                                        p.getDescription())
-                                        .sorted()
-                                        .collect(joining("\n")))
+                        .map(executable -> {
+                            final var desc = executable.description()
+                                    .replace("// end of short description\n", "")
+                                    .replaceAll("^", "        ")
+                                    .trim();
+                            return "" +
+                                    "  - " + executable.name() + ": " +
+                                    Character.toLowerCase(desc.charAt(0)) + desc.substring(1) + "\n" +
+                                    findParameters(executable).map(p -> "" +
+                                            "    " + p.getName() +
+                                            (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue() + ")" : "") + ": " +
+                                            p.getDescription())
+                                            .sorted()
+                                            .collect(joining("\n"));
+                        })
                         .sorted()
                         .collect(joining("\n\n", "", "\n")));
         return completedFuture(null);

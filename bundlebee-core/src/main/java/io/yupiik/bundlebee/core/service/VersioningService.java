@@ -46,7 +46,7 @@ public class VersioningService {
             final int major = Integer.parseInt(segments[0]);
             final int minor = Integer.parseInt(segments[1]);
             final int patch = segments.length >= 3 ? Integer.parseInt(segments[2]) : 0;
-            return new SemanticVersion(major, minor, patch, segments.length >= 3);
+            return new SemanticVersion(version, major, minor, patch, segments.length >= 3);
         } catch (final NumberFormatException nfe) {
             return invalid(version);
         }
@@ -58,10 +58,36 @@ public class VersioningService {
     }
 
     @Data
-    public static class SemanticVersion {
+    public static class SemanticVersion implements Comparable<SemanticVersion> {
+        private final String raw;
         private final int major;
         private final int minor;
         private final int patch;
         private final boolean hasPatch;
+
+        @Override
+        public int compareTo(final SemanticVersion o) {
+            final var major = this.major - o.getMajor();
+            if (major != 0) {
+                return major;
+            }
+            final var minor = this.minor - o.getMinor();
+            if (minor != 0) {
+                return minor;
+            }
+            if (o.isHasPatch() && hasPatch) {
+                final var patch = this.patch - o.getPatch();
+                if (patch != 0) {
+                    return patch;
+                }
+            }
+            if (o.isHasPatch()) {
+                return -1;
+            }
+            if (hasPatch) {
+                return 1;
+            }
+            return raw.compareTo(o.getRaw());
+        }
     }
 }

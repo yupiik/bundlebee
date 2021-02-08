@@ -79,7 +79,7 @@ public class DeleteCommand implements Executable {
     @Override
     public String description() {
         return "Delete an alveolus deployment by deleting all related descriptors.\n" +
-                "// end of short desc\n" +
+                "// end of short description\n" +
                 "`bundlebee.delete.propagationPolicy` can be set in descriptor(s) metadata to force default CLI behavior for this descriptor.";
     }
 
