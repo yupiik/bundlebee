@@ -54,6 +54,7 @@ import static java.util.Locale.ROOT;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -81,20 +82,8 @@ public class AlveolusHandler {
     @Inject
     private ArchiveReader archives;
 
-    public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final String from, final String manifest, final String alveolus,
-                                                final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
-                                                final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor) {
-        final var cache = archives.newCache();
-        final var patches = Map.<String, Collection<Manifest.Patch>>of();
-
-        final var ref = new AtomicReference<Function<AlveolusContext, CompletionStage<?>>>();
-        final Function<AlveolusContext, CompletionStage<?>> internalOnAlveolus = ctx ->
-                this.onAlveolus(prefixOnVisitLog, ctx.alveolus, ctx.patches, ctx.cache, ref.get(), onDescriptor);
-        final Function<AlveolusContext, CompletionStage<?>> combinedOnAlveolus = onAlveolusUser == null ?
-                internalOnAlveolus :
-                ctx -> onAlveolusUser.apply(ctx).thenCompose(i -> internalOnAlveolus.apply(ctx));
-        ref.set(combinedOnAlveolus);
-
+    public CompletionStage<List<Manifest.Alveolus>> findRootAlveoli(final String from, final String manifest,
+                                                                    final String alveolus) {
         if (!"skip".equals(manifest)) {
             final var mf = manifestReader.readManifest(() -> {
                 try {
@@ -112,33 +101,44 @@ public class AlveolusHandler {
             } else {
                 matchedAlveolus = alveolus;
             }
-            return combinedOnAlveolus.apply(new AlveolusContext(
-                    mf.getAlveoli().stream()
-                            .filter(it -> Objects.equals(matchedAlveolus, it.getName()))
-                            .findFirst()
-                            .orElseThrow(() -> new IllegalArgumentException("Didn't find alveolus '" + matchedAlveolus + "' in '" + manifest + "'")),
-                    patches, cache));
+            return mf.getAlveoli().stream()
+                    .filter(it -> Objects.equals(matchedAlveolus, it.getName()))
+                    .findFirst()
+                    .map(List::of)
+                    .map(CompletableFuture::completedFuture)
+                    .orElseThrow(() -> new IllegalArgumentException("Didn't find alveolus '" + matchedAlveolus + "' in '" + manifest + "'"));
         }
         if ("auto".equals(alveolus)) {
             log.info("" +
                     "Auto scanning the classpath, this can be dangerous if you don't fully control your classpath, " +
                     "ensure to set a particular alveolus if you doubt about this behavior");
-            return all(
-                    manifests()
-                            .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(Collection::stream))
-                            .map(it -> combinedOnAlveolus.apply(new AlveolusContext(it, patches, cache)))
-                            .collect(toList()), toList(),
-                    true);
+            return completedFuture(manifests()
+                    .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(Collection::stream))
+                    .collect(toList()));
         }
         if (from == null || "auto".equals(from)) {
-            return combinedOnAlveolus.apply(new AlveolusContext(findAlveolusInClasspath(alveolus), patches, cache));
+            return completedFuture(List.of(findAlveolusInClasspath(alveolus)));
         }
-        return findAlveolus(from, alveolus, cache)
-                .thenCompose(it -> combinedOnAlveolus.apply(new AlveolusContext(it, patches, cache)));
+        return findAlveolus(from, alveolus, archives.newCache()).thenApply(List::of);
+    }
+
+    public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final Manifest.Alveolus alveolus,
+                                                final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
+                                                final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
+                                                final ArchiveReader.Cache cache) {
+        final var ref = new AtomicReference<Function<AlveolusContext, CompletionStage<?>>>();
+        final Function<AlveolusContext, CompletionStage<?>> internalOnAlveolus = ctx ->
+                this.onAlveolus(prefixOnVisitLog, ctx.alveolus, ctx.patches, ctx.cache, ref.get(), onDescriptor);
+        final Function<AlveolusContext, CompletionStage<?>> combinedOnAlveolus = onAlveolusUser == null ?
+                internalOnAlveolus :
+                ctx -> onAlveolusUser.apply(ctx).thenCompose(i -> internalOnAlveolus.apply(ctx));
+        ref.set(combinedOnAlveolus);
+        return combinedOnAlveolus.apply(new AlveolusContext(alveolus, Map.of(), cache));
     }
 
     private Manifest.Alveolus findAlveolusInClasspath(final String alveolus) {
-        return manifests()
+        final var manifests = manifests().collect(toList());
+        return manifests.stream()
                 .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(Collection::stream))
                 .filter(it -> alveolus.equals(it.getName()))
                 .findFirst()

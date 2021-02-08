@@ -32,6 +32,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
 import javax.net.ssl.KeyManager;
@@ -68,7 +69,6 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
-import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -79,6 +79,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
@@ -88,14 +89,11 @@ import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
 
 @Log
 @ApplicationScoped
 public class KubeClient {
-    private HttpClient client;
-
     @Inject
     @BundleBee // just here to inherit from client config - for now the pool
     private HttpClient dontUseAtRuntime;
@@ -135,6 +133,11 @@ public class KubeClient {
     private String namespace;
 
     @Inject
+    @Description("Default value for deletions of `propagationPolicy`. Values can be `Orphan`, `Foreground` and `Background`.")
+    @ConfigProperty(name = "bundlebee.kube.defaultPropagationPolicy", defaultValue = "Foreground")
+    private String defaultPropagationPolicy;
+
+    @Inject
     @Description("If `true` http requests/responses to Kubernetes will be logged.")
     @ConfigProperty(name = "bundlebee.kube.verbose", defaultValue = "false")
     private boolean verbose;
@@ -148,6 +151,7 @@ public class KubeClient {
     private boolean dryRun;
 
     private Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
+    private HttpClient client;
 
     @PostConstruct
     private void createCustomClient() {
@@ -161,9 +165,29 @@ public class KubeClient {
         }
     }
 
-    public CompletionStage<?> apply(final String descriptorContent, final String ext, final boolean injectTimeLabel) {
+    public CompletionStage<HttpResponse<String>> execute(final HttpRequest.Builder builder, final String urlOrPath) {
+        return client.sendAsync(setAuth.apply(builder)
+                        .uri(URI.create(
+                                urlOrPath.startsWith("http:") || urlOrPath.startsWith("https:") ?
+                                        urlOrPath :
+                                        (baseApi + urlOrPath)))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    public CompletionStage<?> apply(final String descriptorContent, final String ext,
+                                    final Map<String, String> customLabels) {
+        return forDescriptor("Applying", descriptorContent, ext, json -> doApply(json, customLabels));
+    }
+
+    public CompletionStage<?> delete(final String descriptorContent, final String ext) {
+        return forDescriptor("Deleting", descriptorContent, ext, this::doDelete);
+    }
+
+    private CompletionStage<?> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
+                                             final Function<JsonObject, CompletionStage<?>> descHandler) {
         if (verbose) {
-            log.info(() -> "Applying descriptor\n" + descriptorContent);
+            log.info(() -> prefixLog + " descriptor\n" + descriptorContent);
         }
         final var json = "json".equals(ext) ?
                 jsonb.fromJson(descriptorContent.trim(), JsonValue.class) :
@@ -176,20 +200,49 @@ public class KubeClient {
                 return all(
                         json.asJsonArray().stream()
                                 .map(JsonValue::asJsonObject)
-                                .map(it -> doApply(it, injectTimeLabel)
+                                .map(it -> descHandler.apply(it)
                                         // small trick to type it and make all() working
                                         .thenApply(ignored -> 1))
                                 .collect(toList()),
                         counting(),
                         true);
             case OBJECT:
-                return doApply(json.asJsonObject(), injectTimeLabel);
+                return descHandler.apply(json.asJsonObject());
             default:
                 throw new IllegalArgumentException("Unsupported json type for apply: " + json);
         }
     }
 
-    private CompletionStage<?> doApply(final JsonObject rawDesc, final boolean injectTimeLabel) {
+    private CompletionStage<?> doDelete(final JsonObject desc) {
+        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+        final var metadata = desc.getJsonObject("metadata");
+        final var name = metadata.getString("name");
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
+        log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
+
+        final var uri = baseApi + findApiPrefix(kindLowerCased) +
+                (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
+                "/" + kindLowerCased + "/" + name;
+
+        return client.sendAsync(setAuth.apply(
+                HttpRequest.newBuilder(URI.create(uri))
+                        .method("DELETE", HttpRequest.BodyPublishers.ofString(jsonBuilderFactory.createObjectBuilder()
+                                .add("kind", "DeleteOptions")
+                                .add("apiVersion", "v1")
+                                // todo: .add("gracePeriodSeconds", config)
+                                .add("orphanDependents", true)
+                                .add("propagationPolicy", metadata.containsKey("bundlebee.delete.propagationPolicy") ?
+                                        metadata.getString("bundlebee.delete.propagationPolicy") :
+                                        defaultPropagationPolicy)
+                                .build()
+                                .toString(), StandardCharsets.UTF_8))
+                        .header("Content-Type", "application/json")
+                        .header("Accept", "application/json"))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    private CompletionStage<?> doApply(final JsonObject rawDesc, final Map<String, String> customLabels) {
         // apply logic is a "create or replace" one
         // so first thing we have to do is to test if the resource exists, and if not create it
         // for that we will need to extract the resource "kind" and "name" (id):
@@ -208,7 +261,7 @@ public class KubeClient {
         //          'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>?fieldManager=kubectl-client-side-apply'
         //          <descriptor>
         // end
-        final var desc = !injectTimeLabel ? rawDesc : injectTimestampLabel(rawDesc);
+        final var desc = customLabels.isEmpty() ? rawDesc : injectLabels(rawDesc, customLabels);
 
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
         final var metadata = desc.getJsonObject("metadata");
@@ -230,7 +283,7 @@ public class KubeClient {
                         .GET()
                         .header("Accept", "application/json"))
                         .build(),
-                HttpResponse.BodyHandlers.discarding())
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenCompose(findResponse -> {
                     if (verbose) {
                         log.info(findResponse::toString);
@@ -319,58 +372,70 @@ public class KubeClient {
         }
     }
 
-    private JsonObject injectTimestampLabel(final JsonObject rawDesc) {
-        return jsonBuilderFactory.createObjectBuilder(
-                rawDesc.entrySet().stream()
-                        .flatMap(entry -> {
-                            final var timestampLabelName = "bundlebee.timestamp";
-                            final var value = Long.toString(Instant.now().toEpochMilli());
+    private JsonObject injectLabels(final JsonObject rawDesc, final Map<String, String> customLabels) {
+        return rawDesc.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .flatMap(entry -> {
+                    if ("metadata".equals(entry.getKey())) {
+                        final JsonObject labelsJson = customLabels.entrySet().stream()
+                                .sorted(Map.Entry.comparingByKey())
+                                .collect(Collector.of(
+                                        jsonBuilderFactory::createObjectBuilder,
+                                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
+                                        JsonObjectBuilder::addAll,
+                                        JsonObjectBuilder::build));
 
-                            if ("metadata".equals(entry.getKey())) {
-                                final var metadata = entry.getValue().asJsonObject();
-                                if (metadata.containsKey("labels")) {
-                                    return mergeTimestampLabel(entry, value, metadata);
-                                }
-                                // no labels, just add ours
-                                return Stream.of(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), jsonBuilderFactory.createObjectBuilder(
-                                        Stream.concat(
-                                                metadata.entrySet().stream(),
-                                                Stream.of(new AbstractMap.SimpleImmutableEntry<>("labels", jsonBuilderFactory.createObjectBuilder()
-                                                        .add(timestampLabelName, value)
-                                                        .build())))
-                                                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                                        .build()));
-                            }
-                            return Stream.of(entry);
-                        })
-                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .build();
+                        final var metadata = entry.getValue().asJsonObject();
+                        if (metadata.containsKey("labels")) {
+                            return mergeLabels(entry, metadata, labelsJson);
+                        }
+                        return Stream.of(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), Stream.concat(
+                                metadata.entrySet().stream().sorted(Map.Entry.comparingByKey()),
+                                Stream.of(new AbstractMap.SimpleImmutableEntry<>("labels", labelsJson)))
+                                .collect(Collector.of(
+                                        jsonBuilderFactory::createObjectBuilder,
+                                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
+                                        JsonObjectBuilder::addAll,
+                                        JsonObjectBuilder::build))));
+                    }
+                    return Stream.of(entry);
+                })
+                .collect(Collector.of(
+                        jsonBuilderFactory::createObjectBuilder,
+                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
+                        JsonObjectBuilder::addAll,
+                        JsonObjectBuilder::build));
     }
 
-    private Stream<Map.Entry<String, JsonValue>> mergeTimestampLabel(
-            final Map.Entry<String, JsonValue> entry, final String value,
-            final JsonObject metadata) {
+    private Stream<Map.Entry<String, JsonValue>> mergeLabels(final Map.Entry<String, JsonValue> entry,
+                                                             final JsonObject metadata,
+                                                             final JsonObject customLabels) {
         return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
                 entry.getKey(),
-                jsonBuilderFactory.createObjectBuilder(
-                        metadata.entrySet().stream()
-                                .flatMap(metadataEntry -> {
-                                    if ("labels".equals(metadataEntry.getKey())) {
-                                        return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
-                                                metadataEntry.getKey(),
-                                                jsonBuilderFactory.createObjectBuilder(Stream.concat(
-                                                        metadataEntry.getValue().asJsonObject().entrySet().stream()
-                                                                .filter(e -> !"bundlebee.timestamp".equals(e.getKey())),
-                                                        Stream.of(new AbstractMap.SimpleImmutableEntry<>("labels", jsonBuilderFactory.createObjectBuilder()
-                                                                .add("bundlebee.timestamp", value)
-                                                                .build())))
-                                                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                                                        .build()));
-                                    }
-                                    return Stream.of(metadataEntry);
-                                })
-                                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                        .build()));
+                metadata.entrySet().stream()
+                        .sorted(Map.Entry.comparingByKey())
+                        .flatMap(metadataEntry -> {
+                            if ("labels".equals(metadataEntry.getKey())) {
+                                return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
+                                        metadataEntry.getKey(),
+                                        Stream.concat(
+                                                metadataEntry.getValue().asJsonObject().entrySet().stream()
+                                                        .sorted(Map.Entry.comparingByKey())
+                                                        .filter(e -> !customLabels.containsKey(e.getKey())),
+                                                customLabels.entrySet().stream())
+                                                .collect(Collector.of(
+                                                        jsonBuilderFactory::createObjectBuilder,
+                                                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
+                                                        JsonObjectBuilder::addAll,
+                                                        JsonObjectBuilder::build))));
+                            }
+                            return Stream.of(metadataEntry);
+                        })
+                        .collect(Collector.of(
+                                jsonBuilderFactory::createObjectBuilder,
+                                (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
+                                JsonObjectBuilder::addAll,
+                                JsonObjectBuilder::build))));
     }
 
     private HttpClient.Builder doConfigure(final HttpClient.Builder builder) {

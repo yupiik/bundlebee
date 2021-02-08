@@ -17,14 +17,25 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
+import io.yupiik.bundlebee.core.service.ArchiveReader;
+import io.yupiik.bundlebee.core.service.VersioningService;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.time.Instant;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.logging.Level;
+import java.util.stream.Stream;
+
+import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 
 @Log
 @Dependent
@@ -49,14 +60,27 @@ public class ApplyCommand implements Executable {
 
     @Inject
     @Description("If `true`, a `bundlebee.timestamp` label will be injected into the descritors with current date before applying the descriptor.")
-    @ConfigProperty(name = "bundlebee.apply.injectTimestamp", defaultValue = "false")
+    @ConfigProperty(name = "bundlebee.apply.injectTimestamp", defaultValue = "true")
     private boolean injectTimestamp;
+
+    @Inject
+    @Description("" +
+            "If `true`, `bundlebee.*` labels will be injected into the descritors. " +
+            "This is required for rollback command to work.")
+    @ConfigProperty(name = "bundlebee.apply.injectBundleBeeMetadata", defaultValue = "true")
+    private boolean injectBundleBeeMetadata;
 
     @Inject
     private KubeClient kube;
 
     @Inject
     private AlveolusHandler visitor;
+
+    @Inject
+    private ArchiveReader archives;
+
+    @Inject
+    private VersioningService versioningService;
 
     @Override
     public String name() {
@@ -70,8 +94,50 @@ public class ApplyCommand implements Executable {
 
     @Override
     public CompletionStage<?> execute() {
+        return internalApply(from, manifest, alveolus, injectTimestamp, injectBundleBeeMetadata, archives.newCache());
+    }
+
+    public CompletionStage<?> internalApply(final String from, final String manifest, final String alveolus,
+                                            final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
+                                            final ArchiveReader.Cache cache) {
+        return visitor
+                .findRootAlveoli(from, manifest, alveolus)
+                .thenCompose(alveoli -> all(
+                        alveoli.stream()
+                                .map(it -> doApply(injectTimestamp, injectBundleBeeMetadata, cache, it))
+                                .collect(toList()), toList(),
+                        true));
+    }
+
+    public CompletionStage<?> doApply(final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
+                                      final ArchiveReader.Cache cache, final Manifest.Alveolus it) {
+        final var labels = createLabels(it, injectTimestamp, injectBundleBeeMetadata);
         return visitor.executeOnAlveolus(
-                "Deploying", from, manifest, alveolus, null,
-                (ctx, desc) -> kube.apply(desc.getContent(), desc.getContent(), injectTimestamp));
+                "Deploying", it, null,
+                (ctx, desc) -> kube.apply(desc.getContent(), desc.getExtension(), labels),
+                cache);
+    }
+
+    private Map<String, String> createLabels(final Manifest.Alveolus alveolus,
+                                             final boolean injectTimestamp,
+                                             final boolean injectBundleBeeMetadata) {
+        return Stream.of(
+                injectTimestamp ?
+                        Map.of("bundlebee.timestamp", Long.toString(Instant.now().toEpochMilli())) :
+                        Map.<String, String>of(),
+                injectBundleBeeMetadata ?
+                        Map.of("bundlebee.version", findVersion(alveolus)) :
+                        Map.<String, String>of())
+                .flatMap(m -> m.entrySet().stream())
+                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private String findVersion(final Manifest.Alveolus alveolus) {
+        try {
+            return versioningService.findVersion(alveolus);
+        } catch (final RuntimeException re) {
+            log.log(Level.FINEST, re.getMessage(), re);
+            return "unknown";
+        }
     }
 }

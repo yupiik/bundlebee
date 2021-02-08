@@ -138,14 +138,23 @@ public class AlveoliConfigurationGenerator implements Runnable {
                             throw new IllegalStateException(e);
                         }
                         log.info("Created " + target);
-                        final var desc = Character.toLowerCase(description.charAt(0)) + description.substring(1).trim();
-                        return artifactId + " xref:alveoli/" + fileName + '[' + it.getName() + "]: " +
-                                desc + (desc.endsWith(".") ? "" : ".");
+                        final var desc = extractShortDescription(Character.toLowerCase(description.charAt(0)) + description.substring(1).trim());
+                        return artifactId + " xref:alveoli/" + fileName + '[' + it.getName() + "]: " + addDotIfNeeded(desc);
                     })
                     .collect(toList());
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    // go until first comment if it exists
+    private String extractShortDescription(final String s) {
+        final int end = s.indexOf("\n//");
+        return end > 0 ? s.substring(0, end) : s;
+    }
+
+    private String addDotIfNeeded(String desc) {
+        return desc + (desc.endsWith(".") ? "" : ".");
     }
 
     /**

@@ -40,6 +40,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,6 +50,7 @@ import java.util.concurrent.Semaphore;
 
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.logging.Level.FINEST;
 import static java.util.logging.Level.SEVERE;
 import static lombok.AccessLevel.PRIVATE;
 
@@ -117,6 +120,31 @@ public class MavenResolver {
         }
     }
 
+    public CompletionStage<List<String>> findAvailableVersions(final String group, final String artifact) {
+        log.finest(() -> "Looking for available version of " + group + ":" + artifact);
+        final var uri = releaseRepository + group.replace('.', '/') + '/' + artifact + "/maven-metadata.xml";
+        return client.sendAsync(
+                HttpRequest.newBuilder()
+                        .GET()
+                        .uri(URI.create(uri))
+                        .build(),
+                HttpResponse.BodyHandlers.ofByteArray())
+                .thenApply(response -> {
+                    if (response.statusCode() != 200) {
+                        throw new IllegalStateException("Invalid " + uri + " response: " + response);
+                    }
+                    try (final var stream = new ByteArrayInputStream(response.body())) {
+                        return extractVersions(stream);
+                    } catch (final IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .exceptionally(error -> {
+                    log.log(FINEST, error.getMessage());
+                    return List.of();
+                });
+    }
+
     private String removeRepoIfPresent(final String url) {
         final int sep = url.indexOf('!') + 1;
         if (sep != 0) {
@@ -180,7 +208,7 @@ public class MavenResolver {
                         toRelativePath(repoBase, group, artifact, actualVersion, fullClassifier, type)));
     }
 
-    private CompletionStage<String> findVersion(final String repoBase, final String group, final String artifact, final String version) throws MalformedURLException {
+    private CompletionStage<String> findVersion(final String repoBase, final String group, final String artifact, final String version) {
         final var base = repoBase == null || repoBase.isEmpty() ? "" : (repoBase + (!repoBase.endsWith("/") ? "/" : ""));
         if (("LATEST".equals(version) || "LATEST-SNAPSHOT".equals(version)) && base.startsWith("http")) {
             final String meta = base + group.replace('.', '/') + "/" + artifact + "/maven-metadata.xml";
@@ -333,6 +361,61 @@ public class MavenResolver {
             // no-op: not parseable so ignoring
         }
         return defaultVersion;
+    }
+
+    private List<String> extractVersions(final InputStream metadata) {
+        final VersionsExtractor handler = new VersionsExtractor();
+        try {
+            final SAXParser parser = factory.newSAXParser();
+            parser.parse(metadata, handler);
+            return handler.versions;
+        } catch (final Exception e) {
+            // no-op: not parseable so ignoring
+        }
+        return List.of();
+    }
+
+    @NoArgsConstructor(access = PRIVATE)
+    private static class VersionsExtractor extends DefaultHandler {
+        private final List<String> versions = new ArrayList<>();
+
+        private boolean versioningBlock;
+        private boolean versionsBlock;
+        private StringBuilder current;
+
+        @Override
+        public void startElement(final String uri, final String localName,
+                                 final String qName, final Attributes attributes) {
+            if ("versioning".equalsIgnoreCase(qName)) {
+                versioningBlock = true;
+            } else if (versioningBlock && "versions".equalsIgnoreCase(qName)) {
+                versionsBlock = true;
+            } else if (versionsBlock && "version".equalsIgnoreCase(qName)) {
+                current = new StringBuilder();
+            }
+        }
+
+        @Override
+        public void characters(final char[] ch, final int start, final int length) {
+            if (current != null) {
+                current.append(new String(ch, start, length));
+            }
+        }
+
+        @Override
+        public void endElement(final String uri, final String localName, final String qName) {
+            if ("versioning".equalsIgnoreCase(qName)) {
+                versioningBlock = false;
+            } else if (versioningBlock && "versions".equalsIgnoreCase(qName)) {
+                versionsBlock = false;
+            } else if (current != null && versionsBlock && "version".equalsIgnoreCase(qName)) {
+                final var trimmed = current.toString().trim();
+                if (!trimmed.isBlank()) {
+                    versions.add(trimmed);
+                }
+                current = null;
+            }
+        }
     }
 
     @NoArgsConstructor(access = PRIVATE)

@@ -38,7 +38,7 @@ import static java.util.logging.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @HttpApi(useSsl = true)
-class ApplyCommandTest {
+class RollbackCommandTest {
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
@@ -46,39 +46,25 @@ class ApplyCommandTest {
     private HttpApiHandler<?> handler;
 
     @Test
-    void apply(final CommandExecutor executor, final TestInfo info) {
+    void rollback(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
-        handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.apply"));
+        final var logs = executor.wrap(INFO, () -> new BundleBee()
+                .launch("rollback",
+                        "--previousAlveolus", "RollbackCommandTest.first",
+                        "--alveolus", "RollbackCommandTest.second"));
         assertEquals("" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
+                "Deleting 'RollbackCommandTest.second'\n" +
+                "Deleting 'ApplyCommandTest.apply'\n" +
+                "Deleting 's' (kind=services) for namespace 'default'\n" +
+                "Deleting 's2' (kind=services) for namespace 'default'\n" +
+                "Deploying 'RollbackCommandTest.first'\n" +
+                "Applying 's0' (kind=services) for namespace 'default'\n" +
                 "", logs);
-
-        // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
-        assertEquals(2/*test exists + create*/, spyingResponseLocator.getFound().size());
-    }
-
-    @Test
-    void applyWithDependencies(final CommandExecutor executor, final TestInfo info) {
-        final var spyingResponseLocator = newSpyingHandler(info);
-        handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withdep"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.withdep'\n" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
-                "Applying 's2' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
-        // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
-        assertEquals(4/* 2 * (test exists + create)*/, spyingResponseLocator.getFound().size());
+        assertEquals(4, spyingResponseLocator.getFound().size());
     }
 
     private SpyingResponseLocator newSpyingHandler(final TestInfo info) {
-        return new SpyingResponseLocator(
+        final SpyingResponseLocator locator = new SpyingResponseLocator(
                 info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
             @Override
             protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
@@ -86,13 +72,16 @@ class ApplyCommandTest {
                 switch (request.method()) {
                     case "CONNECT":
                         return Optional.empty();
-                    case "GET":
+                    case "DELETE":
                     case "PATCH":
-                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                    case "GET":
+                        return Optional.of(new ResponseImpl(Map.of(), 200, request.payload().getBytes(StandardCharsets.UTF_8)));
                     default:
                         return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
                 }
             }
         };
+        handler.setResponseLocator(locator);
+        return locator;
     }
 }
