@@ -101,7 +101,7 @@
     <dependency>
       <groupId>org.talend.sdk.component</groupId>
       <artifactId>component-runtime-http-junit</artifactId>
-      <version>1.29.0</version>
+      <version>1.29.2</version>
       <scope>test</scope>
     </dependency>
     <dependency> <!-- for talend mock http server -->
