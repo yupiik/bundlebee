@@ -31,6 +31,8 @@
 
   <properties>
     <owb.version>2.0.21</owb.version>
+
+    <m2.location>${settings.localRepository}</m2.location>
   </properties>
 
   <modules>
@@ -88,6 +90,7 @@
             <bundlebee.maven.repositories.downloads.enabled>false</bundlebee.maven.repositories.downloads.enabled>
             <bundlebee.kube.api>https://kubernetes.bundlebee.yupiik.test</bundlebee.kube.api>
             <bundlebee.kube.validateSSL>false</bundlebee.kube.validateSSL>
+            <bundlebee.maven.cache>${m2.location}</bundlebee.maven.cache>
             <jdk.internal.httpclient.disableHostnameVerification>true
             </jdk.internal.httpclient.disableHostnameVerification>
             <kubeconfig>explicit</kubeconfig>
