@@ -19,7 +19,6 @@ import org.apache.openwebbeans.junit5.Cdi;
 import org.junit.jupiter.api.Test;
 
 import javax.inject.Inject;
-
 import java.nio.file.Files;
 import java.util.concurrent.ExecutionException;
 
