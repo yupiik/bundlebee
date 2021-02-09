@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Available commands</title>
+    <title>New</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,48 +50,47 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Available commands</h1>
+                <h1>New</h1>
             </div>
             <div class="page-content-body">
-<div class="ulist">
-<ul>
-<li>
-<p><a href="commands/apply.configuration.html">apply</a></p>
-</li>
-<li>
-<p><a href="commands/build.configuration.html">build</a></p>
-</li>
-<li>
-<p><a href="commands/cipher-password.configuration.html">cipher-password</a></p>
-</li>
-<li>
-<p><a href="commands/create-master-password.configuration.html">create-master-password</a></p>
-</li>
-<li>
-<p><a href="commands/delete.configuration.html">delete</a></p>
-</li>
-<li>
-<p><a href="commands/deploy.configuration.html">deploy</a></p>
-</li>
-<li>
-<p><a href="commands/help.configuration.html">help</a></p>
-</li>
-<li>
-<p><a href="commands/http.configuration.html">http</a></p>
-</li>
-<li>
-<p><a href="commands/new.configuration.html">new</a></p>
-</li>
-<li>
-<p><a href="commands/rollback.configuration.html">rollback</a></p>
-</li>
-<li>
-<p><a href="commands/version.configuration.html">version</a></p>
-</li>
-<li>
-<p><a href="commands/versions.configuration.html">versions</a></p>
-</li>
-</ul>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Creates a new project.</p>
+</div>
+<div class="paragraph">
+<p>Name: <code>new</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration">Configuration</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">artifact (<code>BUNDLEBEE_NEW_ARTIFACT</code>)</dt>
+<dd>
+<p>Bundle artifactId.</p>
+</dd>
+<dt class="hdlist1">dir (<code>BUNDLEBEE_NEW_DIR</code>)</dt>
+<dd>
+<p>Where to create the project. If not set it will use the artifact value in current folder.</p>
+</dd>
+<dt class="hdlist1">group (<code>BUNDLEBEE_NEW_GROUP</code>)</dt>
+<dd>
+<p>Bundle groupId.</p>
+</dd>
+<dt class="hdlist1">skipSamples (<code>BUNDLEBEE_NEW_SKIPSAMPLES</code>)</dt>
+<dd>
+<p>By default a sample alveolus with a config map is generated, if <code>false</code> it will be skipped. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">version (<code>BUNDLEBEE_NEW_VERSION</code>)</dt>
+<dd>
+<p>Bundle version. Default value: <code>1.0.0</code></p>
+</dd>
+</dl>
+</div>
+</div>
 </div>
             </div>
         </div>

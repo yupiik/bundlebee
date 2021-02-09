@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Available commands</title>
+    <title>Http</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,48 +50,61 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Available commands</h1>
+                <h1>Http</h1>
             </div>
             <div class="page-content-body">
-<div class="ulist">
-<ul>
-<li>
-<p><a href="commands/apply.configuration.html">apply</a></p>
-</li>
-<li>
-<p><a href="commands/build.configuration.html">build</a></p>
-</li>
-<li>
-<p><a href="commands/cipher-password.configuration.html">cipher-password</a></p>
-</li>
-<li>
-<p><a href="commands/create-master-password.configuration.html">create-master-password</a></p>
-</li>
-<li>
-<p><a href="commands/delete.configuration.html">delete</a></p>
-</li>
-<li>
-<p><a href="commands/deploy.configuration.html">deploy</a></p>
-</li>
-<li>
-<p><a href="commands/help.configuration.html">help</a></p>
-</li>
-<li>
-<p><a href="commands/http.configuration.html">http</a></p>
-</li>
-<li>
-<p><a href="commands/new.configuration.html">new</a></p>
-</li>
-<li>
-<p><a href="commands/rollback.configuration.html">rollback</a></p>
-</li>
-<li>
-<p><a href="commands/version.configuration.html">version</a></p>
-</li>
-<li>
-<p><a href="commands/versions.configuration.html">versions</a></p>
-</li>
-</ul>
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
+</div>
+<div class="paragraph">
+<p>Name: <code>http</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration">Configuration</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">failOnError (<code>BUNDLEBEE_HTTP_FAILONERROR</code>)</dt>
+<dd>
+<p>If <code>true</code>, an exception if thrown if the status is not between 200 and 299 (making the execution a failure). Default value: <code>true</code></p>
+</dd>
+<dt class="hdlist1">headers (<code>BUNDLEBEE_HTTP_HEADERS</code>)</dt>
+<dd>
+<p>Request HTTP headers (in properties format). Default value:</p>
+</dd>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">Accept: application/json
+Content-Type: application/json</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">method (<code>BUNDLEBEE_HTTP_METHOD</code>)</dt>
+<dd>
+<p>HTTP verb to use for the request. Default value: <code>GET</code></p>
+</dd>
+<dt class="hdlist1">path (<code>BUNDLEBEE_HTTP_PATH</code>)</dt>
+<dd>
+<p>HTTP request path (optionally with query parameters). You can use the absolute kubernetes URL but if the value does not start with a protocol (<code>http</code> or <code>https</code>) then it will be prefixed by the Kubernetes API base. Default value: <code>/api/</code></p>
+</dd>
+<dt class="hdlist1">payload (<code>BUNDLEBEE_HTTP_PAYLOAD</code>)</dt>
+<dd>
+<p>HTTP payload to use for the request - skipped for method different from <code>PATCH</code>, <code>POST</code> and <code>PUT</code>. Default value: ``</p>
+</dd>
+<dt class="hdlist1">payloadOnly (<code>BUNDLEBEE_HTTP_PAYLOADONLY</code>)</dt>
+<dd>
+<p>If <code>true</code>, only the payload of the response will be logged if successful. Default value: <code>true</code></p>
+</dd>
+</dl>
+</div>
+</div>
 </div>
             </div>
         </div>

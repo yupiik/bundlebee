@@ -172,6 +172,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">Name of the alveolus (recipe). It must be unique accross the whole classpath. Using maven style identifier, it is recommended to name it <code>&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;</code> using maven filtering but it is not enforced.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>version</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If name does not follow <code>&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;</code> naming (i.e. version can&#8217;t be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced).</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency">Alveolus.dependencies</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>dependencies</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
@@ -434,6 +440,11 @@ It provides the unique identifier of your recipe (application/library) and what 
                 }
               }
             }
+          },
+          "version":{
+            "type":"string",
+            "title":"Alveolus.version",
+            "description":"If name does not follow `&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;` naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced)."
           }
         }
       }

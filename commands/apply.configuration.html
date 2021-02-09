@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>apply</title>
+    <title>Apply</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,13 +50,16 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>apply</h1>
+                <h1>Apply</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
 <p>Apply/deploy a set of descriptors from a root one.</p>
+</div>
+<div class="paragraph">
+<p>Name: <code>apply</code>.</p>
 </div>
 </div>
 </div>
@@ -73,17 +76,17 @@
 <dd>
 <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
 </dd>
+<dt class="hdlist1">injectBundleBeeMetadata (<code>BUNDLEBEE_APPLY_INJECTBUNDLEBEEMETADATA</code>)</dt>
+<dd>
+<p>If <code>true</code>, <code>bundlebee.*</code> labels will be injected into the descritors. This is required for rollback command to work. Default value: <code>true</code></p>
+</dd>
 <dt class="hdlist1">injectTimestamp (<code>BUNDLEBEE_APPLY_INJECTTIMESTAMP</code>)</dt>
 <dd>
-<p>If <code>true</code>, a <code>bundlebee.timestamp</code> label will be injected into the descritors with current date before applying the descriptor. Default value: <code>false</code></p>
+<p>If <code>true</code>, a <code>bundlebee.timestamp</code> label will be injected into the descritors with current date before applying the descriptor. Default value: <code>true</code></p>
 </dd>
 <dt class="hdlist1">manifest (<code>BUNDLEBEE_APPLY_MANIFEST</code>)</dt>
 <dd>
 <p>Manifest to load to start to deploy. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
-</dd>
-<dt class="hdlist1">verbose (<code>BUNDLEBEE_APPLY_VERBOSE</code>)</dt>
-<dd>
-<p>If <code>true</code> it will log more information than usual. Default value: <code>false</code></p>
 </dd>
 </dl>
 </div>

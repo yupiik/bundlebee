@@ -71,6 +71,14 @@ It means you change some defaults for your local setup creating a file <code>~/.
 <dd>
 <p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code></p>
 </dd>
+<dt class="hdlist1">bundlebee.kube.defaultPropagationPolicy (<code>BUNDLEBEE_KUBE_DEFAULTPROPAGATIONPOLICY</code>)</dt>
+<dd>
+<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code></p>
+</dd>
+<dt class="hdlist1">bundlebee.kube.dryRun (<code>BUNDLEBEE_KUBE_DRYRUN</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
+</dd>
 <dt class="hdlist1">bundlebee.kube.namespace (<code>BUNDLEBEE_KUBE_NAMESPACE</code>)</dt>
 <dd>
 <p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
@@ -87,9 +95,17 @@ It means you change some defaults for your local setup creating a file <code>~/.
 <dd>
 <p>Where to cache maven dependencies. If set to <code>auto</code>, <code>$HOME/.m2/repository</code> is used. Default value: <code>auto</code></p>
 </dd>
+<dt class="hdlist1">bundlebee.maven.forceCustomSettingsXml (<code>BUNDLEBEE_MAVEN_FORCECUSTOMSETTINGSXML</code>)</dt>
+<dd>
+<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code></p>
+</dd>
 <dt class="hdlist1">bundlebee.maven.http.connectTimeout (<code>BUNDLEBEE_MAVEN_HTTP_CONNECTTIMEOUT</code>)</dt>
 <dd>
 <p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code></p>
+</dd>
+<dt class="hdlist1">bundlebee.maven.preferCustomSettingsXml (<code>BUNDLEBEE_MAVEN_PREFERCUSTOMSETTINGSXML</code>)</dt>
+<dd>
+<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code></p>
 </dd>
 <dt class="hdlist1">bundlebee.maven.repositories.downloads.enabled (<code>BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED</code>)</dt>
 <dd>

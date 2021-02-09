@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Available commands</title>
+    <title>Rollback</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,48 +50,98 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Available commands</h1>
+                <h1>Rollback</h1>
             </div>
             <div class="page-content-body">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Rollback an alveolus deployment.</p>
+</div>
+<div class="paragraph">
+<p>The strategy is the following one:</p>
+</div>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="commands/apply.configuration.html">apply</a></p>
+<p>Load current alveolus (recursively) to list all descriptors in "current" version</p>
 </li>
 <li>
-<p><a href="commands/build.configuration.html">build</a></p>
+<p>Find previous version if not explicit (by choosing the first previous on in the list of available version on maven repository)</p>
 </li>
 <li>
-<p><a href="commands/cipher-password.configuration.html">cipher-password</a></p>
+<p>Run delete command for current version</p>
 </li>
 <li>
-<p><a href="commands/create-master-password.configuration.html">create-master-password</a></p>
-</li>
-<li>
-<p><a href="commands/delete.configuration.html">delete</a></p>
-</li>
-<li>
-<p><a href="commands/deploy.configuration.html">deploy</a></p>
-</li>
-<li>
-<p><a href="commands/help.configuration.html">help</a></p>
-</li>
-<li>
-<p><a href="commands/http.configuration.html">http</a></p>
-</li>
-<li>
-<p><a href="commands/new.configuration.html">new</a></p>
-</li>
-<li>
-<p><a href="commands/rollback.configuration.html">rollback</a></p>
-</li>
-<li>
-<p><a href="commands/version.configuration.html">version</a></p>
-</li>
-<li>
-<p><a href="commands/versions.configuration.html">versions</a></p>
+<p>Run apply command for previous version</p>
 </li>
 </ul>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+this command only uses releases when it guesses the versions, it does not handles SNAPSHOTs. If you want to rollback to a snapshot, ensure to configure <code>previous*</code> properties.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+this is equivalent to <code>apply</code> and <code>delete</code> commands successfully. For now it is recommended to do both manually.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Name: <code>rollback</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration">Configuration</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">alveolus (<code>BUNDLEBEE_ROLLBACK_ALVEOLUS</code>)</dt>
+<dd>
+<p>Alveolus name to rollback (in currently deployed version). When set to <code>auto</code>, it will look up all manifests found in the classpath (it is not recommended until you perfectly know what you do). If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
+</dd>
+<dt class="hdlist1">from (<code>BUNDLEBEE_ROLLBACK_FROM</code>)</dt>
+<dd>
+<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
+</dd>
+<dt class="hdlist1">manifest (<code>BUNDLEBEE_ROLLBACK_MANIFEST</code>)</dt>
+<dd>
+<p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
+</dd>
+<dt class="hdlist1">previousAlveolus (<code>BUNDLEBEE_ROLLBACK_PREVIOUSALVEOLUS</code>)</dt>
+<dd>
+<p>Alveolus name to install as rollback. Default value: <code>auto</code></p>
+</dd>
+<dt class="hdlist1">previousFrom (<code>BUNDLEBEE_ROLLBACK_PREVIOUSFROM</code>)</dt>
+<dd>
+<p>Same as <code>from</code> but for the previous alveolus to install. Default value: <code>auto</code></p>
+</dd>
+<dt class="hdlist1">previousManifest (<code>BUNDLEBEE_ROLLBACK_PREVIOUSMANIFEST</code>)</dt>
+<dd>
+<p>Same as <code>manifest</code> but for the previous alveolus to install. Default value: <code>skip</code></p>
+</dd>
+<dt class="hdlist1">useMavenVersioning (<code>BUNDLEBEE_ROLLBACK_USEMAVENVERSIONING</code>)</dt>
+<dd>
+<p>If <code>true</code>, and previous alveolus is not defined on the CLI, we will query the release repository to find available versions. If the alveolus name does not match <code>&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;[:&lt;type&gt;:&lt;classifier&gt;]</code> pattern then a heuristic is used instead. Default value: <code>true</code></p>
+</dd>
+</dl>
+</div>
+</div>
 </div>
             </div>
         </div>
