@@ -1,0 +1,116 @@
+{
+  "$id":"io_yupiik_bundlebee_core_descriptor_Manifest",
+  "type":"object",
+  "title":"Manifest Descriptor",
+  "description":"BundleBee manifest descriptor.",
+  "definitions":{
+
+  },
+  "properties":{
+    "alveoli":{
+      "type":"array",
+      "title":"Manifest.alveoli",
+      "description":"List of described applications/libraries.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus",
+        "type":"object",
+        "properties":{
+          "dependencies":{
+            "type":"array",
+            "title":"Alveolus.dependencies",
+            "description":"Dependencies of this alveolus. It is a way to import transitively a set of descriptors.",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency",
+              "type":"object",
+              "properties":{
+                "location":{
+                  "type":"string",
+                  "title":"AlveolusDependency.location",
+                  "description":"Where to find the alveolus. Note it will ensure the jar is present on the local maven repository."
+                },
+                "name":{
+                  "type":"string",
+                  "title":"AlveolusDependency.name",
+                  "description":"Alveolus name."
+                }
+              }
+            }
+          },
+          "descriptors":{
+            "type":"array",
+            "title":"Alveolus.descriptors",
+            "description":"List of descriptors to install for this alveolus. This is required even if an empty array.",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
+              "type":"object",
+              "properties":{
+                "interpolate":{
+                  "type":"boolean",
+                  "title":"Descriptor.interpolate",
+                  "description":"If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`."
+                },
+                "location":{
+                  "type":"string",
+                  "title":"Descriptor.location",
+                  "description":"Optional, if coming form another manifest, the dependency to download to get the alveolus."
+                },
+                "name":{
+                  "type":"string",
+                  "title":"Descriptor.name",
+                  "description":"Name of the descriptor to install. For kubernetes descriptors you can omit the `.yaml` extension."
+                },
+                "type":{
+                  "type":"string",
+                  "title":"Descriptor.type",
+                  "description":"Type of this descriptor. For now only `kubernetes` is supported. It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name."
+                }
+              }
+            }
+          },
+          "name":{
+            "type":"string",
+            "title":"Alveolus.name",
+            "description":"Name of the alveolus (recipe). It must be unique accross the whole classpath. Using maven style identifier, it is recommended to name it `<groupId>:<artifactId>:<version>` using maven filtering but it is not enforced."
+          },
+          "patches":{
+            "type":"array",
+            "title":"Alveolus.patches",
+            "description":"Patches on descriptors. It enables to inject configuration in descriptors by patching (using JSON-Patch or plain interpolation with `${key}` values) their JSON representation. The key is the descriptor name and each time the descriptor is found it will be applied.",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Patch",
+              "type":"object",
+              "properties":{
+                "descriptorName":{
+                  "type":"string",
+                  "title":"Patch.descriptorName",
+                  "description":"The descriptor to patch. It can be any descriptor, including transitive ones."
+                },
+                "interpolate":{
+                  "type":"boolean",
+                  "title":"Patch.interpolate",
+                  "description":"If set to `true`, it will interpolate the patch from the execution configuration which means you can use `--<config-key> <value>` to inject bindings too."
+                },
+                "patch":{
+                  "type":"array",
+                  "title":"Patch.patch",
+                  "description":"JSON-Patch to apply on the JSON representation of the descriptor. It enables to inject configuration in descriptors for example, or changing some name/application.",
+                  "items":{
+                    "type":"object",
+                    "properties":{
+
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "version":{
+            "type":"string",
+            "title":"Alveolus.version",
+            "description":"If name does not follow `<groupId>:<artifactId>:<version>` naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced)."
+          }
+        }
+      }
+    }
+  }
+}
