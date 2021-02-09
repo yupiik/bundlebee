@@ -26,9 +26,9 @@ import java.util.concurrent.ExecutionException;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Cdi
-class MavenResolverTest {
+class MavenTest {
     @Inject
-    private MavenResolver resolver;
+    private Maven resolver;
 
     @Test
     void resolveLocal() throws ExecutionException, InterruptedException {

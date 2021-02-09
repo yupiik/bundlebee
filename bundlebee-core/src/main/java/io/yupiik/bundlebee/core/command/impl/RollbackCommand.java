@@ -22,7 +22,7 @@ import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.lang.Tuple2;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
-import io.yupiik.bundlebee.core.service.MavenResolver;
+import io.yupiik.bundlebee.core.service.Maven;
 import io.yupiik.bundlebee.core.service.VersioningService;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -94,7 +94,7 @@ public class RollbackCommand implements Executable {
     private AlveolusHandler alveolusHandler;
 
     @Inject
-    private MavenResolver resolver;
+    private Maven resolver;
 
     @Inject
     private ArchiveReader archives;
