@@ -30,22 +30,13 @@ import org.talend.sdk.component.junit.http.internal.impl.ResponseImpl;
 import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-import java.util.stream.Stream;
 
 import static java.util.logging.Level.INFO;
-import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

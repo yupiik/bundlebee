@@ -27,11 +27,15 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.annotation.PostConstruct;
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
@@ -46,20 +50,30 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
+import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.empty;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.logging.Level.FINEST;
@@ -70,6 +84,7 @@ import static lombok.AccessLevel.PRIVATE;
 @ApplicationScoped
 public class Maven {
     private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
+    private static final Pattern ENCRYPTED_PATTERN = Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
 
     @Inject
     @Description("When fetching a dependency using HTTP, the connection timeout for this dependency.")
@@ -80,6 +95,16 @@ public class Maven {
     @Description("Where to cache maven dependencies. If set to `auto`, `$HOME/.m2/repository` is used.")
     @ConfigProperty(name = "bundlebee.maven.cache", defaultValue = "auto")
     private String m2CacheConfig;
+
+    @Inject
+    @Description("If `false` we first try to read `settings.xml` file(s) in `cache` location before the default one.")
+    @ConfigProperty(name = "bundlebee.maven.preferCustomSettingsXml", defaultValue = "true")
+    private boolean preferCustomSettingsXml;
+
+    @Inject
+    @Description("If `true` we only use `cache` value and never fallback on default maven settings.xml location.")
+    @ConfigProperty(name = "bundlebee.maven.forceCustomSettingsXml", defaultValue = "false")
+    private boolean forceCustomSettingsXml;
 
     @Inject
     @Description("Default release repository.")
@@ -118,43 +143,55 @@ public class Maven {
         factory.setValidating(false);
     }
 
-    public Optional<Server> findServerPassword(final String serverId) {
-        var settings = Paths.get(System.getProperty("user.home")).resolve(".m2/settings.xml");
-        if (!Files.exists(settings)) {
-            settings = m2.resolve("settings.xml"); // custom configured folder, not maven compliant but bundlebee specific
-            if (!Files.exists(settings)) {
-                throw new IllegalArgumentException(
-                        "No " + settings + " found, ensure your credentials configuration is valid");
-            }
-        }
-        final var settingsSecurity = settings.getParent().resolve("settings-security.xml");
-
-        final SAXParser parser;
+    public Path ensureSettingsXml() {
         try {
-            parser = factory.newSAXParser();
-        } catch (final RuntimeException e) {
-            throw e;
-        } catch (final Exception e) {
-            throw new IllegalStateException(e);
-        }
-
-        final String master;
-        if (Files.exists(settingsSecurity)) {
-            final var extractor = new MvnMasterExtractor();
-            try (final var is = Files.newInputStream(settingsSecurity)) {
-                parser.parse(is, extractor);
-            } catch (final IOException | SAXException e) {
-                throw new IllegalArgumentException(e);
+            return findSettingsXml(); // this one also test our custom m2/settings.xml location
+        } catch (final IllegalArgumentException iae) {
+            final var settingsXml = preferCustomSettingsXml || forceCustomSettingsXml ?
+                    m2.resolve("settings.xml") :
+                    Paths.get(System.getProperty("user.home")).resolve(".m2/settings.xml");
+            try {
+                Files.createDirectories(settingsXml.getParent());
+                Files.writeString(settingsXml, "" +
+                        "<settings>\n" +
+                        "  <servers>\n" +
+                        "  </servers>\n" +
+                        "</settings>\n" +
+                        "\n" +
+                        "", StandardOpenOption.CREATE);
+                log.info(() -> "Created " + settingsXml);
+            } catch (final IOException ioe) {
+                throw new IllegalStateException(ioe);
             }
-            master = extractor.current == null ? null : extractor.current.toString().trim();
-        } else {
-            master = null;
+            return settingsXml;
+        }
+    }
+
+    public Optional<String> findMasterPassword(final Path settingsXml) {
+        final var settingsSecurity = settingsXml.getParent().resolve("settings-security.xml");
+        if (!Files.exists(settingsSecurity)) {
+            return empty();
         }
 
-        final var extractor = new MvnServerExtractor(master, serverId);
+        final var extractor = new MvnMasterExtractor();
+        try (final var is = Files.newInputStream(settingsSecurity)) {
+            factory.newSAXParser().parse(is, extractor);
+        } catch (final ParserConfigurationException | IOException | SAXException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return extractor.current == null ? empty() : of(extractor.current.toString().trim());
+    }
+
+    public Optional<Server> findServerPassword(final String serverId) {
+        return findServerPassword(findSettingsXml(), serverId);
+    }
+
+    public Optional<Server> findServerPassword(final Path settings, final String serverId) {
+        final var extractor = new MvnServerExtractor(
+                findMasterPassword(settings).orElse(null), serverId, this::decryptPassword);
         try (final var is = Files.newInputStream(settings)) {
-            parser.parse(is, extractor);
-        } catch (final IOException | SAXException e) {
+            factory.newSAXParser().parse(is, extractor);
+        } catch (final ParserConfigurationException | IOException | SAXException e) {
             throw new IllegalArgumentException(e);
         }
 
@@ -213,6 +250,22 @@ public class Maven {
         } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private Path findSettingsXml() {
+        var settings = preferCustomSettingsXml || forceCustomSettingsXml ?
+                m2.resolve("settings.xml") :
+                Paths.get(System.getProperty("user.home")).resolve(".m2/settings.xml");
+        if (!Files.exists(settings)) {
+            settings = preferCustomSettingsXml && !forceCustomSettingsXml ?
+                    Paths.get(System.getProperty("user.home")).resolve(".m2/settings.xml") :
+                    m2.resolve("settings.xml");
+            if (!Files.exists(settings)) {
+                throw new IllegalArgumentException(
+                        "No " + settings + " found, ensure your credentials configuration is valid");
+            }
+        }
+        return settings;
     }
 
     private String removeRepoIfPresent(final String url) {
@@ -360,7 +413,7 @@ public class Maven {
     }
 
     private Path m2Home() {
-        return Optional.of(m2CacheConfig)
+        return ofNullable(m2CacheConfig)
                 .filter(it -> !"auto".equals(it))
                 .map(Paths::get)
                 .orElseGet(() -> {
@@ -443,6 +496,152 @@ public class Maven {
             // no-op: not parseable so ignoring
         }
         return List.of();
+    }
+
+    public String createPassword(final String password, final String masterPassword) {
+        final byte[] clearBytes = ("auto".equals(password) ?
+                UUID.randomUUID().toString() : password).getBytes(StandardCharsets.UTF_8);
+        final var secureRandom = new SecureRandom();
+        secureRandom.setSeed(Instant.now().toEpochMilli());
+
+        final byte[] salt = secureRandom.generateSeed(8);
+        secureRandom.nextBytes(salt);
+
+        final MessageDigest digester;
+        try {
+            digester = MessageDigest.getInstance("SHA-256");
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+
+        final var keyAndIv = new byte[32];
+        byte[] result;
+        int currentPos = 0;
+        while (currentPos < keyAndIv.length) {
+            digester.update(masterPassword.getBytes(StandardCharsets.UTF_8));
+            if (salt != null) {
+                digester.update(salt, 0, 8);
+            }
+            result = digester.digest();
+
+            final int stillNeed = keyAndIv.length - currentPos;
+            if (result.length > stillNeed) {
+                final var b = new byte[stillNeed];
+                System.arraycopy(result, 0, b, 0, b.length);
+                result = b;
+            }
+
+            System.arraycopy(result, 0, keyAndIv, currentPos, result.length);
+            currentPos += result.length;
+            if (currentPos < keyAndIv.length) {
+                digester.reset();
+                digester.update(result);
+            }
+        }
+
+        final byte[] key = new byte[16];
+        final byte[] iv = new byte[16];
+        System.arraycopy(keyAndIv, 0, key, 0, key.length);
+        System.arraycopy(keyAndIv, key.length, iv, 0, iv.length);
+
+        final byte[] encryptedBytes;
+        try {
+            final var cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
+            encryptedBytes = cipher.doFinal(clearBytes);
+        } catch (final NoSuchPaddingException | NoSuchAlgorithmException |
+                InvalidKeyException | InvalidAlgorithmParameterException |
+                IllegalBlockSizeException | BadPaddingException e) {
+            throw new IllegalStateException(e);
+        }
+
+        final int len = encryptedBytes.length;
+        final byte padLen = (byte) (16 - (8 + len + 1) % 16);
+        final int totalLen = 8 + len + padLen + 1;
+        final byte[] allEncryptedBytes = secureRandom.generateSeed(totalLen);
+        System.arraycopy(salt, 0, allEncryptedBytes, 0, 8);
+        allEncryptedBytes[8] = padLen;
+
+        System.arraycopy(encryptedBytes, 0, allEncryptedBytes, 8 + 1, len);
+        return '{' + Base64.getEncoder().encodeToString(allEncryptedBytes) + '}';
+    }
+
+    public String decryptPassword(final String value, final String pwd) {
+        if (value == null) {
+            return null;
+        }
+
+        final Matcher matcher = ENCRYPTED_PATTERN.matcher(value);
+        if (!matcher.matches() && !matcher.find()) {
+            return value; // not encrypted, just use it
+        }
+
+        final String bare = matcher.group(1);
+        if (value.startsWith("${env.")) {
+            final String key = bare.substring("env.".length());
+            return ofNullable(System.getenv(key)).orElseGet(() -> System.getProperty(bare));
+        }
+        if (value.startsWith("${")) { // all is system prop, no interpolation yet
+            return System.getProperty(bare);
+        }
+
+        if (pwd == null || pwd.isEmpty()) {
+            throw new IllegalArgumentException("Master password can't be null or empty.");
+        }
+
+        if (bare.contains("[") && bare.contains("]") && bare.contains("type=")) {
+            throw new IllegalArgumentException("Unsupported encryption for " + value);
+        }
+
+        final byte[] allEncryptedBytes = Base64.getMimeDecoder().decode(bare);
+        final int totalLen = allEncryptedBytes.length;
+        final byte[] salt = new byte[8];
+        System.arraycopy(allEncryptedBytes, 0, salt, 0, 8);
+        final byte padLen = allEncryptedBytes[8];
+        final byte[] encryptedBytes = new byte[totalLen - 8 - 1 - padLen];
+        System.arraycopy(allEncryptedBytes, 8 + 1, encryptedBytes, 0, encryptedBytes.length);
+
+        try {
+            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] keyAndIv = new byte[16 * 2];
+            byte[] result;
+            int currentPos = 0;
+
+            while (currentPos < keyAndIv.length) {
+                digest.update(pwd.getBytes(StandardCharsets.UTF_8));
+
+                digest.update(salt, 0, 8);
+                result = digest.digest();
+
+                final int stillNeed = keyAndIv.length - currentPos;
+                if (result.length > stillNeed) {
+                    final byte[] b = new byte[stillNeed];
+                    System.arraycopy(result, 0, b, 0, b.length);
+                    result = b;
+                }
+
+                System.arraycopy(result, 0, keyAndIv, currentPos, result.length);
+
+                currentPos += result.length;
+                if (currentPos < keyAndIv.length) {
+                    digest.reset();
+                    digest.update(result);
+                }
+            }
+
+            final byte[] key = new byte[16];
+            final byte[] iv = new byte[16];
+            System.arraycopy(keyAndIv, 0, key, 0, key.length);
+            System.arraycopy(keyAndIv, key.length, iv, 0, iv.length);
+
+            final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
+
+            final byte[] clearBytes = cipher.doFinal(encryptedBytes);
+            return new String(clearBytes, StandardCharsets.UTF_8);
+        } catch (final Exception e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @NoArgsConstructor(access = PRIVATE)
@@ -576,18 +775,19 @@ public class Maven {
     }
 
     private static class MvnServerExtractor extends DefaultHandler {
-        private static final Pattern ENCRYPTED_PATTERN = Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
-
         private final String passphrase;
         private final String serverId;
+        private final BiFunction<String, String, String> doDecrypt;
 
         private Server server;
         private String encryptedPassword;
         private boolean done;
         private StringBuilder current;
 
-        private MvnServerExtractor(final String passphrase, final String serverId) {
-            this.passphrase = doDecrypt(passphrase, "settings.security");
+        private MvnServerExtractor(final String passphrase, final String serverId,
+                                   final BiFunction<String, String, String> decipher) {
+            this.doDecrypt = decipher;
+            this.passphrase = decipher.apply(passphrase, "settings.security");
             this.serverId = serverId;
         }
 
@@ -614,7 +814,7 @@ public class Maven {
         public void endElement(final String uri, final String localName, final String qName) {
             if (done) {
                 // decrypt password only when the server is found
-                server.setPassword(doDecrypt(encryptedPassword, passphrase));
+                server.setPassword(doDecrypt.apply(encryptedPassword, passphrase));
                 return;
             }
             if ("server".equalsIgnoreCase(qName)) {
@@ -631,7 +831,7 @@ public class Maven {
                         break;
                     case "username":
                         try {
-                            server.setUsername(doDecrypt(current.toString(), passphrase));
+                            server.setUsername(doDecrypt.apply(current.toString(), passphrase));
                         } catch (final RuntimeException re) {
                             server.setUsername(current.toString());
                         }
@@ -642,84 +842,6 @@ public class Maven {
                     default:
                 }
                 current = null;
-            }
-        }
-
-        private String doDecrypt(final String value, final String pwd) {
-            if (value == null) {
-                return null;
-            }
-
-            final Matcher matcher = ENCRYPTED_PATTERN.matcher(value);
-            if (!matcher.matches() && !matcher.find()) {
-                return value; // not encrypted, just use it
-            }
-
-            final String bare = matcher.group(1);
-            if (value.startsWith("${env.")) {
-                final String key = bare.substring("env.".length());
-                return ofNullable(System.getenv(key)).orElseGet(() -> System.getProperty(bare));
-            }
-            if (value.startsWith("${")) { // all is system prop, no interpolation yet
-                return System.getProperty(bare);
-            }
-
-            if (pwd == null || pwd.isEmpty()) {
-                throw new IllegalArgumentException("Master password can't be null or empty.");
-            }
-
-            if (bare.contains("[") && bare.contains("]") && bare.contains("type=")) {
-                throw new IllegalArgumentException("Unsupported encryption for " + value);
-            }
-
-            final byte[] allEncryptedBytes = Base64.getMimeDecoder().decode(bare);
-            final int totalLen = allEncryptedBytes.length;
-            final byte[] salt = new byte[8];
-            System.arraycopy(allEncryptedBytes, 0, salt, 0, 8);
-            final byte padLen = allEncryptedBytes[8];
-            final byte[] encryptedBytes = new byte[totalLen - 8 - 1 - padLen];
-            System.arraycopy(allEncryptedBytes, 8 + 1, encryptedBytes, 0, encryptedBytes.length);
-
-            try {
-                final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] keyAndIv = new byte[16 * 2];
-                byte[] result;
-                int currentPos = 0;
-
-                while (currentPos < keyAndIv.length) {
-                    digest.update(pwd.getBytes(StandardCharsets.UTF_8));
-
-                    digest.update(salt, 0, 8);
-                    result = digest.digest();
-
-                    final int stillNeed = keyAndIv.length - currentPos;
-                    if (result.length > stillNeed) {
-                        final byte[] b = new byte[stillNeed];
-                        System.arraycopy(result, 0, b, 0, b.length);
-                        result = b;
-                    }
-
-                    System.arraycopy(result, 0, keyAndIv, currentPos, result.length);
-
-                    currentPos += result.length;
-                    if (currentPos < keyAndIv.length) {
-                        digest.reset();
-                        digest.update(result);
-                    }
-                }
-
-                final byte[] key = new byte[16];
-                final byte[] iv = new byte[16];
-                System.arraycopy(keyAndIv, 0, key, 0, key.length);
-                System.arraycopy(keyAndIv, key.length, iv, 0, iv.length);
-
-                final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
-
-                final byte[] clearBytes = cipher.doFinal(encryptedBytes);
-                return new String(clearBytes, StandardCharsets.UTF_8);
-            } catch (final Exception e) {
-                throw new IllegalStateException(e);
             }
         }
     }

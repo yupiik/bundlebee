@@ -27,7 +27,6 @@ import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
 import javax.inject.Inject;
-
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;

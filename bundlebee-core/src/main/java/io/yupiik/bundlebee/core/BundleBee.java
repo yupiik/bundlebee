@@ -37,6 +37,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import static java.util.Locale.ROOT;
 import static java.util.stream.Collectors.toMap;
 
 @Log
@@ -44,6 +45,7 @@ public final class BundleBee {
     public static void main(final String... args) {
         initLogging();
         setupUserConfig();
+        setupRandom();
         final var newArgs = setupArgConfig(args);
         new BundleBee().launch(newArgs);
     }
@@ -109,6 +111,12 @@ public final class BundleBee {
         final var userConfig = Paths.get(System.getProperty("user.home", "/home/user")).resolve(".bundlebeerc");
         if (Files.exists(userConfig)) {
             injectConfiguration(userConfig);
+        }
+    }
+
+    private static void setupRandom() {
+        if (System.getProperty("os.name", "blah").toLowerCase(ROOT).contains("linux")) {
+            System.setProperty("securerandom.source", System.getProperty("securerandom.source", "file:/dev/./urandom"));
         }
     }
 

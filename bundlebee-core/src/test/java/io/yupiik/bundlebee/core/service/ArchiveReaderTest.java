@@ -15,7 +15,6 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.descriptor.Manifest;
 import org.apache.openwebbeans.junit5.Cdi;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
