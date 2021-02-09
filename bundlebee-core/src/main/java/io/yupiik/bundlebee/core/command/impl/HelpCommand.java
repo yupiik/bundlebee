@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 @Log
 @Dependent
@@ -62,23 +63,57 @@ public class HelpCommand implements Executable {
                 "\n" +
                 executables.stream()
                         .map(executable -> {
-                            final var desc = executable.description()
-                                    .replace("// end of short description\n", "")
-                                    .replaceAll("^", "        ")
-                                    .trim();
+                            final var parameters = findParameters(executable).collect(toList());
+                            final var desc = reflowText(executable.description()
+                                    .replace("// end of short description\n", ""), "        ") +
+                                    (parameters.isEmpty() ? "" : "\n");
                             return "" +
-                                    "  - " + executable.name() + ": " +
+                                    "  [] " + executable.name() + ": " +
                                     Character.toLowerCase(desc.charAt(0)) + desc.substring(1) + "\n" +
-                                    findParameters(executable).map(p -> "" +
+                                    parameters.stream().map(p -> "" +
                                             "    " + p.getName() +
-                                            (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue() + ")" : "") + ": " +
-                                            p.getDescription())
+                                            (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue()
+                                                    .replace("\n", "\\\\n") + ")" : "") + ": " +
+                                            reflowText(p.getDescription(), "          "))
                                             .sorted()
                                             .collect(joining("\n"));
                         })
                         .sorted()
                         .collect(joining("\n\n", "", "\n")));
         return completedFuture(null);
+    }
+
+    // not perfect impl but sufficient for now
+    private String reflowText(final String content, final String prefix) {
+        final var lines = content.split("\n");
+        final var builder = new StringBuilder();
+        int currentCount = builder.length();
+        for (final String s : lines) {
+            final var line = s.trim();
+            if (line.isBlank()) {
+                builder.append("\n\n").append(prefix);
+                currentCount = 0;
+                continue;
+            } else if (line.startsWith("* ")) {
+                builder.append("\n").append(prefix);
+                currentCount = 0;
+            }
+            final var words = line.split(" ");
+            for (int w = 0; w < words.length; w++) {
+                final var word = words[w];
+                if (currentCount + word.length() + prefix.length() < 80) {
+                    if (currentCount > 0) {
+                        builder.append(" ");
+                    }
+                    builder.append(word);
+                    currentCount += 1 + word.length();
+                } else {
+                    builder.append("\n").append(prefix).append(word);
+                    currentCount = word.length();
+                }
+            }
+        }
+        return builder.toString();
     }
 
     private Stream<Parameter> findParameters(final Executable executable) {
@@ -92,10 +127,11 @@ public class HelpCommand implements Executable {
                     if (name.isEmpty()) {
                         name = it.getMember().getDeclaringClass().getName() + '.' + it.getMember().getName();
                     }
+                    final var desc = annotated.getAnnotation(Description.class).value();
                     return new Parameter(
                             "--" + prefix.matcher(name).replaceFirst(""),
                             ConfigProperty.UNCONFIGURED_VALUE.equals(annotation.defaultValue()) ? null : annotation.defaultValue(),
-                            annotated.getAnnotation(Description.class).value());
+                            Character.toLowerCase(desc.charAt(0)) + desc.substring(1));
                 });
     }
 
