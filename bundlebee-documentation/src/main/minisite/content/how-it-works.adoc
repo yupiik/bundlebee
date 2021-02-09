@@ -51,6 +51,8 @@ If you use JSON-Schema facilities in your preferred editor, here is the raw JSON
 include::content/_partials/generated/jsonschema/manifest.descriptor.json[]
 ----
 
+TIP: you can also use last version from link:https://raw.githubusercontent.com/yupiik/bundlebee/gh-pages/generated/jsonschema/manifest.descriptor.json[this link].
+
 == Deployment and Dependency Management
 
 A manifest can reference descriptors in other alveoli, it just requires to reference them to let bundlebee find them.
