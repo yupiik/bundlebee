@@ -119,6 +119,20 @@
               <type>jsonschema</type>
               <configuration>
                 <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
+                <type>JSON</type>
+                <pretty>true</pretty>
+                <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
+                <to>
+                  ${project.basedir}/src/main/minisite/assets/generated/jsonschema/manifest.descriptor.json
+                </to>
+                <title>Manifest Descriptor</title>
+                <description>BundleBee manifest descriptor.</description>
+              </configuration>
+            </action>
+            <action>
+              <type>jsonschema</type>
+              <configuration>
+                <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
                 <type>ADOC</type>
                 <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
                 <to>
