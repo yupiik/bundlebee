@@ -17,7 +17,8 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.service.MavenResolver;
+import io.yupiik.bundlebee.core.service.Maven;
+import lombok.Data;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -74,7 +75,7 @@ public class BuildCommand implements Executable {
     private String version;
 
     @Inject
-    private MavenResolver mvn;
+    private Maven mvn;
 
     @Override
     public String name() {
@@ -88,6 +89,15 @@ public class BuildCommand implements Executable {
 
     @Override
     public CompletionStage<?> execute() {
+        return doBuild(directory, buildDirectory, group, artifact, version, deployInLocalRepository);
+    }
+
+    public CompletionStage<BuildResult> doBuild(final String directory,
+                                                final String buildDirectory,
+                                                final String rawGroup,
+                                                final String rawArtifact,
+                                                final String rawVersion,
+                                                final boolean deployInLocalRepository) {
         final var source = Paths.get(directory).normalize().toAbsolutePath();
         if (!Files.exists(source)) {
             throw new IllegalArgumentException(source + " does not exist");
@@ -100,8 +110,30 @@ public class BuildCommand implements Executable {
                 buildDirPath :
                 source.resolve(buildDirPath).normalize().toAbsolutePath();
 
-        if (UNSET.equals(group) || UNSET.equals(artifact) || UNSET.equals(version)) {
-            loadGavFromPom(source.resolve("pom.xml"));
+        final String group;
+        final String artifact;
+        final String version;
+        if (UNSET.equals(rawGroup) || UNSET.equals(rawArtifact) || UNSET.equals(rawVersion)) {
+            final var gav = loadGavFromPom(source.resolve("pom.xml"));
+            if (UNSET.equals(rawGroup)) {
+                group = gav.getGroup();
+            } else {
+                group = rawGroup;
+            }
+            if (UNSET.equals(rawArtifact)) {
+                artifact = gav.getArtifact();
+            } else {
+                artifact = rawArtifact;
+            }
+            if (UNSET.equals(rawVersion)) {
+                version = gav.getVersion();
+            } else {
+                version = rawVersion;
+            }
+        } else {
+            group = rawGroup;
+            artifact = rawArtifact;
+            version = rawVersion;
         }
 
         try {
@@ -156,32 +188,30 @@ public class BuildCommand implements Executable {
                 Files.copy(jar, m2Location, StandardCopyOption.REPLACE_EXISTING);
                 log.info(() -> "Installed " + m2Location);
             }
+
+            log.info("Project successfully built.");
+            return completedFuture(new BuildResult(group, artifact, version, jar));
         } catch (final IOException e) {
             throw new IllegalArgumentException(e);
         }
-
-        log.info("Project successfully built.");
-        return completedFuture(true);
     }
 
-    private void loadGavFromPom(final Path pom) {
+    private Maven.GavParser loadGavFromPom(final Path pom) {
         if (!Files.exists(pom)) {
             throw new IllegalArgumentException("No pom at " + pom + ", ensure to set group, artifact and version on the CLI");
         }
-        final MavenResolver.GavParser gav;
         try (final InputStream stream = Files.newInputStream(pom)) {
-            gav = mvn.extractGav(stream);
+            return mvn.extractGav(stream);
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
-        if (UNSET.equals(group)) {
-            group = gav.getGroup();
-        }
-        if (UNSET.equals(artifact)) {
-            artifact = gav.getArtifact();
-        }
-        if (UNSET.equals(version)) {
-            version = gav.getVersion();
-        }
+    }
+
+    @Data
+    public static class BuildResult {
+        private final String group;
+        private final String artifact;
+        private final String version;
+        private final Path jar;
     }
 }

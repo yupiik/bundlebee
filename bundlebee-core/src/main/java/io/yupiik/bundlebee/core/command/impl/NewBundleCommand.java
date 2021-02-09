@@ -49,8 +49,8 @@ public class NewBundleCommand implements Executable {
     private String version;
 
     @Inject
-    @Description("Where to create the project.")
-    @ConfigProperty(name = "bundlebee.new.dir", defaultValue = ".")
+    @Description("Where to create the project. If not set it will use the artifact value in current folder.")
+    @ConfigProperty(name = "bundlebee.new.dir", defaultValue = UNSET)
     private String directory;
 
     @Inject
@@ -73,7 +73,7 @@ public class NewBundleCommand implements Executable {
         if (UNSET.equals(group) || UNSET.equals(artifact)) {
             throw new IllegalArgumentException("Ensure to set group and artifact for command new");
         }
-        final var output = Paths.get(directory).normalize().toAbsolutePath();
+        final var output = Paths.get(UNSET.equals(directory) ? artifact : directory).normalize().toAbsolutePath();
         try {
             if (Files.exists(output) && Files.list(output).anyMatch(it -> {
                 final var name = it.getFileName().toString();

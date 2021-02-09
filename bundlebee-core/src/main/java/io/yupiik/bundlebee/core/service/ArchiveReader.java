@@ -44,7 +44,7 @@ public class ArchiveReader {
     private ManifestReader manifestReader;
 
     @Inject
-    private MavenResolver mvn;
+    private Maven mvn;
 
     public Archive read(final Path zipLocation) {
         log.finest(() -> "Reading " + zipLocation);

@@ -17,7 +17,7 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.service.MavenResolver;
+import io.yupiik.bundlebee.core.service.Maven;
 import io.yupiik.bundlebee.core.service.VersioningService;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -33,7 +33,7 @@ import static java.util.stream.Collectors.joining;
 @Dependent
 public class VersionsCommand implements Executable {
     @Inject
-    private MavenResolver resolver;
+    private Maven resolver;
 
     @Inject
     private VersioningService versioningService;
