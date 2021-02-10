@@ -279,6 +279,10 @@ public class Maven {
     private CompletionStage<Path> doFind(final String raw) throws MalformedURLException {
         final var segments = raw.substring(raw.indexOf('!') + 1).split(":");
         if (segments.length < 3) {
+            final var path = Paths.get(raw);
+            if (Files.isDirectory(path)) {
+                return completedFuture(path);
+            }
             throw new MalformedURLException("Invalid path: " + raw);
         }
 
