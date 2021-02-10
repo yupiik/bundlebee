@@ -26,7 +26,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,7 +53,41 @@ public class ArchiveReader {
 
     public Archive read(final Path zipLocation) {
         log.finest(() -> "Reading " + zipLocation);
-        try (final ZipFile zip = new ZipFile(zipLocation.toFile())) {
+        if (Files.isDirectory(zipLocation)) {
+            final var manifest = zipLocation.resolve("bundlebee/manifest.json");
+            if (Files.exists(manifest)) {
+                final var manifestJson = manifestReader.readManifest(() -> {
+                    try {
+                        return Files.newInputStream(manifest);
+                    } catch (final IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                });
+                final var descriptors = new HashMap<String, String>();
+                try {
+                    Files.walkFileTree(zipLocation, new SimpleFileVisitor<>() {
+                        @Override
+                        public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                            final var name = zipLocation.relativize(file).toString().replace('\\', '/');
+                            if (name.startsWith("bundlebee/kubernetes/") && name.endsWith(".yaml") || name.endsWith(".json") || name.endsWith(".yml")) {
+                                try (final BufferedReader reader = new BufferedReader(new InputStreamReader(
+                                        Files.newInputStream(file), StandardCharsets.UTF_8))) {
+                                    descriptors.put(name, reader.lines().collect(joining("\n")));
+                                } catch (final IOException e) {
+                                    throw new IllegalStateException(e);
+                                }
+                            }
+                            return super.visitFile(file, attrs);
+                        }
+                    });
+                } catch (final IOException e) {
+                    throw new IllegalStateException(e);
+                }
+                return new Archive(manifestJson, descriptors);
+            }
+            throw new IllegalArgumentException("No '" + manifest + "' found");
+        }
+        try (final var zip = new ZipFile(zipLocation.toFile())) {
             final var manifestEntry = zip.getEntry("bundlebee/manifest.json");
             if (manifestEntry == null) {
                 throw new IllegalStateException("No manifest.json in " + zipLocation);
