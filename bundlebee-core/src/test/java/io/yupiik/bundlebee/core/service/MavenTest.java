@@ -17,6 +17,7 @@ package io.yupiik.bundlebee.core.service;
 
 import org.apache.openwebbeans.junit5.Cdi;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -27,10 +28,15 @@ import java.util.concurrent.ExecutionException;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class SetSystemProperty implements BeforeAllCallback {
+class SetSystemProperty implements BeforeAllCallback, AfterAllCallback {
     @Override
     public void beforeAll(ExtensionContext context) {
         System.setProperty("bundlebee.maven.cache", System.getProperty("m2.location", "auto"));
+    }
+
+    @Override
+    public void afterAll(final ExtensionContext context) {
+        System.clearProperty("bundlebee.maven.cache");
     }
 }
 
