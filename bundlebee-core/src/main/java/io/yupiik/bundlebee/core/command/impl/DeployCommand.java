@@ -48,7 +48,7 @@ public class DeployCommand implements Executable {
     private String directory;
 
     @Inject
-    @Description("Project to build.")
+    @Description("Where to build (for build/temp files).")
     @ConfigProperty(name = "bundlebee.deploy.builddir", defaultValue = "target")
     private String buildDirectory;
 

@@ -16,7 +16,9 @@
 package io.yupiik.bundlebee.core.descriptor;
 
 import io.yupiik.bundlebee.core.configuration.Description;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.json.JsonArray;
 import java.util.List;
@@ -66,6 +68,8 @@ public class Manifest {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Descriptor {
         @Description("Type of this descriptor. For now only `kubernetes` is supported. " +
                 "It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name.")
