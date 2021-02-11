@@ -126,7 +126,9 @@ public class ApplyCommand implements Executable {
                         Map.of("bundlebee.timestamp", Long.toString(Instant.now().toEpochMilli())) :
                         Map.<String, String>of(),
                 injectBundleBeeMetadata ?
-                        Map.of("bundlebee.version", findVersion(alveolus)) :
+                        Map.of(
+                                "bundlebee.root.alveolus.version", findVersion(alveolus),
+                                "bundlebee.root.alveolus.name", alveolus.getName()) :
                         Map.<String, String>of())
                 .flatMap(m -> m.entrySet().stream())
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
