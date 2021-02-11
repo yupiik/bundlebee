@@ -171,7 +171,9 @@ public class AlveolusHandler {
                                           final ArchiveReader.Cache cache,
                                           final Function<AlveolusContext, CompletionStage<?>> onAlveolus,
                                           final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor) {
-        log.info(() -> prefixOnVisitLog + " '" + from.getName() + "'");
+        if (prefixOnVisitLog != null) {
+            log.info(() -> prefixOnVisitLog + " '" + from.getName() + "'");
+        }
         final var currentPatches = from.getPatches() == null || from.getPatches().isEmpty() ?
                 patches :
                 mergePatches(patches, from.getPatches());
