@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Deploy</title>
+    <title>Inspect</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,16 +50,16 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Deploy</h1>
+                <h1>Inspect</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Build and deploy a project. It inherits from most configuration of build command and adds remote repository settings.</p>
+<p>Inspect an alveolus, i.e. list the descriptors to apply.</p>
 </div>
 <div class="paragraph">
-<p>Name: <code>deploy</code>.</p>
+<p>Name: <code>inspect</code>.</p>
 </div>
 </div>
 </div>
@@ -68,45 +68,21 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">artifact (<code>BUNDLEBEE_DEPLOY_ARTIFACT</code>)</dt>
+<dt class="hdlist1">alveolus (<code>BUNDLEBEE_INSPECT_ALVEOLUS</code>)</dt>
 <dd>
-<p>Bundle artifactId.</p>
+<p>Alveolus name to inspect. When set to <code>auto</code>, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">builddir (<code>BUNDLEBEE_DEPLOY_BUILDDIR</code>)</dt>
+<dt class="hdlist1">from (<code>BUNDLEBEE_INSPECT_FROM</code>)</dt>
 <dd>
-<p>Where to build (for build/temp files). Default value: <code>target</code></p>
+<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">deployInLocalRepository (<code>BUNDLEBEE_DEPLOY_DEPLOYINLOCALREPOSITORY</code>)</dt>
+<dt class="hdlist1">manifest (<code>BUNDLEBEE_INSPECT_MANIFEST</code>)</dt>
 <dd>
-<p>If <code>true</code> it will be added to your local maven repository too. Default value: <code>true</code></p>
+<p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
 </dd>
-<dt class="hdlist1">dir (<code>BUNDLEBEE_DEPLOY_DIR</code>)</dt>
+<dt class="hdlist1">verbose (<code>BUNDLEBEE_INSPECT_VERBOSE</code>)</dt>
 <dd>
-<p>Project to build. Default value: <code>.</code></p>
-</dd>
-<dt class="hdlist1">enableReUpload (<code>BUNDLEBEE_DEPLOY_ENABLEREUPLOAD</code>)</dt>
-<dd>
-<p>If <code>true</code> it enables to upload an artifact even if already present. When <code>auto</code> it enables it for snapshots but not for releases. Default value: <code>auto</code></p>
-</dd>
-<dt class="hdlist1">group (<code>BUNDLEBEE_DEPLOY_GROUP</code>)</dt>
-<dd>
-<p>Bundle groupId.</p>
-</dd>
-<dt class="hdlist1">nexusBaseApi (<code>BUNDLEBEE_DEPLOY_NEXUSBASEAPI</code>)</dt>
-<dd>
-<p>If not <code>skip</code> it will deploy the artifact on a remote repository (nexus v2 or v3). Syntax must be a URL pointing to the REST API (base URL). If you don&#8217;t set the userinfo (username:password) in the URL it will be looked up in your settings.xml - potentially ciphered - using the hostname as serverId until you force it with <code>--serverId</code>. Default value: <code>skip</code></p>
-</dd>
-<dt class="hdlist1">nexusRepository (<code>BUNDLEBEE_DEPLOY_NEXUSREPOSITORY</code>)</dt>
-<dd>
-<p>Nexus repository. It is the repository name the artifact(s) will be uploaded to. If <code>auto</code>, it will be <code>maven-releases</code> if the version is a release one and <code>maven-snapshots</code> otherwise. Default value: <code>auto</code></p>
-</dd>
-<dt class="hdlist1">serverId (<code>BUNDLEBEE_DEPLOY_SERVERID</code>)</dt>
-<dd>
-<p>ServerId to lookup from your maven settings.xml for remote deployment if enabled (nexus authentication).</p>
-</dd>
-<dt class="hdlist1">version (<code>BUNDLEBEE_DEPLOY_VERSION</code>)</dt>
-<dd>
-<p>Bundle version.</p>
+<p>If <code>true</code>, descriptors are logged too. Default value: <code>false</code></p>
 </dd>
 </dl>
 </div>
