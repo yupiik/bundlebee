@@ -60,6 +60,11 @@ public class DeleteCommand implements Executable {
     private String from;
 
     @Inject
+    @Description("If set it will be added on REST calls to force a custom grace period (in seconds). Setting it to `0` enables to delete faster objects.")
+    @ConfigProperty(name = "bundlebee.delete.gracePeriodSeconds", defaultValue = UNSET)
+    private String gracePeriodSeconds;
+
+    @Inject
     private KubeClient kube;
 
     @Inject
@@ -85,21 +90,21 @@ public class DeleteCommand implements Executable {
 
     @Override
     public CompletionStage<?> execute() {
-        return internalDelete(from, manifest, alveolus, archives.newCache());
+        return internalDelete(from, manifest, alveolus, gracePeriodSeconds, archives.newCache());
     }
 
     public CompletionStage<?> internalDelete(final String from, final String manifest, final String alveolus,
-                                             final ArchiveReader.Cache cache) {
+                                             final String gracePeriodSeconds, final ArchiveReader.Cache cache) {
         return visitor
                 .findRootAlveoli(from, manifest, alveolus)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
-                                .map(it -> doDelete(cache, it))
+                                .map(it -> doDelete(cache, it, gracePeriodSeconds))
                                 .collect(toList()), toList(),
                         true));
     }
 
-    public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest.Alveolus it) {
+    public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest.Alveolus it, final String gracePeriodSeconds) {
         final var toDelete = new ArrayList<AlveolusHandler.LoadedDescriptor>();
         return visitor.executeOnAlveolus(
                 "Deleting", it, null,
@@ -116,7 +121,9 @@ public class DeleteCommand implements Executable {
                 })
                 .thenCompose(descs -> chain(
                         descs.stream()
-                                .map(desc -> (Supplier<CompletionStage<?>>) () -> kube.delete(desc.getContent(), desc.getExtension()))
+                                .map(desc -> (Supplier<CompletionStage<?>>) () -> kube.delete(
+                                        desc.getContent(), desc.getExtension(),
+                                        UNSET.equals(gracePeriodSeconds) ? -1 : Integer.parseInt(gracePeriodSeconds)))
                                 .collect(toList())
                                 .iterator(),
                         true));

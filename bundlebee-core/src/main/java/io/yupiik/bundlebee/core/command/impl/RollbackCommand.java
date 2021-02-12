@@ -78,6 +78,11 @@ public class RollbackCommand implements Executable {
     private String from;
 
     @Inject
+    @Description("If set it will be added on REST calls to force a custom grace period (in seconds). Setting it to `0` enables to delete faster objects.")
+    @ConfigProperty(name = "bundlebee.rollback.gracePeriodSeconds", defaultValue = UNSET)
+    private String gracePeriodSeconds;
+
+    @Inject
     @Description("" +
             "If `true`, and previous alveolus is not defined on the CLI, we will query the release repository to find available versions. " +
             "If the alveolus name does not match `<groupId>:<artifactId>:<version>[:<type>:<classifier>]` pattern then a heuristic is used instead.")
@@ -142,7 +147,7 @@ public class RollbackCommand implements Executable {
     }
 
     private CompletionStage<?> rollback(final ArchiveReader.Cache cache, final Tuple2<Manifest.Alveolus, Object> v) {
-        return delete.doDelete(cache, v.getFirst())
+        return delete.doDelete(cache, v.getFirst(), gracePeriodSeconds)
                 .thenCompose(it -> apply.doApply(true, true, cache, v.getSecond()));
     }
 
