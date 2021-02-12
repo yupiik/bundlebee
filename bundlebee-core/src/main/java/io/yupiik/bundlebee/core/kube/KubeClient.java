@@ -180,8 +180,8 @@ public class KubeClient {
         return forDescriptor("Applying", descriptorContent, ext, json -> doApply(json, customLabels));
     }
 
-    public CompletionStage<?> delete(final String descriptorContent, final String ext) {
-        return forDescriptor("Deleting", descriptorContent, ext, this::doDelete);
+    public CompletionStage<?> delete(final String descriptorContent, final String ext, final int gracePeriod) {
+        return forDescriptor("Deleting", descriptorContent, ext, json -> doDelete(json, gracePeriod));
     }
 
     private CompletionStage<?> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
@@ -213,7 +213,7 @@ public class KubeClient {
         }
     }
 
-    private CompletionStage<?> doDelete(final JsonObject desc) {
+    private CompletionStage<?> doDelete(final JsonObject desc, final int gracePeriod) {
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
@@ -222,7 +222,7 @@ public class KubeClient {
 
         final var uri = baseApi + findApiPrefix(kindLowerCased) +
                 (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
-                "/" + kindLowerCased + "/" + name;
+                "/" + kindLowerCased + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
 
         return client.sendAsync(setAuth.apply(
                 HttpRequest.newBuilder(URI.create(uri))
