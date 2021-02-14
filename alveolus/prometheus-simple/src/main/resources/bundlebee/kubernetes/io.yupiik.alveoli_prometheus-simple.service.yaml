@@ -26,7 +26,7 @@ spec:
     - protocol: TCP
       port: 9090
       targetPort: 9090
-      # cause we want to access on the host the service (for convenience: http://$(minikube ip):9090)
-      nodePort: 9090
+      # cause we want to access on the host the service (for convenience: http://$(minikube ip):32090)
+      nodePort: 32090
   selector:
     app: prometheus_simple

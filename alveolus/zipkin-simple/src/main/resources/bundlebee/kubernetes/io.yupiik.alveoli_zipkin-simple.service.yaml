@@ -26,7 +26,7 @@ spec:
     - protocol: TCP
       port: 9411
       targetPort: 9411
-      # cause we want to access on the host the service (for convenience: http://$(minikube ip):30411)
-      nodePort: 30411
+      # cause we want to access on the host the service (for convenience: http://$(minikube ip):31411)
+      nodePort: 31411
   selector:
     app: zipkin_simple
