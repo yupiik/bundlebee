@@ -376,6 +376,8 @@ public class KubeClient {
         switch (kindLowerCased) {
             case "nodes":
             case "persistentvolumes":
+            case "clusterroles":
+            case "clusterrolebindings":
                 return true;
             default:
                 return false;
@@ -399,6 +401,9 @@ public class KubeClient {
             case "mutatingwebhookconfigurations":
             case "validatingwebhookconfigurations":
                 return "/apis/admissionregistration.k8s.io/v1";
+            case "clusterroles":
+            case "clusterrolebindings":
+                return "/apis/rbac.authorization.k8s.io/v1beta1";
             default:
                 return "/api/v1";
         }
