@@ -118,7 +118,10 @@ public class AlveoliConfigurationGenerator implements Runnable {
             final var mf = jsonb.fromJson(mfString, Manifest.class);
             return mf.getAlveoli().stream()
                     .map(it -> {
-                        final var fileName = artifactId + "-" + it.getName().replaceAll("[^a-zA-Z0-9\\-_]", "-") + ".adoc";
+                        final var fileName = artifactId + "-" + it.getName()
+                                .replaceAll(":([0-9]+\\.[0-9]+\\.[0-9]+(-SNAPSHOT)?)$", "") // drop the version to have stable links
+                                .replaceAll("[^a-zA-Z0-9\\-_]", "-") +
+                                ".adoc";
                         final var target = alveoliOutputBase.resolve(fileName);
                         final var rawAlveolusSpec = json.getJsonArray("alveoli").stream()
                                 .map(JsonValue::asJsonObject)
@@ -208,8 +211,8 @@ public class AlveoliConfigurationGenerator implements Runnable {
                 "    {\n" +
                 "      \"//\": \"My alveolus.\",\n" +
                 "      \"name\": \"com.company:my-app:1.0.0\",\n" +
-                "      \"descriptors\": []\n" +
-                "      \"dependencies\": [" +
+                "      \"descriptors\": [],\n" +
+                "      \"dependencies\": [\n" +
                 "        {\n" +
                 "          \"name\": \"" + alveolus.getName() + "\",\n" +
                 "          \"location\": \"io.yupiik.alveoli:" + artifactId + ":" + configuration.get("version") + "\",\n" +
