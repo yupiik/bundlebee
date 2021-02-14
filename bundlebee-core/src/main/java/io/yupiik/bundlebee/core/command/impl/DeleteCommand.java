@@ -19,6 +19,7 @@ import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
+import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
 import io.yupiik.bundlebee.core.service.VersioningService;
@@ -27,9 +28,15 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
@@ -80,6 +87,10 @@ public class DeleteCommand implements Executable {
 
     @Inject
     private VersioningService versioningService;
+
+    @Inject
+    @BundleBee
+    private ScheduledExecutorService scheduledExecutorService;
 
     @Override
     public String name() {
@@ -143,10 +154,44 @@ public class DeleteCommand implements Executable {
                                 .iterator(),
                         true))
                 .thenCompose(result -> {
-                    if (await <= 0) {
-                        return completedFuture(result);
+                    if (await <= 0 || toDelete.isEmpty()) {
+                        return completedFuture(null);
                     }
-                    return completedFuture(result);
+                    return testIfDeletedOrAwait(toDelete, Instant.now().plusMillis(await));
+                });
+    }
+
+    private CompletionStage<Boolean> testIfDeletedOrAwait(final List<AlveolusHandler.LoadedDescriptor> descriptors, final Instant end) {
+        return all(
+                descriptors.stream()
+                        .map(it -> kube.exists(it.getContent(), it.getExtension()))
+                        .collect(toList()),
+                toList(),
+                true)
+                .exceptionally(e -> List.of())
+                .thenCompose(results -> {
+                    final CompletableFuture<Boolean> future = new CompletableFuture<>();
+                    if (results.size() == descriptors.size() && results.stream().allMatch(Boolean.FALSE::equals)) {
+                        future.complete(true);
+                        return future;
+                    }
+
+                    final var status = "(" +
+                            results.stream().filter(Boolean.TRUE::equals).count() + "/" + results.size() + ", expected " + descriptors.size() + ").";
+                    if (Instant.now().isAfter(end)) {
+                        throw new IllegalStateException("Deletion didn't complete in " + await + "ms, giving up " + status);
+                    }
+                    log.info("Waiting 5 more seconds before testing if all descriptors were deleted " + status);
+                    scheduledExecutorService.schedule(() -> {
+                        testIfDeletedOrAwait(descriptors, end).whenComplete((r, e) -> {
+                            if (e != null) {
+                                future.completeExceptionally(e);
+                            } else {
+                                future.complete(r);
+                            }
+                        });
+                    }, 5, TimeUnit.SECONDS);
+                    return future;
                 });
     }
 }
