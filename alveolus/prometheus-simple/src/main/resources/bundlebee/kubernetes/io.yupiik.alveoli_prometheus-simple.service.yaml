@@ -19,7 +19,7 @@ kind: Service
 metadata:
   name: prometheus
   labels:
-    app: prometheus_simple
+    app: prometheus-simple
 spec:
   type: NodePort
   ports:
@@ -29,4 +29,4 @@ spec:
       # cause we want to access on the host the service (for convenience: http://$(minikube ip):32090)
       nodePort: 32090
   selector:
-    app: prometheus_simple
+    app: prometheus-simple

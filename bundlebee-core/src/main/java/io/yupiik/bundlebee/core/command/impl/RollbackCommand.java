@@ -83,6 +83,11 @@ public class RollbackCommand implements Executable {
     private String gracePeriodSeconds;
 
     @Inject
+    @Description("If an integer > 0, how long (ms) to await for the actual deletion of components - before redeploying.")
+    @ConfigProperty(name = "bundlebee.rollback.awaitTimeout", defaultValue = "120000")
+    private String await;
+
+    @Inject
     @Description("" +
             "If `true`, and previous alveolus is not defined on the CLI, we will query the release repository to find available versions. " +
             "If the alveolus name does not match `<groupId>:<artifactId>:<version>[:<type>:<classifier>]` pattern then a heuristic is used instead.")
@@ -147,7 +152,7 @@ public class RollbackCommand implements Executable {
     }
 
     private CompletionStage<?> rollback(final ArchiveReader.Cache cache, final Tuple2<Manifest.Alveolus, Object> v) {
-        return delete.doDelete(cache, v.getFirst(), gracePeriodSeconds)
+        return delete.doDelete(cache, v.getFirst(), gracePeriodSeconds, Integer.parseInt(await))
                 .thenCompose(it -> apply.doApply(true, true, cache, v.getSecond()));
     }
 

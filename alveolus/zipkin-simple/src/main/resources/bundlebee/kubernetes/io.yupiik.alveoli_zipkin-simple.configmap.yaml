@@ -19,7 +19,7 @@ kind: ConfigMap
 metadata:
   name: zipkin-simple-config
   labels:
-    app: zipkin_simple
+    app: zipkin-simple
 data:
   STORAGE_TYPE: "{{zipkin-simple.storageType:-mem}}"
 
