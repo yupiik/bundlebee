@@ -163,6 +163,10 @@ public class AddAlveolusCommand implements Executable {
                 "    metadata:\n" +
                 "      labels:\n" +
                 "        app: " + app + "\n" +
+                "      annotations:\n" +
+                "        prometheus.io/scrape: 'false'\n" +
+                "        prometheus.io/port: '8080'\n" +
+                "        prometheus.io/path: '/metrics'\n" +
                 "    spec:\n" +
                 "      containers:\n" +
                 "        - name: " + app + "\n" +
