@@ -19,7 +19,7 @@ kind: Service
 metadata:
   name: zipkin
   labels:
-    app: zipkin_simple
+    app: zipkin-simple
 spec:
   type: NodePort
   ports:
@@ -29,4 +29,4 @@ spec:
       # cause we want to access on the host the service (for convenience: http://$(minikube ip):31411)
       nodePort: 31411
   selector:
-    app: zipkin_simple
+    app: zipkin-simple

@@ -65,6 +65,11 @@ public class DeleteCommand implements Executable {
     private String gracePeriodSeconds;
 
     @Inject
+    @Description("If an integer > 0, how long (ms) to await for the actual deletion of components, default does not await.")
+    @ConfigProperty(name = "bundlebee.delete.awaitTimeout", defaultValue = UNSET)
+    private String await;
+
+    @Inject
     private KubeClient kube;
 
     @Inject
@@ -90,21 +95,30 @@ public class DeleteCommand implements Executable {
 
     @Override
     public CompletionStage<?> execute() {
-        return internalDelete(from, manifest, alveolus, gracePeriodSeconds, archives.newCache());
+        return internalDelete(from, manifest, alveolus, gracePeriodSeconds, await, archives.newCache());
     }
 
     public CompletionStage<?> internalDelete(final String from, final String manifest, final String alveolus,
-                                             final String gracePeriodSeconds, final ArchiveReader.Cache cache) {
+                                             final String gracePeriodSeconds, final String await,
+                                             final ArchiveReader.Cache cache) {
+        int awaitValue = 0;
+        try {
+            awaitValue = Integer.parseInt(await);
+        } catch (final NumberFormatException nfe) {
+            awaitValue = 0;
+        }
+        final int awaitTimeout = awaitValue;
         return visitor
                 .findRootAlveoli(from, manifest, alveolus)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
-                                .map(it -> doDelete(cache, it, gracePeriodSeconds))
+                                .map(it -> doDelete(cache, it, gracePeriodSeconds, awaitTimeout))
                                 .collect(toList()), toList(),
                         true));
     }
 
-    public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest.Alveolus it, final String gracePeriodSeconds) {
+    public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest.Alveolus it,
+                                       final String gracePeriodSeconds, final int await) {
         final var toDelete = new ArrayList<AlveolusHandler.LoadedDescriptor>();
         return visitor.executeOnAlveolus(
                 "Deleting", it, null,
@@ -123,9 +137,16 @@ public class DeleteCommand implements Executable {
                         descs.stream()
                                 .map(desc -> (Supplier<CompletionStage<?>>) () -> kube.delete(
                                         desc.getContent(), desc.getExtension(),
-                                        UNSET.equals(gracePeriodSeconds) ? -1 : Integer.parseInt(gracePeriodSeconds)))
+                                        UNSET.equals(gracePeriodSeconds) ? -1 : Integer.parseInt(gracePeriodSeconds))
+                                        .thenApply(ignored -> desc))
                                 .collect(toList())
                                 .iterator(),
-                        true));
+                        true))
+                .thenCompose(result -> {
+                    if (await <= 0) {
+                        return completedFuture(result);
+                    }
+                    return completedFuture(result);
+                });
     }
 }

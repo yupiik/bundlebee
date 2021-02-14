@@ -17,25 +17,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prometheus_simple-deployment
+  name: prometheus-simple-deployment
   labels:
-    app: prometheus_simple
+    app: prometheus-simple
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: prometheus_simple
+      app: prometheus-simple
   template:
     metadata:
       labels:
-        app: prometheus_simple
+        app: prometheus-simple
     spec:
       containers:
         - name: prometheus
           image: {{prometheus-simple.image:-quay.io/prometheus/prometheus:v1.0.1}}
           envFrom:
             - configMapRef:
-                name: prometheus_simple-config
+                name: prometheus-simple-config
           ports:
             - containerPort: 9090
           livenessProbe:
