@@ -5,6 +5,12 @@
       "name": "${project.groupId}:${project.artifactId}:${project.version}",
       "descriptors": [
         {
+          "name": "${project.groupId}_${project.artifactId}.clusterrole"
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.clusterrolebinding"
+        },
+        {
           "name": "${project.groupId}_${project.artifactId}.configmap"
         },
         {
