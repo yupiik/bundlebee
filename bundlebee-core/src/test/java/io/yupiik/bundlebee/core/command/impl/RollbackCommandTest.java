@@ -30,8 +30,10 @@ import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import static java.util.logging.Level.INFO;
@@ -60,10 +62,11 @@ class RollbackCommandTest {
                 "Deploying 'RollbackCommandTest.first'\n" +
                 "Applying 's0' (kind=services) for namespace 'default'\n" +
                 "", logs);
-        assertEquals(4, spyingResponseLocator.getFound().size());
+        assertEquals(6, spyingResponseLocator.getFound().size());
     }
 
     private SpyingResponseLocator newSpyingHandler(final TestInfo info) {
+        final Set<String> deleted = new HashSet<>();
         final SpyingResponseLocator locator = new SpyingResponseLocator(
                 info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
             @Override
@@ -73,8 +76,14 @@ class RollbackCommandTest {
                     case "CONNECT":
                         return Optional.empty();
                     case "DELETE":
+                        synchronized (deleted) {
+                            deleted.add(request.uri());
+                        }
                     case "PATCH":
                     case "GET":
+                        if (deleted.contains(request.uri())) {
+                            return Optional.of(new ResponseImpl(Map.of(), 404, request.payload().getBytes(StandardCharsets.UTF_8)));
+                        }
                         return Optional.of(new ResponseImpl(Map.of(), 200, request.payload().getBytes(StandardCharsets.UTF_8)));
                     default:
                         return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));

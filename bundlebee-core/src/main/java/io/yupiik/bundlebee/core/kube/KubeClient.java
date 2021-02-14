@@ -77,6 +77,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collector;
@@ -173,6 +174,31 @@ public class KubeClient {
                                         (baseApi + urlOrPath)))
                         .build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    public CompletionStage<?> exists(final String descriptorContent, final String ext) {
+        final var result = new AtomicBoolean(true);
+        return forDescriptor(null, descriptorContent, ext, desc -> {
+            final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+            final var metadata = desc.getJsonObject("metadata");
+            final var name = metadata.getString("name");
+            final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
+            final var baseUri = baseApi + findApiPrefix(kindLowerCased) +
+                    (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
+                    "/" + kindLowerCased;
+
+            return client.sendAsync(setAuth.apply(
+                    HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
+                            .GET()
+                            .header("Accept", "application/json"))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                    .whenComplete((r, e) -> {
+                        if (r != null && r.statusCode() == 404) {
+                            result.set(false);
+                        }
+                    });
+        }).thenApply(ignored -> result.get());
     }
 
     public CompletionStage<?> apply(final String descriptorContent, final String ext,
