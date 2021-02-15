@@ -83,9 +83,11 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+import static io.yupiik.bundlebee.core.command.Executable.UNSET;
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static java.util.Locale.ROOT;
 import static java.util.Objects.requireNonNull;
+import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.counting;
@@ -122,6 +124,11 @@ public class KubeClient {
     @Description("When kubeconfig is not set the base API endpoint.")
     @ConfigProperty(name = "bundlebee.kube.api", defaultValue = "http://localhost:8080")
     private String baseApi;
+
+    @Inject
+    @Description("When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.")
+    @ConfigProperty(name = "bundlebee.kube.context", defaultValue = UNSET)
+    private String kubeConfigContext;
 
     @Inject
     @Description("Should SSL connector be validated or not.")
@@ -517,15 +524,17 @@ public class KubeClient {
             throw new IllegalArgumentException(e);
         }
 
-        final var currentContext = ofNullable(config.getCurrentContext())
-                .orElseGet(() -> {
-                    if (config.getClusters() == null || config.getClusters().isEmpty()) {
-                        throw new IllegalArgumentException("No current context in " + location + ", ensure to configure kube client please.");
-                    }
-                    final var key = config.getClusters().iterator().next();
-                    log.info(() -> "Will use kube context '" + key + "'");
-                    return key.getName();
-                });
+        final var currentContext = of(kubeConfigContext)
+                .filter(it -> !UNSET.equals(it))
+                .orElseGet(() -> ofNullable(config.getCurrentContext())
+                        .orElseGet(() -> {
+                            if (config.getClusters() == null || config.getClusters().isEmpty()) {
+                                throw new IllegalArgumentException("No current context in " + location + ", ensure to configure kube client please.");
+                            }
+                            final var key = config.getClusters().iterator().next();
+                            log.info(() -> "Will use kube context '" + key + "'");
+                            return key.getName();
+                        }));
 
         final var contextError = "No kube context '" + currentContext + "', ensure to configure kube client please";
         final var context = requireNonNull(
