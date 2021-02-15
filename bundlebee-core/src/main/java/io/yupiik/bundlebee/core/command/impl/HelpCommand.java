@@ -26,9 +26,12 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.CompletionStage;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.joining;
@@ -61,7 +64,7 @@ public class HelpCommand implements Executable {
                 "\n" +
                 "  BundleBee is a light Kubernetes package manager. Available commands:\n" +
                 "\n" +
-                executables.stream()
+                stream(executables)
                         .map(executable -> {
                             final var parameters = findParameters(executable).collect(toList());
                             final var desc = reflowText(executable.description()
@@ -81,6 +84,11 @@ public class HelpCommand implements Executable {
                         .sorted()
                         .collect(joining("\n\n", "", "\n")));
         return completedFuture(null);
+    }
+
+    // functionally we want executables.stream() but maven 3.6 requires this workaround for our maven plugin
+    private Stream<Executable> stream(final Instance<Executable> executables) {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(executables.iterator(), Spliterator.IMMUTABLE), false);
     }
 
     // not perfect impl but sufficient for now
