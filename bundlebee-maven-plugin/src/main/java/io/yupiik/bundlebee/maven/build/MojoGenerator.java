@@ -129,23 +129,23 @@ public final class MojoGenerator {
                                         " */\n" +
                                         "package " + pck + ";\n" +
                                         "\n" +
-                                        "import org.apache.maven.plugin.AbstractMojo;\n" +
                                         "import org.apache.maven.plugins.annotations.Mojo;\n" +
                                         "import org.apache.maven.plugins.annotations.Parameter;\n" +
                                         "\n" +
                                         "import io.yupiik.bundlebee.core.BundleBee;\n" +
+                                        "import io.yupiik.bundlebee.maven.mojo.BaseMojo;\n" +
                                         "\n" +
                                         "/**\n" +
                                         " * " + instance.description().replace("// end of short description\n", "").replace('\n', ' ') + "\n" +
                                         " */\n" +
                                         "@Mojo(name = \"" + name + "\", threadSafe = true /* not strictly true but avoids warning inaccurate for builds */)\n" +
-                                        "public class " + className + " extends AbstractMojo {\n" +
+                                        "public class " + className + " extends BaseMojo {\n" +
                                         sharedParameters.values().stream()
                                                 .collect(joining("\n\n", "", "\n\n")) +
                                         parameterDeclarationPerName.values().stream()
                                                 .collect(joining("\n\n", "", "\n\n")) +
                                         "    @Override\n" +
-                                        "    public void execute() {\n" +
+                                        "    public void doExecute() {\n" +
                                         "        new BundleBee().launch(\n" +
                                         "            \"" + name + "\",\n" +
                                         sharedParameters.keySet().stream()

@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -65,8 +67,10 @@ public final class BundleBee {
 
             boolean foundCommand = false;
             try { // we vetoed all other executable except the one we want
-                final var command = container
-                        .select(Executable.class).stream()
+                final var executables = container.select(Executable.class);
+                final var command = StreamSupport.stream(
+                        // we can just do executables.stream() but maven 3.6 integration would be broken
+                        Spliterators.spliteratorUnknownSize(executables.iterator(), Spliterator.IMMUTABLE), false)
                         .filter(it -> cmd.equals(it.name()))
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("No command " + cmd));
