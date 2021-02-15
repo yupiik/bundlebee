@@ -155,6 +155,7 @@
         <configuration>
           <encoding>UTF-8</encoding>
           <goalPrefix>bundlebee</goalPrefix>
+          <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
         </configuration>
       </plugin>
     </plugins>
