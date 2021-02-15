@@ -279,29 +279,32 @@ public class AlveoliConfigurationGenerator implements Runnable {
                         "NodePort".equals(desc.getJsonObject("spec").getString("type")) &&
                         desc.getJsonObject("spec").containsKey("ports"))
                 .findFirst() // assume there is only one
-                .map(desc -> desc.getJsonObject("spec").getJsonArray("ports"))
-                .map(ports -> "" +
-                        "== Ports\n" +
-                        "\n" +
-                        ports.stream()
-                                .map(JsonValue::asJsonObject)
-                                .map(port -> "" +
-                                        "* Name: `" + (port.containsKey("name") ? toString(port.get("name")) : "default") + "`\n" +
-                                        (port.containsKey("protocol") ? "** Protocol: " + port.getString("protocol") + '\n' : "") +
-                                        (port.containsKey("port") ? "** Port: " + toString(port.get("port")) + '\n' : "") +
-                                        (port.containsKey("targetPort") ? "** Target Port: " + toString(port.get("targetPort")) + '\n' : "") +
-                                        (port.containsKey("nodePort") ? "** Node Port: " + toString(port.get("nodePort")) + '\n' : "")
-                                )
-                                .collect(joining(
-                                        "\n", "",
-                                        ports.stream().anyMatch(it -> it.asJsonObject().containsKey("nodePort")) ?
-                                                "\nTIP: on linux and with minikube you can access this service using `http://$(minikube ip):" +
-                                                        ports.stream()
-                                                                .filter(it -> it.asJsonObject().containsKey("nodePort"))
-                                                                .findFirst()
-                                                                .map(it -> toString(it.asJsonObject().get("nodePort")))
-                                                                .orElseThrow() + "` on your host.\n\n" :
-                                                "\n")))
+                .map(desc -> {
+                    final var ports = desc.getJsonObject("spec").getJsonArray("ports");
+                    final var name = desc.getJsonObject("metadata").getString("name");
+                    return "" +
+                            "== Ports\n" +
+                            "\n" +
+                            ports.stream()
+                                    .map(JsonValue::asJsonObject)
+                                    .map(port -> "" +
+                                            "* Name: `" + (port.containsKey("name") ? name + " (" + toString(port.get("name")) + ")" : name) + "`\n" +
+                                            (port.containsKey("protocol") ? "** Protocol: " + port.getString("protocol") + '\n' : "") +
+                                            (port.containsKey("port") ? "** Port: " + toString(port.get("port")) + '\n' : "") +
+                                            (port.containsKey("targetPort") ? "** Target Port: " + toString(port.get("targetPort")) + '\n' : "") +
+                                            (port.containsKey("nodePort") ? "** Node Port: " + toString(port.get("nodePort")) + '\n' : "")
+                                    )
+                                    .collect(joining(
+                                            "\n", "",
+                                            ports.stream().anyMatch(it -> it.asJsonObject().containsKey("nodePort")) ?
+                                                    "\nTIP: on linux and with minikube you can access this service using `http://$(minikube ip):" +
+                                                            ports.stream()
+                                                                    .filter(it -> it.asJsonObject().containsKey("nodePort"))
+                                                                    .findFirst()
+                                                                    .map(it -> toString(it.asJsonObject().get("nodePort")))
+                                                                    .orElseThrow() + "` on your host.\n\n" :
+                                                    "\n"));
+                })
                 .orElse("");
     }
 
