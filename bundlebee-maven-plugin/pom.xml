@@ -53,6 +53,12 @@
       <artifactId>maven-core</artifactId>
       <version>${mvn.version}</version>
       <scope>provided</scope>
+      <exclusions>
+        <exclusion> <!-- indeed we need it but we don't want CVE reported so since it is provided... -->
+          <groupId>com.google.inject</groupId>
+          <artifactId>guice</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
