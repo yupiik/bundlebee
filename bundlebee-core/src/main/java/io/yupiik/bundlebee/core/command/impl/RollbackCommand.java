@@ -20,6 +20,7 @@ import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.lang.Tuple2;
+import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
 import io.yupiik.bundlebee.core.service.Maven;
@@ -35,8 +36,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -88,6 +92,11 @@ public class RollbackCommand implements Executable {
     private String await;
 
     @Inject
+    @Description("A pause (in ms) between delete and apply phases, this can some environment to release all resources related to deleted components.")
+    @ConfigProperty(name = "bundlebee.rollback.pause", defaultValue = "0")
+    private long pause;
+
+    @Inject
     @Description("" +
             "If `true`, and previous alveolus is not defined on the CLI, we will query the release repository to find available versions. " +
             "If the alveolus name does not match `<groupId>:<artifactId>:<version>[:<type>:<classifier>]` pattern then a heuristic is used instead.")
@@ -114,6 +123,10 @@ public class RollbackCommand implements Executable {
 
     @Inject
     private DeleteCommand delete;
+
+    @Inject
+    @BundleBee
+    private ScheduledExecutorService scheduledExecutorService;
 
     @Override
     public String name() {
@@ -153,6 +166,14 @@ public class RollbackCommand implements Executable {
 
     private CompletionStage<?> rollback(final ArchiveReader.Cache cache, final Tuple2<Manifest.Alveolus, Object> v) {
         return delete.doDelete(cache, v.getFirst(), gracePeriodSeconds, Integer.parseInt(await))
+                .thenCompose(it -> {
+                    if (pause <= 0) {
+                        return completedFuture(it);
+                    }
+                    final var promise = new CompletableFuture<>();
+                    scheduledExecutorService.schedule(() -> promise.complete(it), pause, MILLISECONDS);
+                    return promise;
+                })
                 .thenCompose(it -> apply.doApply(true, true, cache, v.getSecond()));
     }
 
