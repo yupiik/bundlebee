@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Http</title>
+    <title>Bundlebee Maven Plugin</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,59 +51,61 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Http</h1>
+                <h1>Bundlebee Maven Plugin</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
-</div>
-<div class="paragraph">
-<p>Name: <code>http</code>.</p>
+<p>BundleBee command executable from Maven environment.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_configuration">Configuration</h2>
+<h2 id="_goals">Goals</h2>
 <div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">failOnError (<code>BUNDLEBEE_HTTP_FAILONERROR</code>)</dt>
-<dd>
-<p>If <code>true</code>, an exception if thrown if the status is not between 200 and 299 (making the execution a failure). Default value: <code>true</code></p>
-</dd>
-<dt class="hdlist1">headers (<code>BUNDLEBEE_HTTP_HEADERS</code>)</dt>
-<dd>
-<p>Request HTTP headers (in properties format). Default value:</p>
-</dd>
-</dl>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">Accept: application/json
-Content-Type: application/json</code></pre>
-</div>
-</div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">method (<code>BUNDLEBEE_HTTP_METHOD</code>)</dt>
-<dd>
-<p>HTTP verb to use for the request. Default value: <code>GET</code></p>
-</dd>
-<dt class="hdlist1">path (<code>BUNDLEBEE_HTTP_PATH</code>)</dt>
-<dd>
-<p>HTTP request path (optionally with query parameters). You can use the absolute kubernetes URL but if the value does not start with a protocol (<code>http</code> or <code>https</code>) then it will be prefixed by the Kubernetes API base. Default value: <code>/api/</code></p>
-</dd>
-<dt class="hdlist1">payload (<code>BUNDLEBEE_HTTP_PAYLOAD</code>)</dt>
-<dd>
-<p>HTTP payload to use for the request - skipped for method different from <code>PATCH</code>, <code>POST</code> and <code>PUT</code>. Default value: ``</p>
-</dd>
-<dt class="hdlist1">payloadOnly (<code>BUNDLEBEE_HTTP_PAYLOADONLY</code>)</dt>
-<dd>
-<p>If <code>true</code>, only the payload of the response will be logged if successful. Default value: <code>true</code></p>
-</dd>
-</dl>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="add-alveolus.html">add-alveolus</a>: Adds a service to the alveoli available in the defined folder. It is a skaffolding command.</p>
+</li>
+<li>
+<p><a href="apply.html">apply</a>: Apply/deploy a set of descriptors from a root one.</p>
+</li>
+<li>
+<p><a href="build.html">build</a>: Build a project.</p>
+</li>
+<li>
+<p><a href="cipher-password.html">cipher-password</a>: Cipher a password to put it in <code>~/.m2/settings.xml</code> servers (useful for deploy command for example).</p>
+</li>
+<li>
+<p><a href="create-master-password.html">create-master-password</a>: Generate a master password if none exist (in <code>~/.m2/settings-security.xml</code>)</p>
+</li>
+<li>
+<p><a href="delete.html">delete</a>: Delete an alveolus deployment by deleting all related descriptors. <code>bundlebee.delete.propagationPolicy</code> can be set in descriptor(s) metadata to force default CLI behavior for this descriptor.</p>
+</li>
+<li>
+<p><a href="deploy.html">deploy</a>: Build and deploy a project. It inherits from most configuration of build command and adds remote repository settings.</p>
+</li>
+<li>
+<p><a href="http.html">http</a>: Execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
+</li>
+<li>
+<p><a href="inspect.html">inspect</a>: Inspect an alveolus, i.e. list the descriptors to apply.</p>
+</li>
+<li>
+<p><a href="new.html">new</a>: Creates a new project.</p>
+</li>
+<li>
+<p><a href="rollback.html">rollback</a>: Rollback an alveolus deployment.  The strategy is the following one:  * Load current alveolus (recursively) to list all descriptors in "current" version * Find previous version if not explicit (by choosing the first previous on in the list of available version on maven repository) * Run delete command for current version * Run apply command for previous version  IMPORTANT: this command only uses releases when it guesses the versions, it does not handles SNAPSHOTs. If you want to rollback to a snapshot, ensure to configure <code>previous*</code> properties.  TIP: this is equivalent to <code>apply</code> and <code>delete</code> commands successfully. For now it is recommended to do both manually.</p>
+</li>
+<li>
+<p><a href="version.html">version</a>: Shows the application version.</p>
+</li>
+<li>
+<p><a href="versions.html">versions</a>: List versions for an artifact to know which ones are available.</p>
+</li>
+</ul>
 </div>
 </div>
 </div>

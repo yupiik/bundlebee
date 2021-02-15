@@ -45,6 +45,7 @@
                 <li><a href="//yupiik.github.io/bundlebee/how-it-works.html"><i class="fas fa-car-battery"></i> How it works</a></li>
                 <li><a href="//yupiik.github.io/bundlebee/commands.html"><i class="fas fa-terminal"></i> Commands</a></li>
                 <li><a href="//yupiik.github.io/bundlebee/alveoli.html"><i class="fas fa-puzzle-piece"></i> Alveoli</a></li>
+                <li><a href="//yupiik.github.io/bundlebee/maven-plugin.html"><i class="fas fa-building"></i> Maven Plugin</a></li>
             </ul>
         </div>
 
@@ -71,6 +72,10 @@
 <dt class="hdlist1">alveolus (<code>BUNDLEBEE_INSPECT_ALVEOLUS</code>)</dt>
 <dd>
 <p>Alveolus name to inspect. When set to <code>auto</code>, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
+</dd>
+<dt class="hdlist1">descriptor (<code>BUNDLEBEE_INSPECT_DESCRIPTOR</code>)</dt>
+<dd>
+<p>If set only this descriptor is logged, not that you can use a regex if you make the value prefixed with <code>r/</code>. Note it generally only makes sense with verbose option.</p>
 </dd>
 <dt class="hdlist1">from (<code>BUNDLEBEE_INSPECT_FROM</code>)</dt>
 <dd>

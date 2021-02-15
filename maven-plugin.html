@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Http</title>
+    <title>BundleBee Maven Plugin</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,59 +51,37 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Http</h1>
+                <h1>BundleBee Maven Plugin</h1>
             </div>
             <div class="page-content-body">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_declaration">Declaration</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>Execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;plugin&gt;
+  &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
+  &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;${bundlebee.version}&lt;/version&gt;
+&lt;/plugin&gt;</code></pre>
 </div>
-<div class="paragraph">
-<p>Name: <code>http</code>.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_configuration">Configuration</h2>
+<h2 id="_mojo">Mojo</h2>
 <div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">failOnError (<code>BUNDLEBEE_HTTP_FAILONERROR</code>)</dt>
-<dd>
-<p>If <code>true</code>, an exception if thrown if the status is not between 200 and 299 (making the execution a failure). Default value: <code>true</code></p>
-</dd>
-<dt class="hdlist1">headers (<code>BUNDLEBEE_HTTP_HEADERS</code>)</dt>
-<dd>
-<p>Request HTTP headers (in properties format). Default value:</p>
-</dd>
-</dl>
+<div class="paragraph">
+<p>All BundleBee <a href="commands.html">commands</a> have their mojo.</p>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">Accept: application/json
-Content-Type: application/json</code></pre>
+<div class="paragraph">
+<p>They are named exactly the same way (i.e. to execute <code>apply</code> command you can run <code>bundlebee:apply</code> mojo).</p>
 </div>
+<div class="paragraph">
+<p>The configuration is the same than the ones of the CLI so you can review the <a href="commands.html">commands</a> documentation or use your IDE completion.</p>
 </div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">method (<code>BUNDLEBEE_HTTP_METHOD</code>)</dt>
-<dd>
-<p>HTTP verb to use for the request. Default value: <code>GET</code></p>
-</dd>
-<dt class="hdlist1">path (<code>BUNDLEBEE_HTTP_PATH</code>)</dt>
-<dd>
-<p>HTTP request path (optionally with query parameters). You can use the absolute kubernetes URL but if the value does not start with a protocol (<code>http</code> or <code>https</code>) then it will be prefixed by the Kubernetes API base. Default value: <code>/api/</code></p>
-</dd>
-<dt class="hdlist1">payload (<code>BUNDLEBEE_HTTP_PAYLOAD</code>)</dt>
-<dd>
-<p>HTTP payload to use for the request - skipped for method different from <code>PATCH</code>, <code>POST</code> and <code>PUT</code>. Default value: ``</p>
-</dd>
-<dt class="hdlist1">payloadOnly (<code>BUNDLEBEE_HTTP_PAYLOADONLY</code>)</dt>
-<dd>
-<p>If <code>true</code>, only the payload of the response will be logged if successful. Default value: <code>true</code></p>
-</dd>
-</dl>
+<div class="paragraph">
+<p>More information on <a href="maven/bundlebee-maven-plugin.html">mojos</a> documentation.</p>
 </div>
 </div>
 </div>

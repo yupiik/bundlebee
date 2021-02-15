@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Http</title>
+    <title>bundlebee:inspect</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,16 +51,56 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Http</h1>
+                <h1>bundlebee:inspect</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
+<p>Inspect an alveolus, i.e. list the descriptors to apply.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_coordinates">Coordinates</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;plugin&gt;
+  &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
+  &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;1.0.1-SNAPSHOT&lt;/version&gt;
+&lt;/plugin&gt;</code></pre>
+</div>
 </div>
 <div class="paragraph">
-<p>Name: <code>http</code>.</p>
+<p>To call this goal from the command line execute: <code>mvn bundlebee:inspect</code>.</p>
+</div>
+<div class="paragraph">
+<p>To bind this goal in the build you can use:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;plugin&gt;
+  &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
+  &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
+  &lt;version&gt;1.0.1-SNAPSHOT&lt;/version&gt;
+  &lt;executions&gt;
+    &lt;execution&gt;
+      &lt;id&gt;my-execution&lt;/id&gt;
+      &lt;goals&gt;
+        &lt;goal&gt;inspect&lt;/goal&gt;
+      &lt;/goals&gt;
+      &lt;configuration&gt;
+        &lt;!-- execution specific configuration come there --&gt;
+      &lt;/configuration&gt;
+    &lt;/execution&gt;
+  &lt;/execitions&gt;
+&lt;/plugin&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can execute this goal particularly with <code>mvn bundlebee:inspect@my-execution</code> command.</p>
 </div>
 </div>
 </div>
@@ -69,39 +109,85 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">failOnError (<code>BUNDLEBEE_HTTP_FAILONERROR</code>)</dt>
+<dt class="hdlist1">alveolus (<code>String</code>)</dt>
 <dd>
-<p>If <code>true</code>, an exception if thrown if the status is not between 200 and 299 (making the execution a failure). Default value: <code>true</code></p>
+<p>Alveolus name to inspect. When set to <code>auto</code>, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code>. Property: <code>${bundlebee.inspect.alveolus}</code>.</p>
 </dd>
-<dt class="hdlist1">headers (<code>BUNDLEBEE_HTTP_HEADERS</code>)</dt>
+<dt class="hdlist1">descriptor (<code>String</code>)</dt>
 <dd>
-<p>Request HTTP headers (in properties format). Default value:</p>
+<p>If set only this descriptor is logged, not that you can use a regex if you make the value prefixed with <code>r/</code>. Note it generally only makes sense with verbose option. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.inspect.descriptor}</code>.</p>
 </dd>
-</dl>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">Accept: application/json
-Content-Type: application/json</code></pre>
-</div>
-</div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">method (<code>BUNDLEBEE_HTTP_METHOD</code>)</dt>
+<dt class="hdlist1">from (<code>String</code>)</dt>
 <dd>
-<p>HTTP verb to use for the request. Default value: <code>GET</code></p>
+<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code>. Property: <code>${bundlebee.inspect.from}</code>.</p>
 </dd>
-<dt class="hdlist1">path (<code>BUNDLEBEE_HTTP_PATH</code>)</dt>
+<dt class="hdlist1">kubeApi (<code>String</code>)</dt>
 <dd>
-<p>HTTP request path (optionally with query parameters). You can use the absolute kubernetes URL but if the value does not start with a protocol (<code>http</code> or <code>https</code>) then it will be prefixed by the Kubernetes API base. Default value: <code>/api/</code></p>
+<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code>. Property: <code>${bundlebee.kube.api}</code>.</p>
 </dd>
-<dt class="hdlist1">payload (<code>BUNDLEBEE_HTTP_PAYLOAD</code>)</dt>
+<dt class="hdlist1">kubeContext (<code>String</code>)</dt>
 <dd>
-<p>HTTP payload to use for the request - skipped for method different from <code>PATCH</code>, <code>POST</code> and <code>PUT</code>. Default value: ``</p>
+<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.kube.context}</code>.</p>
 </dd>
-<dt class="hdlist1">payloadOnly (<code>BUNDLEBEE_HTTP_PAYLOADONLY</code>)</dt>
+<dt class="hdlist1">kubeDefaultPropagationPolicy (<code>String</code>)</dt>
 <dd>
-<p>If <code>true</code>, only the payload of the response will be logged if successful. Default value: <code>true</code></p>
+<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code>. Property: <code>${bundlebee.kube.defaultPropagationPolicy}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeDryRun (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code>. Property: <code>${bundlebee.kube.dryRun}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeNamespace (<code>String</code>)</dt>
+<dd>
+<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code>. Property: <code>${bundlebee.kube.namespace}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeValidateSSL (<code>boolean</code>)</dt>
+<dd>
+<p>Should SSL connector be validated or not. Default value: <code>true</code>. Property: <code>${bundlebee.kube.validateSSL}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeVerbose (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code>. Property: <code>${bundlebee.kube.verbose}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeconfig (<code>String</code>)</dt>
+<dd>
+<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. Default value: <code>auto</code>. Property: <code>${kubeconfig}</code>.</p>
+</dd>
+<dt class="hdlist1">manifest (<code>String</code>)</dt>
+<dd>
+<p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code>. Property: <code>${bundlebee.inspect.manifest}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenCache (<code>String</code>)</dt>
+<dd>
+<p>Where to cache maven dependencies. If set to <code>auto</code>, <code>$HOME/.m2/repository</code> is used. Default value: <code>auto</code>. Property: <code>${bundlebee.maven.cache}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenForceCustomSettingsXml (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code>. Property: <code>${bundlebee.maven.forceCustomSettingsXml}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenHttpConnectTimeout (<code>int</code>)</dt>
+<dd>
+<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code>. Property: <code>${bundlebee.maven.http.connectTimeout}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenPreferCustomSettingsXml (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code>. Property: <code>${bundlebee.maven.preferCustomSettingsXml}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenRepositoriesDownloadsEnabled (<code>boolean</code>)</dt>
+<dd>
+<p>Enables to disable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code>. Property: <code>${bundlebee.maven.repositories.downloads.enabled}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenRepositoriesRelease (<code>String</code>)</dt>
+<dd>
+<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code>. Property: <code>${bundlebee.maven.repositories.release}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenRepositoriesSnapshot (<code>String</code>)</dt>
+<dd>
+<p>Default snapshot repository, not set by default. Default value: <code>unset</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
+</dd>
+<dt class="hdlist1">verbose (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code>, descriptors are logged too. Default value: <code>false</code>. Property: <code>${bundlebee.inspect.verbose}</code>.</p>
 </dd>
 </dl>
 </div>
