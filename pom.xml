@@ -29,6 +29,7 @@
 
   <properties>
     <owb.version>2.0.21</owb.version>
+    <xbean.version>4.18</xbean.version>
 
     <m2.location>${settings.localRepository}</m2.location>
   </properties>
@@ -37,6 +38,7 @@
     <module>bundlebee-core</module>
     <module>bundlebee-documentation</module>
     <module>alveolus</module>
+    <module>bundlebee-maven-plugin</module>
   </modules>
 
   <dependencies>
@@ -54,6 +56,16 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.xbean</groupId>
+        <artifactId>xbean-finder-shaded</artifactId>
+        <version>${xbean.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <plugins>
@@ -157,6 +169,11 @@ under the License.
         </configuration>
       </plugin>
       <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.0.0</version>
+      </plugin>
+      <plugin>
         <groupId>org.sonatype.plugins</groupId>
         <artifactId>nexus-staging-maven-plugin</artifactId>
         <version>1.6.8</version>
@@ -202,6 +219,11 @@ under the License.
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.2.0</version>
       </plugin>
       <plugin><!--  mvn ossindex:audit -->
         <groupId>org.sonatype.ossindex.maven</groupId>
