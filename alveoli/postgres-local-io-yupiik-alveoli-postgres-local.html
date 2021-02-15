@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Inspect</title>
+    <title>io.yupiik.alveoli:postgres-local:1.0.1-SNAPSHOT</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,16 +50,98 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Inspect</h1>
+                <h1>io.yupiik.alveoli:postgres-local:1.0.1-SNAPSHOT</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Inspect an alveolus, i.e. list the descriptors to apply.</p>
+<p>Setup "postgres-local" which runs a PostgreSQL instance usable by other applications.</p>
 </div>
-<div class="paragraph">
-<p>Name: <code>inspect</code>.</p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_maven_dependency">Maven Dependency</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+  &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
+  &lt;artifactId&gt;postgres-local&lt;/artifactId&gt;
+  &lt;version&gt;1.0.1-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_default_configuration">Default Configuration</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">POSTGRES_DB</dt>
+<dd>
+<p><code>{}</code></p>
+</dd>
+<dt class="hdlist1">POSTGRES_USER</dt>
+<dd>
+<p><code>{}</code></p>
+</dd>
+<dt class="hdlist1">POSTGRES_PASSWORD</dt>
+<dd>
+<p><code>{}</code></p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ports">Ports</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Name: <code>default</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Port: 5432</p>
+</li>
+<li>
+<p>Target Port: 5432</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sample_usage">Sample Usage</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+  "alveoli": [
+    {
+      "//": "My alveolus.",
+      "name": "com.company:my-app:1.0.0",
+      "descriptors": [],
+      "dependencies": [
+        {
+          "name": "io.yupiik.alveoli:postgres-local:1.0.1-SNAPSHOT",
+          "location": "io.yupiik.alveoli:postgres-local:1.0.1-SNAPSHOT",
+        }
+      ],
+      "patches": [{
+        "descriptorName": "io.yupiik.alveoli:postgres-local:1.0.1-SNAPSHOT",
+        "interpolate": true
+      }]
+    }
+  ]
+}</code></pre>
+</div>
 </div>
 </div>
 </div>
@@ -68,21 +150,25 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">alveolus (<code>BUNDLEBEE_INSPECT_ALVEOLUS</code>)</dt>
+<dt class="hdlist1">postgres-local.db</dt>
 <dd>
-<p>Alveolus name to inspect. When set to <code>auto</code>, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
+<p>The default database name in the PostgreSQL instance.
+Default value: <code>postgres</code>.</p>
 </dd>
-<dt class="hdlist1">from (<code>BUNDLEBEE_INSPECT_FROM</code>)</dt>
+<dt class="hdlist1">postgres-local.mountPath</dt>
 <dd>
-<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
+<p>Where to persist data - using a hostPath mounting point by default.
+Default value: <code>/data/postgres-local</code>.</p>
 </dd>
-<dt class="hdlist1">manifest (<code>BUNDLEBEE_INSPECT_MANIFEST</code>)</dt>
+<dt class="hdlist1">postgres-local.password</dt>
 <dd>
-<p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
+<p>The default user PostgreSQL password.
+Default value: <code>postgres</code>.</p>
 </dd>
-<dt class="hdlist1">verbose (<code>BUNDLEBEE_INSPECT_VERBOSE</code>)</dt>
+<dt class="hdlist1">postgres-local.username</dt>
 <dd>
-<p>If <code>true</code>, descriptors are logged too. Default value: <code>false</code></p>
+<p>The default user PostgreSQL username.
+Default value: <code>postgres</code>.</p>
 </dd>
 </dl>
 </div>
