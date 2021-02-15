@@ -21,8 +21,10 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.yaml.snakeyaml.Yaml;
 
 import javax.json.JsonObject;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
@@ -35,7 +37,9 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +61,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
 
     @Override
     public void run() {
+        final var yaml = new Yaml();
         try (final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().setProperty("johnzon-.skip-cdi", true))) {
             final var output = sourceBase.resolve("content/alveoli");
             java.nio.file.Files.createDirectories(output);
@@ -65,7 +70,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                     .getParent().getParent().getParent().getParent()
                     .resolve("alveolus");
 
-            final var docs = generateAndReturnLinks(output, alveoliRoot, jsonb);
+            final var docs = generateAndReturnLinks(output, alveoliRoot, jsonb, yaml);
             final var commandsAdoc = output.getParent().resolve("alveoli.adoc");
             java.nio.file.Files.writeString(
                     commandsAdoc,
@@ -88,7 +93,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
         }
     }
 
-    private List<String> generateAndReturnLinks(final Path base, final Path alveolusRoot, final Jsonb jsonb) {
+    private List<String> generateAndReturnLinks(final Path base, final Path alveolusRoot, final Jsonb jsonb, final Yaml yaml) {
         final var links = new ArrayList<String>();
         try {
             Files.walkFileTree(alveolusRoot, new SimpleFileVisitor<>() {
@@ -96,7 +101,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                 public FileVisitResult preVisitDirectory(final Path dir, final BasicFileAttributes attrs) {
                     final var manifest = dir.resolve("target/classes/bundlebee/manifest.json");
                     if (Files.exists(manifest)) {
-                        links.addAll(generateAlveolusDoc(dir.getFileName().toString(), manifest, jsonb, base));
+                        links.addAll(generateAlveolusDoc(dir.getFileName().toString(), manifest, jsonb, yaml, base));
                     }
                     if (!Files.exists(dir.resolve("pom.xml"))) { // no need to go further
                         return FileVisitResult.SKIP_SUBTREE;
@@ -111,7 +116,8 @@ public class AlveoliConfigurationGenerator implements Runnable {
     }
 
     private List<String> generateAlveolusDoc(final String artifactId, final Path manifest,
-                                             final Jsonb jsonb, final Path alveoliOutputBase) {
+                                             final Jsonb jsonb, final Yaml yaml,
+                                             final Path alveoliOutputBase) {
         try {
             final var mfString = Files.readString(manifest, StandardCharsets.UTF_8);
             final var json = jsonb.fromJson(mfString, JsonObject.class); // here we'll keep our internal comments (//)
@@ -135,7 +141,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                                     toAlveolusDoc(
                                             it, manifest.getParent(),
                                             rawAlveolusSpec,
-                                            artifactId, description),
+                                            artifactId, description, jsonb, yaml),
                                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         } catch (final IOException e) {
                             throw new IllegalStateException(e);
@@ -172,7 +178,9 @@ public class AlveoliConfigurationGenerator implements Runnable {
                                  final Path bundleBeeFolder,
                                  final JsonObject rawAlveolusSpec,
                                  final String artifactId,
-                                 final String description) {
+                                 final String description,
+                                 final Jsonb jsonb,
+                                 final Yaml yaml) {
         final var placeholders = findPlaceholders(
                 bundleBeeFolder, alveolus,
                 rawAlveolusSpec.containsKey("placeholdersDoc") ?
@@ -202,6 +210,8 @@ public class AlveoliConfigurationGenerator implements Runnable {
                 "</dependency>\n" +
                 "----\n" +
                 "\n" +
+                addDefaultConfigurationDocIfAny(bundleBeeFolder, alveolus, jsonb, yaml) +
+                addPortsDocIfAny(bundleBeeFolder, alveolus, jsonb, yaml) +
                 "== Sample Usage\n" +
                 "\n" +
                 "[source,json]\n" +
@@ -238,6 +248,78 @@ public class AlveoliConfigurationGenerator implements Runnable {
                                         .map(v -> "Default value: `" + v + "`.")
                                         .orElse("No default value."))
                         .collect(joining("\n\n", "", "\n"));
+    }
+
+    private String addDefaultConfigurationDocIfAny(final Path bundleBeeFolder, final Manifest.Alveolus alveolus, final Jsonb jsonb, final Yaml yaml) {
+        return ofNullable(alveolus.getDescriptors()).stream()
+                .flatMap(Collection::stream)
+                .filter(it -> it.getName().endsWith(".configmap"))
+                .map(desc -> toJson(bundleBeeFolder, jsonb, yaml, desc))
+                .filter(desc -> "ConfigMap".equals(desc.getString("kind")) && desc.containsKey("data"))
+                .findFirst() // assume there is only one
+                .map(desc -> desc.getJsonObject("data"))
+                .map(data -> "" +
+                        "== Default Configuration\n" +
+                        "\n" +
+                        data.entrySet().stream()
+                                .map(e -> new AbstractMap.SimpleImmutableEntry<>(e.getKey(), toString(e.getValue())))
+                                .map(e -> e.getKey() + "::\n" + (e.getValue().contains("\n") ?
+                                        "[source]\n----\n" + e.getValue() + "\n----\n" : ('`' + e.getValue() + '`')))
+                                .collect(joining("\n", "", "\n\n")))
+                .orElse("");
+    }
+
+    private String addPortsDocIfAny(final Path bundleBeeFolder, final Manifest.Alveolus alveolus, final Jsonb jsonb,
+                                    final Yaml yaml) {
+        return ofNullable(alveolus.getDescriptors()).stream()
+                .flatMap(Collection::stream)
+                .filter(it -> it.getName().endsWith(".service"))
+                .map(desc -> toJson(bundleBeeFolder, jsonb, yaml, desc))
+                .filter(desc -> "Service".equals(desc.getString("kind")) &&
+                        "NodePort".equals(desc.getJsonObject("spec").getString("type")) &&
+                        desc.getJsonObject("spec").containsKey("ports"))
+                .findFirst() // assume there is only one
+                .map(desc -> desc.getJsonObject("spec").getJsonArray("ports"))
+                .map(ports -> "" +
+                        "== Ports\n" +
+                        "\n" +
+                        ports.stream()
+                                .map(JsonValue::asJsonObject)
+                                .map(port -> "" +
+                                        "* Name: `" + (port.containsKey("name") ? toString(port.get("name")) : "default") + "`\n" +
+                                        (port.containsKey("protocol") ? "** Protocol: " + port.getString("protocol") + '\n' : "") +
+                                        (port.containsKey("port") ? "** Port: " + toString(port.get("port")) + '\n' : "") +
+                                        (port.containsKey("targetPort") ? "** Target Port: " + toString(port.get("targetPort")) + '\n' : "") +
+                                        (port.containsKey("nodePort") ? "** Node Port: " + toString(port.get("nodePort")) + '\n' : "")
+                                )
+                                .collect(joining(
+                                        "\n", "",
+                                        ports.stream().anyMatch(it -> it.asJsonObject().containsKey("nodePort")) ?
+                                                "\nTIP: on linux and with minikube you can access this service using `http://$(minikube ip):" +
+                                                        ports.stream()
+                                                                .filter(it -> it.asJsonObject().containsKey("nodePort"))
+                                                                .findFirst()
+                                                                .map(it -> toString(it.asJsonObject().get("nodePort")))
+                                                                .orElseThrow() + "` on your host.\n\n" :
+                                                "\n")))
+                .orElse("");
+    }
+
+    private JsonObject toJson(final Path bundleBeeFolder, final Jsonb jsonb, final Yaml yaml, final Manifest.Descriptor desc) {
+        try {
+            return jsonb.fromJson(jsonb.toJson(
+                    yaml.load(Files.readString(bundleBeeFolder.resolve(desc.getType()).resolve(desc.getName() + ".yaml")))),
+                    JsonObject.class);
+        } catch (final IOException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private String toString(final JsonValue json) {
+        if (json.getValueType() == JsonValue.ValueType.STRING) {
+            return JsonString.class.cast(json).getString();
+        }
+        return json.toString();
     }
 
     private List<Placeholder> findPlaceholders(final Path bundleBeeFolder, final Manifest.Alveolus alveolus,
