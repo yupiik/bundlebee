@@ -132,6 +132,10 @@ this is equivalent to <code>apply</code> and <code>delete</code> commands succes
 <dd>
 <p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
 </dd>
+<dt class="hdlist1">pause (<code>BUNDLEBEE_ROLLBACK_PAUSE</code>)</dt>
+<dd>
+<p>A pause (in ms) between delete and apply phases, this can some environment to release all resources related to deleted components. Default value: <code>0</code></p>
+</dd>
 <dt class="hdlist1">previousAlveolus (<code>BUNDLEBEE_ROLLBACK_PREVIOUSALVEOLUS</code>)</dt>
 <dd>
 <p>Alveolus name to install as rollback. Default value: <code>auto</code></p>
