@@ -148,7 +148,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                         }
                         log.info("Created " + target);
                         final var desc = extractShortDescription(Character.toLowerCase(description.charAt(0)) + description.substring(1).trim());
-                        return artifactId + " xref:alveoli/" + fileName + '[' + it.getName() + "]: " + addDotIfNeeded(desc);
+                        return '*' + artifactId + '*' + " (xref:alveoli/" + fileName + '[' + it.getName() + "]): " + addDotIfNeeded(desc);
                     })
                     .collect(toList());
         } catch (final IOException e) {
