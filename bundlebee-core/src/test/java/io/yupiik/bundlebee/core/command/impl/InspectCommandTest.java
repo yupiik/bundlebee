@@ -19,7 +19,6 @@ import io.yupiik.bundlebee.core.BundleBee;
 import io.yupiik.bundlebee.core.test.BundleBeeExtension;
 import io.yupiik.bundlebee.core.test.CommandExecutor;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static java.util.logging.Level.INFO;
@@ -84,6 +83,87 @@ class InspectCommandTest {
                 "      selector:\n" +
                 "        app: s-test\n" +
                 "  - Dependency 'ApplyCommandTest.apply'\n" +
+                "", logs);
+    }
+
+    @Test
+    void inspectVerboseFilterDescriptorName(final CommandExecutor executor) {
+        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+                "inspect", "--alveolus", "ApplyCommandTest.withdep", "--verbose", "true",
+                "--descriptor", "ApplyCommandTest.d2"));
+        assertEquals("" +
+                "Inspection Report for alveolus=ApplyCommandTest.withdep\n" +
+                "\n" +
+                "* Alveolus 'ApplyCommandTest.withdep'\n" +
+                "  > Descriptor 'ApplyCommandTest.d2'\n" +
+                "    apiVersion: v1\n" +
+                "    kind: Service\n" +
+                "    metadata:\n" +
+                "      name: s2\n" +
+                "      labels:\n" +
+                "        app: s-test\n" +
+                "    spec:\n" +
+                "      type: NodePort\n" +
+                "      ports:\n" +
+                "        - port: 1235\n" +
+                "          targetPort: 1235\n" +
+                "      selector:\n" +
+                "        app: s-test\n" +
+                "  - Dependency 'ApplyCommandTest.apply'\n" +
+                "", logs);
+    }
+
+    @Test
+    void inspectVerboseFilterDescriptorRegexMatches(final CommandExecutor executor) {
+        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+                "inspect", "--alveolus", "ApplyCommandTest.withdep", "--verbose", "true",
+                "--descriptor", "r/ApplyCommandTest.d."));
+        assertEquals("" +
+                "Inspection Report for alveolus=ApplyCommandTest.withdep\n" +
+                "\n" +
+                "* Alveolus 'ApplyCommandTest.apply'\n" +
+                "  > Descriptor 'ApplyCommandTest.d1'\n" +
+                "    apiVersion: v1\n" +
+                "    kind: Service\n" +
+                "    metadata:\n" +
+                "      name: s\n" +
+                "      labels:\n" +
+                "        app: s-test\n" +
+                "    spec:\n" +
+                "      type: NodePort\n" +
+                "      ports:\n" +
+                "        - port: 1234\n" +
+                "          targetPort: 1234\n" +
+                "      selector:\n" +
+                "        app: s-test\n" +
+                "\n" +
+                "* Alveolus 'ApplyCommandTest.withdep'\n" +
+                "  > Descriptor 'ApplyCommandTest.d2'\n" +
+                "    apiVersion: v1\n" +
+                "    kind: Service\n" +
+                "    metadata:\n" +
+                "      name: s2\n" +
+                "      labels:\n" +
+                "        app: s-test\n" +
+                "    spec:\n" +
+                "      type: NodePort\n" +
+                "      ports:\n" +
+                "        - port: 1235\n" +
+                "          targetPort: 1235\n" +
+                "      selector:\n" +
+                "        app: s-test\n" +
+                "  - Dependency 'ApplyCommandTest.apply'\n" +
+                "", logs);
+    }
+
+    @Test
+    void inspectVerboseFilterDescriptorRegexNoMatch(final CommandExecutor executor) {
+        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+                "inspect", "--alveolus", "ApplyCommandTest.withdep", "--verbose", "true",
+                "--descriptor", "r/ApplyCommandTest.d.."));
+        assertEquals("" +
+                "Inspection Report for alveolus=ApplyCommandTest.withdep\n" +
+                "\n" +
                 "", logs);
     }
 }

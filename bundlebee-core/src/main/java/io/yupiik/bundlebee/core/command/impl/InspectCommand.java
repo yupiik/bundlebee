@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
@@ -63,6 +65,13 @@ public class InspectCommand implements Executable {
     private String from;
 
     @Inject
+    @Description("" +
+            "If set only this descriptor is logged, not that you can use a regex if you make the value prefixed with `r/`. " +
+            "Note it generally only makes sense with verbose option.")
+    @ConfigProperty(name = "bundlebee.inspect.descriptor", defaultValue = UNSET)
+    private String descriptor;
+
+    @Inject
     @Description("If `true`, descriptors are logged too.")
     @ConfigProperty(name = "bundlebee.inspect.verbose", defaultValue = "false")
     private boolean verbose;
@@ -88,6 +97,7 @@ public class InspectCommand implements Executable {
         final var cache = archives.newCache();
         final var descPerAlveolus = new ConcurrentHashMap<String, List<AlveolusHandler.LoadedDescriptor>>();
         final var alveolusPerName = new ConcurrentHashMap<String, Manifest.Alveolus>();
+        final var filter = createDescriptorFilter();
         return visitor
                 .findRootAlveoli(from, manifest, alveolus)
                 .thenCompose(alveoli -> all(
@@ -95,9 +105,11 @@ public class InspectCommand implements Executable {
                                 .map(it -> visitor.executeOnAlveolus(
                                         null, it, null,
                                         (ctx, desc) -> {
-                                            alveolusPerName.putIfAbsent(ctx.getAlveolus().getName(), ctx.getAlveolus());
-                                            descPerAlveolus.computeIfAbsent(ctx.getAlveolus().getName(), k -> new ArrayList<>())
-                                                    .add(desc);
+                                            if (filter.test(desc.getConfiguration().getName())) {
+                                                alveolusPerName.putIfAbsent(ctx.getAlveolus().getName(), ctx.getAlveolus());
+                                                descPerAlveolus.computeIfAbsent(ctx.getAlveolus().getName(), k -> new ArrayList<>())
+                                                        .add(desc);
+                                            }
                                             return completedFuture(true);
                                         },
                                         cache))
@@ -124,6 +136,16 @@ public class InspectCommand implements Executable {
                                 }
                             });
                 });
+    }
+
+    private Predicate<String> createDescriptorFilter() {
+        if (UNSET.equals(descriptor) || descriptor.isBlank()) {
+            return s -> true;
+        }
+        if (descriptor.startsWith("r/")) {
+            return Pattern.compile(descriptor.substring("r/".length())).asMatchPredicate();
+        }
+        return s -> descriptor.equals(s);
     }
 
     private Stream<String> toLogs(final Manifest.Alveolus alveolus,

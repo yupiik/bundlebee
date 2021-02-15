@@ -31,12 +31,18 @@
     <dependency>
       <groupId>org.apache.xbean</groupId>
       <artifactId>xbean-finder-shaded</artifactId>
-      <version>4.18</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bundlebee-core</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency> <!-- for the reactor -->
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-maven-plugin</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+      <optional>true</optional>
     </dependency>
 
     <!-- alveoli to ensure reactor is correct -->
@@ -80,6 +86,14 @@
             &lt;/script&gt;
           </customScripts>
           <preActions>
+            <action>
+              <type>maven-plugin</type>
+              <configuration>
+                <pluginXml>${project.parent.basedir}/bundlebee-maven-plugin/target/classes/META-INF/maven/plugin.xml</pluginXml>
+                <toBase>${project.basedir}/src/main/minisite/content/maven</toBase>
+                <description>BundleBee command executable from Maven environment.</description>
+              </configuration>
+            </action>
             <action>
               <type>io.yupiik.bundlebee.documentation.ConfigurationGenerator</type>
               <configuration>

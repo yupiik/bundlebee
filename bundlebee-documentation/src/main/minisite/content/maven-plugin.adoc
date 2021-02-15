@@ -1,0 +1,26 @@
+= BundleBee Maven Plugin
+:minisite-index: 500
+:minisite-index-title: Maven Plugin
+:minisite-index-description: Run bundlebee commands from Maven.
+:minisite-index-icon: building
+
+== Declaration
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.yupiik</groupId>
+  <artifactId>bundlebee-maven-plugin</artifactId>
+  <version>${bundlebee.version}</version>
+</plugin>
+----
+
+== Mojo
+
+All BundleBee xref:commands.adoc[commands] have their mojo.
+
+They are named exactly the same way (i.e. to execute `apply` command you can run `bundlebee:apply` mojo).
+
+The configuration is the same than the ones of the CLI so you can review the xref:commands.adoc[commands] documentation or use your IDE completion.
+
+More information on xref:maven/bundlebee-maven-plugin.adoc[mojos] documentation.
