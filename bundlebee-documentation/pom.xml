@@ -66,6 +66,11 @@
       <artifactId>prometheus-simple</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>loki-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

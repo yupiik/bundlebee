@@ -34,6 +34,7 @@
     <module>elasticsearch-local</module>
     <module>zipkin-simple</module>
     <module>prometheus-simple</module>
+    <module>loki-simple</module>
   </modules>
 
   <build>
