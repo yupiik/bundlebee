@@ -111,6 +111,29 @@ public final class MojoGenerator {
                         final var className = toClassName(name) + "Mojo";
                         final var mojo = output.resolve(pck.replace('.', '/') + '/' + className + ".java");
                         Files.createDirectories(mojo.getParent());
+
+                        final var skipSharedConfig = skipSharedConfig(name);
+
+                        final var sharedConfigParameters = skipSharedConfig ?
+                                "" :
+                                sharedParameters.keySet().stream()
+                                        .flatMap(k -> Stream.of("\"--" + k + "\"", "String.valueOf(" + fromParameterToFieldName(k) + ")"))
+                                        .collect(joining(",\n            ", "            ", ""));
+
+                        final var specificParameters = parameterDeclarationPerName.keySet().stream()
+                                .flatMap(k -> {
+                                    final var simpleName = prefix.matcher(k).replaceAll("");
+                                    return Stream.of("\"--" + simpleName + "\"", "String.valueOf(" + simpleName + ")");
+                                })
+                                .collect(joining(",\n            ", "            ", ""));
+
+                        final var launchArgs = Stream.of(
+                                "            \"" + name + "\"",
+                                sharedConfigParameters,
+                                specificParameters)
+                                .filter(it -> !it.isBlank())
+                                .collect(joining(",\n"));
+
                         Files.writeString(
                                 mojo,
                                 "/*\n" +
@@ -141,24 +164,14 @@ public final class MojoGenerator {
                                         " */\n" +
                                         "@Mojo(name = \"" + name + "\", threadSafe = true /* not strictly true but avoids warning inaccurate for builds */)\n" +
                                         "public class " + className + " extends BaseMojo {\n" +
-                                        sharedParameters.values().stream()
-                                                .collect(joining("\n\n", "", "\n\n")) +
+                                        (skipSharedConfig ? "" : sharedParameters.values().stream()
+                                                .collect(joining("\n\n", "", "\n\n"))) +
                                         parameterDeclarationPerName.values().stream()
                                                 .collect(joining("\n\n", "", "\n\n")) +
                                         "    @Override\n" +
                                         "    public void doExecute() {\n" +
                                         "        new BundleBee().launch(\n" +
-                                        "            \"" + name + "\",\n" +
-                                        sharedParameters.keySet().stream()
-                                                .flatMap(k -> Stream.of("\"--" + k + "\"", "String.valueOf(" + fromParameterToFieldName(k) + ")"))
-                                                .collect(joining(",\n            ", "            ", "")) +
-                                        (!parameterDeclarationPerName.isEmpty() ? ",\n" : "") +
-                                        parameterDeclarationPerName.keySet().stream()
-                                                .flatMap(k -> {
-                                                    final var simpleName = prefix.matcher(k).replaceAll("");
-                                                    return Stream.of("\"--" + simpleName + "\"", "String.valueOf(" + simpleName + ")");
-                                                })
-                                                .collect(joining(",\n            ", "            ", "")) + ");\n" +
+                                        launchArgs + ");\n" +
                                         "    }\n" +
                                         "}" +
                                         "\n",
@@ -212,5 +225,15 @@ public final class MojoGenerator {
             }
         }
         return out.toString();
+    }
+
+    // see io.yupiik.bundlebee.documentation.CommandConfigurationGenerator.skipSharedConfig
+    private static boolean skipSharedConfig(final String name) {
+        return "add-alveolus".equals(name) ||
+                "build".equals(name) ||
+                "cipher-password".equals(name) ||
+                "create-master-password".equals(name) ||
+                "new".equals(name) ||
+                "version".equals(name);
     }
 }
