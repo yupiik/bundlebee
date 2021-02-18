@@ -48,8 +48,8 @@ public class HelpCommand implements Executable {
     private BeanManager beanManager;
 
     @Inject
-    @Description("Which command to show help for.")
-    @ConfigProperty(name = "bundlebee.help.command", defaultValue = "")
+    @Description("Which command to show help for. If not set it will show all commands.")
+    @ConfigProperty(name = "bundlebee.help.command", defaultValue = UNSET)
     private String command;
 
     @Override
@@ -59,7 +59,7 @@ public class HelpCommand implements Executable {
 
     @Override
     public String description() {
-        return "Print help.";
+        return "Print help for all available commands.";
     }
 
     @Override
@@ -70,11 +70,12 @@ public class HelpCommand implements Executable {
                 "  BundleBee is a light Kubernetes package manager. Available commands:\n" +
                 "\n" +
                 stream(executables)
-                        .filter(it -> command.isBlank() || command.equals(it.name()))
+                        .filter(it -> UNSET.equals(command) || command.equals(it.name()))
                         .map(executable -> {
                             final var parameters = findParameters(executable).collect(toList());
-                            final var desc = reflowText(executable.description()
-                                    .replace("// end of short description\n", ""), "        ") +
+                            final var description = executable.description();
+                            final int end = description.indexOf("\n//");
+                            final var desc = reflowText(end > 0 ? description.substring(0, end) : description, "        ") +
                                     (parameters.isEmpty() ? "" : "\n");
                             return "" +
                                     "  [] " + executable.name() + ": " +

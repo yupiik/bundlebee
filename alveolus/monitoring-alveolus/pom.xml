@@ -27,5 +27,5 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>monitoring-alveolus</artifactId>
-  <name>BundleBee :: Alveolus :: Zipkin Simple</name>
+  <name>BundleBee :: Alveolus :: Monitoring</name>
 </project>
