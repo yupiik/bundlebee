@@ -88,7 +88,7 @@
       <plugin> <!-- mvn [compile] yupiik-tools:serve-minisite -e -->
         <groupId>io.yupiik.maven</groupId>
         <artifactId>yupiik-tools-maven-plugin</artifactId>
-        <version>1.0.5</version>
+        <version>1.0.6-SNAPSHOT</version>
         <configuration>
           <siteBase>//yupiik.github.io/bundlebee</siteBase>
           <logoText>Yupiik BundleBee</logoText>

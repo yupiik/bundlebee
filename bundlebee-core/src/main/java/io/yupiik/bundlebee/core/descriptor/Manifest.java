@@ -106,9 +106,9 @@ public class Manifest {
                 "Note it will ensure the jar is present on the local maven repository.")
         private String location;
 
-        @Description("Conditions to ignore this dependency. " +
+        @Description("Conditions to include this dependency. " +
                 "Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)")
-        private Conditions ignoreIf;
+        private Conditions includeIf;
     }
 
     @Data
@@ -130,8 +130,8 @@ public class Manifest {
                 "You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`.")
         private boolean interpolate;
 
-        @Description("Conditions to ignore this descriptor.")
-        private Conditions ignoreIf;
+        @Description("Conditions to include this descriptor.")
+        private Conditions includeIf;
     }
 
     @Data
