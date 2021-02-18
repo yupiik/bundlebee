@@ -1,0 +1,66 @@
+#
+# Copyright (c) 2021 - Yupiik SAS - https://www.yupiik.com
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-simple-deployment
+  labels:
+    app: grafana-simple
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana-simple
+  template:
+    metadata:
+      labels:
+        app: grafana-simple
+    spec:
+      volumes:
+        - name: dashboard
+          configMap:
+            name: grafana-simple-dashboard-config
+        - name: config
+          configMap:
+            name: grafana-simple-config
+      containers:
+        - name: grafana
+          image: {{grafana-simple.image:-grafana/grafana:7.4.2}}
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: "admin"
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: "admin"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/grafana/
+            - name: dashboard
+              mountPath: /etc/grafana/provisioning/datasources/
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10

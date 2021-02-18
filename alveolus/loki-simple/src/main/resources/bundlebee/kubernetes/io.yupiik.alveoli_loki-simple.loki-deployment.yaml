@@ -42,8 +42,5 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/loki
-          envFrom:
-            - configMapRef:
-                name: loki-config
           ports:
             - containerPort: 3100
