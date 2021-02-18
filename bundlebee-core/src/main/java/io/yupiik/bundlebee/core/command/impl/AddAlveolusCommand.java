@@ -66,6 +66,11 @@ public class AddAlveolusCommand implements Executable {
     private String type;
 
     @Inject
+    @Description("If `false`, generated files already existing will be skipped.")
+    @ConfigProperty(name = "bundlebee.add-alveolus.overwrite", defaultValue = "false")
+    private boolean overwrite;
+
+    @Inject
     @BundleBee
     private Jsonb jsonb;
 
@@ -133,7 +138,7 @@ public class AddAlveolusCommand implements Executable {
     }
 
     private void addConfigMap(final Path k8sFolder, final String descPrefix, final String app) throws IOException {
-        log.info("Created " + Files.writeString(k8sFolder.resolve(descPrefix + "configmap.yaml"), "" +
+        log.info("Created " + writeString(k8sFolder.resolve(descPrefix + "configmap.yaml"), "" +
                 "apiVersion: v1\n" +
                 "kind: ConfigMap\n" +
                 "metadata:\n" +
@@ -147,7 +152,7 @@ public class AddAlveolusCommand implements Executable {
     }
 
     private void addDeployment(final Path k8sFolder, final String descPrefix, final String app) throws IOException {
-        log.info("Created " + Files.writeString(k8sFolder.resolve(descPrefix + "deployment.yaml"), "" +
+        log.info("Created " + writeString(k8sFolder.resolve(descPrefix + "deployment.yaml"), "" +
                 "apiVersion: apps/v1\n" +
                 "kind: Deployment\n" +
                 "metadata:\n" +
@@ -193,7 +198,7 @@ public class AddAlveolusCommand implements Executable {
     }
 
     private void addService(final Path k8sFolder, final String descPrefix, final String app) throws IOException {
-        log.info("Created " + Files.writeString(k8sFolder.resolve(descPrefix + "service.yaml"), "" +
+        log.info("Created " + writeString(k8sFolder.resolve(descPrefix + "service.yaml"), "" +
                 "apiVersion: v1\n" +
                 "kind: Service\n" +
                 "metadata:\n" +
@@ -211,6 +216,14 @@ public class AddAlveolusCommand implements Executable {
                 "  selector:\n" +
                 "    app: " + app + "\n" +
                 "", StandardOpenOption.CREATE));
+    }
+
+    private String writeString(final Path to, final String what, final StandardOpenOption... opts) throws IOException {
+        if (!overwrite && Files.exists(to)) {
+            log.info("Skipping " + to + " since it already exists and overwrite=false");
+            return to.toString();
+        }
+        return Files.writeString(to, what, opts).toString();
     }
 
 }
