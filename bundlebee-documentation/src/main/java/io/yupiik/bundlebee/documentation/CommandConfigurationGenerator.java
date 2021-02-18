@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.documentation;
 
 import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.configuration.Description;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.java.Log;
 import org.apache.xbean.finder.AnnotationFinder;
@@ -76,6 +77,16 @@ public class CommandConfigurationGenerator implements Runnable {
 
     private List<Map.Entry<Path, String>> generate(final Path base, final AnnotationFinder finder) {
         final var formatter = new DocEntryFormatter();
+        final var sharedConfigDoc = "\n=== Inherited Global Configuration\n" +
+                "\n" +
+                "TIP: for these configurations, don't hesitate to use `~/.bundlebeerc` or `--config-file <path to config>` (just remove the `--` prefix from option keys).\n" +
+                "\n" +
+                finder.findAnnotatedFields(ConfigProperty.class).stream()
+                        .filter(it -> it.isAnnotationPresent(Description.class))
+                        .filter(it -> !it.getDeclaringClass().getName().startsWith("io.yupiik.bundlebee.core.command."))
+                        .map(it -> formatter.format(it, k -> "--" + k))
+                        .sorted() // by key name to ensure it is deterministic
+                        .collect(joining("\n\n")) + '\n';
         return finder.enableFindImplementations().findImplementations(Executable.class).stream()
                 .filter(it -> !Modifier.isAbstract(it.getModifiers()) && !it.isInterface())
                 .map(command -> {
@@ -84,7 +95,7 @@ public class CommandConfigurationGenerator implements Runnable {
                         final var name = instance.name();
                         final var prefix = Pattern.compile("^bundlebee\\." + name + "\\."); // see io.yupiik.bundlebee.core.BundleBee.toProperties
                         final var config = new ClassFinder(command).findAnnotatedFields(ConfigProperty.class).stream()
-                                .map(it -> formatter.format(it, k -> prefix.matcher(k).replaceAll("")))
+                                .map(it -> formatter.format(it, k -> "--" + prefix.matcher(k).replaceAll("")))
                                 .sorted() // by key name to ensure it is deterministic
                                 .collect(joining("\n\n"));
                         final var conf = base.resolve(name + ".configuration.adoc");
@@ -99,7 +110,8 @@ public class CommandConfigurationGenerator implements Runnable {
                                         "\n" +
                                         "== Configuration\n" +
                                         "\n" +
-                                        (config.isEmpty() ? "No configuration." : config) + "\n",
+                                        (config.isEmpty() ? "No configuration." : config) + "\n" +
+                                        (skipSharedConfig(name) ? "" : sharedConfigDoc),
                                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         log.info("Created " + conf);
                         final int end = description.indexOf("\n//");
@@ -111,5 +123,13 @@ public class CommandConfigurationGenerator implements Runnable {
                     }
                 })
                 .collect(toList());
+    }
+
+    private boolean skipSharedConfig(final String name) {
+        return "build".equals(name) ||
+                "cipher-password".equals(name) ||
+                "create-master-password".equals(name) ||
+                "new".equals(name) ||
+                "version".equals(name);
     }
 }
