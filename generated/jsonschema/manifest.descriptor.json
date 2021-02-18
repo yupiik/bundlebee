@@ -7,8 +7,8 @@
     "io_yupiik_bundlebee_core_descriptor_Manifest_Conditions":{
       "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
       "type":"object",
-      "title":"Descriptor.ignoreIf",
-      "description":"Conditions to ignore this descriptor.",
+      "title":"Descriptor.includeIf",
+      "description":"Conditions to include this descriptor.",
       "properties":{
         "conditions":{
           "type":"array",
@@ -78,11 +78,11 @@
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency",
               "type":"object",
               "properties":{
-                "ignoreIf":{
+                "includeIf":{
                   "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
                   "type":"object",
-                  "title":"AlveolusDependency.ignoreIf",
-                  "description":"Conditions to ignore this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
+                  "title":"AlveolusDependency.includeIf",
+                  "description":"Conditions to include this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
                 },
                 "location":{
                   "type":"string",
@@ -105,11 +105,11 @@
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
               "type":"object",
               "properties":{
-                "ignoreIf":{
+                "includeIf":{
                   "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
                   "type":"object",
-                  "title":"Descriptor.ignoreIf",
-                  "description":"Conditions to ignore this descriptor.",
+                  "title":"Descriptor.includeIf",
+                  "description":"Conditions to include this descriptor.",
                   "properties":{
                     "conditions":{
                       "type":"array",

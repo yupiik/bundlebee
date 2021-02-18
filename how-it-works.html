@@ -235,10 +235,10 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">Alveolus name.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.ignoreIf</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ignoreIf</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.includeIf</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>includeIf</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">object</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Conditions to ignore this dependency. Enables for example to have an environment variable enabling part of the stack (ex: <code>MONITORING=true</code>)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Conditions to include this dependency. Enables for example to have an environment variable enabling part of the stack (ex: <code>MONITORING=true</code>)</p></td>
 </tr>
 </tbody>
 </table>
@@ -290,21 +290,21 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">Type of this descriptor. For now only <code>kubernetes</code> is supported. It also defines in which folder under <code>bundlebee</code> the descriptor(s) are looked for from its name.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.ignoreIf</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ignoreIf</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.includeIf</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>includeIf</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">object</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Conditions to ignore this descriptor.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Conditions to include this descriptor.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect3">
-<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.ignoreIf</h4>
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.includeIf</h4>
 <div class="paragraph">
-<p>Conditions to ignore this descriptor.</p>
+<p>Conditions to include this descriptor.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 5. Descriptor.ignoreIf</caption>
+<caption class="title">Table 5. Descriptor.includeIf</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -444,8 +444,8 @@ It provides the unique identifier of your recipe (application/library) and what 
     "io_yupiik_bundlebee_core_descriptor_Manifest_Conditions":{
       "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
       "type":"object",
-      "title":"Descriptor.ignoreIf",
-      "description":"Conditions to ignore this descriptor.",
+      "title":"Descriptor.includeIf",
+      "description":"Conditions to include this descriptor.",
       "properties":{
         "conditions":{
           "type":"array",
@@ -515,11 +515,11 @@ It provides the unique identifier of your recipe (application/library) and what 
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency",
               "type":"object",
               "properties":{
-                "ignoreIf":{
+                "includeIf":{
                   "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
                   "type":"object",
-                  "title":"AlveolusDependency.ignoreIf",
-                  "description":"Conditions to ignore this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
+                  "title":"AlveolusDependency.includeIf",
+                  "description":"Conditions to include this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
                 },
                 "location":{
                   "type":"string",
@@ -542,11 +542,11 @@ It provides the unique identifier of your recipe (application/library) and what 
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
               "type":"object",
               "properties":{
-                "ignoreIf":{
+                "includeIf":{
                   "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
                   "type":"object",
-                  "title":"Descriptor.ignoreIf",
-                  "description":"Conditions to ignore this descriptor.",
+                  "title":"Descriptor.includeIf",
+                  "description":"Conditions to include this descriptor.",
                   "properties":{
                     "conditions":{
                       "type":"array",
@@ -782,6 +782,52 @@ For that you can use <code>descriptor.patches</code> in the manifest which will 
 </td>
 <td class="content">
 this mecanism is very useful for <code>ConfigMap</code> descriptors but also <code>PersistenceVolume</code> since you can now patch `/spec/hostPath `easily too.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_deploy_a_dependency_or_descriptor_conditionally">Deploy a dependency (or descriptor) conditionally</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In some case it can be neat to be able to not deploy part of the stack.
+It is typically the case when you wrote a monitoring-full alveolus (ie with some optional services functionally).
+In such a case you can condition dependencies and descriptor deployment:</p>
+</div>
+<div class="listingblock">
+<div class="title">Deploy monitoring alveolus only if MONITORING option is set</div>
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+  "alveoli": [
+    {
+      "name": "com.company.alveoli:my-app:${project.version}",
+      "dependencies": [
+        {
+          "name": "io.yupiik.alveoli:monitoring-alveolus:${version}",
+          "location": "io.yupiik.alveoli:monitoring-alveolus:${version}",
+          "includeIf": {
+            "conditions": [{
+              "key": "MONITORING",
+              "value": "true"
+            }]
+          }
+        }
+      ]
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+used on descriptors and using a complete set of conditions for descriptors you can handle environments this way (<code>ENV=preprod</code> for descriptor <code>preprod.configmap</code> for example).
 </td>
 </tr>
 </table>
