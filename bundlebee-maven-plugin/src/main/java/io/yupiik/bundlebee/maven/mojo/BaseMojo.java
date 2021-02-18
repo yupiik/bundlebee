@@ -18,6 +18,7 @@ package io.yupiik.bundlebee.maven.mojo;
 import lombok.RequiredArgsConstructor;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
+import org.apache.maven.plugins.annotations.Parameter;
 
 import java.util.MissingResourceException;
 import java.util.logging.Handler;
@@ -32,6 +33,12 @@ import static java.util.stream.Collectors.toList;
  * Enables to have some global extension points - to change the classloader for ex.
  */
 public abstract class BaseMojo extends AbstractMojo {
+    /**
+     * Skip execution.
+     */
+    @Parameter(property = "bundlebee.skip", defaultValue = "false")
+    private boolean skip;
+
     protected abstract void doExecute();
 
     @Override
@@ -40,6 +47,10 @@ public abstract class BaseMojo extends AbstractMojo {
                 setupLogger("org.apache.webbeans", Level.WARNING),
                 setupLogger("io.yupiik.bundlebee", Level.INFO))
                 .collect(toList());
+        if (skip) {
+            getLog().info(getClass().getName() + " execution skippedsk");
+            return;
+        }
         try {
             doExecute();
         } finally {
