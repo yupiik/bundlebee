@@ -184,6 +184,27 @@
               }
             }
           },
+          "excludedDescriptors":{
+            "type":"array",
+            "title":"Alveolus.excludedDescriptors",
+            "description":"List of descriptors to ignore for this alveolus (generally coming from dependencies).",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef",
+              "type":"object",
+              "properties":{
+                "location":{
+                  "type":"string",
+                  "title":"DescriptorRef.location",
+                  "description":"The container of the descriptor (maven coordinates generally)."
+                },
+                "name":{
+                  "type":"string",
+                  "title":"DescriptorRef.name",
+                  "description":"Name of the descriptor (as declared, ie potentially without the extension)."
+                }
+              }
+            }
+          },
           "name":{
             "type":"string",
             "title":"Alveolus.name",

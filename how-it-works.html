@@ -192,6 +192,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of descriptors to install for this alveolus. This is required even if an empty array.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef">Alveolus.excludedDescriptors</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>excludedDescriptors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of descriptors to ignore for this alveolus (generally coming from dependencies).</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Patch">Alveolus.patches</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>patches</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
@@ -385,12 +391,49 @@ It provides the unique identifier of your recipe (application/library) and what 
 </table>
 </div>
 <div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef">Alveolus.excludedDescriptors</h4>
+<div class="paragraph">
+<p>List of descriptors to ignore for this alveolus (generally coming from dependencies).</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 7. Alveolus.excludedDescriptors</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">location</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>location</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The container of the descriptor (maven coordinates generally).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the descriptor (as declared, ie potentially without the extension).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
 <h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_Patch">Alveolus.patches</h4>
 <div class="paragraph">
 <p>Patches on descriptors. It enables to inject configuration in descriptors by patching (using JSON-Patch or plain interpolation with <code>${key}</code> values) their JSON representation. The key is the descriptor name and each time the descriptor is found it will be applied.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 7. Alveolus.patches</caption>
+<caption class="title">Table 8. Alveolus.patches</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -617,6 +660,27 @@ It provides the unique identifier of your recipe (application/library) and what 
                   "type":"string",
                   "title":"Descriptor.type",
                   "description":"Type of this descriptor. For now only `kubernetes` is supported. It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name."
+                }
+              }
+            }
+          },
+          "excludedDescriptors":{
+            "type":"array",
+            "title":"Alveolus.excludedDescriptors",
+            "description":"List of descriptors to ignore for this alveolus (generally coming from dependencies).",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef",
+              "type":"object",
+              "properties":{
+                "location":{
+                  "type":"string",
+                  "title":"DescriptorRef.location",
+                  "description":"The container of the descriptor (maven coordinates generally)."
+                },
+                "name":{
+                  "type":"string",
+                  "title":"DescriptorRef.name",
+                  "description":"Name of the descriptor (as declared, ie potentially without the extension)."
                 }
               }
             }
@@ -869,6 +933,81 @@ Even if not recommended it can be done using <code>{{xxx}}</code> placeholders -
     --project.version 1.2.1 \
     --bundlebee.version 1.0.1</code></pre>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_windows_and_cli">Windows and CLI</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>On windows, the usage of the Java mode is recommended and the most reliable, however, if you want to speed up a bit the execution you can run the native bundlebee executable in a docker image.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+ensure to test this solution <strong>on your machine</strong>, on our test machine gain can be x2 but it depends the docker setup too.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Once done you would be able to replace <code>bundlebee</code> by <code>docker run bundlebee -v $HOME/.kube/config:/kube/config -e KUBECONFIG=/kube/config --network host</code> (use an alias ;)).</p>
+</div>
+<div class="paragraph">
+<p>Here are the step to use this solution:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Download bundlebee native binary, for that go on <a href="https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/" class="bare">https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/</a>, select the version you want and download the file ending with <code>Linux-amd64</code>,</p>
+</li>
+<li>
+<p>Create this <code>Dockerfile</code> file next to the binary you just downloaded and renamed <code>bundlebee</code>:</p>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="dockerfile" class="language-dockerfile hljs">FROM ubuntu:20.10 as builder
+
+RUN apt-get update &amp;&amp; apt-get install -y zlib1g libgcc-s1 libstdc++6
+
+FROM scratch
+
+ENV LD_LIBRARY_PATH /lib
+
+COPY --from=builder /lib/x86_64-linux-gnu/libc.so.6 /lib/libc.so.6
+COPY --from=builder /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib/libgcc_s.so.1
+COPY --from=builder /lib/x86_64-linux-gnu/libstdc++.so.6.0.28 /lib/libstdc++.so.6
+COPY --from=builder /lib/x86_64-linux-gnu/libpthread.so.0 /lib/libpthread.so.0
+COPY --from=builder /lib/x86_64-linux-gnu/libdl.so.2 /lib/libdl.so.2
+COPY --from=builder /lib/x86_64-linux-gnu/libm.so.6 /lib/libm.so.6
+COPY --from=builder /lib/x86_64-linux-gnu/libz.so.1 /lib/libz.so.1
+COPY --from=builder /lib64/ld-linux-x86-64.so.2 /lib/ld-linux
+
+COPY bundlebee-core /bin/bundlebee-core
+
+CMD ["/lib/ld-linux", "/bin/bundlebee-core"]</code></pre>
+</div>
+</div>
+</li>
+<li>
+<p>Run <code>docker build -t bundlebee .</code> in the folder you put <code>bundlebee</code> binary and previous <code>Dockerfile</code></p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+this dockerfile works as of today because binaries are build on Ubuntu 20.10, you can need to adjust a bit libraries if this changes - this is why Java mode is simpler.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
