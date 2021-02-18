@@ -88,6 +88,9 @@ public class Manifest {
         @Description("Dependencies of this alveolus. It is a way to import transitively a set of descriptors.")
         private List<AlveolusDependency> dependencies;
 
+        @Description("List of descriptors to ignore for this alveolus (generally coming from dependencies).")
+        private List<DescriptorRef> excludedDescriptors;
+
         @Description("" +
                 "Patches on descriptors. " +
                 "It enables to inject configuration in descriptors by patching " +
@@ -109,6 +112,17 @@ public class Manifest {
         @Description("Conditions to include this dependency. " +
                 "Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)")
         private Conditions includeIf;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DescriptorRef {
+        @Description("Name of the descriptor (as declared, ie potentially without the extension).")
+        private String name;
+
+        @Description("The container of the descriptor (maven coordinates generally).")
+        private String location;
     }
 
     @Data

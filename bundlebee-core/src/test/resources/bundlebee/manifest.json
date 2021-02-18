@@ -22,6 +22,24 @@
       ]
     },
     {
+      "name": "ApplyCommandTest.withexclude",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d2"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.apply"
+        }
+      ],
+      "excludedDescriptors": [
+        {
+          "name": "ApplyCommandTest.d1"
+        }
+      ]
+    },
+    {
       "name": "ApplyCommandTest.withsamedep",
       "descriptors": [
         {

@@ -157,7 +157,7 @@ public class InspectCommand implements Executable {
                                 .map(desc -> "  > Descriptor '" + desc.getConfiguration().getName() + "'" +
                                         toFrom(desc.getConfiguration().getLocation()) +
                                         (verbose ? '\n' + formatDescriptorContent(desc.getContent()) : "") +
-                                        toDetails(alveolus, desc)),
+                                        toPatches(alveolus, desc)),
                         alveolus.getDependencies() != null && !alveolus.getDependencies().isEmpty() ?
                                 alveolus.getDependencies().stream()
                                         .map(it -> "  - Dependency '" + it.getName() + "'" + toFrom(it.getLocation())) :
@@ -180,7 +180,7 @@ public class InspectCommand implements Executable {
         return from != null && !"auto".equals(from) ? ", from '" + from + "'" : "";
     }
 
-    private String toDetails(final Manifest.Alveolus alveolus, final AlveolusHandler.LoadedDescriptor desc) {
+    private String toPatches(final Manifest.Alveolus alveolus, final AlveolusHandler.LoadedDescriptor desc) {
         if (alveolus.getPatches() == null) {
             return "";
         }
