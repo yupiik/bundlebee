@@ -72,14 +72,13 @@
 <p><a href="commands/create-master-password.configuration.html">create-master-password</a>: Generate a master password if none exist (in <code>~/.m2/settings-security.xml</code>)</p>
 </li>
 <li>
-<p><a href="commands/delete.configuration.html">delete</a>: / end of short description
-<code>bundlebee.delete.propagationPolicy</code> can be set in descriptor(s) metadata to force default CLI behavior for this descriptor.</p>
+<p><a href="commands/delete.configuration.html">delete</a>: Delete an alveolus deployment by deleting all related descriptors.</p>
 </li>
 <li>
 <p><a href="commands/deploy.configuration.html">deploy</a>: Build and deploy a project. It inherits from most configuration of build command and adds remote repository settings.</p>
 </li>
 <li>
-<p><a href="commands/help.configuration.html">help</a>: Print help for all available commands.</p>
+<p><a href="commands/help.configuration.html">help</a>: Print help.</p>
 </li>
 <li>
 <p><a href="commands/http.configuration.html">http</a>: Execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
@@ -91,54 +90,15 @@
 <p><a href="commands/new.configuration.html">new</a>: Creates a new project.</p>
 </li>
 <li>
-<p><a href="commands/rollback.configuration.html">rollback</a>: / end of short description</p>
+<p><a href="commands/rollback.configuration.html">rollback</a>: Rollback an alveolus deployment.</p>
+</li>
+<li>
+<p><a href="commands/version.configuration.html">version</a>: Shows the application version.</p>
+</li>
+<li>
+<p><a href="commands/versions.configuration.html">versions</a>: List versions for an artifact to know which ones are available.</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p>The strategy is the following one:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Load current alveolus (recursively) to list all descriptors in "current" version</p>
-</li>
-<li>
-<p>Find previous version if not explicit (by choosing the first previous on in the list of available version on maven repository)</p>
-</li>
-<li>
-<p>Run delete command for current version</p>
-</li>
-<li>
-<p>Run apply command for previous version</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-this command only uses releases when it guesses the versions, it does not handles SNAPSHOTs. If you want to rollback to a snapshot, ensure to configure <code>previous*</code> properties.
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-this is equivalent to <code>apply</code> and <code>delete</code> commands successfully. For now it is recommended to do both manually.
-- <a href="commands/version.configuration.html">version</a>: Shows the application version.
-- <a href="commands/versions.configuration.html">versions</a>: List versions for an artifact to know which ones are available.
-</td>
-</tr>
-</table>
 </div>
             </div>
         </div>
