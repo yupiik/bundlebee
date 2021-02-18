@@ -34,7 +34,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -45,6 +44,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
@@ -167,7 +168,7 @@ public class AlveolusHandler {
     }
 
     private CompletionStage<?> onAlveolus(final String prefixOnVisitLog, final Manifest.Alveolus from,
-                                          final Map<String, Collection<Manifest.Patch>> patches,
+                                          final Map<Predicate<String>, Manifest.Patch> patches,
                                           final ArchiveReader.Cache cache,
                                           final Function<AlveolusContext, CompletionStage<?>> onAlveolus,
                                           final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor) {
@@ -254,18 +255,31 @@ public class AlveolusHandler {
                 }));
     }
 
-    private Map<String, Collection<Manifest.Patch>> mergePatches(final Map<String, Collection<Manifest.Patch>> patches,
-                                                                 final List<Manifest.Patch> newPatches) {
+    private Map<Predicate<String>, Manifest.Patch> mergePatches(final Map<Predicate<String>, Manifest.Patch> patches,
+                                                                final List<Manifest.Patch> newPatches) {
         final var result = new HashMap<>(patches);
-        newPatches.forEach(p -> result.computeIfAbsent(p.getDescriptorName(), k -> new ArrayList<>()).add(p));
+        newPatches.forEach(p -> result.put(toPredicate(p.getDescriptorName()), p));
         return result;
     }
 
-    private LoadedDescriptor prepare(final LoadedDescriptor desc, final Map<String, Collection<Manifest.Patch>> patches) {
+    private Predicate<String> toPredicate(final String descriptorName) {
+        if (descriptorName.contains("*")) {
+            return "*".equals(descriptorName) ? s -> true : Pattern.compile(descriptorName).asMatchPredicate();
+        }
+        if (descriptorName.startsWith("regex:")) { // other advanced regex, this prefix forces regex mode
+            return Pattern.compile(descriptorName.substring("regex:".length())).asMatchPredicate();
+        }
+        return descriptorName::equals;
+    }
+
+    private LoadedDescriptor prepare(final LoadedDescriptor desc, final Map<Predicate<String>, Manifest.Patch> patches) {
         var content = desc.getContent();
 
-        final var descPatches = patches.get(desc.configuration.getName());
-        if (descPatches != null && !descPatches.isEmpty()) {
+        final var descPatches = patches.entrySet().stream()
+                .filter(e -> e.getKey().test(desc.configuration.getName()))
+                .map(Map.Entry::getValue)
+                .collect(toList());
+        if (!descPatches.isEmpty()) {
             for (final Manifest.Patch patch : descPatches) {
                 if (patch.isInterpolate()) {
                     content = substitutor.replace(content);
@@ -323,7 +337,7 @@ public class AlveolusHandler {
     @Data
     public static class AlveolusContext {
         private final Manifest.Alveolus alveolus;
-        private final Map<String, Collection<Manifest.Patch>> patches;
+        private final Map<Predicate<String>, Manifest.Patch> patches;
         private final ArchiveReader.Cache cache;
     }
 }
