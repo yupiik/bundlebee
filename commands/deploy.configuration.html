@@ -69,47 +69,126 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">artifact (<code>BUNDLEBEE_DEPLOY_ARTIFACT</code>)</dt>
+<dt class="hdlist1">--artifact (<code>BUNDLEBEE_DEPLOY_ARTIFACT</code>)</dt>
 <dd>
 <p>Bundle artifactId.</p>
 </dd>
-<dt class="hdlist1">builddir (<code>BUNDLEBEE_DEPLOY_BUILDDIR</code>)</dt>
+<dt class="hdlist1">--builddir (<code>BUNDLEBEE_DEPLOY_BUILDDIR</code>)</dt>
 <dd>
 <p>Where to build (for build/temp files). Default value: <code>target</code></p>
 </dd>
-<dt class="hdlist1">deployInLocalRepository (<code>BUNDLEBEE_DEPLOY_DEPLOYINLOCALREPOSITORY</code>)</dt>
+<dt class="hdlist1">--deployInLocalRepository (<code>BUNDLEBEE_DEPLOY_DEPLOYINLOCALREPOSITORY</code>)</dt>
 <dd>
 <p>If <code>true</code> it will be added to your local maven repository too. Default value: <code>true</code></p>
 </dd>
-<dt class="hdlist1">dir (<code>BUNDLEBEE_DEPLOY_DIR</code>)</dt>
+<dt class="hdlist1">--dir (<code>BUNDLEBEE_DEPLOY_DIR</code>)</dt>
 <dd>
 <p>Project to build. Default value: <code>.</code></p>
 </dd>
-<dt class="hdlist1">enableReUpload (<code>BUNDLEBEE_DEPLOY_ENABLEREUPLOAD</code>)</dt>
+<dt class="hdlist1">--enableReUpload (<code>BUNDLEBEE_DEPLOY_ENABLEREUPLOAD</code>)</dt>
 <dd>
 <p>If <code>true</code> it enables to upload an artifact even if already present. When <code>auto</code> it enables it for snapshots but not for releases. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">group (<code>BUNDLEBEE_DEPLOY_GROUP</code>)</dt>
+<dt class="hdlist1">--group (<code>BUNDLEBEE_DEPLOY_GROUP</code>)</dt>
 <dd>
 <p>Bundle groupId.</p>
 </dd>
-<dt class="hdlist1">nexusBaseApi (<code>BUNDLEBEE_DEPLOY_NEXUSBASEAPI</code>)</dt>
+<dt class="hdlist1">--nexusBaseApi (<code>BUNDLEBEE_DEPLOY_NEXUSBASEAPI</code>)</dt>
 <dd>
 <p>If not <code>skip</code> it will deploy the artifact on a remote repository (nexus v2 or v3). Syntax must be a URL pointing to the REST API (base URL). If you don&#8217;t set the userinfo (username:password) in the URL it will be looked up in your settings.xml - potentially ciphered - using the hostname as serverId until you force it with <code>--serverId</code>. Default value: <code>skip</code></p>
 </dd>
-<dt class="hdlist1">nexusRepository (<code>BUNDLEBEE_DEPLOY_NEXUSREPOSITORY</code>)</dt>
+<dt class="hdlist1">--nexusRepository (<code>BUNDLEBEE_DEPLOY_NEXUSREPOSITORY</code>)</dt>
 <dd>
 <p>Nexus repository. It is the repository name the artifact(s) will be uploaded to. If <code>auto</code>, it will be <code>maven-releases</code> if the version is a release one and <code>maven-snapshots</code> otherwise. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">serverId (<code>BUNDLEBEE_DEPLOY_SERVERID</code>)</dt>
+<dt class="hdlist1">--serverId (<code>BUNDLEBEE_DEPLOY_SERVERID</code>)</dt>
 <dd>
 <p>ServerId to lookup from your maven settings.xml for remote deployment if enabled (nexus authentication).</p>
 </dd>
-<dt class="hdlist1">version (<code>BUNDLEBEE_DEPLOY_VERSION</code>)</dt>
+<dt class="hdlist1">--version (<code>BUNDLEBEE_DEPLOY_VERSION</code>)</dt>
 <dd>
 <p>Bundle version.</p>
 </dd>
 </dl>
+</div>
+<div class="sect2">
+<h3 id="_inherited_global_configuration">Inherited Global Configuration</h3>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code> or <code>--config-file &lt;path to config&gt;</code> (just remove the <code>--</code> prefix from option keys).
+</td>
+</tr>
+</table>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--bundlebee.kube.api (<code>BUNDLEBEE_KUBE_API</code>)</dt>
+<dd>
+<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.context (<code>BUNDLEBEE_KUBE_CONTEXT</code>)</dt>
+<dd>
+<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.</p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.defaultPropagationPolicy (<code>BUNDLEBEE_KUBE_DEFAULTPROPAGATIONPOLICY</code>)</dt>
+<dd>
+<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.dryRun (<code>BUNDLEBEE_KUBE_DRYRUN</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.namespace (<code>BUNDLEBEE_KUBE_NAMESPACE</code>)</dt>
+<dd>
+<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.validateSSL (<code>BUNDLEBEE_KUBE_VALIDATESSL</code>)</dt>
+<dd>
+<p>Should SSL connector be validated or not. Default value: <code>true</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.verbose (<code>BUNDLEBEE_KUBE_VERBOSE</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.cache (<code>BUNDLEBEE_MAVEN_CACHE</code>)</dt>
+<dd>
+<p>Where to cache maven dependencies. If set to <code>auto</code>, <code>$HOME/.m2/repository</code> is used. Default value: <code>auto</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.forceCustomSettingsXml (<code>BUNDLEBEE_MAVEN_FORCECUSTOMSETTINGSXML</code>)</dt>
+<dd>
+<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.http.connectTimeout (<code>BUNDLEBEE_MAVEN_HTTP_CONNECTTIMEOUT</code>)</dt>
+<dd>
+<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.preferCustomSettingsXml (<code>BUNDLEBEE_MAVEN_PREFERCUSTOMSETTINGSXML</code>)</dt>
+<dd>
+<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.repositories.downloads.enabled (<code>BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED</code>)</dt>
+<dd>
+<p>Enables to disable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.repositories.release (<code>BUNDLEBEE_MAVEN_REPOSITORIES_RELEASE</code>)</dt>
+<dd>
+<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.repositories.snapshot (<code>BUNDLEBEE_MAVEN_REPOSITORIES_SNAPSHOT</code>)</dt>
+<dd>
+<p>Default snapshot repository, not set by default. Default value: <code>unset</code></p>
+</dd>
+<dt class="hdlist1">--kubeconfig (<code>KUBECONFIG</code>)</dt>
+<dd>
+<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. Default value: <code>auto</code></p>
+</dd>
+</dl>
+</div>
 </div>
 </div>
 </div>

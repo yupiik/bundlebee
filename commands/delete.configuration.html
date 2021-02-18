@@ -70,27 +70,106 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">alveolus (<code>BUNDLEBEE_DELETE_ALVEOLUS</code>)</dt>
+<dt class="hdlist1">--alveolus (<code>BUNDLEBEE_DELETE_ALVEOLUS</code>)</dt>
 <dd>
 <p>Alveolus name to rollback (in currently deployed version). When set to <code>auto</code>, it will look up all manifests found in the classpath (it is not recommended until you perfectly know what you do). If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">awaitTimeout (<code>BUNDLEBEE_DELETE_AWAITTIMEOUT</code>)</dt>
+<dt class="hdlist1">--awaitTimeout (<code>BUNDLEBEE_DELETE_AWAITTIMEOUT</code>)</dt>
 <dd>
 <p>If an integer &gt; 0, how long (ms) to await for the actual deletion of components, default does not await.</p>
 </dd>
-<dt class="hdlist1">from (<code>BUNDLEBEE_DELETE_FROM</code>)</dt>
+<dt class="hdlist1">--from (<code>BUNDLEBEE_DELETE_FROM</code>)</dt>
 <dd>
 <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">gracePeriodSeconds (<code>BUNDLEBEE_DELETE_GRACEPERIODSECONDS</code>)</dt>
+<dt class="hdlist1">--gracePeriodSeconds (<code>BUNDLEBEE_DELETE_GRACEPERIODSECONDS</code>)</dt>
 <dd>
 <p>If set it will be added on REST calls to force a custom grace period (in seconds). Setting it to <code>0</code> enables to delete faster objects.</p>
 </dd>
-<dt class="hdlist1">manifest (<code>BUNDLEBEE_DELETE_MANIFEST</code>)</dt>
+<dt class="hdlist1">--manifest (<code>BUNDLEBEE_DELETE_MANIFEST</code>)</dt>
 <dd>
 <p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
 </dd>
 </dl>
+</div>
+<div class="sect2">
+<h3 id="_inherited_global_configuration">Inherited Global Configuration</h3>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code> or <code>--config-file &lt;path to config&gt;</code> (just remove the <code>--</code> prefix from option keys).
+</td>
+</tr>
+</table>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">--bundlebee.kube.api (<code>BUNDLEBEE_KUBE_API</code>)</dt>
+<dd>
+<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.context (<code>BUNDLEBEE_KUBE_CONTEXT</code>)</dt>
+<dd>
+<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.</p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.defaultPropagationPolicy (<code>BUNDLEBEE_KUBE_DEFAULTPROPAGATIONPOLICY</code>)</dt>
+<dd>
+<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.dryRun (<code>BUNDLEBEE_KUBE_DRYRUN</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.namespace (<code>BUNDLEBEE_KUBE_NAMESPACE</code>)</dt>
+<dd>
+<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.validateSSL (<code>BUNDLEBEE_KUBE_VALIDATESSL</code>)</dt>
+<dd>
+<p>Should SSL connector be validated or not. Default value: <code>true</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.verbose (<code>BUNDLEBEE_KUBE_VERBOSE</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.cache (<code>BUNDLEBEE_MAVEN_CACHE</code>)</dt>
+<dd>
+<p>Where to cache maven dependencies. If set to <code>auto</code>, <code>$HOME/.m2/repository</code> is used. Default value: <code>auto</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.forceCustomSettingsXml (<code>BUNDLEBEE_MAVEN_FORCECUSTOMSETTINGSXML</code>)</dt>
+<dd>
+<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.http.connectTimeout (<code>BUNDLEBEE_MAVEN_HTTP_CONNECTTIMEOUT</code>)</dt>
+<dd>
+<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.preferCustomSettingsXml (<code>BUNDLEBEE_MAVEN_PREFERCUSTOMSETTINGSXML</code>)</dt>
+<dd>
+<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.repositories.downloads.enabled (<code>BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED</code>)</dt>
+<dd>
+<p>Enables to disable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.repositories.release (<code>BUNDLEBEE_MAVEN_REPOSITORIES_RELEASE</code>)</dt>
+<dd>
+<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.maven.repositories.snapshot (<code>BUNDLEBEE_MAVEN_REPOSITORIES_SNAPSHOT</code>)</dt>
+<dd>
+<p>Default snapshot repository, not set by default. Default value: <code>unset</code></p>
+</dd>
+<dt class="hdlist1">--kubeconfig (<code>KUBECONFIG</code>)</dt>
+<dd>
+<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. Default value: <code>auto</code></p>
+</dd>
+</dl>
+</div>
 </div>
 </div>
 </div>
