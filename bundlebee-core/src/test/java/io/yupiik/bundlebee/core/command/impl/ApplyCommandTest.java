@@ -77,6 +77,26 @@ class ApplyCommandTest {
         assertEquals(4/* 2 * (test exists + create)*/, spyingResponseLocator.getFound().size());
     }
 
+    @Test
+    void applyWithDuplicatedDependencies(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withsamedep"));
+        assertEquals("" +
+                "Deploying 'ApplyCommandTest.withsamedep'\n" +
+                "Deploying 'ApplyCommandTest.apply'\n" +
+                "Applying 's' (kind=services) for namespace 'default'\n" +
+                "Deploying 'ApplyCommandTest.withdep'\n" +
+                "Deploying 'ApplyCommandTest.apply'\n" +
+                "ApplyCommandTest.d1 already deployed, skipping\n" +
+                "Applying 's2' (kind=services) for namespace 'default'\n" +
+                "Applying 's3' (kind=services) for namespace 'default'\n" +
+                "", logs);
+
+        assertEquals(6, spyingResponseLocator.getFound().size());
+    }
+
     private SpyingResponseLocator newSpyingHandler(final TestInfo info) {
         return new SpyingResponseLocator(
                 info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {

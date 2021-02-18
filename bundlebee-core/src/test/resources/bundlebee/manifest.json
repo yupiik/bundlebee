@@ -22,6 +22,22 @@
       ]
     },
     {
+      "name": "ApplyCommandTest.withsamedep",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d3"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.apply"
+        },
+        {
+          "name": "ApplyCommandTest.withdep"
+        }
+      ]
+    },
+    {
       "name": "DeleteCommandTest.deleteMaven",
       "descriptors": [
         {
