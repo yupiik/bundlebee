@@ -184,18 +184,25 @@ public final class MojoGenerator {
     }
 
     private static String findDefault(final String key, final String defaultDefault) {
-        if (!UNSET.equals(defaultDefault) && !"bundlebee.new.version".equals(key) /*this one has a default we want to override*/) {
-            return defaultDefault;
-        }
-        switch (key.substring(key.lastIndexOf('.') + 1)) {
-            case "group":
-                return "${project.groupId}";
-            case "artifact":
-                return "${project.artifactId}";
-            case "version":
-                return "${project.version}";
+        switch (key) {
+            case "bundlebee.add-alveolus.alveolus":
+                return "${project.groupId}:${project.artifactId}:${project.version}";
+            case "bundlebee.add-alveolus.manifest":
+                return "${project.basedir}/src/main/resources/bundlebee/manifest.json";
             default:
-                return defaultDefault;
+                if (!UNSET.equals(defaultDefault) && !"bundlebee.new.version".equals(key) /*this one has a default we want to override*/) {
+                    return defaultDefault;
+                }
+                switch (key.substring(key.lastIndexOf('.') + 1)) {
+                    case "group":
+                        return "${project.groupId}";
+                    case "artifact":
+                        return "${project.artifactId}";
+                    case "version":
+                        return "${project.version}";
+                    default:
+                        return defaultDefault;
+                }
         }
     }
 
