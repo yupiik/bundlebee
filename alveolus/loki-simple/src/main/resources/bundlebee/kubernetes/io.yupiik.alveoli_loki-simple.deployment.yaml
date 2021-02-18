@@ -49,7 +49,7 @@ spec:
           image: {{loki-simple.promtail.image:-grafana/promtail:2.1.0}}
           args:
             - -config.file=/etc/promtail/promtail.yaml
-            - -client.url=http://$(LOKI_SERVICE_SERVICE_HOST):$(LOKI_SERVICE_SERVICE_PORT)/loki/api/v1/push
+            - -client.url=http://$(LOKI_SERVICE_HOST):$(LOKI_SERVICE_PORT)/loki/api/v1/push
           ports:
             - containerPort: 3101
           volumeMounts:

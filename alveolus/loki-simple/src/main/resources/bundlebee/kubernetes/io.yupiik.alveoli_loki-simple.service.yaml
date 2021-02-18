@@ -17,7 +17,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: promtail-service
+  name: promtail
   labels:
     app: loki-simple
 spec:
