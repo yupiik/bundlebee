@@ -89,7 +89,9 @@ public class Manifest {
 
     @Data
     public static class Patch {
-        @Description("The descriptor to patch. It can be any descriptor, including transitive ones.")
+        @Description("The descriptor to patch. It can be any descriptor, including transitive ones. " +
+                "It can be `*` to patch all descriptors (`/metadata/label/app` for example) or " +
+                "`regex:<java pattern>` to match descriptor names with a regex.")
         private String descriptorName;
 
         @Description("" +
