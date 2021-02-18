@@ -19,34 +19,52 @@ kind: Deployment
 metadata:
   name: promtail-server-deployment
   labels:
-    app: promtail-simple
+    app: loki-simple
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: promtail-simple
+      app: loki-simple
   template:
     metadata:
       labels:
-        app: promtail-simple
+        app: loki-simple
     spec:
-      serviceAccount: promtail-serviceaccount
+      serviceAccountName: promtail-serviceaccount
       volumes:
-        - name: logs
-          hostPath:
-            path: /var/log
-        - name: promtail-config
+        - name: config
           configMap:
             name: promtail-config
+        - name: run
+          hostPath:
+            path: /run/promtail
+        - hostPath:
+            path: /var/lib/docker/containers
+          name: containers
+        - hostPath:
+            path: /var/log/pods
+          name: pods
       containers:
         - name: promtail-container
-          image: {{promtail-simple.promtail.image:-grafana/promtail:2.1.0}}
+          image: {{loki-simple.promtail.image:-grafana/promtail:2.1.0}}
           args:
             - -config.file=/etc/promtail/promtail.yaml
-          - ports:
-              - containerPort: 3100
+            - -client.url=http://$(LOKI_SERVICE_SERVICE_HOST):$(LOKI_SERVICE_SERVICE_PORT)/loki/api/v1/push
+          ports:
+            - containerPort: 3101
           volumeMounts:
-            - name: logs
-              mountPath: /var/log
-            - name: promtail-config
+            - name: config
               mountPath: /etc/promtail
+            - name: run
+              mountPath: /run/promtail
+            - mountPath: /var/lib/docker/containers
+              name: containers
+              readOnly: true
+            - mountPath: /var/log/pods
+              name: pods
+              readOnly: true
+          env:
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName

@@ -19,20 +19,29 @@ kind: Deployment
 metadata:
   name: loki-server-deployment
   labels:
-    app: promtail-simple
+    app: loki-simple
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: promtail-simple
+      app: loki-simple
   template:
     metadata:
       labels:
-        app: promtail-simple
+        app: loki-simple
     spec:
+      volumes:
+        - name: config
+          configMap:
+            name: loki-config
       containers:
         - name: loki
           image: {{loki-simple.loki.image:-grafana/loki:2.1.0}}
+          args:
+          - -config.file=/etc/loki/loki.yaml
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
           envFrom:
             - configMapRef:
                 name: loki-config

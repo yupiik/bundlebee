@@ -14,11 +14,15 @@
           "name": "${project.groupId}_${project.artifactId}.rolebinding"
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.configmap"
+          "name": "${project.groupId}_${project.artifactId}.configmap",
+          "interpolate": true
         },
         {
           "name": "${project.groupId}_${project.artifactId}.deployment",
           "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.service"
         },
         {
           "name": "${project.groupId}_${project.artifactId}.loki-configmap"
@@ -39,6 +43,10 @@
         {
           "name": "loki-simple.loki.image",
           "description": "The image to use for loki."
+        },
+        {
+          "name": "loki-simple.loki.pipeline_stage",
+          "description": "Pipeline stage to use, generally `cri` or `docker`."
         }
       ]
     }
