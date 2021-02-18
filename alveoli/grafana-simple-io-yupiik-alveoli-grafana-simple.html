@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Available Alveoli</title>
+    <title>io.yupiik.alveoli:grafana-simple:1.0.1-SNAPSHOT</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,33 +51,184 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Available Alveoli</h1>
+                <h1>io.yupiik.alveoli:grafana-simple:1.0.1-SNAPSHOT</h1>
             </div>
             <div class="page-content-body">
+<div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Simple Grafana instance, note we preconfigure it with Loki, Prometheus and Zipkin alveoli, ensure to override the configuration if you don&#8217;t use them.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_maven_dependency">Maven Dependency</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+  &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
+  &lt;artifactId&gt;grafana-simple&lt;/artifactId&gt;
+  &lt;version&gt;1.0.1-SNAPSHOT&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_default_configuration">Default Configuration</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">grafana.ini</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">[analytics]
+check_for_updates = false
+[grafana_net]
+url = https://grafana.net
+[log]
+mode = console
+[paths]
+data = /var/lib/grafana/data
+logs = /var/log/grafana
+plugins = /var/lib/grafana/plugins
+provisioning = /etc/grafana/provisioning</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">loki.yml</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">apiVersion: 1
+datasources:
+  - name: Loki
+    type: loki
+    typeLogoUrl: public/app/plugins/datasource/loki/img/loki_icon.svg
+    access: proxy
+    url: http://loki:3100</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">zipkin.yml</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">apiVersion: 1
+datasources:
+ - name: Zipkin
+   type: zipkin
+   typeLogoUrl: public/app/plugins/datasource/zipkin/img/zipkin-logo.svg
+   access: proxy
+   url: http://zipkin:9411</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">prometheus.yml</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-none hljs">apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    typeLogoUrl: public/app/plugins/datasource/prometheus/img/prometheus_logo.svg
+    access: proxy
+    url: http://prometheus:9090</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_ports">Ports</h2>
+<div class="sectionbody">
 <div class="ulist">
 <ul>
 <li>
-<p><strong>elasticsearch-local</strong> (<a href="alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local.html">io.yupiik.alveoli:elasticsearch-local:1.0.1-SNAPSHOT</a>): setup "elasticsearch-local" which runs an Elasticsearch instance usable by other applications.</p>
+<p>Name: <code>grafana</code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Protocol: TCP</p>
 </li>
 <li>
-<p><strong>grafana-simple</strong> (<a href="alveoli/grafana-simple-io-yupiik-alveoli-grafana-simple.html">io.yupiik.alveoli:grafana-simple:1.0.1-SNAPSHOT</a>): simple Grafana instance, note we preconfigure it with Loki, Prometheus and Zipkin alveoli, ensure to override the configuration if you don&#8217;t use them.</p>
+<p>Port: 3000</p>
 </li>
 <li>
-<p><strong>loki-simple</strong> (<a href="alveoli/loki-simple-io-yupiik-alveoli-loki-simple.html">io.yupiik.alveoli:loki-simple:1.0.1-SNAPSHOT</a>): loki setup to aggregate service logs using promtail, the prometheus for logs.</p>
+<p>Target Port: 3000</p>
 </li>
 <li>
-<p><strong>monitoring-alveolus</strong> (<a href="alveoli/monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus.html">io.yupiik.alveoli:monitoring-alveolus:1.0.1-SNAPSHOT</a>): includes loki+prometheus+zipkin+grafana at once.</p>
-</li>
-<li>
-<p><strong>postgres-local</strong> (<a href="alveoli/postgres-local-io-yupiik-alveoli-postgres-local.html">io.yupiik.alveoli:postgres-local:1.0.1-SNAPSHOT</a>): setup "postgres-local" which runs a PostgreSQL instance usable by other applications.</p>
-</li>
-<li>
-<p><strong>prometheus-simple</strong> (<a href="alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple.html">io.yupiik.alveoli:prometheus-simple:1.0.1-SNAPSHOT</a>): prometheus local/dev setup. Will be available on <a href="http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT" class="bare">http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT</a>).</p>
-</li>
-<li>
-<p><strong>zipkin-simple</strong> (<a href="alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple.html">io.yupiik.alveoli:zipkin-simple:1.0.1-SNAPSHOT</a>): zipkin in memory setup. Will be available on <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT</a>). For example <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans</a> to push spans through HTTP.</p>
+<p>Node Port: 30300</p>
 </li>
 </ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+on linux and with minikube you can access this service using <code><a href="http://$(minikube" class="bare">http://$(minikube</a> ip):30300</code> on your host.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sample_usage">Sample Usage</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+  "alveoli": [
+    {
+      "//": "My alveolus.",
+      "name": "com.company:my-app:1.0.0",
+      "descriptors": [],
+      "dependencies": [
+        {
+          "name": "io.yupiik.alveoli:grafana-simple:1.0.1-SNAPSHOT",
+          "location": "io.yupiik.alveoli:grafana-simple:1.0.1-SNAPSHOT",
+        }
+      ],
+      "patches": [{
+        "descriptorName": "io.yupiik.alveoli:grafana-simple:1.0.1-SNAPSHOT",
+        "interpolate": true
+      }]
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_configuration">Configuration</h2>
+<div class="sectionbody">
+<div class="dlist">
+<dl>
+<dt class="hdlist1">grafana-simple.image</dt>
+<dd>
+<p>The image to use.
+Default value: <code>grafana/grafana:7.4.2</code>.</p>
+</dd>
+</dl>
+</div>
+</div>
 </div>
             </div>
         </div>

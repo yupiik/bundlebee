@@ -83,7 +83,7 @@
                 "descriptorName":{
                   "type":"string",
                   "title":"Patch.descriptorName",
-                  "description":"The descriptor to patch. It can be any descriptor, including transitive ones."
+                  "description":"The descriptor to patch. It can be any descriptor, including transitive ones. It can be `*` to patch all descriptors (`/metadata/label/app` for example) or `regex:<java pattern>` to match descriptor names with a regex."
                 },
                 "interpolate":{
                   "type":"boolean",
