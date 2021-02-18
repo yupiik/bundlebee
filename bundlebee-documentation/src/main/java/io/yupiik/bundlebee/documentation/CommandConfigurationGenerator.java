@@ -125,7 +125,7 @@ public class CommandConfigurationGenerator implements Runnable {
                 .collect(toList());
     }
 
-    // local commands
+    // see io.yupiik.bundlebee.maven.build.MojoGenerator.skipSharedConfig
     private boolean skipSharedConfig(final String name) {
         return "add-alveolus".equals(name) ||
                 "build".equals(name) ||
