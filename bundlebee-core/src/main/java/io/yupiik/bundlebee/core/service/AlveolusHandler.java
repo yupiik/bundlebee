@@ -188,7 +188,7 @@ public class AlveolusHandler {
         final var dependencies = ofNullable(from.getDependencies()).orElseGet(List::of);
         return all(
                 dependencies.stream()
-                        .filter(dep -> conditionEvaluator.test(dep.getIgnoreIf()))
+                        .filter(dep -> conditionEvaluator.test(dep.getIncludeIf()))
                         .map(it -> {
                             if (it.getLocation() == null) {
                                 return onAlveolus.apply(new AlveolusContext(findAlveolusInClasspath(it.getName()), currentPatches, cache));
@@ -201,7 +201,7 @@ public class AlveolusHandler {
                 counting(), true)
                 .thenCompose(ready -> all(
                         ofNullable(from.getDescriptors()).orElseGet(List::of).stream()
-                                .filter(desc -> conditionEvaluator.test(desc.getIgnoreIf()))
+                                .filter(desc -> conditionEvaluator.test(desc.getIncludeIf()))
                                 .map(desc -> findDescriptor(desc, cache))
                                 .collect(toList()),
                         toList(),

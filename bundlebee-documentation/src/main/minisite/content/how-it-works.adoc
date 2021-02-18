@@ -114,3 +114,68 @@ Here are some examples.
 <.> We use an interpolation in the configuration in the JSON-Patch `replace` operation which replaces the data of the referenced `ConfigMap`
 
 TIP: this mecanism is very useful for `ConfigMap` descriptors but also `PersistenceVolume` since you can now patch `/spec/hostPath `easily too.
+
+== Deploy a dependency (or descriptor) conditionally
+
+In some case it can be neat to be able to not deploy part of the stack.
+It is typically the case when you wrote a monitoring-full alveolus (ie with some optional services functionally).
+In such a case you can condition dependencies and descriptor deployment:
+
+[source,json]
+.Deploy monitoring alveolus only if MONITORING option is set
+----
+{
+  "alveoli": [
+    {
+      "name": "com.company.alveoli:my-app:${project.version}",
+      "dependencies": [
+        {
+          "name": "io.yupiik.alveoli:monitoring-alveolus:${bundlebee.version}",
+          "location": "io.yupiik.alveoli:monitoring-alveolus:${bundlebee.version}",
+          "includeIf": {
+            "conditions": [{
+              "key": "MONITORING",
+              "value": "true"
+            }]
+          }
+        }
+      ]
+    }
+  ]
+}
+----
+
+TIP: used on descriptors and using a complete set of conditions for descriptors you can handle environments this way (`ENV=preprod` for descriptor `preprod.configmap` for example).
+
+== Filter manifest at command time
+
+In some case it can be needed to evaluate some values of the manifest when executing the command.
+Even if not recommended it can be done using `{{xxx}}` placeholders - read from environment variables and system properties.
+
+[source,json]
+.Filter manifest.json at command time
+----
+{
+  "alveoli": [
+    {
+      "name": "com.company.alveoli:my-app:{{project.version}}",
+      "dependencies": [
+        {
+          "name": "io.yupiik.alveoli:monitoring-alveolus:{{bundlebee.version}}",
+          "location": "io.yupiik.alveoli:monitoring-alveolus:{{bundlebee.version}}"
+        }
+      ]
+    }
+  ]
+}
+----
+
+With this manifest you can value `project.version` and `bundlebee.version` using the command line:
+
+[source,bash]
+----
+bundlebee \
+    [your command and options] \
+    --project.version 1.2.1 \
+    --bundlebee.version 1.0.1
+----
