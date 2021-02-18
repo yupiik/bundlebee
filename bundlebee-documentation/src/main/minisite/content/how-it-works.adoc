@@ -179,3 +179,44 @@ bundlebee \
     --project.version 1.2.1 \
     --bundlebee.version 1.0.1
 ----
+
+== Windows and CLI
+
+On windows, the usage of the Java mode is recommended and the most reliable, however, if you want to speed up a bit the execution you can run the native bundlebee executable in a docker image.
+
+TIP: ensure to test this solution *on your machine*, on our test machine gain can be x2 but it depends the docker setup too.
+
+Once done you would be able to replace `bundlebee` by `docker run bundlebee -v $HOME/.kube/config:/kube/config -e KUBECONFIG=/kube/config --network host` (use an alias ;)).
+
+Here are the step to use this solution:
+
+. Download bundlebee native binary, for that go on https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/, select the version you want and download the file ending with `Linux-amd64`,
+. Create this `Dockerfile` file next to the binary you just downloaded and renamed `bundlebee`:
++
+[source,dockerfile]
+----
+FROM ubuntu:20.10 as builder
+
+RUN apt-get update && apt-get install -y zlib1g libgcc-s1 libstdc++6
+
+FROM scratch
+
+ENV LD_LIBRARY_PATH /lib
+
+COPY --from=builder /lib/x86_64-linux-gnu/libc.so.6 /lib/libc.so.6
+COPY --from=builder /lib/x86_64-linux-gnu/libgcc_s.so.1 /lib/libgcc_s.so.1
+COPY --from=builder /lib/x86_64-linux-gnu/libstdc++.so.6.0.28 /lib/libstdc++.so.6
+COPY --from=builder /lib/x86_64-linux-gnu/libpthread.so.0 /lib/libpthread.so.0
+COPY --from=builder /lib/x86_64-linux-gnu/libdl.so.2 /lib/libdl.so.2
+COPY --from=builder /lib/x86_64-linux-gnu/libm.so.6 /lib/libm.so.6
+COPY --from=builder /lib/x86_64-linux-gnu/libz.so.1 /lib/libz.so.1
+COPY --from=builder /lib64/ld-linux-x86-64.so.2 /lib/ld-linux
+
+COPY bundlebee-core /bin/bundlebee-core
+
+CMD ["/lib/ld-linux", "/bin/bundlebee-core"]
+----
++
+. Run `docker build -t bundlebee .` in the folder you put `bundlebee` binary and previous `Dockerfile`
+
+IMPORTANT: this dockerfile works as of today because binaries are build on Ubuntu 20.10, you can need to adjust a bit libraries if this changes - this is why Java mode is simpler.
