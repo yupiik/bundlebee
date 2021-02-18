@@ -34,6 +34,7 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static io.yupiik.bundlebee.core.command.Executable.UNSET;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
@@ -102,7 +103,7 @@ public final class MojoGenerator {
                                                     "     * " + desc.replace('\n', ' ') + "\n" +
                                                     "     */\n" +
                                                     "    @Parameter(property = \"" + key + "\"" +
-                                                    ", defaultValue = \"" + defaultValue.replaceAll("\n", "\\n") + "\")\n" +
+                                                    ", defaultValue = \"" + findDefault(key, defaultValue.replaceAll("\n", "\\n")) + "\")\n" +
                                                     "    private " + it.getType().getName().replace("java.lang.", "") + " " + paramName + ";";
                                         },
                                         (a, b) -> a,
@@ -167,6 +168,22 @@ public final class MojoGenerator {
                         throw new IllegalArgumentException(e);
                     }
                 });
+    }
+
+    private static String findDefault(final String key, final String defaultDefault) {
+        if (!UNSET.equals(defaultDefault) && !"bundlebee.new.version".equals(key) /*this one has a default we want to override*/) {
+            return defaultDefault;
+        }
+        switch (key.substring(key.lastIndexOf('.') + 1)) {
+            case "group":
+                return "${project.groupId}";
+            case "artifact":
+                return "${project.artifactId}";
+            case "version":
+                return "${project.version}";
+            default:
+                return defaultDefault;
+        }
     }
 
     private static String fromParameterToFieldName(final String name) {
