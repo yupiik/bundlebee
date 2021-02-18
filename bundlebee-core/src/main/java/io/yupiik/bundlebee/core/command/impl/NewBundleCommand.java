@@ -107,7 +107,7 @@ public class NewBundleCommand implements Executable {
                             "    }\n") +
                     "  ]\n" +
                     "}" +
-                    "", StandardOpenOption.CREATE));
+                    "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
             if (!skipSamples) {
                 log.info("Created " + Files.writeString(output.resolve("bundlebee/kubernetes/" + group + "_" + artifact + "_my-alveolus.configmap.yaml"), "" +
                         "apiVersion: v1\n" +
@@ -122,10 +122,10 @@ public class NewBundleCommand implements Executable {
                         "data:\n" +
                         "  # set your data there, you can safely drop BUNDLEBEE_SKAFFOLDING variable\n" +
                         "  BUNDLEBEE_SKAFFOLDING: true\n" +
-                        "", StandardOpenOption.CREATE));
+                        "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
             } else {
                 log.info("Created " + Files.writeString(output.resolve("bundlebee/kubernetes/.keepit"),
-                        "can safely be deleted as soon as you add a file in this folder", StandardOpenOption.CREATE));
+                        "can safely be deleted as soon as you add a file in this folder", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
             }
             if (!skipPom) {
                 log.info("Created " + Files.writeString(output.resolve("pom.xml"), "" +
@@ -171,7 +171,7 @@ public class NewBundleCommand implements Executable {
                         "    </repository>\n" +
                         "  </distributionManagement>\n" +
                         "</project>\n" +
-                        "", StandardOpenOption.CREATE));
+                        "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
             }
 
             log.info("Creation completed, you can go in " + output + " and build it with 'bundlebee build'");
