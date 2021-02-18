@@ -27,13 +27,16 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.json.JsonObject;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -112,9 +115,16 @@ public class ApplyCommand implements Executable {
     public CompletionStage<?> doApply(final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
                                       final ArchiveReader.Cache cache, final Manifest.Alveolus it) {
         final var labels = createLabels(it, injectTimestamp, injectBundleBeeMetadata);
+        final var alreadyDone = new HashSet<String>();
         return visitor.executeOnAlveolus(
                 "Deploying", it, null,
-                (ctx, desc) -> kube.apply(desc.getContent(), desc.getExtension(), labels),
+                (ctx, desc) -> {
+                    if (!alreadyDone.add(desc.getContent())) {
+                        log.info(() -> desc.getConfiguration().getName() + " already deployed, skipping");
+                        return completedFuture(false);
+                    }
+                    return kube.apply(desc.getContent(), desc.getExtension(), labels);
+                },
                 cache);
     }
 
