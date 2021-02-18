@@ -4,7 +4,62 @@
   "title":"Manifest Descriptor",
   "description":"BundleBee manifest descriptor.",
   "definitions":{
-
+    "io_yupiik_bundlebee_core_descriptor_Manifest_Conditions":{
+      "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+      "type":"object",
+      "title":"Descriptor.ignoreIf",
+      "description":"Conditions to ignore this descriptor.",
+      "properties":{
+        "conditions":{
+          "type":"array",
+          "title":"Conditions.conditions",
+          "description":"List of condition to match according `operator`.",
+          "items":{
+            "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Condition",
+            "type":"object",
+            "properties":{
+              "key":{
+                "type":"string",
+                "title":"Condition.key",
+                "description":"Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string."
+              },
+              "negate":{
+                "type":"boolean",
+                "title":"Condition.negate",
+                "description":"Should the condition be reversed (ie \"not in this case\")."
+              },
+              "type":{
+                "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionType",
+                "type":"string",
+                "title":"Condition.type",
+                "description":"Type of condition.",
+                "enum":[
+                  "ENV",
+                  "SYSTEM_PROPERTY"
+                ],
+                "nullable":true
+              },
+              "value":{
+                "type":"string",
+                "title":"Condition.value",
+                "description":"Expected value. If empty/null, `true` is assumed. Note that empty is allowed."
+              }
+            }
+          }
+        },
+        "operator":{
+          "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+          "type":"string",
+          "title":"Conditions.operator",
+          "description":"Operator to combine the conditions.",
+          "enum":[
+            "ANY",
+            "ALL"
+          ],
+          "nullable":true
+        }
+      }
+    }
   },
   "properties":{
     "alveoli":{
@@ -23,6 +78,12 @@
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency",
               "type":"object",
               "properties":{
+                "ignoreIf":{
+                  "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"AlveolusDependency.ignoreIf",
+                  "description":"Conditions to ignore this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
+                },
                 "location":{
                   "type":"string",
                   "title":"AlveolusDependency.location",
@@ -44,6 +105,62 @@
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
               "type":"object",
               "properties":{
+                "ignoreIf":{
+                  "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"Descriptor.ignoreIf",
+                  "description":"Conditions to ignore this descriptor.",
+                  "properties":{
+                    "conditions":{
+                      "type":"array",
+                      "title":"Conditions.conditions",
+                      "description":"List of condition to match according `operator`.",
+                      "items":{
+                        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Condition",
+                        "type":"object",
+                        "properties":{
+                          "key":{
+                            "type":"string",
+                            "title":"Condition.key",
+                            "description":"Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string."
+                          },
+                          "negate":{
+                            "type":"boolean",
+                            "title":"Condition.negate",
+                            "description":"Should the condition be reversed (ie \"not in this case\")."
+                          },
+                          "type":{
+                            "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionType",
+                            "type":"string",
+                            "title":"Condition.type",
+                            "description":"Type of condition.",
+                            "enum":[
+                              "ENV",
+                              "SYSTEM_PROPERTY"
+                            ],
+                            "nullable":true
+                          },
+                          "value":{
+                            "type":"string",
+                            "title":"Condition.value",
+                            "description":"Expected value. If empty/null, `true` is assumed. Note that empty is allowed."
+                          }
+                        }
+                      }
+                    },
+                    "operator":{
+                      "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+                      "type":"string",
+                      "title":"Conditions.operator",
+                      "description":"Operator to combine the conditions.",
+                      "enum":[
+                        "ANY",
+                        "ALL"
+                      ],
+                      "nullable":true
+                    }
+                  }
+                },
                 "interpolate":{
                   "type":"boolean",
                   "title":"Descriptor.interpolate",

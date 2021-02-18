@@ -233,6 +233,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Alveolus name.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.ignoreIf</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ignoreIf</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Conditions to ignore this dependency. Enables for example to have an environment variable enabling part of the stack (ex: <code>MONITORING=true</code>)</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -282,6 +288,98 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Type of this descriptor. For now only <code>kubernetes</code> is supported. It also defines in which folder under <code>bundlebee</code> the descriptor(s) are looked for from its name.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.ignoreIf</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ignoreIf</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Conditions to ignore this descriptor.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.ignoreIf</h4>
+<div class="paragraph">
+<p>Conditions to ignore this descriptor.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 5. Descriptor.ignoreIf</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operator</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>operator</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operator to combine the conditions. Potential values: <code>ANY</code> (At least one condition must match.),<code>ALL</code> (All conditions must match.).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Condition">Conditions.conditions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>conditions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of condition to match according <code>operator</code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_Condition">Conditions.conditions</h4>
+<div class="paragraph">
+<p>List of condition to match according <code>operator</code>.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 6. Conditions.conditions</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">key</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>key</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">negate</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>negate</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Should the condition be reversed (ie "not in this case").</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>type</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type of condition. Potential values: <code>ENV</code> (Key is read is process environment variables.),<code>SYSTEM_PROPERTY</code> (Key is read is process system properties.).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>value</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Expected value. If empty/null, <code>true</code> is assumed. Note that empty is allowed.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -291,7 +389,7 @@ It provides the unique identifier of your recipe (application/library) and what 
 <p>Patches on descriptors. It enables to inject configuration in descriptors by patching (using JSON-Patch or plain interpolation with <code>${key}</code> values) their JSON representation. The key is the descriptor name and each time the descriptor is found it will be applied.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 5. Alveolus.patches</caption>
+<caption class="title">Table 7. Alveolus.patches</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -342,7 +440,62 @@ It provides the unique identifier of your recipe (application/library) and what 
   "title":"Manifest Descriptor",
   "description":"BundleBee manifest descriptor.",
   "definitions":{
-
+    "io_yupiik_bundlebee_core_descriptor_Manifest_Conditions":{
+      "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+      "type":"object",
+      "title":"Descriptor.ignoreIf",
+      "description":"Conditions to ignore this descriptor.",
+      "properties":{
+        "conditions":{
+          "type":"array",
+          "title":"Conditions.conditions",
+          "description":"List of condition to match according `operator`.",
+          "items":{
+            "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Condition",
+            "type":"object",
+            "properties":{
+              "key":{
+                "type":"string",
+                "title":"Condition.key",
+                "description":"Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string."
+              },
+              "negate":{
+                "type":"boolean",
+                "title":"Condition.negate",
+                "description":"Should the condition be reversed (ie \"not in this case\")."
+              },
+              "type":{
+                "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionType",
+                "type":"string",
+                "title":"Condition.type",
+                "description":"Type of condition.",
+                "enum":[
+                  "ENV",
+                  "SYSTEM_PROPERTY"
+                ],
+                "nullable":true
+              },
+              "value":{
+                "type":"string",
+                "title":"Condition.value",
+                "description":"Expected value. If empty/null, `true` is assumed. Note that empty is allowed."
+              }
+            }
+          }
+        },
+        "operator":{
+          "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+          "type":"string",
+          "title":"Conditions.operator",
+          "description":"Operator to combine the conditions.",
+          "enum":[
+            "ANY",
+            "ALL"
+          ],
+          "nullable":true
+        }
+      }
+    }
   },
   "properties":{
     "alveoli":{
@@ -361,6 +514,12 @@ It provides the unique identifier of your recipe (application/library) and what 
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency",
               "type":"object",
               "properties":{
+                "ignoreIf":{
+                  "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"AlveolusDependency.ignoreIf",
+                  "description":"Conditions to ignore this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
+                },
                 "location":{
                   "type":"string",
                   "title":"AlveolusDependency.location",
@@ -382,6 +541,62 @@ It provides the unique identifier of your recipe (application/library) and what 
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
               "type":"object",
               "properties":{
+                "ignoreIf":{
+                  "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"Descriptor.ignoreIf",
+                  "description":"Conditions to ignore this descriptor.",
+                  "properties":{
+                    "conditions":{
+                      "type":"array",
+                      "title":"Conditions.conditions",
+                      "description":"List of condition to match according `operator`.",
+                      "items":{
+                        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Condition",
+                        "type":"object",
+                        "properties":{
+                          "key":{
+                            "type":"string",
+                            "title":"Condition.key",
+                            "description":"Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string."
+                          },
+                          "negate":{
+                            "type":"boolean",
+                            "title":"Condition.negate",
+                            "description":"Should the condition be reversed (ie \"not in this case\")."
+                          },
+                          "type":{
+                            "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionType",
+                            "type":"string",
+                            "title":"Condition.type",
+                            "description":"Type of condition.",
+                            "enum":[
+                              "ENV",
+                              "SYSTEM_PROPERTY"
+                            ],
+                            "nullable":true
+                          },
+                          "value":{
+                            "type":"string",
+                            "title":"Condition.value",
+                            "description":"Expected value. If empty/null, `true` is assumed. Note that empty is allowed."
+                          }
+                        }
+                      }
+                    },
+                    "operator":{
+                      "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+                      "type":"string",
+                      "title":"Conditions.operator",
+                      "description":"Operator to combine the conditions.",
+                      "enum":[
+                        "ANY",
+                        "ALL"
+                      ],
+                      "nullable":true
+                    }
+                  }
+                },
                 "interpolate":{
                   "type":"boolean",
                   "title":"Descriptor.interpolate",
