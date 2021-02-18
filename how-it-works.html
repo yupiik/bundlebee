@@ -805,8 +805,8 @@ In such a case you can condition dependencies and descriptor deployment:</p>
       "name": "com.company.alveoli:my-app:${project.version}",
       "dependencies": [
         {
-          "name": "io.yupiik.alveoli:monitoring-alveolus:${version}",
-          "location": "io.yupiik.alveoli:monitoring-alveolus:${version}",
+          "name": "io.yupiik.alveoli:monitoring-alveolus:${bundlebee.version}",
+          "location": "io.yupiik.alveoli:monitoring-alveolus:${bundlebee.version}",
           "includeIf": {
             "conditions": [{
               "key": "MONITORING",
