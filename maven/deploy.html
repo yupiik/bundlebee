@@ -112,7 +112,7 @@
 <dl>
 <dt class="hdlist1">artifact (<code>String</code>)</dt>
 <dd>
-<p>Bundle artifactId. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.deploy.artifact}</code>.</p>
+<p>Bundle artifactId. Default value: <code>${project.artifactId}</code>. Property: <code>${bundlebee.deploy.artifact}</code>.</p>
 </dd>
 <dt class="hdlist1">builddir (<code>String</code>)</dt>
 <dd>
@@ -132,7 +132,7 @@
 </dd>
 <dt class="hdlist1">group (<code>String</code>)</dt>
 <dd>
-<p>Bundle groupId. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.deploy.group}</code>.</p>
+<p>Bundle groupId. Default value: <code>${project.groupId}</code>. Property: <code>${bundlebee.deploy.group}</code>.</p>
 </dd>
 <dt class="hdlist1">kubeApi (<code>String</code>)</dt>
 <dd>
@@ -202,13 +202,25 @@
 <dd>
 <p>Nexus repository. It is the repository name the artifact(s) will be uploaded to. If <code>auto</code>, it will be <code>maven-releases</code> if the version is a release one and <code>maven-snapshots</code> otherwise. Default value: <code>auto</code>. Property: <code>${bundlebee.deploy.nexusRepository}</code>.</p>
 </dd>
+<dt class="hdlist1">packaging (<code>String</code>)</dt>
+<dd>
+<p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: ``.</p>
+</dd>
 <dt class="hdlist1">serverId (<code>String</code>)</dt>
 <dd>
 <p>ServerId to lookup from your maven settings.xml for remote deployment if enabled (nexus authentication). Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.deploy.serverId}</code>.</p>
 </dd>
+<dt class="hdlist1">skip (<code>boolean</code>)</dt>
+<dd>
+<p>Skip execution. Default value: <code>false</code>. Property: <code>${bundlebee.skip}</code>.</p>
+</dd>
+<dt class="hdlist1">skipPackaging (<code>List</code>)</dt>
+<dd>
+<p>Skipped packaging types. Default value: <code>pom</code>. Property: <code>${bundlebee.skipPackaging}</code>.</p>
+</dd>
 <dt class="hdlist1">version (<code>String</code>)</dt>
 <dd>
-<p>Bundle version. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.deploy.version}</code>.</p>
+<p>Bundle version. Default value: <code>${project.version}</code>. Property: <code>${bundlebee.deploy.version}</code>.</p>
 </dd>
 </dl>
 </div>

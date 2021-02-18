@@ -182,6 +182,10 @@
 <dd>
 <p>HTTP verb to use for the request. Default value: <code>GET</code>. Property: <code>${bundlebee.http.method}</code>.</p>
 </dd>
+<dt class="hdlist1">packaging (<code>String</code>)</dt>
+<dd>
+<p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: ``.</p>
+</dd>
 <dt class="hdlist1">path (<code>String</code>)</dt>
 <dd>
 <p>HTTP request path (optionally with query parameters). You can use the absolute kubernetes URL but if the value does not start with a protocol (<code>http</code> or <code>https</code>) then it will be prefixed by the Kubernetes API base. Default value: <code>/api/</code>. Property: <code>${bundlebee.http.path}</code>.</p>
@@ -193,6 +197,14 @@
 <dt class="hdlist1">payloadOnly (<code>boolean</code>)</dt>
 <dd>
 <p>If <code>true</code>, only the payload of the response will be logged if successful. Default value: <code>true</code>. Property: <code>${bundlebee.http.payloadOnly}</code>.</p>
+</dd>
+<dt class="hdlist1">skip (<code>boolean</code>)</dt>
+<dd>
+<p>Skip execution. Default value: <code>false</code>. Property: <code>${bundlebee.skip}</code>.</p>
+</dd>
+<dt class="hdlist1">skipPackaging (<code>List</code>)</dt>
+<dd>
+<p>Skipped packaging types. Default value: <code>pom</code>. Property: <code>${bundlebee.skipPackaging}</code>.</p>
 </dd>
 </dl>
 </div>

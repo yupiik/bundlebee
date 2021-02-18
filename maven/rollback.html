@@ -190,6 +190,10 @@
 <dd>
 <p>Default snapshot repository, not set by default. Default value: <code>unset</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
 </dd>
+<dt class="hdlist1">packaging (<code>String</code>)</dt>
+<dd>
+<p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: ``.</p>
+</dd>
 <dt class="hdlist1">pause (<code>long</code>)</dt>
 <dd>
 <p>A pause (in ms) between delete and apply phases, this can some environment to release all resources related to deleted components. Default value: <code>0</code>. Property: <code>${bundlebee.rollback.pause}</code>.</p>
@@ -205,6 +209,14 @@
 <dt class="hdlist1">previousManifest (<code>String</code>)</dt>
 <dd>
 <p>Same as <code>manifest</code> but for the previous alveolus to install. Default value: <code>skip</code>. Property: <code>${bundlebee.rollback.previousManifest}</code>.</p>
+</dd>
+<dt class="hdlist1">skip (<code>boolean</code>)</dt>
+<dd>
+<p>Skip execution. Default value: <code>false</code>. Property: <code>${bundlebee.skip}</code>.</p>
+</dd>
+<dt class="hdlist1">skipPackaging (<code>List</code>)</dt>
+<dd>
+<p>Skipped packaging types. Default value: <code>pom</code>. Property: <code>${bundlebee.skipPackaging}</code>.</p>
 </dd>
 <dt class="hdlist1">useMavenVersioning (<code>boolean</code>)</dt>
 <dd>

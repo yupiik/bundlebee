@@ -112,83 +112,43 @@
 <dl>
 <dt class="hdlist1">artifact (<code>String</code>)</dt>
 <dd>
-<p>Bundle artifactId. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.new.artifact}</code>.</p>
+<p>Bundle artifactId. Default value: <code>${project.artifactId}</code>. Property: <code>${bundlebee.new.artifact}</code>.</p>
 </dd>
 <dt class="hdlist1">dir (<code>String</code>)</dt>
 <dd>
-<p>Where to create the project. If not set it will use the artifact value in current folder. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.new.dir}</code>.</p>
+<p>Where to create the project. If not set it will use the artifact value in current folder. Default value: <code>${project.build.outputDirectory}</code>. Property: <code>${bundlebee.new.dir}</code>.</p>
+</dd>
+<dt class="hdlist1">force (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code> the execution runs even if dir already exists. Default value: <code>true</code>. Property: <code>${bundlebee.new.force}</code>.</p>
 </dd>
 <dt class="hdlist1">group (<code>String</code>)</dt>
 <dd>
-<p>Bundle groupId. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.new.group}</code>.</p>
+<p>Bundle groupId. Default value: <code>${project.groupId}</code>. Property: <code>${bundlebee.new.group}</code>.</p>
 </dd>
-<dt class="hdlist1">kubeApi (<code>String</code>)</dt>
+<dt class="hdlist1">packaging (<code>String</code>)</dt>
 <dd>
-<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code>. Property: <code>${bundlebee.kube.api}</code>.</p>
+<p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: ``.</p>
 </dd>
-<dt class="hdlist1">kubeContext (<code>String</code>)</dt>
+<dt class="hdlist1">skip (<code>boolean</code>)</dt>
 <dd>
-<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.kube.context}</code>.</p>
+<p>Skip execution. Default value: <code>false</code>. Property: <code>${bundlebee.skip}</code>.</p>
 </dd>
-<dt class="hdlist1">kubeDefaultPropagationPolicy (<code>String</code>)</dt>
+<dt class="hdlist1">skipPackaging (<code>List</code>)</dt>
 <dd>
-<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code>. Property: <code>${bundlebee.kube.defaultPropagationPolicy}</code>.</p>
+<p>Skipped packaging types. Default value: <code>pom</code>. Property: <code>${bundlebee.skipPackaging}</code>.</p>
 </dd>
-<dt class="hdlist1">kubeDryRun (<code>boolean</code>)</dt>
+<dt class="hdlist1">skipPom (<code>boolean</code>)</dt>
 <dd>
-<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code>. Property: <code>${bundlebee.kube.dryRun}</code>.</p>
-</dd>
-<dt class="hdlist1">kubeNamespace (<code>String</code>)</dt>
-<dd>
-<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code>. Property: <code>${bundlebee.kube.namespace}</code>.</p>
-</dd>
-<dt class="hdlist1">kubeValidateSSL (<code>boolean</code>)</dt>
-<dd>
-<p>Should SSL connector be validated or not. Default value: <code>true</code>. Property: <code>${bundlebee.kube.validateSSL}</code>.</p>
-</dd>
-<dt class="hdlist1">kubeVerbose (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code>. Property: <code>${bundlebee.kube.verbose}</code>.</p>
-</dd>
-<dt class="hdlist1">kubeconfig (<code>String</code>)</dt>
-<dd>
-<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. Default value: <code>auto</code>. Property: <code>${kubeconfig}</code>.</p>
-</dd>
-<dt class="hdlist1">mavenCache (<code>String</code>)</dt>
-<dd>
-<p>Where to cache maven dependencies. If set to <code>auto</code>, <code>$HOME/.m2/repository</code> is used. Default value: <code>auto</code>. Property: <code>${bundlebee.maven.cache}</code>.</p>
-</dd>
-<dt class="hdlist1">mavenForceCustomSettingsXml (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code>. Property: <code>${bundlebee.maven.forceCustomSettingsXml}</code>.</p>
-</dd>
-<dt class="hdlist1">mavenHttpConnectTimeout (<code>int</code>)</dt>
-<dd>
-<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code>. Property: <code>${bundlebee.maven.http.connectTimeout}</code>.</p>
-</dd>
-<dt class="hdlist1">mavenPreferCustomSettingsXml (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code>. Property: <code>${bundlebee.maven.preferCustomSettingsXml}</code>.</p>
-</dd>
-<dt class="hdlist1">mavenRepositoriesDownloadsEnabled (<code>boolean</code>)</dt>
-<dd>
-<p>Enables to disable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code>. Property: <code>${bundlebee.maven.repositories.downloads.enabled}</code>.</p>
-</dd>
-<dt class="hdlist1">mavenRepositoriesRelease (<code>String</code>)</dt>
-<dd>
-<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code>. Property: <code>${bundlebee.maven.repositories.release}</code>.</p>
-</dd>
-<dt class="hdlist1">mavenRepositoriesSnapshot (<code>String</code>)</dt>
-<dd>
-<p>Default snapshot repository, not set by default. Default value: <code>unset</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
+<p>If <code>true</code> no pom.xml is generated. Default value: <code>true</code>. Property: <code>${bundlebee.new.skipPom}</code>.</p>
 </dd>
 <dt class="hdlist1">skipSamples (<code>boolean</code>)</dt>
 <dd>
-<p>By default a sample alveolus with a config map is generated, if <code>false</code> it will be skipped. Default value: <code>false</code>. Property: <code>${bundlebee.new.skipSamples}</code>.</p>
+<p>By default a sample alveolus with a config map is generated, if <code>false</code> it will be skipped. Default value: <code>true</code>. Property: <code>${bundlebee.new.skipSamples}</code>.</p>
 </dd>
 <dt class="hdlist1">version (<code>String</code>)</dt>
 <dd>
-<p>Bundle version. Default value: <code>1.0.0</code>. Property: <code>${bundlebee.new.version}</code>.</p>
+<p>Bundle version. Default value: <code>${project.version}</code>. Property: <code>${bundlebee.new.version}</code>.</p>
 </dd>
 </dl>
 </div>
