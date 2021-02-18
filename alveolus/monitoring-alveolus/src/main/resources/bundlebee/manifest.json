@@ -1,0 +1,28 @@
+{
+  "alveoli": [
+    {
+      "//": "Includes loki+prometheus+zipkin+grafana at once.",
+      "name": "${project.groupId}:${project.artifactId}:${project.version}",
+      "descriptors": [
+      ],
+      "dependencies": [
+        {
+          "name": "${project.groupId}:prometheus-simple:${project.version}",
+          "location": "${project.groupId}:prometheus-simple:${project.version}"
+        },
+        {
+          "name": "${project.groupId}:zipkin-simple:${project.version}",
+          "location": "${project.groupId}:zipkin-simple:${project.version}"
+        },
+        {
+          "name": "${project.groupId}:loki-simple:${project.version}",
+          "location": "${project.groupId}:loki-simple:${project.version}"
+        },
+        {
+          "name": "${project.groupId}:grafana-simple:${project.version}",
+          "location": "${project.groupId}:grafana-simple:${project.version}"
+        }
+      ]
+    }
+  ]
+}

@@ -195,6 +195,16 @@ public class AlveoliConfigurationGenerator implements Runnable {
                         p + " does not respect that (" + artifactId + " expected).");
             }
         });
+        final var dependencies = ofNullable(rawAlveolusSpec.get("dependencies"))
+                .map(JsonValue::asJsonArray)
+                .map(deps -> "" +
+                        "== Dependencies\n" +
+                        "\n" +
+                        deps.stream()
+                                .map(JsonValue::asJsonObject)
+                                .map(dep -> "* `" + dep.getString("name") + "` from `" + dep.getString("location") + "` dependency")
+                                .collect(joining("\n", "", "\n")))
+                .orElse("");
         return "= " + alveolus.getName() + "\n" +
                 "\n" +
                 description +
@@ -238,16 +248,18 @@ public class AlveoliConfigurationGenerator implements Runnable {
                 "}\n" +
                 "----\n" +
                 "\n" +
-                "== Configuration\n" +
-                "\n" +
-                placeholders.stream()
-                        .map(it -> it.getName() + "::\n" +
-                                it.getDescription() + "\n" +
-                                of(it.getDefaultValue())
-                                        .filter(v -> !ConfigProperty.UNCONFIGURED_VALUE.equals(v))
-                                        .map(v -> "Default value: `" + v + "`.")
-                                        .orElse("No default value."))
-                        .collect(joining("\n\n", "", "\n"));
+                dependencies +
+                (placeholders.isEmpty() ? "" : ("" +
+                        "== Configuration\n" +
+                        "\n" +
+                        placeholders.stream()
+                                .map(it -> it.getName() + "::\n" +
+                                        it.getDescription() + "\n" +
+                                        of(it.getDefaultValue())
+                                                .filter(v -> !ConfigProperty.UNCONFIGURED_VALUE.equals(v))
+                                                .map(v -> "Default value: `" + v + "`.")
+                                                .orElse("No default value."))
+                                .collect(joining("\n\n", "", "\n"))));
     }
 
     private String addDefaultConfigurationDocIfAny(final Path bundleBeeFolder, final Manifest.Alveolus alveolus, final Jsonb jsonb, final Yaml yaml) {
