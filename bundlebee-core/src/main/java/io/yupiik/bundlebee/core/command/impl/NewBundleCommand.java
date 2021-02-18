@@ -58,6 +58,16 @@ public class NewBundleCommand implements Executable {
     @ConfigProperty(name = "bundlebee.new.skipSamples", defaultValue = "false")
     private boolean skipSamples;
 
+    @Inject
+    @Description("If `true` no pom.xml is generated.")
+    @ConfigProperty(name = "bundlebee.new.skipPom", defaultValue = "false")
+    private boolean skipPom;
+
+    @Inject
+    @Description("If `true` the execution runs even if dir already exists.")
+    @ConfigProperty(name = "bundlebee.new.force", defaultValue = "false")
+    private boolean force;
+
     @Override
     public String name() {
         return "new";
@@ -75,7 +85,7 @@ public class NewBundleCommand implements Executable {
         }
         final var output = Paths.get(UNSET.equals(directory) ? artifact : directory).normalize().toAbsolutePath();
         try {
-            if (Files.exists(output) && Files.list(output).anyMatch(it -> {
+            if (!force && Files.exists(output) && Files.list(output).anyMatch(it -> {
                 final var name = it.getFileName().toString();
                 return !".".equals(name) && !"..".equals(name);
             })) {
@@ -117,50 +127,52 @@ public class NewBundleCommand implements Executable {
                 log.info("Created " + Files.writeString(output.resolve("bundlebee/kubernetes/.keepit"),
                         "can safely be deleted as soon as you add a file in this folder", StandardOpenOption.CREATE));
             }
-            log.info("Created " + Files.writeString(output.resolve("pom.xml"), "" +
-                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                    "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                    "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                    "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                    "  <modelVersion>4.0.0</modelVersion>\n" +
-                    "\n" +
-                    "  <groupId>" + group.replace('/', '.') + "</groupId>\n" +
-                    "  <artifactId>" + artifact + "</artifactId>\n" +
-                    "  <version>" + version + "</version>\n" +
-                    "  <name>" + artifact + "</name>\n" +
-                    "  <description>Informative pom.xml for " + artifact + " if you want to use maven to build and deploy this bundle.</description>\n" +
-                    "\n" +
-                    "  <build>\n" +
-                    "    <resources>\n" +
-                    "      <resource>\n" +
-                    "        <directory>${project.basedir}</directory>\n" +
-                    "        <includes>\n" +
-                    "          <include>bundlebee/**</include>\n" +
-                    "        </includes>\n" +
-                    "      </resource>\n" +
-                    "    </resources>\n" +
-                    "    <plugins>\n" +
-                    "      <plugin>\n" +
-                    "        <groupId>org.apache.maven.plugins</groupId>\n" +
-                    "        <artifactId>maven-release-plugin</artifactId>\n" +
-                    "        <version>3.0.0-M1</version>\n" +
-                    "      </plugin>\n" +
-                    "    </plugins>\n" +
-                    "  </build>\n" +
-                    "\n" +
-                    "  <!-- override with your custom nexus if you have one -->\n" +
-                    "  <distributionManagement>\n" +
-                    "    <snapshotRepository>\n" +
-                    "      <id>my-nexus</id>\n" +
-                    "      <url>https://nexus.mycompany.org/content/repositories/snapshots</url>\n" +
-                    "    </snapshotRepository>\n" +
-                    "    <repository>\n" +
-                    "      <id>my-nexus</id>\n" +
-                    "      <url>https://nexus.mycompany.org/content/repositories/releases</url>\n" +
-                    "    </repository>\n" +
-                    "  </distributionManagement>\n" +
-                    "</project>\n" +
-                    "", StandardOpenOption.CREATE));
+            if (!skipPom) {
+                log.info("Created " + Files.writeString(output.resolve("pom.xml"), "" +
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
+                        "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                        "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
+                        "  <modelVersion>4.0.0</modelVersion>\n" +
+                        "\n" +
+                        "  <groupId>" + group.replace('/', '.') + "</groupId>\n" +
+                        "  <artifactId>" + artifact + "</artifactId>\n" +
+                        "  <version>" + version + "</version>\n" +
+                        "  <name>" + artifact + "</name>\n" +
+                        "  <description>Informative pom.xml for " + artifact + " if you want to use maven to build and deploy this bundle.</description>\n" +
+                        "\n" +
+                        "  <build>\n" +
+                        "    <resources>\n" +
+                        "      <resource>\n" +
+                        "        <directory>${project.basedir}</directory>\n" +
+                        "        <includes>\n" +
+                        "          <include>bundlebee/**</include>\n" +
+                        "        </includes>\n" +
+                        "      </resource>\n" +
+                        "    </resources>\n" +
+                        "    <plugins>\n" +
+                        "      <plugin>\n" +
+                        "        <groupId>org.apache.maven.plugins</groupId>\n" +
+                        "        <artifactId>maven-release-plugin</artifactId>\n" +
+                        "        <version>3.0.0-M1</version>\n" +
+                        "      </plugin>\n" +
+                        "    </plugins>\n" +
+                        "  </build>\n" +
+                        "\n" +
+                        "  <!-- override with your custom nexus if you have one -->\n" +
+                        "  <distributionManagement>\n" +
+                        "    <snapshotRepository>\n" +
+                        "      <id>my-nexus</id>\n" +
+                        "      <url>https://nexus.mycompany.org/content/repositories/snapshots</url>\n" +
+                        "    </snapshotRepository>\n" +
+                        "    <repository>\n" +
+                        "      <id>my-nexus</id>\n" +
+                        "      <url>https://nexus.mycompany.org/content/repositories/releases</url>\n" +
+                        "    </repository>\n" +
+                        "  </distributionManagement>\n" +
+                        "</project>\n" +
+                        "", StandardOpenOption.CREATE));
+            }
 
             log.info("Creation completed, you can go in " + output + " and build it with 'bundlebee build'");
         } catch (final IOException e) {
