@@ -136,12 +136,12 @@ public class AlveolusHandler {
                                                 final ArchiveReader.Cache cache) {
         final var ref = new AtomicReference<Function<AlveolusContext, CompletionStage<?>>>();
         final Function<AlveolusContext, CompletionStage<?>> internalOnAlveolus = ctx ->
-                this.onAlveolus(prefixOnVisitLog, ctx.alveolus, ctx.patches, ctx.cache, ref.get(), onDescriptor);
+                this.onAlveolus(prefixOnVisitLog, ctx.alveolus, ctx.patches, ctx.excludes, ctx.cache, ref.get(), onDescriptor);
         final Function<AlveolusContext, CompletionStage<?>> combinedOnAlveolus = onAlveolusUser == null ?
                 internalOnAlveolus :
                 ctx -> onAlveolusUser.apply(ctx).thenCompose(i -> internalOnAlveolus.apply(ctx));
         ref.set(combinedOnAlveolus);
-        return combinedOnAlveolus.apply(new AlveolusContext(alveolus, Map.of(), cache));
+        return combinedOnAlveolus.apply(new AlveolusContext(alveolus, Map.of(), List.of(), cache));
     }
 
     private Manifest.Alveolus findAlveolusInClasspath(final String alveolus) {
@@ -176,32 +176,42 @@ public class AlveolusHandler {
 
     private CompletionStage<?> onAlveolus(final String prefixOnVisitLog, final Manifest.Alveolus from,
                                           final Map<Predicate<String>, Manifest.Patch> patches,
+                                          final Collection<Manifest.DescriptorRef> excludes,
                                           final ArchiveReader.Cache cache,
                                           final Function<AlveolusContext, CompletionStage<?>> onAlveolus,
                                           final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor) {
         if (prefixOnVisitLog != null) {
             log.info(() -> prefixOnVisitLog + " '" + from.getName() + "'");
         }
+        final var currentExcludes = from.getExcludedDescriptors() == null ?
+                excludes :
+                Stream.concat(
+                        excludes.stream(),
+                        from.getExcludedDescriptors() != null ? from.getExcludedDescriptors().stream() : Stream.empty())
+                        .distinct()
+                        .collect(toList());
         final var currentPatches = from.getPatches() == null || from.getPatches().isEmpty() ?
                 patches :
                 mergePatches(patches, from.getPatches());
         final var dependencies = ofNullable(from.getDependencies()).orElseGet(List::of);
         return all(
                 dependencies.stream()
+                        // note we can't filter it *here* even if all descriptors are excluded because it can have depdencies
                         .filter(dep -> conditionEvaluator.test(dep.getIncludeIf()))
                         .map(it -> {
                             if (it.getLocation() == null) {
-                                return onAlveolus.apply(new AlveolusContext(findAlveolusInClasspath(it.getName()), currentPatches, cache));
+                                return onAlveolus.apply(new AlveolusContext(findAlveolusInClasspath(it.getName()), currentPatches, currentExcludes, cache));
                             }
                             return findAlveolus(it.getLocation(), it.getName(), cache)
-                                    .thenCompose(alveolus -> onAlveolus.apply(new AlveolusContext(alveolus, currentPatches, cache)));
+                                    .thenCompose(alveolus -> onAlveolus.apply(new AlveolusContext(alveolus, currentPatches, currentExcludes, cache)));
                         })
                         .map(it -> it.thenApply(ignored -> 1)) // just to match the signature of all()
                         .collect(toList()),
                 counting(), true)
                 .thenCompose(ready -> all(
                         ofNullable(from.getDescriptors()).orElseGet(List::of).stream()
-                                .filter(desc -> conditionEvaluator.test(desc.getIncludeIf()))
+                                .filter(desc -> conditionEvaluator.test(desc.getIncludeIf()) && excludes.stream()
+                                        .noneMatch(d -> matches(d.getLocation(), desc.getLocation()) && matches(d.getName(), desc.getName())))
                                 .map(desc -> findDescriptor(desc, cache))
                                 .collect(toList()),
                         toList(),
@@ -210,9 +220,13 @@ public class AlveolusHandler {
                             log.finest(() -> "Applying " + descriptors);
                             return all(descriptors.stream()
                                     .map(it -> prepare(it, currentPatches))
-                                    .map(it -> onDescriptor.apply(new AlveolusContext(from, patches, cache), it))
+                                    .map(it -> onDescriptor.apply(new AlveolusContext(from, patches, excludes, cache), it))
                                     .collect(toList()), counting(), true);
                         }));
+    }
+
+    private boolean matches(final String expected, final String actual) {
+        return Objects.equals(expected, actual) || expected == null || "*".equals(expected);
     }
 
     private CompletionStage<Manifest.Alveolus> findAlveolus(final String from, final String alveolus,
@@ -347,6 +361,7 @@ public class AlveolusHandler {
     public static class AlveolusContext {
         private final Manifest.Alveolus alveolus;
         private final Map<Predicate<String>, Manifest.Patch> patches;
+        private final Collection<Manifest.DescriptorRef> excludes;
         private final ArchiveReader.Cache cache;
     }
 }

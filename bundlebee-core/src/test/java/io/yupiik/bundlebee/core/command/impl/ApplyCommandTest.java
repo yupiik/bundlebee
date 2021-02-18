@@ -78,6 +78,21 @@ class ApplyCommandTest {
     }
 
     @Test
+    void applyWithDependenciesAndExclude(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withexclude"));
+        assertEquals("" +
+                "Deploying 'ApplyCommandTest.withexclude'\n" +
+                "Deploying 'ApplyCommandTest.apply'\n" +
+                "Applying 's2' (kind=services) for namespace 'default'\n" +
+                "", logs);
+
+        assertEquals(2, spyingResponseLocator.getFound().size());
+    }
+
+    @Test
     void applyWithDuplicatedDependencies(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
