@@ -188,7 +188,13 @@ public final class MojoGenerator {
             case "bundlebee.add-alveolus.alveolus":
                 return "${project.groupId}:${project.artifactId}:${project.version}";
             case "bundlebee.add-alveolus.manifest":
-                return "${project.basedir}/src/main/resources/bundlebee/manifest.json";
+                return "${project.build.outputDirectory}/bundlebee/manifest.json";
+            case "bundlebee.new.dir":
+                return "${project.build.outputDirectory}";
+            case "bundlebee.new.skipPom":
+            case "bundlebee.new.skipSamples":
+            case "bundlebee.new.force":
+                return "true";
             default:
                 if (!UNSET.equals(defaultDefault) && !"bundlebee.new.version".equals(key) /*this one has a default we want to override*/) {
                     return defaultDefault;

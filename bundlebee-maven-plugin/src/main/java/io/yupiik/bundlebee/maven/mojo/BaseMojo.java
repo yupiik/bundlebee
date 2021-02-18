@@ -20,6 +20,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import java.util.List;
 import java.util.MissingResourceException;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -39,6 +40,18 @@ public abstract class BaseMojo extends AbstractMojo {
     @Parameter(property = "bundlebee.skip", defaultValue = "false")
     private boolean skip;
 
+    /**
+     * Skipped packaging types.
+     */
+    @Parameter(property = "bundlebee.skipPackaging", defaultValue = "pom")
+    private List<String> skipPackaging;
+
+    /**
+     * Current module packaging.
+     */
+    @Parameter(defaultValue = "${project.packaging}")
+    private String packaging;
+
     protected abstract void doExecute();
 
     @Override
@@ -47,8 +60,8 @@ public abstract class BaseMojo extends AbstractMojo {
                 setupLogger("org.apache.webbeans", Level.WARNING),
                 setupLogger("io.yupiik.bundlebee", Level.INFO))
                 .collect(toList());
-        if (skip) {
-            getLog().info(getClass().getName() + " execution skippedsk");
+        if (skip || (skipPackaging != null && skipPackaging.contains(packaging))) {
+            getLog().info(getClass().getName() + " execution skipped");
             return;
         }
         try {
