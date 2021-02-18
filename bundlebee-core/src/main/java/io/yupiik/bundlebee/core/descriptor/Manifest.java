@@ -28,6 +28,46 @@ public class Manifest {
     @Description("List of described applications/libraries.")
     private List<Alveolus> alveoli;
 
+    public enum ConditionType {
+        @Description("Key is read is process environment variables.")
+        ENV,
+
+        @Description("Key is read is process system properties.")
+        SYSTEM_PROPERTY
+    }
+
+    public enum ConditionOperator {
+        @Description("At least one condition must match.")
+        ANY,
+
+        @Description("All conditions must match.")
+        ALL
+    }
+
+    @Data
+    public static class Conditions {
+        @Description("Operator to combine the conditions.")
+        private ConditionOperator operator = ConditionOperator.ALL;
+
+        @Description("List of condition to match according `operator`.")
+        private List<Condition> conditions;
+    }
+
+    @Data
+    public static class Condition {
+        @Description("Type of condition.")
+        private ConditionType type = ConditionType.ENV;
+
+        @Description("Should the condition be reversed (ie \"not in this case\").")
+        private boolean negate;
+
+        @Description("Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string.")
+        private String key;
+
+        @Description("Expected value. If empty/null, `true` is assumed. Note that empty is allowed.")
+        private String value;
+    }
+
     @Data
     public static class Alveolus {
         @Description("" +
@@ -65,6 +105,10 @@ public class Manifest {
                 "Where to find the alveolus. " +
                 "Note it will ensure the jar is present on the local maven repository.")
         private String location;
+
+        @Description("Conditions to ignore this dependency. " +
+                "Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)")
+        private Conditions ignoreIf;
     }
 
     @Data
@@ -85,6 +129,9 @@ public class Manifest {
                 "If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. " +
                 "You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`.")
         private boolean interpolate;
+
+        @Description("Conditions to ignore this descriptor.")
+        private Conditions ignoreIf;
     }
 
     @Data

@@ -125,8 +125,10 @@ public class CommandConfigurationGenerator implements Runnable {
                 .collect(toList());
     }
 
+    // local commands
     private boolean skipSharedConfig(final String name) {
-        return "build".equals(name) ||
+        return "add-alveolus".equals(name) ||
+                "build".equals(name) ||
                 "cipher-password".equals(name) ||
                 "create-master-password".equals(name) ||
                 "new".equals(name) ||

@@ -96,6 +96,9 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.0.0-M5</version>
         <configuration>
+          <environmentVariables>
+            <TEST_ENV_VAR>set</TEST_ENV_VAR>
+          </environmentVariables>
           <systemPropertyVariables>
             <bundlebee.maven.repositories.downloads.enabled>false</bundlebee.maven.repositories.downloads.enabled>
             <bundlebee.kube.api>https://kubernetes.bundlebee.yupiik.test</bundlebee.kube.api>
