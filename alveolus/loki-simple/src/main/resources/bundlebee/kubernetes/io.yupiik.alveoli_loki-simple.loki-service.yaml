@@ -19,7 +19,7 @@ kind: Service
 metadata:
   name: loki-service
   labels:
-    app: promtail-simple
+    app: loki-simple
 spec:
   type: NodePort
   ports:
@@ -30,4 +30,4 @@ spec:
       # cause we want to access on the host the service (for convenience: http://$(minikube ip):32100)
       nodePort: 32100
   selector:
-    app: promtail-simple
+    app: loki-simple

@@ -19,9 +19,10 @@ kind: ConfigMap
 metadata:
   name: loki-config
   labels:
-    app: promtail-simple
+    app: loki-simple
 data:
-  promtail.yaml: |
+  loki.yaml: |
+    # this is the default local configuration for loki
     auth_enabled: false
     server:
       http_listen_port: 3100

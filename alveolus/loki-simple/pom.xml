@@ -27,6 +27,5 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>loki-simple</artifactId>
-  <name>BundleBee :: Alveolus :: Zipkin Simple</name>
-
+  <name>BundleBee :: Alveolus :: Loki Simple</name>
 </project>

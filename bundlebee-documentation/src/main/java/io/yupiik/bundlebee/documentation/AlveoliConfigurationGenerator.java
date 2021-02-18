@@ -251,61 +251,57 @@ public class AlveoliConfigurationGenerator implements Runnable {
     }
 
     private String addDefaultConfigurationDocIfAny(final Path bundleBeeFolder, final Manifest.Alveolus alveolus, final Jsonb jsonb, final Yaml yaml) {
-        return ofNullable(alveolus.getDescriptors()).stream()
+        final var configs = ofNullable(alveolus.getDescriptors()).stream()
                 .flatMap(Collection::stream)
-                .filter(it -> it.getName().endsWith(".configmap"))
+                .filter(it -> it.getName().endsWith("configmap")) // todo: support secret (we don't use it yet)
                 .map(desc -> toJson(bundleBeeFolder, jsonb, yaml, desc))
                 .filter(desc -> "ConfigMap".equals(desc.getString("kind")) && desc.containsKey("data"))
-                .findFirst() // assume there is only one
+                .sorted(comparing(desc -> desc.getJsonObject("metadata").getString("name")))
                 .map(desc -> desc.getJsonObject("data"))
-                .map(data -> "" +
-                        "== Default Configuration\n" +
-                        "\n" +
-                        data.entrySet().stream()
-                                .map(e -> new AbstractMap.SimpleImmutableEntry<>(e.getKey(), toString(e.getValue())))
-                                .map(e -> e.getKey() + "::\n" + (e.getValue().contains("\n") ?
-                                        "[source]\n----\n" + e.getValue() + "\n----\n" : ('`' + e.getValue() + '`')))
-                                .collect(joining("\n", "", "\n\n")))
-                .orElse("");
+                .map(data -> data.entrySet().stream()
+                        .map(e -> new AbstractMap.SimpleImmutableEntry<>(e.getKey(), toString(e.getValue())))
+                        .map(e -> e.getKey() + "::\n" + (e.getValue().contains("\n") ?
+                                "[source]\n----\n" + e.getValue() + "\n----\n" : ('`' + e.getValue() + '`')))
+                        .collect(joining("\n", "", "\n\n")))
+                .collect(joining("\n"));
+        return configs.isBlank() ? "" : ("== Default Configuration\n\n" + configs);
     }
 
     private String addPortsDocIfAny(final Path bundleBeeFolder, final Manifest.Alveolus alveolus, final Jsonb jsonb,
                                     final Yaml yaml) {
-        return ofNullable(alveolus.getDescriptors()).stream()
+        final var content = ofNullable(alveolus.getDescriptors()).stream()
                 .flatMap(Collection::stream)
-                .filter(it -> it.getName().endsWith(".service"))
+                .filter(it -> it.getName().endsWith("service"))
                 .map(desc -> toJson(bundleBeeFolder, jsonb, yaml, desc))
                 .filter(desc -> "Service".equals(desc.getString("kind")) &&
                         "NodePort".equals(desc.getJsonObject("spec").getString("type")) &&
                         desc.getJsonObject("spec").containsKey("ports"))
-                .findFirst() // assume there is only one
+                .sorted(comparing(desc -> desc.getJsonObject("metadata").getString("name")))
                 .map(desc -> {
                     final var ports = desc.getJsonObject("spec").getJsonArray("ports");
                     final var name = desc.getJsonObject("metadata").getString("name");
-                    return "" +
-                            "== Ports\n" +
-                            "\n" +
-                            ports.stream()
-                                    .map(JsonValue::asJsonObject)
-                                    .map(port -> "" +
-                                            "* Name: `" + (port.containsKey("name") ? name + " (" + toString(port.get("name")) + ")" : name) + "`\n" +
-                                            (port.containsKey("protocol") ? "** Protocol: " + port.getString("protocol") + '\n' : "") +
-                                            (port.containsKey("port") ? "** Port: " + toString(port.get("port")) + '\n' : "") +
-                                            (port.containsKey("targetPort") ? "** Target Port: " + toString(port.get("targetPort")) + '\n' : "") +
-                                            (port.containsKey("nodePort") ? "** Node Port: " + toString(port.get("nodePort")) + '\n' : "")
-                                    )
-                                    .collect(joining(
-                                            "\n", "",
-                                            ports.stream().anyMatch(it -> it.asJsonObject().containsKey("nodePort")) ?
-                                                    "\nTIP: on linux and with minikube you can access this service using `http://$(minikube ip):" +
-                                                            ports.stream()
-                                                                    .filter(it -> it.asJsonObject().containsKey("nodePort"))
-                                                                    .findFirst()
-                                                                    .map(it -> toString(it.asJsonObject().get("nodePort")))
-                                                                    .orElseThrow() + "` on your host.\n\n" :
-                                                    "\n"));
+                    return ports.stream()
+                            .map(JsonValue::asJsonObject)
+                            .map(port -> "" +
+                                    "* Name: `" + (port.containsKey("name") ? name + " (" + toString(port.get("name")) + ")" : name) + "`\n" +
+                                    (port.containsKey("protocol") ? "** Protocol: " + port.getString("protocol") + '\n' : "") +
+                                    (port.containsKey("port") ? "** Port: " + toString(port.get("port")) + '\n' : "") +
+                                    (port.containsKey("targetPort") ? "** Target Port: " + toString(port.get("targetPort")) + '\n' : "") +
+                                    (port.containsKey("nodePort") ? "** Node Port: " + toString(port.get("nodePort")) + '\n' : "")
+                            )
+                            .collect(joining(
+                                    "\n", "",
+                                    ports.stream().anyMatch(it -> it.asJsonObject().containsKey("nodePort")) ?
+                                            "\nTIP: on linux and with minikube you can access this service using `http://$(minikube ip):" +
+                                                    ports.stream()
+                                                            .filter(it -> it.asJsonObject().containsKey("nodePort"))
+                                                            .findFirst()
+                                                            .map(it -> toString(it.asJsonObject().get("nodePort")))
+                                                            .orElseThrow() + "` on your host.\n\n" :
+                                            "\n"));
                 })
-                .orElse("");
+                .collect(joining("\n"));
+        return content.isBlank() ? "" : ("== Ports\n\n" + content);
     }
 
     private JsonObject toJson(final Path bundleBeeFolder, final Jsonb jsonb, final Yaml yaml, final Manifest.Descriptor desc) {
