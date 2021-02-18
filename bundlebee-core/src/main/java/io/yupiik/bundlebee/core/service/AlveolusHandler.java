@@ -29,6 +29,7 @@ import javax.json.JsonStructure;
 import javax.json.bind.Jsonb;
 import javax.json.spi.JsonProvider;
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -87,6 +88,9 @@ public class AlveolusHandler {
                                                                     final String alveolus) {
         if (!"skip".equals(manifest)) {
             final var mf = manifestReader.readManifest(() -> {
+                if (manifest.startsWith("{")) {
+                    return new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8));
+                }
                 try {
                     return Files.newInputStream(Paths.get(manifest));
                 } catch (final IOException e) {

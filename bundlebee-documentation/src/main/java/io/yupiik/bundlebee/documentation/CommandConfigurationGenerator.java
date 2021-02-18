@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -58,10 +59,11 @@ public class CommandConfigurationGenerator implements Runnable {
                             "\n" +
                             "\n" +
                             docs.stream()
-                                    .sorted(Path::compareTo)
+                                    .sorted(Map.Entry.comparingByKey())
                                     .map(it -> {
-                                        final var filename = it.getFileName().toString();
-                                        return "- xref:commands/" + filename + '[' + filename.substring(0, filename.length() - ".configuration.adoc".length()) + ']';
+                                        final var filename = it.getKey().getFileName().toString();
+                                        return "- xref:commands/" + filename + '[' + filename.substring(0, filename.length() - ".configuration.adoc".length()) + "]: " +
+                                                Character.toLowerCase(it.getValue().charAt(0)) + it.getValue().substring(1) + (it.getValue().endsWith(".") ? "" : ".");
                                     })
                                     .collect(joining("\n")) +
                             "\n",
@@ -72,7 +74,7 @@ public class CommandConfigurationGenerator implements Runnable {
         }
     }
 
-    private List<Path> generate(final Path base, final AnnotationFinder finder) {
+    private List<Map.Entry<Path, String>> generate(final Path base, final AnnotationFinder finder) {
         final var formatter = new DocEntryFormatter();
         return finder.enableFindImplementations().findImplementations(Executable.class).stream()
                 .filter(it -> !Modifier.isAbstract(it.getModifiers()) && !it.isInterface())
@@ -86,11 +88,12 @@ public class CommandConfigurationGenerator implements Runnable {
                                 .sorted() // by key name to ensure it is deterministic
                                 .collect(joining("\n\n"));
                         final var conf = base.resolve(name + ".configuration.adoc");
+                        final var description = instance.description();
                         java.nio.file.Files.writeString(
                                 conf,
                                 "= " + Character.toUpperCase(name.charAt(0)) + name.substring(1) + "\n" +
                                         "\n" +
-                                        instance.description() + "\n" +
+                                        description + "\n" +
                                         "\n" +
                                         "Name: `" + name + "`.\n" +
                                         "\n" +
@@ -99,7 +102,10 @@ public class CommandConfigurationGenerator implements Runnable {
                                         (config.isEmpty() ? "No configuration." : config) + "\n",
                                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         log.info("Created " + conf);
-                        return conf;
+                        final int end = description.indexOf("\n//");
+                        return new AbstractMap.SimpleImmutableEntry<>(
+                                conf,
+                                end > 0 ? description.substring(0, end) : description);
                     } catch (final IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                         throw new IllegalArgumentException(e);
                     }

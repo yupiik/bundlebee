@@ -51,7 +51,7 @@ public class ApplyCommand implements Executable {
     private String alveolus;
 
     @Inject
-    @Description("Manifest to load to start to deploy. This optional setting mainly enables to use dependencies easily. " +
+    @Description("Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. " +
             "Ignored if set to `skip`.")
     @ConfigProperty(name = "bundlebee.apply.manifest", defaultValue = "skip")
     private String manifest;

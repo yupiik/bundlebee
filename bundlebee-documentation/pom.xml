@@ -71,6 +71,16 @@
       <artifactId>loki-simple</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>grafana-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>monitoring-alveolus</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

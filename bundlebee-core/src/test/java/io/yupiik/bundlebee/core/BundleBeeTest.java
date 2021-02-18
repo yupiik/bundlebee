@@ -35,7 +35,7 @@ class BundleBeeTest {
         final var explicitHelp = executor.wrap(INFO, () -> new BundleBee().launch("help"));
         final var missingCommand = executor.wrap(INFO, () -> new BundleBee().launch("missing"));
         Stream.of(noArg, explicitHelp, missingCommand)
-                .forEach(content -> assertTrue(content.contains("  [] help: print help.\n"), content));
+                .forEach(content -> assertTrue(content.contains("  [] help: print help for all available commands.\n"), content));
 
         // missing command has an additional error message
         assertTrue(missingCommand.contains("No command found for args: [missing]\n"), missingCommand);
