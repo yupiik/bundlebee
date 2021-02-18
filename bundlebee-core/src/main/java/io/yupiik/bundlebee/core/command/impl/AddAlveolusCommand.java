@@ -15,6 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import io.yupiik.bundlebee.core.command.AddAlveolusTypeHandler;
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
@@ -23,6 +24,7 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
@@ -35,8 +37,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.Locale.ROOT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -74,6 +79,9 @@ public class AddAlveolusCommand implements Executable {
     @BundleBee
     private Jsonb jsonb;
 
+    @Inject
+    private Instance<AddAlveolusTypeHandler> typeHandlers;
+
     @Override
     public String name() {
         return "add-alveolus";
@@ -97,7 +105,11 @@ public class AddAlveolusCommand implements Executable {
                     }
                     return createWeb();
                 default:
-                    throw new IllegalArgumentException("Unsupported type: " + type);
+                    return StreamSupport.stream(Spliterators.spliteratorUnknownSize(typeHandlers.iterator(), Spliterator.IMMUTABLE), false)
+                            .filter(it -> type.equals(it.name()))
+                            .findFirst()
+                            .map(AddAlveolusTypeHandler::handle)
+                            .orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + type));
             }
         } catch (final Exception ioe) {
             throw new IllegalStateException(ioe);

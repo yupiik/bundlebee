@@ -24,3 +24,46 @@ They are named exactly the same way (i.e. to execute `apply` command you can run
 The configuration is the same than the ones of the CLI so you can review the xref:commands.adoc[commands] documentation or use your IDE completion.
 
 More information on xref:maven/bundlebee-maven-plugin.adoc[mojos] documentation.
+
+== Example
+
+Here a sample to generate a web alveolus in a maven module (note it can be defined in parent pom):
+
+[source,xml]
+----
+<plugin>
+  <groupId>io.yupiik</groupId>
+  <artifactId>bundlebee-maven-plugin</artifactId>
+  <version>${bundlebee.version}</version>
+  <executions>
+    <execution> <1>
+      <id>init-bundlebee</id>
+      <phase>generate-resources</phase>
+      <goals>
+        <goal>new</goal>
+      </goals>
+    </execution>
+    <execution> <2>
+      <id>generate-alveolus</id>
+      <phase>generate-resources</phase>
+      <goals>
+        <goal>add-alveolus</goal>
+      </goals>
+      <configuration>
+        <image>company/${project.artifactId}:latest</image> <3>
+      </configuration>
+    </execution>
+  </executions>
+</plugin>
+----
+
+<.> initialize a bundlebee folder in `target/classes/bundlebee` (default)
+<.> add a web (default type) alveolus for this module
+<.> ensure to set the image name for the module, it is required
+
+This will enable to bundle the alveolus in the jar and then rely on it in a `manifest.json`.
+
+TIP: even if the `add-alveolus` goal will enable you to deploy your web service, it is recommended to customize the configuration (at least the config map).
+This goal (`add-alveolus`) is mainly to get started but once you got your `manifest.json` written you can remove the plugin execution until you write a custom `io.yupiik.bundlebee.core.command.AddAlveolusTypeHandler` added in plugin dependencies.
+
+
