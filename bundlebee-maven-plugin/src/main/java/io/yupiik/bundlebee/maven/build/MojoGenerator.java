@@ -189,6 +189,8 @@ public final class MojoGenerator {
                 return "${project.groupId}:${project.artifactId}:${project.version}";
             case "bundlebee.add-alveolus.manifest":
                 return "${project.build.outputDirectory}/bundlebee/manifest.json";
+            case "bundlebee.add-alveolus.overwrite":
+                return "false";
             case "bundlebee.new.dir":
                 return "${project.build.outputDirectory}";
             case "bundlebee.new.skipPom":
