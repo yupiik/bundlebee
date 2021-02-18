@@ -84,6 +84,9 @@ public class AlveolusHandler {
     @Inject
     private ArchiveReader archives;
 
+    @Inject
+    private ConditionEvaluator conditionEvaluator;
+
     public CompletionStage<List<Manifest.Alveolus>> findRootAlveoli(final String from, final String manifest,
                                                                     final String alveolus) {
         if (!"skip".equals(manifest)) {
@@ -185,6 +188,7 @@ public class AlveolusHandler {
         final var dependencies = ofNullable(from.getDependencies()).orElseGet(List::of);
         return all(
                 dependencies.stream()
+                        .filter(dep -> conditionEvaluator.test(dep.getIgnoreIf()))
                         .map(it -> {
                             if (it.getLocation() == null) {
                                 return onAlveolus.apply(new AlveolusContext(findAlveolusInClasspath(it.getName()), currentPatches, cache));
@@ -197,7 +201,8 @@ public class AlveolusHandler {
                 counting(), true)
                 .thenCompose(ready -> all(
                         ofNullable(from.getDescriptors()).orElseGet(List::of).stream()
-                                .map(it -> findDescriptor(it, cache))
+                                .filter(desc -> conditionEvaluator.test(desc.getIgnoreIf()))
+                                .map(desc -> findDescriptor(desc, cache))
                                 .collect(toList()),
                         toList(),
                         true)

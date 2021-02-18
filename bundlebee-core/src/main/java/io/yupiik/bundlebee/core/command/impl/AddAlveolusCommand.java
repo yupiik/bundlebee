@@ -119,7 +119,7 @@ public class AddAlveolusCommand implements Executable {
         final var alveolus = new Manifest.Alveolus();
         alveolus.setName(this.alveolus);
         alveolus.setDescriptors(Stream.of("configmap", "deployment", "service")
-                .map(ext -> new Manifest.Descriptor(null, descPrefix + ext, null, false))
+                .map(ext -> new Manifest.Descriptor(null, descPrefix + ext, null, false, null))
                 .collect(toList()));
         mf.getAlveoli().add(alveolus);
         try (final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig()
