@@ -41,6 +41,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -57,11 +58,14 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,14 +74,18 @@ import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import static io.yupiik.bundlebee.core.command.Executable.UNSET;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.empty;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
 import static java.util.logging.Level.FINEST;
 import static java.util.logging.Level.SEVERE;
+import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
 
 @Log
@@ -113,8 +121,19 @@ public class Maven {
 
     @Inject
     @Description("Default snapshot repository, not set by default.")
-    @ConfigProperty(name = "bundlebee.maven.repositories.snapshot", defaultValue = "unset")
+    @ConfigProperty(name = "bundlebee.maven.repositories.snapshot", defaultValue = UNSET)
     private String snapshotRepository;
+
+    @Inject
+    @Description("" +
+            "Properties to define the headers to set per repository, syntax is `host1=headerName headerValue` " +
+            "and it supports as much lines as used repositories. " +
+            "Note that you can use maven `~/.m2/settings.xml` servers (potentially ciphered) username/password pairs. " +
+            "In this last case the server id must be `bundlebee.<server host>`. " +
+            "Still in settings.xml case, if the username is null the password value is used as raw `Authorization` header " +
+            "else username/password is encoded as a basic header.")
+    @ConfigProperty(name = "bundlebee.maven.repositories.httpHeaders", defaultValue = UNSET)
+    private String httpHeaders;
 
     @Inject
     @Description("Enables to disable the download, i.e. ensure it runs only with local maven repository.")
@@ -130,10 +149,11 @@ public class Maven {
 
     private SAXParserFactory factory;
     private final ConcurrentMap<String, Semaphore> locks = new ConcurrentHashMap<>();
+    private Map<String, Map<String, String>> headers;
 
     @PostConstruct
     private void init() {
-        if ("unset".equals(snapshotRepository)) {
+        if (UNSET.equals(snapshotRepository)) {
             snapshotRepository = null;
         }
         m2 = m2Home();
@@ -141,6 +161,10 @@ public class Maven {
         factory = SAXParserFactory.newInstance();
         factory.setNamespaceAware(false);
         factory.setValidating(false);
+
+        headers = UNSET.equals(httpHeaders) ?
+                Map.of() :
+                parseHttpHeaders();
     }
 
     public Path ensureSettingsXml() {
@@ -216,11 +240,11 @@ public class Maven {
 
     public CompletionStage<List<String>> findAvailableVersions(final String group, final String artifact) {
         log.finest(() -> "Looking for available version of " + group + ":" + artifact);
-        final var uri = releaseRepository + group.replace('.', '/') + '/' + artifact + "/maven-metadata.xml";
+        final var uri = URI.create(releaseRepository + group.replace('.', '/') + '/' + artifact + "/maven-metadata.xml");
         return client.sendAsync(
-                HttpRequest.newBuilder()
+                newHttpRequest(uri.getHost())
                         .GET()
-                        .uri(URI.create(uri))
+                        .uri(uri)
                         .build(),
                 HttpResponse.BodyHandlers.ofByteArray())
                 .thenApply(response -> {
@@ -250,6 +274,25 @@ public class Maven {
         } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private HttpRequest.Builder newHttpRequest(final String host) {
+        final var builder = HttpRequest.newBuilder();
+        final var staticHeaders = headers.get(host);
+        if (staticHeaders != null) {
+            staticHeaders.forEach(builder::header);
+        } else {
+            try {
+                findServerPassword("bundlebee." + host)
+                        .ifPresent(s -> builder.header("Authorization", s.getUsername() == null ?
+                                s.getPassword() :
+                                ("Basic " + Base64.getEncoder().encodeToString(
+                                        (s.getUsername() + ':' + s.getPassword()).getBytes(StandardCharsets.UTF_8)))));
+            } catch (final RuntimeException re) {
+                log.log(FINEST, re.getMessage(), re);
+            }
+        }
+        return builder;
     }
 
     private Path findSettingsXml() {
@@ -338,11 +381,11 @@ public class Maven {
     private CompletionStage<String> findVersion(final String repoBase, final String group, final String artifact, final String version) {
         final var base = repoBase == null || repoBase.isEmpty() ? "" : (repoBase + (!repoBase.endsWith("/") ? "/" : ""));
         if (("LATEST".equals(version) || "LATEST-SNAPSHOT".equals(version)) && base.startsWith("http")) {
-            final String meta = base + group.replace('.', '/') + "/" + artifact + "/maven-metadata.xml";
+            final var meta = URI.create(base + group.replace('.', '/') + "/" + artifact + "/maven-metadata.xml");
             return client.sendAsync(
-                    HttpRequest.newBuilder()
+                    newHttpRequest(meta.getHost())
                             .GET()
-                            .uri(URI.create(meta))
+                            .uri(meta)
                             .build(),
                     HttpResponse.BodyHandlers.ofByteArray())
                     .thenApply(response -> {
@@ -361,11 +404,11 @@ public class Maven {
                     });
         }
         if (version.endsWith("-SNAPSHOT") && base.startsWith("http")) {
-            final String meta = base + group.replace('.', '/') + "/" + artifact + "/" + version + "/maven-metadata.xml";
+            final var meta = URI.create(base + group.replace('.', '/') + "/" + artifact + "/" + version + "/maven-metadata.xml");
             return client.sendAsync(
-                    HttpRequest.newBuilder()
+                    newHttpRequest(meta.getHost())
                             .GET()
-                            .uri(URI.create(meta))
+                            .uri(meta)
                             .build(),
                     HttpResponse.BodyHandlers.ofByteArray())
                     .thenApply(response -> {
@@ -392,10 +435,11 @@ public class Maven {
             throw new IllegalStateException("Download are disabled so can't download '" + url + "'");
         }
         log.info(() -> "Downloading " + url);
+        final var uri = URI.create(url);
         return client.sendAsync(
-                HttpRequest.newBuilder()
+                newHttpRequest(uri.getHost())
                         .GET()
-                        .uri(URI.create(url))
+                        .uri(uri)
                         .build(),
                 HttpResponse.BodyHandlers.ofFile(m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type))))
                 .thenApply(it -> {
@@ -473,6 +517,28 @@ public class Maven {
             // no-op: not parseable so ignoring
         }
         return version;
+    }
+
+    private Map<String, Map<String, String>> parseHttpHeaders() {
+        final var props = new Properties();
+        ofNullable(httpHeaders).filter(it -> !UNSET.equals(it)).ifPresent(content -> {
+            try (final var reader = new StringReader(content)) {
+                props.load(reader);
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        return props.stringPropertyNames().stream()
+                .collect(toMap(identity(), key -> Stream.of(props.getProperty(key))
+                        .filter(it -> !it.isBlank())
+                        .map(property -> {
+                            final var sep = property.indexOf(' ');
+                            if (sep < 0) {
+                                return new AbstractMap.SimpleImmutableEntry<>(property, "");
+                            }
+                            return new AbstractMap.SimpleImmutableEntry<>(property.substring(0, sep).trim(), property.substring(sep + 1).trim());
+                        })
+                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue))));
     }
 
     private String extractLastSnapshotVersion(final String defaultVersion, final InputStream metadata) {
