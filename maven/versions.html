@@ -124,7 +124,7 @@
 </dd>
 <dt class="hdlist1">kubeContext (<code>String</code>)</dt>
 <dd>
-<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself. Default value: <code>&lt;to-set&gt;</code>. Property: <code>${bundlebee.kube.context}</code>.</p>
+<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.context}</code>.</p>
 </dd>
 <dt class="hdlist1">kubeDefaultPropagationPolicy (<code>String</code>)</dt>
 <dd>
@@ -170,13 +170,17 @@
 <dd>
 <p>Enables to disable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code>. Property: <code>${bundlebee.maven.repositories.downloads.enabled}</code>.</p>
 </dd>
+<dt class="hdlist1">mavenRepositoriesHttpHeaders (<code>String</code>)</dt>
+<dd>
+<p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.httpHeaders}</code>.</p>
+</dd>
 <dt class="hdlist1">mavenRepositoriesRelease (<code>String</code>)</dt>
 <dd>
 <p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code>. Property: <code>${bundlebee.maven.repositories.release}</code>.</p>
 </dd>
 <dt class="hdlist1">mavenRepositoriesSnapshot (<code>String</code>)</dt>
 <dd>
-<p>Default snapshot repository, not set by default. Default value: <code>unset</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
+<p>Default snapshot repository, not set by default. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
 </dd>
 <dt class="hdlist1">packaging (<code>String</code>)</dt>
 <dd>

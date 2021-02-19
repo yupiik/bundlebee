@@ -117,13 +117,17 @@ It means you change some defaults for your local setup creating a file <code>~/.
 <dd>
 <p>Enables to disable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code></p>
 </dd>
+<dt class="hdlist1">bundlebee.maven.repositories.httpHeaders (<code>BUNDLEBEE_MAVEN_REPOSITORIES_HTTPHEADERS</code>)</dt>
+<dd>
+<p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories.</p>
+</dd>
 <dt class="hdlist1">bundlebee.maven.repositories.release (<code>BUNDLEBEE_MAVEN_REPOSITORIES_RELEASE</code>)</dt>
 <dd>
 <p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code></p>
 </dd>
 <dt class="hdlist1">bundlebee.maven.repositories.snapshot (<code>BUNDLEBEE_MAVEN_REPOSITORIES_SNAPSHOT</code>)</dt>
 <dd>
-<p>Default snapshot repository, not set by default. Default value: <code>unset</code></p>
+<p>Default snapshot repository, not set by default.</p>
 </dd>
 <dt class="hdlist1">kubeconfig (<code>KUBECONFIG</code>)</dt>
 <dd>
