@@ -17,7 +17,7 @@
 #
 set -e
 
-CENTRAL="https://repo.maven.apache.org/maven2/"
+CENTRAL="https://repo.maven.apache.org/maven2"
 GROUP_ID="io/yupiik"
 ARTIFACT_ID="bundlebee-core"
 if [ -z "$BUNDLEBEE_DIR" ]; then
