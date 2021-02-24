@@ -21,6 +21,7 @@ metadata:
   labels:
     app: postgres-local
 data:
-  POSTGRES_DB: {{postgres-local.db:-postgres}}
-  POSTGRES_USER: {{postgres-local.username:-postgres}}
-  POSTGRES_PASSWORD: {{postgres-local.password:-postgres}}
+  POSTGRES_DB: "{{postgres-local.db:-postgres}}"
+  POSTGRES_USER: "{{postgres-local.username:-postgres}}"
+  POSTGRES_PASSWORD: "{{postgres-local.password:-postgres}}"
+  PGDATA: "/var/lib/postgresql/data/pgdata"
