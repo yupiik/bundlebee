@@ -436,12 +436,18 @@ public class Maven {
         }
         log.info(() -> "Downloading " + url);
         final var uri = URI.create(url);
+        final var target = m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type));
+        try {
+            Files.createDirectories(target.getParent());
+        } catch (final IOException e) {
+            throw new IllegalArgumentException(e);
+        }
         return client.sendAsync(
                 newHttpRequest(uri.getHost())
                         .GET()
                         .uri(uri)
                         .build(),
-                HttpResponse.BodyHandlers.ofFile(m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type))))
+                HttpResponse.BodyHandlers.ofFile(target))
                 .thenApply(it -> {
                     if (it.statusCode() != 200) {
                         throw new IllegalStateException("An error occured downloading " + url);
