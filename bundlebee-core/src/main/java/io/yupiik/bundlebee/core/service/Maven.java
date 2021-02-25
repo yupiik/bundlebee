@@ -239,8 +239,14 @@ public class Maven {
     }
 
     public CompletionStage<List<String>> findAvailableVersions(final String group, final String artifact) {
+        return findAvailableVersions(releaseRepository, group, artifact).thenApply(Versions::getVersions);
+    }
+
+    public CompletionStage<Versions> findAvailableVersions(final String repository, final String group, final String artifact) {
         log.finest(() -> "Looking for available version of " + group + ":" + artifact);
-        final var uri = URI.create(releaseRepository + group.replace('.', '/') + '/' + artifact + "/maven-metadata.xml");
+        final var uri = URI.create(
+                repository + (repository.endsWith("/") ? "" : "/") +
+                        group.replace('.', '/') + '/' + artifact + "/maven-metadata.xml");
         return client.sendAsync(
                 newHttpRequest(uri.getHost())
                         .GET()
@@ -259,7 +265,7 @@ public class Maven {
                 })
                 .exceptionally(error -> {
                     log.log(FINEST, error.getMessage());
-                    return List.of();
+                    return new Versions(null, null, List.of());
                 });
     }
 
@@ -434,6 +440,11 @@ public class Maven {
         if (!canDownload) {
             throw new IllegalStateException("Download are disabled so can't download '" + url + "'");
         }
+        return doDownload(group, artifact, version, fullClassifier, type, url);
+    }
+
+    public CompletionStage<Path> doDownload(final String group, final String artifact, final String version,
+                                            final String fullClassifier, final String type, final String url) {
         log.info(() -> "Downloading " + url);
         final var uri = URI.create(url);
         final var target = m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type));
@@ -442,6 +453,10 @@ public class Maven {
         } catch (final IOException e) {
             throw new IllegalArgumentException(e);
         }
+        return doDownload(uri, target);
+    }
+
+    public CompletionStage<Path> doDownload(final URI uri, final Path target) {
         return client.sendAsync(
                 newHttpRequest(uri.getHost())
                         .GET()
@@ -450,7 +465,7 @@ public class Maven {
                 HttpResponse.BodyHandlers.ofFile(target))
                 .thenApply(it -> {
                     if (it.statusCode() != 200) {
-                        throw new IllegalStateException("An error occured downloading " + url);
+                        throw new IllegalStateException("An error occured downloading " + uri);
                     }
                     return it.body();
                 });
@@ -496,8 +511,8 @@ public class Maven {
                 });
     }
 
-    private String toRelativePath(final String base, final String group, final String artifact, final String version,
-                                  final String classifier, final String type) {
+    public String toRelativePath(final String base, final String group, final String artifact, final String version,
+                                 final String classifier, final String type) {
         final var builder = new StringBuilder(base == null ? "" : (base.endsWith("/") ? base : (base + '/')));
         builder.append(group.replace('.', '/')).append('/');
         builder.append(artifact).append('/');
@@ -509,15 +524,16 @@ public class Maven {
         return builder.append('.').append(type).toString();
     }
 
-    private String extractRealVersion(String version, final InputStream stream) {
+    private String extractRealVersion(final String version, final InputStream stream) {
         final QuickMvnMetadataParser handler = new QuickMvnMetadataParser();
         try {
             final SAXParser parser = factory.newSAXParser();
             parser.parse(stream, handler);
             if (!version.endsWith(SNAPSHOT_SUFFIX) && handler.release != null) {
-                version = handler.release.toString();
-            } else if (handler.latest != null) {
-                version = handler.latest.toString();
+                return handler.release.toString();
+            }
+            if (handler.latest != null) {
+                return handler.latest.toString();
             }
         } catch (final Exception e) {
             // no-op: not parseable so ignoring
@@ -562,16 +578,16 @@ public class Maven {
         return defaultVersion;
     }
 
-    private List<String> extractVersions(final InputStream metadata) {
+    private Versions extractVersions(final InputStream metadata) {
         final VersionsExtractor handler = new VersionsExtractor();
         try {
             final SAXParser parser = factory.newSAXParser();
             parser.parse(metadata, handler);
-            return handler.versions;
+            return new Versions(handler.latest, handler.release, handler.versions);
         } catch (final Exception e) {
-            // no-op: not parseable so ignoring
+            log.log(FINEST, e.getMessage(), e);
         }
-        return List.of();
+        return new Versions(null, null, List.of());
     }
 
     public String createPassword(final String password, final String masterPassword) {
@@ -722,6 +738,8 @@ public class Maven {
 
     @NoArgsConstructor(access = PRIVATE)
     private static class VersionsExtractor extends DefaultHandler {
+        private String latest;
+        private String release;
         private final List<String> versions = new ArrayList<>();
 
         private boolean versioningBlock;
@@ -736,6 +754,8 @@ public class Maven {
             } else if (versioningBlock && "versions".equalsIgnoreCase(qName)) {
                 versionsBlock = true;
             } else if (versionsBlock && "version".equalsIgnoreCase(qName)) {
+                current = new StringBuilder();
+            } else if (versioningBlock && ("release".equalsIgnoreCase(qName) || "latest".equalsIgnoreCase(qName))) {
                 current = new StringBuilder();
             }
         }
@@ -753,6 +773,12 @@ public class Maven {
                 versioningBlock = false;
             } else if (versioningBlock && "versions".equalsIgnoreCase(qName)) {
                 versionsBlock = false;
+            } else if (current != null && "release".equalsIgnoreCase(qName)) {
+                release = current.toString();
+                current = null;
+            } else if (current != null && "latest".equalsIgnoreCase(qName)) {
+                latest = current.toString();
+                current = null;
             } else if (current != null && versionsBlock && "version".equalsIgnoreCase(qName)) {
                 final var trimmed = current.toString().trim();
                 if (!trimmed.isBlank()) {
@@ -946,5 +972,12 @@ public class Maven {
         private String id;
         private String username;
         private String password;
+    }
+
+    @Data
+    public static class Versions {
+        private final String latest;
+        private final String release;
+        private final List<String> versions;
     }
 }
