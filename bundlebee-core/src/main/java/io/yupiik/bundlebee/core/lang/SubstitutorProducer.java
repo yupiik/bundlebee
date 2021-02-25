@@ -15,15 +15,36 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
+import io.yupiik.bundlebee.core.kube.KubeClient;
 import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
+import java.net.URI;
+import java.util.Objects;
 
 @ApplicationScoped
 public class SubstitutorProducer {
+    @Inject
+    private KubeClient kubeClient;
+
     @Produces
     public Substitutor substitutor(final Config config) {
-        return new Substitutor(it -> config.getOptionalValue(it, String.class).orElse(null));
+        return new Substitutor(it -> {
+            if (it.startsWith("kubeconfig.cluster.") && it.endsWith(".ip")) {
+                final var name = it.substring("kubeconfig.cluster.".length(), it.length() - ".ip".length());
+                return URI.create(
+                        kubeClient.getLoadedKubeConfig()
+                                .getClusters().stream()
+                                .filter(c -> Objects.equals(c.getName(), name))
+                                .findFirst()
+                                .orElseThrow(() -> new IllegalArgumentException("No cluster named '" + name + "' found"))
+                                .getCluster()
+                                .getServer())
+                        .getHost();
+            }
+            return config.getOptionalValue(it, String.class).orElse(null);
+        });
     }
 }
