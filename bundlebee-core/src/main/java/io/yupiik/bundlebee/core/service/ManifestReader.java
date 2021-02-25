@@ -41,7 +41,8 @@ public class ManifestReader {
     @Inject
     private Config config;
 
-    private final Substitutor substitutor = new Substitutor(k -> config.getOptionalValue(k, String.class).orElse(k));
+    @Inject
+    private Substitutor substitutor;
 
     public Manifest readManifest(final Supplier<InputStream> manifest) {
         try (final BufferedReader reader = new BufferedReader(

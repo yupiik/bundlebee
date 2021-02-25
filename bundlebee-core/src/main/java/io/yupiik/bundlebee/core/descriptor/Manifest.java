@@ -157,7 +157,9 @@ public class Manifest {
 
         @Description("" +
                 "If set to `true`, it will interpolate the patch from the execution configuration which means " +
-                "you can use `--<config-key> <value>` to inject bindings too.")
+                "you can use `--<config-key> <value>` to inject bindings too. " +
+                "An interesting interpolation is the ability to extract the ip/host of the host machine (`minikube ip` equivalent) using the kubeconfig file. " +
+                "Syntax is the following one: `{{kubeconfig.cluster.minikube.ip}}` or more generally `{{kubeconfig.cluster.<cluster name>.ip}}`.")
         private boolean interpolate;
 
         @Description("" +

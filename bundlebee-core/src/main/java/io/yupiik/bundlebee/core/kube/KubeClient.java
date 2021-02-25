@@ -161,6 +161,9 @@ public class KubeClient {
     private Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
     private HttpClient client;
 
+    @Getter
+    private KubeConfig loadedKubeConfig;
+
     @PostConstruct
     private void createCustomClient() {
         client = doConfigure(HttpClient.newBuilder()
@@ -170,6 +173,17 @@ public class KubeClient {
             client = new LoggingClient(log, new DryRunClient(client));
         } else if (verbose) {
             client = new LoggingClient(log, client);
+        }
+        if (loadedKubeConfig == null || loadedKubeConfig.getClusters() == null || loadedKubeConfig.getClusters().isEmpty()) {
+            final var c = new KubeConfig.Cluster();
+            c.setServer(baseApi);
+
+            final var cluster = new KubeConfig.NamedCluster();
+            cluster.setName("default");
+            cluster.setCluster(c);
+
+            loadedKubeConfig = new KubeConfig();
+            loadedKubeConfig.setClusters(List.of(cluster));
         }
     }
 
@@ -516,9 +530,8 @@ public class KubeClient {
     }
 
     private HttpClient.Builder doConfigureFrom(final Path location, final HttpClient.Builder builder) {
-        final KubeConfig config;
         try {
-            config = yaml2json.convert(KubeConfig.class, Files.readString(location, StandardCharsets.UTF_8));
+            loadedKubeConfig = yaml2json.convert(KubeConfig.class, Files.readString(location, StandardCharsets.UTF_8));
             log.info("Read kubeconfig from " + location);
         } catch (final IOException e) {
             throw new IllegalArgumentException(e);
@@ -526,19 +539,19 @@ public class KubeClient {
 
         final var currentContext = of(kubeConfigContext)
                 .filter(it -> !UNSET.equals(it))
-                .orElseGet(() -> ofNullable(config.getCurrentContext())
+                .orElseGet(() -> ofNullable(loadedKubeConfig.getCurrentContext())
                         .orElseGet(() -> {
-                            if (config.getClusters() == null || config.getClusters().isEmpty()) {
+                            if (loadedKubeConfig.getClusters() == null || loadedKubeConfig.getClusters().isEmpty()) {
                                 throw new IllegalArgumentException("No current context in " + location + ", ensure to configure kube client please.");
                             }
-                            final var key = config.getClusters().iterator().next();
+                            final var key = loadedKubeConfig.getClusters().iterator().next();
                             log.info(() -> "Will use kube context '" + key + "'");
                             return key.getName();
                         }));
 
         final var contextError = "No kube context '" + currentContext + "', ensure to configure kube client please";
         final var context = requireNonNull(
-                requireNonNull(config.getContexts(), contextError).stream()
+                requireNonNull(loadedKubeConfig.getContexts(), contextError).stream()
                         .filter(c -> Objects.equals(c.getName(), currentContext))
                         .findFirst()
                         .map(KubeConfig.NamedContext::getContext)
@@ -550,7 +563,7 @@ public class KubeClient {
 
         final var clusterError = "No kube cluster '" + currentContext + "', ensure to configure kube client please";
         final var cluster = requireNonNull(
-                requireNonNull(config.getClusters(), clusterError).stream()
+                requireNonNull(loadedKubeConfig.getClusters(), clusterError).stream()
                         .filter(c -> Objects.equals(c.getName(), currentContext))
                         .findFirst()
                         .map(KubeConfig.NamedCluster::getCluster)
@@ -573,7 +586,7 @@ public class KubeClient {
 
         final var userError = "No kube user '" + currentContext + "', ensure to configure kube client please";
         final var user = requireNonNull(
-                requireNonNull(config.getUsers(), userError).stream()
+                requireNonNull(loadedKubeConfig.getUsers(), userError).stream()
                         .filter(c -> Objects.equals(c.getName(), currentContext))
                         .findFirst()
                         .map(KubeConfig.NamedUser::getUser)
