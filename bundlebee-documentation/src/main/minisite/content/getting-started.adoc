@@ -27,6 +27,10 @@ IMPORTANT: this only works for linux amd64 computers.
 curl https://yupiik.github.io/bundlebee/install/install.sh | bash
 ----
 
+TIP: since 1.0.3, once installed this way (and your `PATH` variable updated to include bundlebee) you can use `check-update` command to check if a new version is available:
+`bundlebee check-update [--update true]`.
+The `--update true` option enables to automatically replace the binary if needed, not specifying it will just log if a new version can be downloaded.
+
 == Create your first alveolus
 
 === Pre-requisite
