@@ -16,13 +16,12 @@
     under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.yupiik</groupId>
   <artifactId>bundlebee</artifactId>
-  <version>1.0.3-SNAPSHOT</version>
+  <version>1.0.3</version>
   <packaging>pom</packaging>
   <name>BundleBee</name>
   <description>A light Kubernetes package manager inheriting from Apache Maven infrastructure.</description>
@@ -244,7 +243,7 @@ under the License.
         <executions>
           <execution>
             <id>audit-dependencies</id>
-            <phase/>
+            <phase />
             <goals>
               <goal>audit</goal>
             </goals>
@@ -315,7 +314,7 @@ under the License.
     <connection>scm:git:https://github.com/yupiik/bundlebee.git</connection>
     <developerConnection>scm:git:https://github.com/yupiik/bundlebee.git</developerConnection>
     <url>https://github.com/yupiik/bundlebee.git</url>
-    <tag>HEAD</tag>
+    <tag>bundlebee-1.0.3</tag>
   </scm>
 
   <distributionManagement>
