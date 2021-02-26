@@ -1,3 +1,8 @@
 = Yupiik BundleBee
 
 See https://yupiik.github.io/bundlebee/.
+
+== Release
+
+. `mvn release:prepare release:perform -Pnative -Prelease`
+. `git checkout -b <release-tag> <release-tag> && mvn clean package -Pgh-pages`
