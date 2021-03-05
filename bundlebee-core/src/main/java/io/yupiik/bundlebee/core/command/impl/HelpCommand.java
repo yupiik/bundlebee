@@ -52,6 +52,11 @@ public class HelpCommand implements Executable {
     @ConfigProperty(name = "bundlebee.help.command", defaultValue = UNSET)
     private String command;
 
+    @Inject
+    @Description("If `false` args are not shown, enable a lighter output.")
+    @ConfigProperty(name = "bundlebee.help.args", defaultValue = "true")
+    private boolean showArgs;
+
     @Override
     public String name() {
         return "help";
@@ -76,20 +81,20 @@ public class HelpCommand implements Executable {
                             final var description = executable.description();
                             final int end = description.indexOf("\n//");
                             final var desc = reflowText(end > 0 ? description.substring(0, end) : description, "        ") +
-                                    (parameters.isEmpty() ? "" : "\n");
+                                    (!showArgs || parameters.isEmpty() ? "" : "\n");
                             return "" +
                                     "  [] " + executable.name() + ": " +
-                                    Character.toLowerCase(desc.charAt(0)) + desc.substring(1) + "\n" +
+                                    Character.toLowerCase(desc.charAt(0)) + desc.substring(1) + (showArgs ? "\n" +
                                     parameters.stream().map(p -> "" +
                                             "    " + p.getName() +
                                             (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue()
                                                     .replace("\n", "\\\\n") + ")" : "") + ": " +
                                             reflowText(p.getDescription(), "          "))
                                             .sorted()
-                                            .collect(joining("\n"));
+                                            .collect(joining("\n")) : "");
                         })
                         .sorted()
-                        .collect(joining("\n\n", "", "\n")));
+                        .collect(joining(showArgs ? "\n\n" : "\n", "", "\n")));
         return completedFuture(null);
     }
 
