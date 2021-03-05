@@ -15,6 +15,7 @@
  */
 package io.yupiik.bundlebee.core.kube;
 
+import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.core.test.http.SpyingResponseLocator;
 import org.apache.openwebbeans.junit5.Cdi;
 import org.junit.jupiter.api.Test;
@@ -42,6 +43,42 @@ class KubeClientTest {
 
     @Inject
     private KubeClient client;
+
+    @Inject
+    private Substitutor substitutor;
+
+    @Test
+    void findServiceAccountSecretEntry(final TestInfo info) {
+        final var spyingResponseLocator = new SpyingResponseLocator(
+                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
+            @Override
+            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
+                                                final Predicate<String> headerFilter, final boolean exactMatching) {
+                switch (request.method()) {
+                    case "CONNECT":
+                        return Optional.empty();
+                    case "GET":
+                        if (request.uri().endsWith("/api/v1/namespaces/default/serviceaccounts/the-account")) {
+                            return Optional.of(new ResponseImpl(Map.of(), 200, "{\"secrets\":[{\"name\":\"the-secret-token-demjde\"}]}".getBytes(StandardCharsets.UTF_8)));
+                        }
+                        if (request.uri().endsWith("/api/v1/namespaces/default/secrets/the-secret-token-demjde")) {
+                            return Optional.of(new ResponseImpl(Map.of(), 200, "{\"data\":{\"token\":\"bearer-token\"}}".getBytes(StandardCharsets.UTF_8)));
+                        }
+                        return Optional.empty();
+                    default:
+                        return Optional.of(new ResponseImpl(Map.of(), 404, "{}".getBytes(StandardCharsets.UTF_8)));
+                }
+            }
+        };
+        handler.setResponseLocator(spyingResponseLocator);
+        assertEquals("bearer-token", substitutor.replace(
+                "{{kubernetes.default.serviceaccount.the-account.secrets.the-secret-token.data.token.180:-missing}}"));
+
+        final var mocks = spyingResponseLocator.getFound();
+        assertEquals(2, mocks.size());
+        assertEquals(200, mocks.get(0).status());
+        assertEquals(200, mocks.get(1).status());
+    }
 
     @Test
     void apply(final TestInfo info) throws Exception {

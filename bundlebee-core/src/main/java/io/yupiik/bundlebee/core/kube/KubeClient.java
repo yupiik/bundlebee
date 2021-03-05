@@ -187,6 +187,32 @@ public class KubeClient {
         }
     }
 
+    public CompletionStage<JsonObject> findSecret(final String namespace, final String name) {
+        return client.sendAsync(setAuth.apply(HttpRequest.newBuilder())
+                        .uri(URI.create(baseApi + "/api/v1/namespaces/" + namespace + "/secrets/" + name))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                .thenApply(r -> {
+                    if (r.statusCode() != 200) {
+                        throw new IllegalArgumentException("Can't read secret '" + namespace + "'/'" + name + "': " + r.body());
+                    }
+                    return jsonb.fromJson(r.body().trim(), JsonObject.class);
+                });
+    }
+
+    public CompletionStage<JsonObject> findServiceAccount(final String namespace, final String name) {
+        return client.sendAsync(setAuth.apply(HttpRequest.newBuilder())
+                        .uri(URI.create(baseApi + "/api/v1/namespaces/" + namespace + "/serviceaccounts/" + name))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                .thenApply(r -> {
+                    if (r.statusCode() != 200) {
+                        throw new IllegalArgumentException("Can't read account '" + namespace + "'/'" + name + "': " + r.body());
+                    }
+                    return jsonb.fromJson(r.body().trim(), JsonObject.class);
+                });
+    }
+
     public CompletionStage<HttpResponse<String>> execute(final HttpRequest.Builder builder, final String urlOrPath) {
         return client.sendAsync(setAuth.apply(builder)
                         .uri(URI.create(
@@ -204,7 +230,7 @@ public class KubeClient {
             final var metadata = desc.getJsonObject("metadata");
             final var name = metadata.getString("name");
             final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
-            final var baseUri = baseApi + findApiPrefix(kindLowerCased) +
+            final var baseUri = baseApi + findApiPrefix(kindLowerCased, desc) +
                     (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
                     "/" + kindLowerCased;
 
@@ -267,7 +293,7 @@ public class KubeClient {
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
         log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
-        final var uri = baseApi + findApiPrefix(kindLowerCased) +
+        final var uri = baseApi + findApiPrefix(kindLowerCased, desc) +
                 (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
                 "/" + kindLowerCased + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
 
@@ -323,7 +349,7 @@ public class KubeClient {
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
         final var fieldManager = "?fieldManager=kubectl-client-side-apply";
-        final var baseUri = baseApi + findApiPrefix(kindLowerCased) +
+        final var baseUri = baseApi + findApiPrefix(kindLowerCased, desc) +
                 (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
                 "/" + kindLowerCased;
 
@@ -405,7 +431,7 @@ public class KubeClient {
         }
     }
 
-    private String findApiPrefix(final String kindLowerCased) {
+    private String findApiPrefix(final String kindLowerCased, final JsonObject desc) {
         switch (kindLowerCased) {
             case "deployments":
             case "statefulsets":
@@ -422,9 +448,11 @@ public class KubeClient {
             case "mutatingwebhookconfigurations":
             case "validatingwebhookconfigurations":
                 return "/apis/admissionregistration.k8s.io/v1";
+            case "roles":
+            case "rolebindings":
             case "clusterroles":
             case "clusterrolebindings":
-                return "/apis/rbac.authorization.k8s.io/v1beta1";
+                return "/apis/" + desc.getString("apiVersion");
             default:
                 return "/api/v1";
         }
@@ -557,7 +585,7 @@ public class KubeClient {
                         .map(KubeConfig.NamedContext::getContext)
                         .orElseThrow(() -> new IllegalArgumentException(contextError)),
                 contextError);
-        if (context.getNamespace() != null) {
+        if (context.getNamespace() != null && "default".equals(namespace) /*else user set it*/) {
             namespace = context.getNamespace();
         }
 

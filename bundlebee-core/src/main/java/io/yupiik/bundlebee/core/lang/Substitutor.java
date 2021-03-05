@@ -139,7 +139,14 @@ public class Substitutor {
     }
 
     protected String getOrDefault(final String varName, final String varDefaultValue) {
-        return ofNullable(lookup.apply(varName, varDefaultValue)).orElse(varDefaultValue);
+        try {
+            return ofNullable(lookup.apply(varName, varDefaultValue)).orElse(varDefaultValue);
+        } catch (final RuntimeException re) {
+            if (varDefaultValue != null) {
+                return varDefaultValue;
+            }
+            throw re;
+        }
     }
 
     private int isMatch(final char[] chars, final char[] buffer, int pos,
