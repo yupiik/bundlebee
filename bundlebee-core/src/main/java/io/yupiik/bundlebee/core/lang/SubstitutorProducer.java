@@ -16,14 +16,23 @@
 package io.yupiik.bundlebee.core.lang;
 
 import io.yupiik.bundlebee.core.kube.KubeClient;
+import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
+import javax.json.JsonValue;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+
+@Log
 @ApplicationScoped
 public class SubstitutorProducer {
     @Inject
@@ -44,7 +53,95 @@ public class SubstitutorProducer {
                                 .getServer())
                         .getHost();
             }
+            if (it.startsWith("kubernetes.")) {
+                final var segments = it.split("\\.");
+                switch (segments.length) {
+                    case 8:
+                    case 9: // adds timeout in last segment
+                        // kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]
+                        if ("serviceaccount".equals(segments[2]) && "secrets".equals(segments[4]) && "data".equals(segments[6])) {
+                            final var namespace = segments[1];
+                            final var account = segments[3];
+                            final var secretPrefix = segments[5];
+                            final var dataName = segments[7];
+                            final int timeout = segments.length == 9 ? Integer.parseInt(segments[8]) : 120;
+                            return findSecret(namespace, account, secretPrefix, dataName, timeout);
+                        }
+                        break;
+                    default:
+                        // try in config
+                }
+            }
             return config.getOptionalValue(it, String.class).orElse(null);
         });
+    }
+
+    private String findSecret(final String namespace, final String account, final String secretPrefix,
+                              final String dataKey, final int timeout) {
+        final var end = Instant.now().plusSeconds(timeout);
+        int iterations = 0;
+        do {
+            iterations++;
+            try {
+                final var secret = kubeClient
+                        .findServiceAccount(namespace, account)
+                        .thenCompose(serviceAccount -> {
+                            if (!serviceAccount.containsKey("secrets")) {
+                                return completedFuture(null);
+                            }
+                            return serviceAccount
+                                    .getJsonArray("secrets").stream()
+                                    .filter(json -> json.getValueType() == JsonValue.ValueType.OBJECT)
+                                    .map(JsonValue::asJsonObject)
+                                    .filter(it -> it.containsKey("name"))
+                                    .map(it -> it.getString("name"))
+                                    .filter(it -> it.startsWith(secretPrefix))
+                                    .sorted() // be deterministic for the same inputs
+                                    .findFirst()
+                                    .map(secretName -> kubeClient.findSecret(namespace, secretName)
+                                            .thenApply(secretJson -> {
+                                                if (!secretJson.containsKey("data")) {
+                                                    return null;
+                                                }
+                                                final var data = secretJson.getJsonObject("data");
+                                                if (!data.containsKey(dataKey)) {
+                                                    return null;
+                                                }
+                                                final var content = data.getString(dataKey);
+                                                try {
+                                                    return new String(Base64.getDecoder().decode(content), StandardCharsets.UTF_8);
+                                                } catch (final RuntimeException re) {
+                                                    return content;
+                                                }
+                                            }))
+                                    .orElseGet(() -> completedFuture(null));
+                        })
+                        .exceptionally(err -> null)
+                        .toCompletableFuture()
+                        .get();
+                if (secret != null) {
+                    return secret;
+                }
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return null;
+            } catch (final ExecutionException e) {
+                log.warning(e.getMessage());
+            }
+            try {
+                Thread.sleep(250);
+            } catch (final InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+                return null;
+            }
+            if (iterations == 20) { // each 5s is more than enough
+                log.info("Waiting for " + namespace + "/" + account + "/" + secretPrefix + "/" + dataKey + " secret");
+                iterations = 0;
+            }
+        } while (Instant.now().isBefore(end));
+        final var error = "Was not able to read secret " +
+                "namespace=" + namespace + "/account=" + account + "/prefix=" + secretPrefix + " in " + timeout + "s";
+        log.warning(error);
+        throw new IllegalStateException(error);
     }
 }

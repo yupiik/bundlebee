@@ -159,7 +159,10 @@ public class Manifest {
                 "If set to `true`, it will interpolate the patch from the execution configuration which means " +
                 "you can use `--<config-key> <value>` to inject bindings too. " +
                 "An interesting interpolation is the ability to extract the ip/host of the host machine (`minikube ip` equivalent) using the kubeconfig file. " +
-                "Syntax is the following one: `{{kubeconfig.cluster.minikube.ip}}` or more generally `{{kubeconfig.cluster.<cluster name>.ip}}`.")
+                "Syntax is the following one: `{{kubeconfig.cluster.minikube.ip}}` or more generally `{{kubeconfig.cluster.<cluster name>.ip}}`. " +
+                "You can also await for some secret with this syntax " +
+                "`{{kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds, default to 2mn>]}}`. " +
+                "This is particular useful to access freshly created service account tokens for example.")
         private boolean interpolate;
 
         @Description("" +
