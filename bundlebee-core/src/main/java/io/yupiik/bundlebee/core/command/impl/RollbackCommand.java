@@ -153,7 +153,8 @@ public class RollbackCommand implements Executable {
     @Override
     public CompletionStage<?> execute() {
         final var cache = archives.newCache();
-        return alveolusHandler.findRootAlveoli(from, manifest, alveolus)
+        return alveolusHandler
+                .findRootAlveoli(from, manifest, alveolus)
                 .thenCompose(alveolus -> all(
                         alveolus.stream()
                                 .map(it -> findPreviousVersion(it, cache)
@@ -164,8 +165,9 @@ public class RollbackCommand implements Executable {
                         true));
     }
 
-    private CompletionStage<?> rollback(final ArchiveReader.Cache cache, final Tuple2<Manifest.Alveolus, Object> v) {
-        return delete.doDelete(cache, v.getFirst(), gracePeriodSeconds, Integer.parseInt(await))
+    private CompletionStage<?> rollback(final ArchiveReader.Cache cache, final Tuple2<AlveolusHandler.ManifestAndAlveolus, Object> v) {
+        return delete
+                .doDelete(cache, v.getFirst().getManifest(), v.getFirst().getAlveolus(), gracePeriodSeconds, Integer.parseInt(await))
                 .thenCompose(it -> {
                     if (pause <= 0) {
                         return completedFuture(it);
@@ -177,10 +179,10 @@ public class RollbackCommand implements Executable {
                 .thenCompose(it -> apply.doApply(true, true, cache, v.getSecond()));
     }
 
-    private CompletionStage<Manifest.Alveolus> findPreviousVersion(final Manifest.Alveolus alveolus,
-                                                                   final ArchiveReader.Cache cache) {
+    private CompletionStage<AlveolusHandler.ManifestAndAlveolus> findPreviousVersion(final AlveolusHandler.ManifestAndAlveolus alveolus,
+                                                                                     final ArchiveReader.Cache cache) {
         if ("auto".equals(previousFrom) && "skip".equals(previousManifest) && "auto".equals(previousAlveolus)) {
-            return guessPreviousVersion(alveolus, cache);
+            return guessPreviousVersion(alveolus.getAlveolus(), cache);
         }
         return alveolusHandler
                 // todo: can be found from alveolus.location too
@@ -188,6 +190,7 @@ public class RollbackCommand implements Executable {
                 .thenApply(list -> {
                     if (list.size() != 1) {
                         throw new IllegalArgumentException("Ambiguous previous version, found: " + list.stream()
+                                .map(AlveolusHandler.ManifestAndAlveolus::getAlveolus)
                                 .map(Manifest.Alveolus::getName)
                                 .collect(joining(", ")));
                     }
@@ -195,8 +198,8 @@ public class RollbackCommand implements Executable {
                 });
     }
 
-    private CompletionStage<Manifest.Alveolus> guessPreviousVersion(final Manifest.Alveolus alveolus,
-                                                                    final ArchiveReader.Cache cache) {
+    private CompletionStage<AlveolusHandler.ManifestAndAlveolus> guessPreviousVersion(final Manifest.Alveolus alveolus,
+                                                                                      final ArchiveReader.Cache cache) {
         final var name = alveolus.getName();
         log.info(() -> "Looking for previous version of '" + name + "'" +
                 (alveolus.getVersion() != null ? " (version=" + alveolus.getVersion() + ")" : ""));
@@ -224,9 +227,9 @@ public class RollbackCommand implements Executable {
         return tryToFindPreviousVersion(alveolus, previousVersionsOf(semanticVersion).iterator());
     }
 
-    private CompletionStage<Manifest.Alveolus> tryToFindPreviousVersion(final Manifest.Alveolus alveolus,
-                                                                        final Iterator<String> potentialVersionsIt) {
-        final var result = new CompletableFuture<Manifest.Alveolus>();
+    private CompletionStage<AlveolusHandler.ManifestAndAlveolus> tryToFindPreviousVersion(final Manifest.Alveolus alveolus,
+                                                                                          final Iterator<String> potentialVersionsIt) {
+        final var result = new CompletableFuture<AlveolusHandler.ManifestAndAlveolus>();
         try {
             if (!potentialVersionsIt.hasNext()) {
                 result.completeExceptionally(new IllegalArgumentException("Can't find previous version of " + alveolus));
@@ -250,7 +253,7 @@ public class RollbackCommand implements Executable {
                                 result.complete(list.iterator().next());
                             } else {
                                 final var selected = list.stream()
-                                        .filter(it -> Objects.equals(versioningService.findVersion(it), version))
+                                        .filter(it -> Objects.equals(versioningService.findVersion(it.getAlveolus()), version))
                                         .collect(toList());
                                 if (selected.size() == 1) {
                                     result.complete(selected.iterator().next());

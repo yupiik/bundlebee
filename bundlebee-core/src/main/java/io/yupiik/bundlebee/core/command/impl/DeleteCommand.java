@@ -28,7 +28,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -123,16 +122,16 @@ public class DeleteCommand implements Executable {
                 .findRootAlveoli(from, manifest, alveolus)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
-                                .map(it -> doDelete(cache, it, gracePeriodSeconds, awaitTimeout))
+                                .map(it -> doDelete(cache, it.getManifest(), it.getAlveolus(), gracePeriodSeconds, awaitTimeout))
                                 .collect(toList()), toList(),
                         true));
     }
 
-    public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest.Alveolus it,
+    public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest manifest, final Manifest.Alveolus it,
                                        final String gracePeriodSeconds, final int await) {
         final var toDelete = new ArrayList<AlveolusHandler.LoadedDescriptor>();
         return visitor.executeOnAlveolus(
-                "Deleting", it, null,
+                "Deleting", manifest, it, null,
                 (ctx, desc) -> {
                     synchronized (toDelete) { // it is concurrent but we mainly want owner order here so "ok"
                         toDelete.add(desc);

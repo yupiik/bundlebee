@@ -103,7 +103,7 @@ public class InspectCommand implements Executable {
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
                                 .map(it -> visitor.executeOnAlveolus(
-                                        null, it, null,
+                                        null, it.getManifest(), it.getAlveolus(), null,
                                         (ctx, desc) -> {
                                             if (filter.test(desc.getConfiguration().getName())) {
                                                 alveolusPerName.putIfAbsent(ctx.getAlveolus().getName(), ctx.getAlveolus());
