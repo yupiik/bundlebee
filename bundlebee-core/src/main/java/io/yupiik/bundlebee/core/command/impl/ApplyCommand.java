@@ -27,7 +27,6 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import javax.json.JsonObject;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Map;
@@ -113,11 +112,11 @@ public class ApplyCommand implements Executable {
     }
 
     public CompletionStage<?> doApply(final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
-                                      final ArchiveReader.Cache cache, final Manifest.Alveolus it) {
-        final var labels = createLabels(it, injectTimestamp, injectBundleBeeMetadata);
+                                      final ArchiveReader.Cache cache, final AlveolusHandler.ManifestAndAlveolus it) {
+        final var labels = createLabels(it.getAlveolus(), injectTimestamp, injectBundleBeeMetadata);
         final var alreadyDone = new HashSet<String>();
         return visitor.executeOnAlveolus(
-                "Deploying", it, null,
+                "Deploying", it.getManifest(), it.getAlveolus(), null,
                 (ctx, desc) -> {
                     if (!alreadyDone.add(desc.getContent())) {
                         log.info(() -> desc.getConfiguration().getName() + " already deployed, skipping");

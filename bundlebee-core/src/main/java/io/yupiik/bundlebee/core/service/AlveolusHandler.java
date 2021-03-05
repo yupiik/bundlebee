@@ -87,8 +87,8 @@ public class AlveolusHandler {
     @Inject
     private ConditionEvaluator conditionEvaluator;
 
-    public CompletionStage<List<Manifest.Alveolus>> findRootAlveoli(final String from, final String manifest,
-                                                                    final String alveolus) {
+    public CompletionStage<List<ManifestAndAlveolus>> findRootAlveoli(final String from, final String manifest,
+                                                                      final String alveolus) {
         if (!"skip".equals(manifest)) {
             final var mf = manifestReader.readManifest(() -> {
                 if (manifest.startsWith("{")) {
@@ -112,6 +112,7 @@ public class AlveolusHandler {
             return mf.getAlveoli().stream()
                     .filter(it -> Objects.equals(matchedAlveolus, it.getName()))
                     .findFirst()
+                    .map(it -> new ManifestAndAlveolus(mf, it))
                     .map(List::of)
                     .map(CompletableFuture::completedFuture)
                     .orElseThrow(() -> new IllegalArgumentException("Didn't find alveolus '" + matchedAlveolus + "' in '" + manifest + "'"));
@@ -121,7 +122,7 @@ public class AlveolusHandler {
                     "Auto scanning the classpath, this can be dangerous if you don't fully control your classpath, " +
                     "ensure to set a particular alveolus if you doubt about this behavior");
             return completedFuture(manifests()
-                    .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(Collection::stream))
+                    .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(it -> it.stream().map(a -> new ManifestAndAlveolus(m, a))))
                     .collect(toList()));
         }
         if (from == null || "auto".equals(from)) {
@@ -130,25 +131,26 @@ public class AlveolusHandler {
         return findAlveolus(from, alveolus, archives.newCache()).thenApply(List::of);
     }
 
-    public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final Manifest.Alveolus alveolus,
+    public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus alveolus,
                                                 final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
                                                 final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
                                                 final ArchiveReader.Cache cache) {
         final var ref = new AtomicReference<Function<AlveolusContext, CompletionStage<?>>>();
         final Function<AlveolusContext, CompletionStage<?>> internalOnAlveolus = ctx ->
-                this.onAlveolus(prefixOnVisitLog, ctx.alveolus, ctx.patches, ctx.excludes, ctx.cache, ref.get(), onDescriptor);
+                this.onAlveolus(prefixOnVisitLog, manifest, ctx.alveolus, ctx.patches, ctx.excludes, ctx.cache, ref.get(), onDescriptor);
         final Function<AlveolusContext, CompletionStage<?>> combinedOnAlveolus = onAlveolusUser == null ?
                 internalOnAlveolus :
                 ctx -> onAlveolusUser.apply(ctx).thenCompose(i -> internalOnAlveolus.apply(ctx));
         ref.set(combinedOnAlveolus);
-        return combinedOnAlveolus.apply(new AlveolusContext(alveolus, Map.of(), List.of(), cache));
+        return combinedOnAlveolus.apply(new AlveolusContext(manifest, alveolus, Map.of(), List.of(), cache));
     }
 
-    private Manifest.Alveolus findAlveolusInClasspath(final String alveolus) {
+    private ManifestAndAlveolus findAlveolusInClasspath(final String alveolus) {
         final var manifests = manifests().collect(toList());
         return manifests.stream()
-                .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(Collection::stream))
-                .filter(it -> alveolus.equals(it.getName()))
+                .flatMap(m -> ofNullable(m.getAlveoli()).stream()
+                        .flatMap(a -> a.stream().map(it -> new ManifestAndAlveolus(m, it))))
+                .filter(it -> alveolus.equals(it.getAlveolus().getName()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No alveolus named '" + alveolus + "' found"));
     }
@@ -174,7 +176,7 @@ public class AlveolusHandler {
         }
     }
 
-    private CompletionStage<?> onAlveolus(final String prefixOnVisitLog, final Manifest.Alveolus from,
+    private CompletionStage<?> onAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus from,
                                           final Map<Predicate<String>, Manifest.Patch> patches,
                                           final Collection<Manifest.DescriptorRef> excludes,
                                           final ArchiveReader.Cache cache,
@@ -200,10 +202,20 @@ public class AlveolusHandler {
                         .filter(dep -> conditionEvaluator.test(dep.getIncludeIf()))
                         .map(it -> {
                             if (it.getLocation() == null) {
-                                return onAlveolus.apply(new AlveolusContext(findAlveolusInClasspath(it.getName()), currentPatches, currentExcludes, cache));
+                                if (manifest.getAlveoli() != null) { // prefer in the same manifest first
+                                    final var found = manifest.getAlveoli().stream()
+                                            .filter(a -> Objects.equals(it.getName(), a.getName()))
+                                            .findFirst()
+                                            .orElse(null);
+                                    if (found != null) {
+                                        return onAlveolus.apply(new AlveolusContext(manifest, found, currentPatches, currentExcludes, cache));
+                                    }
+                                }
+                                final var alveolus = findAlveolusInClasspath(it.getName());
+                                return onAlveolus.apply(new AlveolusContext(alveolus.getManifest(), alveolus.getAlveolus(), currentPatches, currentExcludes, cache));
                             }
                             return findAlveolus(it.getLocation(), it.getName(), cache)
-                                    .thenCompose(alveolus -> onAlveolus.apply(new AlveolusContext(alveolus, currentPatches, currentExcludes, cache)));
+                                    .thenCompose(alveolus -> onAlveolus.apply(new AlveolusContext(manifest, alveolus.getAlveolus(), currentPatches, currentExcludes, cache)));
                         })
                         .map(it -> it.thenApply(ignored -> 1)) // just to match the signature of all()
                         .collect(toList()),
@@ -220,7 +232,7 @@ public class AlveolusHandler {
                             log.finest(() -> "Applying " + descriptors);
                             return all(descriptors.stream()
                                     .map(it -> prepare(it, currentPatches))
-                                    .map(it -> onDescriptor.apply(new AlveolusContext(from, patches, excludes, cache), it))
+                                    .map(it -> onDescriptor.apply(new AlveolusContext(manifest, from, patches, excludes, cache), it))
                                     .collect(toList()), counting(), true);
                         }));
     }
@@ -229,8 +241,8 @@ public class AlveolusHandler {
         return Objects.equals(expected, actual) || expected == null || "*".equals(expected);
     }
 
-    private CompletionStage<Manifest.Alveolus> findAlveolus(final String from, final String alveolus,
-                                                            final ArchiveReader.Cache cache) {
+    private CompletionStage<ManifestAndAlveolus> findAlveolus(final String from, final String alveolus,
+                                                              final ArchiveReader.Cache cache) {
         return cache.loadArchive(from)
                 .thenApply(archive -> requireNonNull(requireNonNull(archive.getManifest(), "No manifest found in " + from)
                         .getAlveoli(), "No alveolus in manifest of " + from).stream()
@@ -243,6 +255,7 @@ public class AlveolusHandler {
                             }
                         })
                         .findFirst()
+                        .map(it -> new ManifestAndAlveolus(archive.getManifest(), it))
                         .orElseThrow(() -> new IllegalArgumentException("" +
                                 "No alveolus '" + alveolus + "' found, available in '" + from + "': " +
                                 archive.getManifest().getAlveoli().stream()
@@ -359,9 +372,16 @@ public class AlveolusHandler {
 
     @Data
     public static class AlveolusContext {
+        private final Manifest manifest;
         private final Manifest.Alveolus alveolus;
         private final Map<Predicate<String>, Manifest.Patch> patches;
         private final Collection<Manifest.DescriptorRef> excludes;
         private final ArchiveReader.Cache cache;
+    }
+
+    @Data
+    public static class ManifestAndAlveolus {
+        private final Manifest manifest;
+        private final Manifest.Alveolus alveolus;
     }
 }
