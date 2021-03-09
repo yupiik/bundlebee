@@ -146,6 +146,12 @@ public class KubeClient {
     private String defaultPropagationPolicy;
 
     @Inject
+    @Description("When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. " +
+            "Default uses labels since it enables to query them later on but you can switch it to annotations.")
+    @ConfigProperty(name = "bundlebee.kube.customMetadataInjectionPoint", defaultValue = "labels")
+    private String customMetadataInjectionPoint;
+
+    @Inject
     @Description("If `true` http requests/responses to Kubernetes will be logged.")
     @ConfigProperty(name = "bundlebee.kube.verbose", defaultValue = "false")
     private boolean verbose;
@@ -340,7 +346,7 @@ public class KubeClient {
         //          'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>?fieldManager=kubectl-client-side-apply'
         //          <descriptor>
         // end
-        final var desc = customLabels.isEmpty() ? rawDesc : injectLabels(rawDesc, customLabels);
+        final var desc = customLabels.isEmpty() ? rawDesc : injectMetadata(rawDesc, customLabels);
 
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
         final var metadata = desc.getJsonObject("metadata");
@@ -458,7 +464,7 @@ public class KubeClient {
         }
     }
 
-    private JsonObject injectLabels(final JsonObject rawDesc, final Map<String, String> customLabels) {
+    private JsonObject injectMetadata(final JsonObject rawDesc, final Map<String, String> customLabels) {
         return rawDesc.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .flatMap(entry -> {
@@ -472,12 +478,12 @@ public class KubeClient {
                                         JsonObjectBuilder::build));
 
                         final var metadata = entry.getValue().asJsonObject();
-                        if (metadata.containsKey("labels")) {
+                        if (metadata.containsKey(customMetadataInjectionPoint)) {
                             return mergeLabels(entry, metadata, labelsJson);
                         }
                         return Stream.of(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), Stream.concat(
                                 metadata.entrySet().stream().sorted(Map.Entry.comparingByKey()),
-                                Stream.of(new AbstractMap.SimpleImmutableEntry<>("labels", labelsJson)))
+                                Stream.of(new AbstractMap.SimpleImmutableEntry<>(customMetadataInjectionPoint, labelsJson)))
                                 .collect(Collector.of(
                                         jsonBuilderFactory::createObjectBuilder,
                                         (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
@@ -501,7 +507,7 @@ public class KubeClient {
                 metadata.entrySet().stream()
                         .sorted(Map.Entry.comparingByKey())
                         .flatMap(metadataEntry -> {
-                            if ("labels".equals(metadataEntry.getKey())) {
+                            if (customMetadataInjectionPoint.equals(metadataEntry.getKey())) {
                                 return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
                                         metadataEntry.getKey(),
                                         Stream.concat(
