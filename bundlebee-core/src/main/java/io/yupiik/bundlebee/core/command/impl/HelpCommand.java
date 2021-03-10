@@ -17,6 +17,8 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.kube.KubeClient;
+import io.yupiik.bundlebee.core.service.Maven;
 import lombok.Data;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -26,9 +28,11 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.CompletionStage;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -57,6 +61,11 @@ public class HelpCommand implements Executable {
     @ConfigProperty(name = "bundlebee.help.args", defaultValue = "true")
     private boolean showArgs;
 
+    @Inject
+    @Description("If `false` shared configuration (by all commands) is not shown.")
+    @ConfigProperty(name = "bundlebee.help.shared", defaultValue = "true")
+    private boolean showSharedOptions;
+
     @Override
     public String name() {
         return "help";
@@ -69,13 +78,15 @@ public class HelpCommand implements Executable {
 
     @Override
     public CompletionStage<?> execute() {
+        final var showAllCommands = UNSET.equals(command);
         log.info("\n" +
                 "BundleBee\n" +
                 "\n" +
-                "  BundleBee is a light Kubernetes package manager. Available commands:\n" +
-                "\n" +
+                (showAllCommands ? "  BundleBee is a light Kubernetes package manager.\n\n" : "") +
+                (showSharedOptions ? sharedOptions() : "") +
+                (showAllCommands ? " Available commands:\n\n" :"") +
                 stream(executables)
-                        .filter(it -> UNSET.equals(command) || command.equals(it.name()))
+                        .filter(it -> showAllCommands || command.equals(it.name()))
                         .map(executable -> {
                             final var parameters = findParameters(executable).collect(toList());
                             final var description = executable.description();
@@ -85,17 +96,20 @@ public class HelpCommand implements Executable {
                             return "" +
                                     "  [] " + executable.name() + ": " +
                                     Character.toLowerCase(desc.charAt(0)) + desc.substring(1) + (showArgs ? "\n" +
-                                    parameters.stream().map(p -> "" +
-                                            "    " + p.getName() +
-                                            (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue()
-                                                    .replace("\n", "\\\\n") + ")" : "") + ": " +
-                                            reflowText(p.getDescription(), "          "))
-                                            .sorted()
-                                            .collect(joining("\n")) : "");
+                                    toString(parameters) : "");
                         })
                         .sorted()
                         .collect(joining(showArgs ? "\n\n" : "\n", "", "\n")));
         return completedFuture(null);
+    }
+
+    private String sharedOptions() {
+        return " Shared Options:\n" +
+                "\n" +
+                Stream.of(Maven.class, KubeClient.class)
+                        .map(it -> toParameters(it, n -> n).collect(toList()))
+                        .map(this::toString)
+                        .collect(joining("\n", "", "\n\n"));
     }
 
     // functionally we want executables.stream() but maven 3.6 requires this workaround for our maven plugin
@@ -119,8 +133,7 @@ public class HelpCommand implements Executable {
                 currentCount = 0;
             }
             final var words = line.split(" ");
-            for (int w = 0; w < words.length; w++) {
-                final var word = words[w];
+            for (final String word : words) {
                 if (currentCount + word.length() + prefix.length() < 80) {
                     if (currentCount > 0) {
                         builder.append(" ");
@@ -136,9 +149,24 @@ public class HelpCommand implements Executable {
         return builder.toString();
     }
 
+    private String toString(final List<Parameter> parameters) {
+        return parameters.stream().map(p -> "" +
+                "    " + p.getName() +
+                (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue()
+                        .replace("\n", "\\\\n") + ")" : "") + ": " +
+                reflowText(p.getDescription(), "          "))
+                .sorted()
+                .collect(joining("\n"));
+    }
+
     private Stream<Parameter> findParameters(final Executable executable) {
-        final var prefix = Pattern.compile("^bundlebee\\." + executable.name() + "\\."); // see io.yupiik.bundlebee.core.BundleBee.toProperties
-        return beanManager.createInjectionTarget(beanManager.createAnnotatedType(executable.getClass())).getInjectionPoints().stream()
+        // see io.yupiik.bundlebee.core.BundleBee.toProperties
+        final var prefix = Pattern.compile("^bundlebee\\." + executable.name() + "\\.");
+        return toParameters(executable.getClass(), name -> prefix.matcher(name).replaceFirst(""));
+    }
+
+    private Stream<Parameter> toParameters(final Class<?> type, final Function<String, String> prefix) {
+        return beanManager.createInjectionTarget(beanManager.createAnnotatedType(type)).getInjectionPoints().stream()
                 .filter(it -> it.getAnnotated().isAnnotationPresent(ConfigProperty.class) && it.getAnnotated().isAnnotationPresent(Description.class))
                 .map(it -> {
                     final var annotated = it.getAnnotated();
@@ -149,7 +177,7 @@ public class HelpCommand implements Executable {
                     }
                     final var desc = annotated.getAnnotation(Description.class).value();
                     return new Parameter(
-                            "--" + prefix.matcher(name).replaceFirst(""),
+                            "--" + prefix.apply(name),
                             ConfigProperty.UNCONFIGURED_VALUE.equals(annotation.defaultValue()) ? null : annotation.defaultValue(),
                             Character.toLowerCase(desc.charAt(0)) + desc.substring(1));
                 });
