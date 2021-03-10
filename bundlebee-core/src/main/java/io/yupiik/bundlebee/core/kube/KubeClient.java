@@ -102,7 +102,7 @@ import static java.util.Locale.ROOT;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
-import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.completedStage;
 import static java.util.function.Function.identity;
 import static java.util.logging.Level.SEVERE;
 import static java.util.stream.Collectors.counting;
@@ -425,7 +425,7 @@ public class KubeClient {
             ready = chainedAPIResourceListFetch(base, () -> execute(HttpRequest.newBuilder(), base)
                     .thenAccept(r -> processResourceListDefinition(base, r)));
         } else {
-            ready = completedFuture(true);
+            ready = ofNullable(pending).orElseGet(() -> completedStage(null));
         }
         return ready;
     }
@@ -533,7 +533,7 @@ public class KubeClient {
                         .or(() -> ofNullable(it.getSingularName()))
                         .filter(v -> !v.isBlank())
                         .orElse(it.getKind())))
-                .collect(toMap(i -> i.getKind().toLowerCase(ROOT), i -> "" +
+                .collect(toMap(i -> i.getKind().toLowerCase(ROOT) + 's', i -> "" +
                                 (i.getGroup() != null && i.getVersion() != null ?
                                         "/apis/" + i.getGroup() + "/" + i.getVersion() :
                                         base) +
@@ -550,8 +550,9 @@ public class KubeClient {
 
     private String toBaseUri(final JsonObject desc, final String kindLowerCased, final String namespace) {
         return ofNullable(resourceMapping.get(kindLowerCased))
+                .map(mapped -> !mapped.startsWith("http") ? baseApi + mapped  : mapped)
                 .or(() -> ofNullable(baseUrls.get(kindLowerCased))
-                        .map(url -> url.replace("${namespace}", namespace)))
+                        .map(url -> baseApi + url.replace("${namespace}", namespace)))
                 .orElseGet(() -> baseApi + findApiPrefix(kindLowerCased, desc) +
                         (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
                         "/" + kindLowerCased);
@@ -599,8 +600,8 @@ public class KubeClient {
     // we don't want to fetch twice the same api resource list
     private CompletionStage<?> chainedAPIResourceListFetch(final String marker, final Supplier<CompletionStage<?>> supplier) {
         synchronized (this) {
-            if (fetchedResourceLists.contains(marker)) {
-                return completedFuture(true);
+            if (!fetchedResourceLists.add(marker)) {
+                return ofNullable(pending).orElseGet(() -> completedStage(null));
             }
             final var refSet = new CountDownLatch(1);
             final var promise = new AtomicReference<CompletionStage<?>>();
@@ -611,7 +612,6 @@ public class KubeClient {
                     Thread.currentThread().interrupt();
                 }
                 synchronized (KubeClient.this) {
-                    fetchedResourceLists.add(marker);
                     if (KubeClient.this.pending == promise.get()) {
                         KubeClient.this.pending = null; // let it be gc
                     }
