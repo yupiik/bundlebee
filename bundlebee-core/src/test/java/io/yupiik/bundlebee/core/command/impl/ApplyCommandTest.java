@@ -101,10 +101,10 @@ class ApplyCommandTest {
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.withsamedep'\n" +
                 "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
                 "Deploying 'ApplyCommandTest.withdep'\n" +
                 "Deploying 'ApplyCommandTest.apply'\n" +
                 "ApplyCommandTest.d1 already deployed, skipping\n" +
+                "Applying 's' (kind=services) for namespace 'default'\n" +
                 "Applying 's2' (kind=services) for namespace 'default'\n" +
                 "Applying 's3' (kind=services) for namespace 'default'\n" +
                 "", logs);

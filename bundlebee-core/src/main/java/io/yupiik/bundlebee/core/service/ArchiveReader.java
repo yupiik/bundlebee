@@ -29,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static java.util.Collections.list;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 
@@ -129,8 +131,13 @@ public class ArchiveReader {
         private final Map<String, CompletionStage<Archive>> cache = new ConcurrentHashMap<>();
 
         public CompletionStage<Archive> loadArchive(final String coords) {
-            return cache.computeIfAbsent(coords, k -> mvn.findOrDownload(k)
-                    .thenApply(ArchiveReader.this::read));
+            return cache.computeIfAbsent(coords, k -> {
+                final var local = Paths.get(coords);
+                if (Files.exists(local)) {
+                    return completedFuture(read(local));
+                }
+                return mvn.findOrDownload(k).thenApply(ArchiveReader.this::read);
+            });
         }
     }
 
