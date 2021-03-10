@@ -30,12 +30,10 @@ class HelpCommandTest { // BundleBeeTest already test help command (since it is 
 
     @Test
     void helpOneCommand(final CommandExecutor executor) {
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("help", "--command", "version"));
+        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("help", "--command", "version", "--shared", "false"));
         assertEquals("" +
                 "\n" +
                 "BundleBee\n" +
-                "\n" +
-                "  BundleBee is a light Kubernetes package manager. Available commands:\n" +
                 "\n" +
                 "  [] version: shows the application version.\n" +
                 "\n" +
