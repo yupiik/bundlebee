@@ -17,6 +17,7 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.http.HttpClientProducer;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.service.Maven;
 import lombok.Data;
@@ -106,7 +107,7 @@ public class HelpCommand implements Executable {
     private String sharedOptions() {
         return " Shared Options:\n" +
                 "\n" +
-                Stream.of(Maven.class, KubeClient.class)
+                Stream.of(Maven.class, KubeClient.class, HttpClientProducer.class)
                         .map(it -> toParameters(it, n -> n).collect(toList()))
                         .map(this::toString)
                         .collect(joining("\n", "", "\n\n"));

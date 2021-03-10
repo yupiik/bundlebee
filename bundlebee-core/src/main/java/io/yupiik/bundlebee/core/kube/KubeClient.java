@@ -18,6 +18,7 @@ package io.yupiik.bundlebee.core.kube;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.http.DryRunClient;
 import io.yupiik.bundlebee.core.http.LoggingClient;
+import io.yupiik.bundlebee.core.kube.model.APIResourceList;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
 import lombok.AllArgsConstructor;
@@ -28,6 +29,7 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.JsonBuilderFactory;
@@ -72,26 +74,40 @@ import java.security.spec.RSAPrivateCrtKeySpec;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.command.Executable.UNSET;
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static java.util.Comparator.comparing;
 import static java.util.Locale.ROOT;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.function.Function.identity;
+import static java.util.logging.Level.SEVERE;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
 
 @Log
@@ -119,6 +135,11 @@ public class KubeClient {
             "to create the client.")
     @ConfigProperty(name = "kubeconfig" /* to match KUBECONFIG env var */, defaultValue = "auto")
     private String kubeConfig;
+
+    @Inject
+    @Description("Enables to define resource mapping, syntax uses propeties one: `<lowercased resource kind>s = /apis/....`.")
+    @ConfigProperty(name = "bundlebee.kube.resourceMapping", defaultValue = "")
+    private String rawResourceMapping;
 
     @Inject
     @Description("When kubeconfig is not set the base API endpoint.")
@@ -170,8 +191,13 @@ public class KubeClient {
     @Getter
     private KubeConfig loadedKubeConfig;
 
+    private Map<String, String> resourceMapping;
+    private volatile CompletionStage<?> pending; // we don't want to do 2 calls to get base urls at the same time
+    private final Collection<String> fetchedResourceLists = new HashSet<>();
+    private final Map<String, String> baseUrls = new ConcurrentHashMap<>();
+
     @PostConstruct
-    private void createCustomClient() {
+    private void init() {
         client = doConfigure(HttpClient.newBuilder()
                 .executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool)))
                 .build();
@@ -190,6 +216,41 @@ public class KubeClient {
 
             loadedKubeConfig = new KubeConfig();
             loadedKubeConfig.setClusters(List.of(cluster));
+        }
+
+        final var tmpResourceMapping = new Properties();
+        if (rawResourceMapping != null && !rawResourceMapping.isBlank()) {
+            try (final var reader = new StringReader(rawResourceMapping)) {
+                tmpResourceMapping.load(reader);
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            }
+            resourceMapping = tmpResourceMapping.stringPropertyNames().stream()
+                    .collect(toMap(identity(), tmpResourceMapping::getProperty));
+        } else {
+            resourceMapping = Map.of();
+        }
+
+        // preload default resources
+        chainedAPIResourceListFetch("/api/v1", () -> execute(HttpRequest.newBuilder(), "/api/v1")
+                .thenAccept(r -> processResourceListDefinition("/api/v1", r)));
+    }
+
+    @PreDestroy
+    private void destroy() {
+        // pending can be resetted concurrently and we can't synchronized(this)
+        // to avoid deadlocks so we just test the ref, this is sufficient here
+        final CompletionStage<?> current = pending;
+        if (current != null) {
+            try {
+                current.toCompletableFuture().get(1, TimeUnit.MINUTES);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (final ExecutionException e) {
+                log.log(SEVERE, e.getMessage(), e.getCause());
+            } catch (final TimeoutException e) {
+                log.log(SEVERE, e.getMessage(), e);
+            }
         }
     }
 
@@ -233,25 +294,28 @@ public class KubeClient {
         final var result = new AtomicBoolean(true);
         return forDescriptor(null, descriptorContent, ext, desc -> {
             final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
-            final var metadata = desc.getJsonObject("metadata");
-            final var name = metadata.getString("name");
-            final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
-            final var baseUri = baseApi + findApiPrefix(kindLowerCased, desc) +
-                    (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
-                    "/" + kindLowerCased;
-
-            return client.sendAsync(setAuth.apply(
-                    HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
-                            .GET()
-                            .header("Accept", "application/json"))
-                            .build(),
-                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-                    .whenComplete((r, e) -> {
-                        if (r != null && r.statusCode() == 404) {
-                            result.set(false);
-                        }
-                    });
+            return ensureResourceSpec(desc, kindLowerCased)
+                    .thenCompose(ignored -> doExists(result, desc, kindLowerCased));
         }).thenApply(ignored -> result.get());
+    }
+
+    private CompletionStage<?> doExists(final AtomicBoolean result, final JsonObject desc, final String kindLowerCased) {
+        final var metadata = desc.getJsonObject("metadata");
+        final var name = metadata.getString("name");
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
+        final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
+
+        return client.sendAsync(setAuth.apply(
+                HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
+                        .GET()
+                        .header("Accept", "application/json"))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                .whenComplete((r, e) -> {
+                    if (r != null && r.statusCode() == 404) {
+                        result.set(false);
+                    }
+                });
     }
 
     public CompletionStage<?> apply(final String descriptorContent, final String ext,
@@ -294,15 +358,17 @@ public class KubeClient {
 
     private CompletionStage<?> doDelete(final JsonObject desc, final int gracePeriod) {
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+        return ensureResourceSpec(desc, kindLowerCased)
+                .thenCompose(ignored -> doDelete(desc, gracePeriod, kindLowerCased));
+    }
+
+    private CompletionStage<?> doDelete(final JsonObject desc, final int gracePeriod, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
         log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
-        final var uri = baseApi + findApiPrefix(kindLowerCased, desc) +
-                (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
-                "/" + kindLowerCased + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
-
+        final var uri = toBaseUri(desc, kindLowerCased, namespace) + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
         return client.sendAsync(setAuth.apply(
                 HttpRequest.newBuilder(URI.create(uri))
                         .method("DELETE", HttpRequest.BodyPublishers.ofString(jsonBuilderFactory.createObjectBuilder()
@@ -347,17 +413,31 @@ public class KubeClient {
         //          <descriptor>
         // end
         final var desc = customLabels.isEmpty() ? rawDesc : injectMetadata(rawDesc, customLabels);
-
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+        return ensureResourceSpec(desc, kindLowerCased)
+                .thenCompose(ignored -> doApply(rawDesc, desc, kindLowerCased));
+    }
+
+    private CompletionStage<?> ensureResourceSpec(final JsonObject desc, final String kindLowerCased) {
+        final CompletionStage<?> ready;
+        if (!baseUrls.containsKey(kindLowerCased) && desc.containsKey("apiVersion") && !"v1".equals(desc.getString("apiVersion"))) {
+            final var base = "/apis/" + desc.getString("apiVersion");
+            ready = chainedAPIResourceListFetch(base, () -> execute(HttpRequest.newBuilder(), base)
+                    .thenAccept(r -> processResourceListDefinition(base, r)));
+        } else {
+            ready = completedFuture(true);
+        }
+        return ready;
+    }
+
+    private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject desc, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
         final var fieldManager = "?fieldManager=kubectl-client-side-apply";
-        final var baseUri = baseApi + findApiPrefix(kindLowerCased, desc) +
-                (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
-                "/" + kindLowerCased;
+        final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
 
         if (verbose) {
             log.info(() -> "Will apply descriptor " + rawDesc + " on " + baseUri);
@@ -425,6 +505,58 @@ public class KubeClient {
                 });
     }
 
+    private void processResourceListDefinition(final String base, final HttpResponse<String> response) {
+        log.finest(() -> "Fetched " + response.uri() + ", status=" + response.statusCode());
+        switch (response.statusCode()) {
+            case 200:
+                doProcessResourceListDefinition(base, jsonb.fromJson(response.body(), APIResourceList.class));
+                break;
+            case 404:
+                log.warning(() -> "Didn't find apiVersion '" + response.uri() + "', using default mapping");
+                break;
+            default:
+                log.finest(() -> "Can't get apiVersion '" + response.uri() + "', status=" + response.statusCode() + "\n" + response.body());
+        }
+    }
+
+    // more accurate impl is https://github.com/kubernetes/apimachinery/blob/dd0b9a0a73d89b90dbc4930db4f1e7dbdc6eb8c3/pkg/api/meta/restmapper.go#L192
+    private void doProcessResourceListDefinition(final String base, final APIResourceList list) {
+        if (list.getResources() == null) {
+            return;
+        }
+        final var newMappings = list.getResources().stream()
+                .filter(it -> it.getKind() != null)
+                // sort to find the smallest first, this way if 2 equal kind exist we take the minimal one
+                // (Namespace name=namespaces vs name=namespaces/status for ex)
+                .sorted(comparing(it -> ofNullable(it.getName())
+                        .filter(v -> !v.isBlank())
+                        .or(() -> ofNullable(it.getSingularName()))
+                        .filter(v -> !v.isBlank())
+                        .orElse(it.getKind())))
+                .collect(toMap(i -> i.getKind().toLowerCase(ROOT), i -> "" +
+                                (i.getGroup() != null && i.getVersion() != null ?
+                                        "/apis/" + i.getGroup() + "/" + i.getVersion() :
+                                        base) +
+                                (i.isNamespaced() ? "/namespaces/${namespace}" : "") +
+                                '/' + ofNullable(i.getName())
+                                .filter(it -> !it.isBlank())
+                                .orElse(i.getSingularName()),
+                        // since we sorted the list we can take the first one securely normally
+                        (a, b) -> a));
+        // /!\ some url will be wrong but shouldn't be used like podexecoptions -> /api/v1/namespaces/${namespace}/pods/exec
+        // which is actually /api/v1/namespaces/${namespace}/pods/${name}/exec
+        baseUrls.putAll(newMappings);
+    }
+
+    private String toBaseUri(final JsonObject desc, final String kindLowerCased, final String namespace) {
+        return ofNullable(resourceMapping.get(kindLowerCased))
+                .or(() -> ofNullable(baseUrls.get(kindLowerCased))
+                        .map(url -> url.replace("${namespace}", namespace)))
+                .orElseGet(() -> baseApi + findApiPrefix(kindLowerCased, desc) +
+                        (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
+                        "/" + kindLowerCased);
+    }
+
     private boolean isSkipNameSpace(final String kindLowerCased) {
         switch (kindLowerCased) {
             case "nodes":
@@ -461,6 +593,38 @@ public class KubeClient {
                 return "/apis/" + desc.getString("apiVersion");
             default:
                 return "/api/v1";
+        }
+    }
+
+    // we don't want to fetch twice the same api resource list
+    private CompletionStage<?> chainedAPIResourceListFetch(final String marker, final Supplier<CompletionStage<?>> supplier) {
+        synchronized (this) {
+            if (fetchedResourceLists.contains(marker)) {
+                return completedFuture(true);
+            }
+            final var refSet = new CountDownLatch(1);
+            final var promise = new AtomicReference<CompletionStage<?>>();
+            final var fetch = supplier.get().whenComplete((r, e) -> {
+                try {
+                    refSet.await();
+                } catch (final InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+                synchronized (KubeClient.this) {
+                    fetchedResourceLists.add(marker);
+                    if (KubeClient.this.pending == promise.get()) {
+                        KubeClient.this.pending = null; // let it be gc
+                    }
+                }
+                if (e != null) {
+                    log.severe(e.getMessage());
+                }
+            });
+            final var facade = this.pending == null ? fetch : this.pending.thenCompose(ignored -> fetch);
+            promise.set(facade);
+            refSet.countDown();
+            this.pending = facade;
+            return this.pending;
         }
     }
 

@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static java.util.logging.Level.INFO;
+import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @HttpApi(useSsl = true)
@@ -74,6 +75,9 @@ class HttpCommandTest {
                 "{\"msg\":\"ok\"}\n", executor.wrap(INFO, () -> new BundleBee().launch("http", "--payloadOnly", "false")));
 
         // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
-        assertEquals(2/*test exists + create*/, spyingResponseLocator.getFound().size());
+        assertEquals(2/*test exists + create*/, spyingResponseLocator.getFound().size(),
+                () -> spyingResponseLocator.getFound().stream()
+                        .map(r -> r.status() + "\n" + new String(r.payload(), StandardCharsets.UTF_8))
+                        .collect(joining("\n----\n")));
     }
 }

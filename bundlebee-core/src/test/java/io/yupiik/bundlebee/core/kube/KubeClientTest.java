@@ -98,7 +98,7 @@ class KubeClientTest {
 
         final var mocks = spyingResponseLocator.getFound();
         assertEquals(2, mocks.size());
-        assertEquals(404, mocks.get(0).status());
+        assertEquals(404, mocks.get(0).status(), mocks::toString);
         assertEquals(201, mocks.get(1).status());
     }
 
