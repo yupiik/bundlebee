@@ -163,9 +163,9 @@ public class CompletionGeneratorCommand implements Executable {
                             final var prefix = "bundlebee." + cmd.getExecutable().name() + '.';
                             final var map = toOptionMap("bundlebee." + cmd.getExecutable().name() + '.', args);
                             if (argName.startsWith(prefix)) {
-                                return cmd.getExecutable().complete(map, argName);
+                                return cmd.getCompleter().complete(map, argName);
                             }
-                            return cmd.getExecutable().complete(map, argName);
+                            return cmd.getCompleter().complete(map, argName);
                         })
                         .map(options -> options.filter(it -> it.startsWith(current)))
                         .orElseGet(Stream::empty);

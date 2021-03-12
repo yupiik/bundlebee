@@ -15,7 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import lombok.extern.java.Log;
@@ -39,7 +39,7 @@ import static java.util.stream.Collectors.joining;
 
 @Log
 @Dependent
-public class HttpCommand implements Executable {
+public class HttpCommand implements CompletingExecutable {
     @Inject
     private KubeClient kube;
 

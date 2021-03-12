@@ -15,9 +15,11 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.lang.ConfigHolder;
+import io.yupiik.bundlebee.core.service.CompletionService;
 import io.yupiik.bundlebee.core.service.ParameterExtractor;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -28,6 +30,7 @@ import javax.enterprise.inject.Instance;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.CompletionStage;
@@ -41,7 +44,7 @@ import static java.util.stream.Collectors.toList;
 
 @Log
 @Dependent
-public class HelpCommand implements Executable {
+public class HelpCommand implements CompletingExecutable {
     @Any
     @Inject
     private Instance<Executable> executables;
@@ -71,6 +74,9 @@ public class HelpCommand implements Executable {
     @Inject
     private ParameterExtractor parameterExtractor;
 
+    @Inject
+    private CompletionService completionService;
+
     @Override
     public String name() {
         return "help";
@@ -79,6 +85,19 @@ public class HelpCommand implements Executable {
     @Override
     public String description() {
         return "Print help for all available commands.";
+    }
+
+    @Override
+    public Stream<String> complete(final Map<String, String> config, final String optionName) {
+        switch (optionName) {
+            case "command":
+                return completionService.getCommands().keySet().stream();
+            case "shared":
+            case "args":
+                return Stream.of("true", "false");
+            default:
+                return Stream.empty();
+        }
     }
 
     @Override

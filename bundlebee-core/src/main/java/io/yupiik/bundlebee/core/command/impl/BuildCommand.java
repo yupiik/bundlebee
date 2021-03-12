@@ -15,7 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.service.Maven;
 import lombok.Data;
@@ -45,7 +45,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 @Log
 @Dependent
-public class BuildCommand implements Executable {
+public class BuildCommand implements CompletingExecutable {
     @Inject
     @Description("Project to build.")
     @ConfigProperty(name = "bundlebee.build.dir", defaultValue = ".")

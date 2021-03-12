@@ -15,7 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
@@ -48,7 +48,7 @@ import static java.util.stream.Collectors.toList;
 
 @Log
 @Dependent
-public class RollbackCommand implements Executable {
+public class RollbackCommand implements CompletingExecutable {
     @Inject
     @Description("Alveolus name to install as rollback.")
     @ConfigProperty(name = "bundlebee.rollback.previousAlveolus", defaultValue = "auto")

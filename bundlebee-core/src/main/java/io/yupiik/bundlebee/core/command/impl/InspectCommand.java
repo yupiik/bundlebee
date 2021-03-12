@@ -15,7 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
@@ -46,7 +46,7 @@ import static java.util.stream.Collectors.toList;
 
 @Log
 @Dependent
-public class InspectCommand implements Executable {
+public class InspectCommand implements CompletingExecutable {
     @Inject
     @Description("Alveolus name to inspect. When set to `auto`, it will look for all manifests found in the classpath. " +
             "If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, " +

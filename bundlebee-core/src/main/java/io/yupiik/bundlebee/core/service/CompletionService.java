@@ -68,9 +68,9 @@ public class CompletionService {
             final var pattern = Pattern.compile("^bundlebee\\." + executable.name() + "\\.");
             final var commandParameters = parameterExtractor.toParameters(executable.getClass(), s -> pattern.matcher(s).replaceFirst("")).collect(toList());
             if (noSharedConfigCommandNames().anyMatch(n -> n.equals(executable.name()))) {
-                return new Command(executable, commandParameters::stream);
+                return new Command(executable, executable.completer(), commandParameters::stream);
             }
-            return new Command(executable, () -> Stream.concat(shared.stream(), commandParameters.stream()));
+            return new Command(executable, executable.completer(), () -> Stream.concat(shared.stream(), commandParameters.stream()));
         }));
     }
 
@@ -86,6 +86,9 @@ public class CompletionService {
     public static class Command implements Supplier<Stream<ParameterExtractor.Parameter>> {
         @Getter
         private final Executable executable;
+
+        @Getter
+        private final Executable.Completer completer;
 
         @Delegate
         private final Supplier<Stream<ParameterExtractor.Parameter>> parameters;

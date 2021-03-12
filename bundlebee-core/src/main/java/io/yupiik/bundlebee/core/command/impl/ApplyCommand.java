@@ -15,7 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
@@ -41,7 +41,7 @@ import static java.util.stream.Collectors.toMap;
 
 @Log
 @Dependent
-public class ApplyCommand implements Executable {
+public class ApplyCommand implements CompletingExecutable {
     @Inject
     @Description("Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. " +
             "If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, " +
