@@ -107,7 +107,7 @@ public class CheckUpdateCommand implements Executable {
             }
             log.info(() -> "A new version is available: " + last);
             if (!update) {
-                log.info(() -> "You can download it with this link: " + maven.toRelativePath(repository, groupId, artifactId, last, "Linux-amd64", "bin"));
+                log.info(() -> "You can download it with this link: " + maven.toRelativePath(repository, groupId, artifactId, last, "-Linux-amd64", "bin"));
                 return completedFuture(last);
             }
             final var target = Paths.get(installLocation.replace("${user.home}", System.getProperty("user.home")));
