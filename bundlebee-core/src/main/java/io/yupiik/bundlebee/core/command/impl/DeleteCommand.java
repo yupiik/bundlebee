@@ -15,7 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
@@ -47,7 +47,7 @@ import static java.util.stream.Collectors.toList;
 
 @Log
 @Dependent
-public class DeleteCommand implements Executable {
+public class DeleteCommand implements CompletingExecutable {
     @Inject
     @Description("Alveolus name to rollback (in currently deployed version). " +
             "When set to `auto`, it will look up all manifests found in the classpath (it is not recommended until you perfectly know what you do). " +

@@ -15,7 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -34,7 +34,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 
 @Log
 @Dependent
-public class NewBundleCommand implements Executable {
+public class NewBundleCommand implements CompletingExecutable {
     @Inject
     @Description("Bundle groupId.")
     @ConfigProperty(name = "bundlebee.new.group", defaultValue = UNSET)
