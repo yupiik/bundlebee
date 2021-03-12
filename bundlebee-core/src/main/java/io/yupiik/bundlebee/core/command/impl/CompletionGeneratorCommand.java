@@ -72,7 +72,7 @@ public class CompletionGeneratorCommand implements Executable {
     @Override
     public String description() {
         return "Execute bash completion. " +
-                "Should be setup in your ~/.bashrc or ~/.profile file to be active. " +
+                "Should be setup in your ~/.bashrc or ~/.profile file to be active.\n" +
                 "// end of short description\n" +
                 "The result will be the list of proposal you can inject into COMPREPLY array.\n" +
                 "\n" +
