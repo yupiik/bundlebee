@@ -74,31 +74,39 @@
 <p><a href="commands/cipher-password.configuration.html">cipher-password</a>: cipher a password to put it in <code>~/.m2/settings.xml</code> servers (useful for deploy command for example).</p>
 </li>
 <li>
-<p><a href="commands/completion.configuration.html">completion</a>: execute bash completion. Should be setup in your ~/.bashrc or ~/.profile file to be active. // end of short description
-The result will be the list of proposal you can inject into COMPREPLY array.</p>
+<p><a href="commands/completion.configuration.html">completion</a>: execute bash completion. Should be setup in your ~/.bashrc or ~/.profile file to be active.</p>
+</li>
+<li>
+<p><a href="commands/create-master-password.configuration.html">create-master-password</a>: generate a master password if none exist (in <code>~/.m2/settings-security.xml</code>).</p>
+</li>
+<li>
+<p><a href="commands/delete.configuration.html">delete</a>: delete an alveolus deployment by deleting all related descriptors.</p>
+</li>
+<li>
+<p><a href="commands/deploy.configuration.html">deploy</a>: build and deploy a project. It inherits from most configuration of build command and adds remote repository settings.</p>
+</li>
+<li>
+<p><a href="commands/help.configuration.html">help</a>: print help for all available commands.</p>
+</li>
+<li>
+<p><a href="commands/http.configuration.html">http</a>: execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
+</li>
+<li>
+<p><a href="commands/inspect.configuration.html">inspect</a>: inspect an alveolus, i.e. list the descriptors to apply.</p>
+</li>
+<li>
+<p><a href="commands/new.configuration.html">new</a>: creates a new project.</p>
+</li>
+<li>
+<p><a href="commands/rollback.configuration.html">rollback</a>: rollback an alveolus deployment.</p>
+</li>
+<li>
+<p><a href="commands/version.configuration.html">version</a>: shows the application version.</p>
+</li>
+<li>
+<p><a href="commands/versions.configuration.html">versions</a>: list versions for an artifact to know which ones are available.</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p>To set it up you can add this snippet to your .bashrc (assumes you uses the <code>bundlebee</code> linux binary and it is in your <code>$PATH</code> otherwise replace bundlebee by your own launching script):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">complete -o default -o nospace -C "bundlebee completion" bundlebee</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>.
-- <a href="commands/create-master-password.configuration.html">create-master-password</a>: generate a master password if none exist (in <code>~/.m2/settings-security.xml</code>).
-- <a href="commands/delete.configuration.html">delete</a>: delete an alveolus deployment by deleting all related descriptors.
-- <a href="commands/deploy.configuration.html">deploy</a>: build and deploy a project. It inherits from most configuration of build command and adds remote repository settings.
-- <a href="commands/help.configuration.html">help</a>: print help for all available commands.
-- <a href="commands/http.configuration.html">http</a>: execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.
-- <a href="commands/inspect.configuration.html">inspect</a>: inspect an alveolus, i.e. list the descriptors to apply.
-- <a href="commands/new.configuration.html">new</a>: creates a new project.
-- <a href="commands/rollback.configuration.html">rollback</a>: rollback an alveolus deployment.
-- <a href="commands/version.configuration.html">version</a>: shows the application version.
-- <a href="commands/versions.configuration.html">versions</a>: list versions for an artifact to know which ones are available.</p>
 </div>
             </div>
         </div>
