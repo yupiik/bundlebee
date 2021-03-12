@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>bundlebee:build</title>
+    <title>bundlebee:completion</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,13 +53,13 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>bundlebee:build</h1>
+                <h1>bundlebee:completion</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Build a project.</p>
+<p>Execute bash completion. Should be setup in your ~/.bashrc or ~/.profile file to be active. The result will be the list of proposal you can inject into COMPREPLY array.  To set it up you can add this snippet to your .bashrc (assumes you uses the <code>bundlebee</code> linux binary and it is in your <code>$PATH</code> otherwise replace bundlebee by your own launching script):  [source,bash] ---- complete -o default -o nospace -C "bundlebee completion" bundlebee ----</p>
 </div>
 </div>
 </div>
@@ -76,7 +76,7 @@
 </div>
 </div>
 <div class="paragraph">
-<p>To call this goal from the command line execute: <code>mvn bundlebee:build</code>.</p>
+<p>To call this goal from the command line execute: <code>mvn bundlebee:completion</code>.</p>
 </div>
 <div class="paragraph">
 <p>To bind this goal in the build you can use:</p>
@@ -91,7 +91,7 @@
     &lt;execution&gt;
       &lt;id&gt;my-execution&lt;/id&gt;
       &lt;goals&gt;
-        &lt;goal&gt;build&lt;/goal&gt;
+        &lt;goal&gt;completion&lt;/goal&gt;
       &lt;/goals&gt;
       &lt;configuration&gt;
         &lt;!-- execution specific configuration come there --&gt;
@@ -102,7 +102,7 @@
 </div>
 </div>
 <div class="paragraph">
-<p>You can execute this goal particularly with <code>mvn bundlebee:build@my-execution</code> command.</p>
+<p>You can execute this goal particularly with <code>mvn bundlebee:completion@my-execution</code> command.</p>
 </div>
 </div>
 </div>
@@ -111,29 +111,93 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">artifact (<code>String</code>)</dt>
+<dt class="hdlist1">httpclientThreads (<code>int</code>)</dt>
 <dd>
-<p>Bundle artifactId. Default value: <code>${project.artifactId}</code>. Property: <code>${bundlebee.build.artifact}</code>.</p>
+<p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code>. Property: <code>${bundlebee.httpclient.threads}</code>.</p>
 </dd>
-<dt class="hdlist1">builddir (<code>String</code>)</dt>
+<dt class="hdlist1">kubeApi (<code>String</code>)</dt>
 <dd>
-<p>Project to build. Default value: <code>target</code>. Property: <code>${bundlebee.build.builddir}</code>.</p>
+<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code>. Property: <code>${bundlebee.kube.api}</code>.</p>
 </dd>
-<dt class="hdlist1">deployInLocalRepository (<code>boolean</code>)</dt>
+<dt class="hdlist1">kubeContext (<code>String</code>)</dt>
 <dd>
-<p>If <code>true</code> it will be added to your local maven repository. Default value: <code>true</code>. Property: <code>${bundlebee.build.deployInLocalRepository}</code>.</p>
+<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.context}</code>.</p>
 </dd>
-<dt class="hdlist1">dir (<code>String</code>)</dt>
+<dt class="hdlist1">kubeCustomMetadataInjectionPoint (<code>String</code>)</dt>
 <dd>
-<p>Project to build. Default value: <code>.</code>. Property: <code>${bundlebee.build.dir}</code>.</p>
+<p>When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations. Default value: <code>labels</code>. Property: <code>${bundlebee.kube.customMetadataInjectionPoint}</code>.</p>
 </dd>
-<dt class="hdlist1">group (<code>String</code>)</dt>
+<dt class="hdlist1">kubeDefaultPropagationPolicy (<code>String</code>)</dt>
 <dd>
-<p>Bundle groupId. Default value: <code>${project.groupId}</code>. Property: <code>${bundlebee.build.group}</code>.</p>
+<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code>. Property: <code>${bundlebee.kube.defaultPropagationPolicy}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeDryRun (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code>. Property: <code>${bundlebee.kube.dryRun}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeNamespace (<code>String</code>)</dt>
+<dd>
+<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code>. Property: <code>${bundlebee.kube.namespace}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeResourceMapping (<code>String</code>)</dt>
+<dd>
+<p>Enables to define resource mapping, syntax uses propeties one: <code>&lt;lowercased resource kind&gt;s = /apis/&#8230;&#8203;.</code>. Default value: <code>`. Property: `${bundlebee.kube.resourceMapping}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeValidateSSL (<code>boolean</code>)</dt>
+<dd>
+<p>Should SSL connector be validated or not. Default value: <code>true</code>. Property: <code>${bundlebee.kube.validateSSL}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeVerbose (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code>. Property: <code>${bundlebee.kube.verbose}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeconfig (<code>String</code>)</dt>
+<dd>
+<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. Default value: <code>auto</code>. Property: <code>${kubeconfig}</code>.</p>
+</dd>
+<dt class="hdlist1">line (<code>String</code>)</dt>
+<dd>
+<p>Matches bash COMP_LINE environment variable, represents the current command line. Default value: <code>&lt;unset&gt;</code>. Property: <code>${comp.line}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenCache (<code>String</code>)</dt>
+<dd>
+<p>Where to cache maven dependencies. If set to <code>auto</code>, <code>$HOME/.m2/repository</code> is used. Default value: <code>auto</code>. Property: <code>${bundlebee.maven.cache}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenForceCustomSettingsXml (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code>. Property: <code>${bundlebee.maven.forceCustomSettingsXml}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenHttpConnectTimeout (<code>int</code>)</dt>
+<dd>
+<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code>. Property: <code>${bundlebee.maven.http.connectTimeout}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenPreferCustomSettingsXml (<code>boolean</code>)</dt>
+<dd>
+<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code>. Property: <code>${bundlebee.maven.preferCustomSettingsXml}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenRepositoriesDownloadsEnabled (<code>boolean</code>)</dt>
+<dd>
+<p>Enables to disable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code>. Property: <code>${bundlebee.maven.repositories.downloads.enabled}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenRepositoriesHttpHeaders (<code>String</code>)</dt>
+<dd>
+<p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Note that you can use maven <code>~/.m2/settings.xml</code> servers (potentially ciphered) username/password pairs. In this last case the server id must be <code>bundlebee.&lt;server host&gt;</code>. Still in settings.xml case, if the username is null the password value is used as raw <code>Authorization</code> header else username/password is encoded as a basic header. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.httpHeaders}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenRepositoriesRelease (<code>String</code>)</dt>
+<dd>
+<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code>. Property: <code>${bundlebee.maven.repositories.release}</code>.</p>
+</dd>
+<dt class="hdlist1">mavenRepositoriesSnapshot (<code>String</code>)</dt>
+<dd>
+<p>Default snapshot repository, not set by default. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
 </dd>
 <dt class="hdlist1">packaging (<code>String</code>)</dt>
 <dd>
 <p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: ``.</p>
+</dd>
+<dt class="hdlist1">point (<code>int</code>)</dt>
+<dd>
+<p>Matches bash COMP_POINT environment variable, represents the index of the cursor position. Default value: <code>-1</code>. Property: <code>${comp.point}</code>.</p>
 </dd>
 <dt class="hdlist1">skip (<code>boolean</code>)</dt>
 <dd>
@@ -143,9 +207,9 @@
 <dd>
 <p>Skipped packaging types. Default value: <code>pom</code>. Property: <code>${bundlebee.skipPackaging}</code>.</p>
 </dd>
-<dt class="hdlist1">version (<code>String</code>)</dt>
+<dt class="hdlist1">useLogger (<code>boolean</code>)</dt>
 <dd>
-<p>Bundle version. Default value: <code>${project.version}</code>. Property: <code>${bundlebee.build.version}</code>.</p>
+<p>If true logger will be used instead of stdout. Default value: <code>false</code>. Property: <code>${bundlebee.completion.useLogger}</code>.</p>
 </dd>
 </dl>
 </div>
