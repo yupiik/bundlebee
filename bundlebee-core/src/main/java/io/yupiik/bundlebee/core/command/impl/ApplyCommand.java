@@ -85,6 +85,19 @@ public class ApplyCommand implements Executable {
     private VersioningService versioningService;
 
     @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        switch (optionName) {
+            case "injectBundleBeeMetadata":
+            case "injectTimestamp":
+                return Stream.of("false", "true");
+            case "alveolus":
+                return visitor.findCompletionAlveoli(options);
+            default:
+                return Stream.empty();
+        }
+    }
+
+    @Override
     public String name() {
         return "apply";
     }

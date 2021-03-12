@@ -33,10 +33,12 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -127,6 +129,18 @@ public class RollbackCommand implements Executable {
     @Inject
     @BundleBee
     private ScheduledExecutorService scheduledExecutorService;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        switch (optionName) {
+            case "useMavenVersioning":
+                return Stream.of("false", "true");
+            case "alveolus":
+                return alveolusHandler.findCompletionAlveoli(options);
+            default:
+                return Stream.empty();
+        }
+    }
 
     @Override
     public String name() {

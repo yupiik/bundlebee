@@ -31,6 +31,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,6 +82,18 @@ public class InspectCommand implements Executable {
 
     @Inject
     private ArchiveReader archives;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        switch (optionName) {
+            case "verbose":
+                return Stream.of("false", "true");
+            case "alveolus":
+                return visitor.findCompletionAlveoli(options);
+            default:
+                return Stream.empty();
+        }
+    }
 
     @Override
     public String name() {

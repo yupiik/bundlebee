@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -87,19 +88,20 @@ public class AlveolusHandler {
     @Inject
     private ConditionEvaluator conditionEvaluator;
 
+    public CompletionStage<Manifest> findManifest(final String from, final String manifest) {
+        if (!"skip".equals(manifest)) {
+            return completedFuture(readManifest(manifest));
+        }
+        if (from == null || "auto".equals(from)) { // can't do
+            return completedFuture(null);
+        }
+        return archives.newCache().loadArchive(from).thenApply(ArchiveReader.Archive::getManifest);
+    }
+
     public CompletionStage<List<ManifestAndAlveolus>> findRootAlveoli(final String from, final String manifest,
                                                                       final String alveolus) {
         if (!"skip".equals(manifest)) {
-            final var mf = manifestReader.readManifest(() -> {
-                if (manifest.startsWith("{")) {
-                    return new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8));
-                }
-                try {
-                    return Files.newInputStream(Paths.get(manifest));
-                } catch (final IOException e) {
-                    throw new IllegalArgumentException(e);
-                }
-            });
+            final var mf = readManifest(manifest);
             if (mf.getAlveoli() == null) {
                 throw new IllegalArgumentException("No alveoli in manifest '" + manifest + "'");
             }
@@ -143,6 +145,19 @@ public class AlveolusHandler {
                 ctx -> onAlveolusUser.apply(ctx).thenCompose(i -> internalOnAlveolus.apply(ctx));
         ref.set(combinedOnAlveolus);
         return combinedOnAlveolus.apply(new AlveolusContext(manifest, alveolus, Map.of(), List.of(), cache));
+    }
+
+    private Manifest readManifest(final String manifest) {
+        return manifestReader.readManifest(() -> {
+            if (manifest.startsWith("{")) {
+                return new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8));
+            }
+            try {
+                return Files.newInputStream(Paths.get(manifest));
+            } catch (final IOException e) {
+                throw new IllegalArgumentException(e);
+            }
+        });
     }
 
     private ManifestAndAlveolus findAlveolusInClasspath(final String alveolus) {
@@ -361,6 +376,28 @@ public class AlveolusHandler {
             return ".yaml";
         }
         throw new IllegalArgumentException("Unsupported type: '" + type + "'");
+    }
+
+    public Stream<String> findCompletionAlveoli(final Map<String, String> options) {
+        try {
+            return findManifest(
+                    ofNullable(options.get("from")).orElse("auto"),
+                    ofNullable(options.get("manifest")).orElse("skip"))
+                    .exceptionally(e -> null)
+                    .thenApply(m -> {
+                        if (m == null || m.getAlveoli() == null) {
+                            return Stream.<String>empty();
+                        }
+                        return m.getAlveoli().stream().map(Manifest.Alveolus::getName).sorted();
+                    })
+                    .toCompletableFuture()
+                    .get();
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (final ExecutionException e) {
+            // no-op
+        }
+        return Stream.empty();
     }
 
     @Data

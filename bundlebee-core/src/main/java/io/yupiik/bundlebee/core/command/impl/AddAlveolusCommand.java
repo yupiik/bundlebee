@@ -24,6 +24,7 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
+import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.json.bind.Jsonb;
@@ -36,6 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -79,8 +81,44 @@ public class AddAlveolusCommand implements Executable {
     @BundleBee
     private Jsonb jsonb;
 
+    @Any
     @Inject
     private Instance<AddAlveolusTypeHandler> typeHandlers;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        switch (optionName) {
+            case "type":
+                return Stream.concat(
+                        Stream.of("web"),
+                        types().map(AddAlveolusTypeHandler::name))
+                        .distinct()
+                        .sorted();
+            case "overwrite":
+                return Stream.of("false", "true");
+            case "alveolus":
+                return Stream.ofNullable(manifest)
+                        .flatMap(m -> {
+                            final var json = Paths.get(manifest);
+                            if (!Files.exists(json)) {
+                                return Stream.empty();
+                            }
+                            try {
+                                final var mf = jsonb.fromJson(Files.readString(json).trim(), Manifest.class);
+                                if (mf.getAlveoli() != null) {
+                                    return mf.getAlveoli().stream()
+                                            .map(Manifest.Alveolus::getName)
+                                            .sorted();
+                                }
+                            } catch (final RuntimeException | IOException re) {
+                                // no-op
+                            }
+                            return Stream.empty();
+                        });
+            default:
+                return Stream.empty();
+        }
+    }
 
     @Override
     public String name() {
@@ -98,22 +136,25 @@ public class AddAlveolusCommand implements Executable {
             throw new IllegalArgumentException("You didn't set --alveolus");
         }
         try {
-            switch (type.toLowerCase(ROOT).trim()) {
-                case "web":
-                    if (UNSET.equals(image)) {
-                        throw new IllegalArgumentException("You didn't set --image");
-                    }
-                    return createWeb();
-                default:
-                    return StreamSupport.stream(Spliterators.spliteratorUnknownSize(typeHandlers.iterator(), Spliterator.IMMUTABLE), false)
-                            .filter(it -> type.equals(it.name()))
-                            .findFirst()
-                            .map(AddAlveolusTypeHandler::handle)
-                            .orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + type));
+            if ("web".equals(type.toLowerCase(ROOT).trim())) {
+                if (UNSET.equals(image)) {
+                    throw new IllegalArgumentException("You didn't set --image");
+                }
+                return createWeb();
             }
+            return types()
+                    .filter(it -> type.equals(it.name()))
+                    .findFirst()
+                    .map(AddAlveolusTypeHandler::handle)
+                    .orElseThrow(() -> new IllegalArgumentException("Unsupported type: " + type));
         } catch (final Exception ioe) {
             throw new IllegalStateException(ioe);
         }
+    }
+
+    // typeHandlers.stream() but workaround for mvn 3.6 (<4)
+    private Stream<AddAlveolusTypeHandler> types() {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(typeHandlers.iterator(), Spliterator.IMMUTABLE), false);
     }
 
     private CompletionStage<?> createWeb() throws Exception {

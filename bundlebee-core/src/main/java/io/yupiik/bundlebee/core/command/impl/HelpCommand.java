@@ -17,10 +17,8 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.command.Executable;
 import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.http.HttpClientProducer;
-import io.yupiik.bundlebee.core.kube.KubeClient;
-import io.yupiik.bundlebee.core.service.Maven;
-import lombok.Data;
+import io.yupiik.bundlebee.core.lang.ConfigHolder;
+import io.yupiik.bundlebee.core.service.ParameterExtractor;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -33,7 +31,6 @@ import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -48,6 +45,10 @@ public class HelpCommand implements Executable {
     @Any
     @Inject
     private Instance<Executable> executables;
+
+    @Any
+    @Inject
+    private Instance<ConfigHolder> configHolders;
 
     @Inject
     private BeanManager beanManager;
@@ -67,6 +68,9 @@ public class HelpCommand implements Executable {
     @ConfigProperty(name = "bundlebee.help.shared", defaultValue = "true")
     private boolean showSharedOptions;
 
+    @Inject
+    private ParameterExtractor parameterExtractor;
+
     @Override
     public String name() {
         return "help";
@@ -85,7 +89,7 @@ public class HelpCommand implements Executable {
                 "\n" +
                 (showAllCommands ? "  BundleBee is a light Kubernetes package manager.\n\n" : "") +
                 (showSharedOptions ? sharedOptions() : "") +
-                (showAllCommands ? " Available commands:\n\n" :"") +
+                (showAllCommands ? " Available commands:\n\n" : "") +
                 stream(executables)
                         .filter(it -> showAllCommands || command.equals(it.name()))
                         .map(executable -> {
@@ -107,15 +111,17 @@ public class HelpCommand implements Executable {
     private String sharedOptions() {
         return " Shared Options:\n" +
                 "\n" +
-                Stream.of(Maven.class, KubeClient.class, HttpClientProducer.class)
-                        .map(it -> toParameters(it, n -> n).collect(toList()))
+                stream(configHolders)
+                        .map(ConfigHolder::getClass)
+                        .map(c -> c.getName().contains("$$") ? c.getSuperclass() : c) // unwrap proxy
+                        .map(it -> parameterExtractor.toParameters(it, n -> n).collect(toList()))
                         .map(this::toString)
                         .collect(joining("\n", "", "\n\n"));
     }
 
     // functionally we want executables.stream() but maven 3.6 requires this workaround for our maven plugin
-    private Stream<Executable> stream(final Instance<Executable> executables) {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(executables.iterator(), Spliterator.IMMUTABLE), false);
+    private <T> Stream<T> stream(final Instance<T> instance) {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(instance.iterator(), Spliterator.IMMUTABLE), false);
     }
 
     // not perfect impl but sufficient for now
@@ -150,7 +156,7 @@ public class HelpCommand implements Executable {
         return builder.toString();
     }
 
-    private String toString(final List<Parameter> parameters) {
+    private String toString(final List<ParameterExtractor.Parameter> parameters) {
         return parameters.stream().map(p -> "" +
                 "    " + p.getName() +
                 (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue()
@@ -160,34 +166,9 @@ public class HelpCommand implements Executable {
                 .collect(joining("\n"));
     }
 
-    private Stream<Parameter> findParameters(final Executable executable) {
+    private Stream<ParameterExtractor.Parameter> findParameters(final Executable executable) {
         // see io.yupiik.bundlebee.core.BundleBee.toProperties
         final var prefix = Pattern.compile("^bundlebee\\." + executable.name() + "\\.");
-        return toParameters(executable.getClass(), name -> prefix.matcher(name).replaceFirst(""));
-    }
-
-    private Stream<Parameter> toParameters(final Class<?> type, final Function<String, String> prefix) {
-        return beanManager.createInjectionTarget(beanManager.createAnnotatedType(type)).getInjectionPoints().stream()
-                .filter(it -> it.getAnnotated().isAnnotationPresent(ConfigProperty.class) && it.getAnnotated().isAnnotationPresent(Description.class))
-                .map(it -> {
-                    final var annotated = it.getAnnotated();
-                    final var annotation = annotated.getAnnotation(ConfigProperty.class);
-                    var name = annotation.name();
-                    if (name.isEmpty()) {
-                        name = it.getMember().getDeclaringClass().getName() + '.' + it.getMember().getName();
-                    }
-                    final var desc = annotated.getAnnotation(Description.class).value();
-                    return new Parameter(
-                            "--" + prefix.apply(name),
-                            ConfigProperty.UNCONFIGURED_VALUE.equals(annotation.defaultValue()) ? null : annotation.defaultValue(),
-                            Character.toLowerCase(desc.charAt(0)) + desc.substring(1));
-                });
-    }
-
-    @Data
-    private static class Parameter {
-        private final String name;
-        private final String defaultValue;
-        private final String description;
+        return parameterExtractor.toParameters(executable.getClass(), name -> prefix.matcher(name).replaceFirst(""));
     }
 }

@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import lombok.Data;
 import lombok.Getter;
@@ -90,7 +91,7 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Log
 @ApplicationScoped
-public class Maven {
+public class Maven implements ConfigHolder {
     private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
     private static final Pattern ENCRYPTED_PATTERN = Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
 

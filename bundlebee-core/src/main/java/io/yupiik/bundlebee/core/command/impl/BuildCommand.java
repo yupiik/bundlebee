@@ -33,11 +33,13 @@ import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -76,6 +78,14 @@ public class BuildCommand implements Executable {
 
     @Inject
     private Maven mvn;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        if ("deployInLocalRepository".equals(optionName)) {
+            return Stream.of("false", "true");
+        }
+        return Stream.empty();
+    }
 
     @Override
     public String name() {

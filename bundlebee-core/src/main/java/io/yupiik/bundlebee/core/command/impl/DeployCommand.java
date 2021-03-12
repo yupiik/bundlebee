@@ -33,8 +33,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.logging.Level;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -112,6 +114,17 @@ public class DeployCommand implements Executable {
     @Inject
     @BundleBee
     private Jsonb jsonb;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        switch (optionName) {
+            case "deployInLocalRepository":
+            case "enableReUpload":
+                return Stream.of("false", "true");
+            default:
+                return Stream.empty();
+        }
+    }
 
     @Override
     public String name() {
