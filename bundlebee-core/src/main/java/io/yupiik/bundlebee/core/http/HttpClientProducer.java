@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.http;
 
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -32,7 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
-public class HttpClientProducer {
+public class HttpClientProducer implements ConfigHolder {
     @Inject
     @Description("How many threads are allocated to async HTTP client, negative or zero value means to use common pool.")
     @ConfigProperty(name = "bundlebee.httpclient.threads", defaultValue = "-1")

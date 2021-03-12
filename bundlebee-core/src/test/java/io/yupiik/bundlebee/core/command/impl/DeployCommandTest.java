@@ -79,7 +79,6 @@ class DeployCommandTest {
             @Override
             protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
                                                 final Predicate<String> headerFilter, final boolean exactMatching) {
-                System.out.println(request.method() + " " + request.uri());
                 switch (request.method()) {
                     case "CONNECT":
                         return Optional.empty();

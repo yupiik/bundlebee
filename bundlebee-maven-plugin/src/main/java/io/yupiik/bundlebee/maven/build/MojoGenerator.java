@@ -97,7 +97,7 @@ public final class MojoGenerator {
                                             final var key = configProperty.name();
                                             final var defaultValue = configProperty.defaultValue();
                                             final var desc = it.getAnnotation(Description.class).value();
-                                            final var paramName = prefix.matcher(key).replaceAll("");
+                                            final var paramName = fromParameterToFieldName(prefix.matcher(key).replaceAll(""));
                                             return "" +
                                                     "    /**\n" +
                                                     "     * " + desc.replace('\n', ' ') + "\n" +
@@ -123,7 +123,7 @@ public final class MojoGenerator {
                         final var specificParameters = parameterDeclarationPerName.keySet().stream()
                                 .flatMap(k -> {
                                     final var simpleName = prefix.matcher(k).replaceAll("");
-                                    return Stream.of("\"--" + simpleName + "\"", "String.valueOf(" + simpleName + ")");
+                                    return Stream.of("\"--" + simpleName + "\"", "String.valueOf(" + fromParameterToFieldName(simpleName) + ")");
                                 })
                                 .collect(joining(",\n            ", "            ", ""));
 
@@ -215,6 +215,9 @@ public final class MojoGenerator {
     }
 
     private static String fromParameterToFieldName(final String name) {
+        if (name.startsWith("comp.")) {
+            return fromParameterToFieldName(name.substring("comp.".length()));
+        }
         if (name.startsWith("bundlebee.")) {
             return fromParameterToFieldName(name.substring("bundlebee.".length()));
         }

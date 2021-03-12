@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
@@ -74,6 +75,19 @@ public class HttpCommand implements Executable {
     @Description("If `true`, an exception if thrown if the status is not between 200 and 299 (making the execution a failure).")
     @ConfigProperty(name = "bundlebee.http.failOnError", defaultValue = "true")
     private boolean failOnError;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        switch (optionName) {
+            case "failOnError":
+            case "payloadOnly":
+                return Stream.of("false", "true");
+            case "method":
+                return Stream.of("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD");
+            default:
+                return Stream.empty();
+        }
+    }
 
     @Override
     public String name() {

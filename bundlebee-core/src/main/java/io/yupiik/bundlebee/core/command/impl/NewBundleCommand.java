@@ -26,7 +26,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
@@ -67,6 +69,18 @@ public class NewBundleCommand implements Executable {
     @Description("If `true` the execution runs even if dir already exists.")
     @ConfigProperty(name = "bundlebee.new.force", defaultValue = "false")
     private boolean force;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        switch (optionName) {
+            case "skipSamples":
+            case "skipPom":
+            case "force":
+                return Stream.of("false", "true");
+            default:
+                return Stream.empty();
+        }
+    }
 
     @Override
     public String name() {

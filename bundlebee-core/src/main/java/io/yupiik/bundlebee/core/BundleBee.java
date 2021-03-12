@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -91,8 +92,27 @@ public final class BundleBee {
     }
 
     private Map<String, String> toProperties(final String cmd, final String... args) {
+        if ("completion".equals(cmd)) { // using complete -C will send an invalid command so fwd them manully for this one
+            final var arguments = List.of(args);
+            final var out = new HashMap<String, String>();
+            final int pt = getArgIndex(arguments, "comp.point");
+            if (pt >= 0 && args.length > pt + 1) {
+                out.put("comp.point", arguments.get(pt + 1));
+            }
+            final int line = getArgIndex(arguments, "comp.line");
+            if (line >= 0 && args.length > line + 1) {
+                out.put("comp.line", arguments.get(line + 1));
+            }
+            final int useLogger = getArgIndex(arguments, "useLogger");
+            if (useLogger >= 0 && args.length > useLogger + 1) {
+                out.put("bundlebee.completion.useLogger", arguments.get(useLogger + 1));
+            }
+            return out;
+        }
         if (args.length > 0 && (args.length % 2) == 0) {
-            throw new IllegalArgumentException("Invalid argument parity, syntax is: <command> --<arg1> <value> --<arg2> <value> ...");
+            throw new IllegalArgumentException("" +
+                    "Invalid argument parity, syntax is: <command> --<arg1> <value> --<arg2> <value> ..., got:\n" +
+                    String.join(" ", args));
         }
         final var directMapping = IntStream.rangeClosed(0, (args.length / 2) - 1).boxed().collect(toMap(
                 idx -> {
@@ -109,6 +129,14 @@ public final class BundleBee {
                 .flatMap(it -> !it.getKey().contains("-") ?
                         Stream.of(it) : Stream.of(it, new AbstractMap.SimpleImmutableEntry<>(it.getKey().replace('-', '.'), it.getValue())))
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
+    }
+
+    private int getArgIndex(List<String> arguments, final String name) {
+        final var pt = arguments.indexOf("--" + name);
+        if (pt < 0) {
+            return arguments.indexOf("--" + name.replace('.', '-'));
+        }
+        return pt;
     }
 
     private static void setupUserConfig() {

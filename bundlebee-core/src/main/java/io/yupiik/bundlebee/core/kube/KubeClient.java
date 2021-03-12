@@ -19,6 +19,7 @@ import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.http.DryRunClient;
 import io.yupiik.bundlebee.core.http.LoggingClient;
 import io.yupiik.bundlebee.core.kube.model.APIResourceList;
+import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
 import lombok.AllArgsConstructor;
@@ -112,7 +113,7 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Log
 @ApplicationScoped
-public class KubeClient {
+public class KubeClient implements ConfigHolder {
     @Inject
     @BundleBee // just here to inherit from client config - for now the pool
     private HttpClient dontUseAtRuntime;

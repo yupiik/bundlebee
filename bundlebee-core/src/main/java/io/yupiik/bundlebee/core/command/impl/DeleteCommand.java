@@ -32,11 +32,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
@@ -90,6 +92,14 @@ public class DeleteCommand implements Executable {
     @Inject
     @BundleBee
     private ScheduledExecutorService scheduledExecutorService;
+
+    @Override
+    public Stream<String> complete(final Map<String, String> options, final String optionName) {
+        if ("alveolus".equals(optionName)) {
+            return visitor.findCompletionAlveoli(options);
+        }
+        return Stream.empty();
+    }
 
     @Override
     public String name() {

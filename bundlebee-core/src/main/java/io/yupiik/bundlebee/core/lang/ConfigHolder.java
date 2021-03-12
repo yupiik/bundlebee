@@ -13,22 +13,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.yupiik.bundlebee.core.command;
+package io.yupiik.bundlebee.core.lang;
 
-import java.util.Map;
-import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
-
-public interface Executable {
-    String UNSET = "<unset>";
-
-    String name();
-
-    String description();
-
-    CompletionStage<?> execute();
-
-    default Stream<String> complete(final Map<String, String> config, final String optionName) {
-        return Stream.empty();
-    }
+public interface ConfigHolder {
 }
