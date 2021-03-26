@@ -201,7 +201,7 @@
               </execution>
             </executions>
             <configuration>
-              <graalVersion>20.3.0.r11</graalVersion>
+              <graalVersion>21.0.0.2.r11</graalVersion>
               <attach>true</attach>
               <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
               <output>${project.build.directory}/${project.artifactId}</output>
