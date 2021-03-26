@@ -760,10 +760,10 @@ public class KubeClient implements ConfigHolder {
             namespace = context.getNamespace();
         }
 
-        final var clusterError = "No kube cluster '" + currentContext + "', ensure to configure kube client please";
+        final var clusterError = "No kube cluster '" + context.getCluster() + "', ensure to configure kube client please";
         final var cluster = requireNonNull(
                 requireNonNull(loadedKubeConfig.getClusters(), clusterError).stream()
-                        .filter(c -> Objects.equals(c.getName(), currentContext))
+                        .filter(c -> Objects.equals(c.getName(), context.getCluster()))
                         .findFirst()
                         .map(KubeConfig.NamedCluster::getCluster)
                         .orElseThrow(() -> new IllegalArgumentException(clusterError)),
@@ -783,10 +783,10 @@ public class KubeClient implements ConfigHolder {
             this.baseApi = this.baseApi.substring(0, this.baseApi.length() - 1);
         }
 
-        final var userError = "No kube user '" + currentContext + "', ensure to configure kube client please";
+        final var userError = "No kube user '" + context.getUser() + "', ensure to configure kube client please";
         final var user = requireNonNull(
                 requireNonNull(loadedKubeConfig.getUsers(), userError).stream()
-                        .filter(c -> Objects.equals(c.getName(), currentContext))
+                        .filter(c -> Objects.equals(c.getName(), context.getUser()))
                         .findFirst()
                         .map(KubeConfig.NamedUser::getUser)
                         .orElseThrow(() -> new IllegalArgumentException(userError)),
