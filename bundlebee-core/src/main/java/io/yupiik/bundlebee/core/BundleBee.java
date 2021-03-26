@@ -161,7 +161,7 @@ public final class BundleBee {
         if (i >= 0) {
             injectConfiguration(Paths.get(args[i + 1]));
             arguments.remove(i);
-            arguments.remove(i + 1);
+            arguments.remove(i); // i+1 but we just removed one
             return arguments.toArray(new String[0]);
         }
         return args;
