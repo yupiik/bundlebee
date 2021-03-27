@@ -21,6 +21,7 @@ import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
+import io.yupiik.bundlebee.core.service.LabelSanitizerService;
 import io.yupiik.bundlebee.core.service.VersioningService;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
@@ -83,6 +84,9 @@ public class ApplyCommand implements CompletingExecutable {
 
     @Inject
     private VersioningService versioningService;
+
+    @Inject
+    private LabelSanitizerService labelSanitizerService;
 
     @Override
     public Stream<String> complete(final Map<String, String> options, final String optionName) {
@@ -149,8 +153,8 @@ public class ApplyCommand implements CompletingExecutable {
                         Map.<String, String>of(),
                 injectBundleBeeMetadata ?
                         Map.of(
-                                "bundlebee.root.alveolus.version", findVersion(alveolus),
-                                "bundlebee.root.alveolus.name", alveolus.getName()) :
+                                "bundlebee.root.alveolus.version", labelSanitizerService.sanitize(findVersion(alveolus)),
+                                "bundlebee.root.alveolus.name", labelSanitizerService.sanitize(alveolus.getName())) :
                         Map.<String, String>of())
                 .flatMap(m -> m.entrySet().stream())
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -164,4 +168,5 @@ public class ApplyCommand implements CompletingExecutable {
             return "unknown";
         }
     }
+
 }
