@@ -246,7 +246,8 @@ public class AlveolusHandler {
                         .thenCompose(descriptors -> {
                             log.finest(() -> "Applying " + descriptors);
                             final Collection<Collection<LoadedDescriptor>> rankedDescriptors = rankDescriptors(descriptors);
-                            return all(rankedDescriptors.stream()
+                            CompletionStage<?> promise = completedFuture(true);
+                            for (final var next : rankedDescriptors.stream()
                                     .map(descs -> {
                                         final var descriptorApply = prepareDescriptors(manifest, from, patches, excludes, cache, onDescriptor, currentPatches, descs);
                                         if (awaiter == null) {
@@ -259,7 +260,10 @@ public class AlveolusHandler {
                                             return all(awaiters, counting(), true).thenApply(it -> result);
                                         });
                                     })
-                                    .collect(toList()), counting(), true);
+                                    .collect(toList())) {
+                                promise = promise.thenCompose(ignored -> next);
+                            }
+                            return promise;
                         }));
     }
 
