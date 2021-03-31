@@ -291,7 +291,7 @@ public class KubeClient implements ConfigHolder {
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
     }
 
-    public CompletionStage<?> exists(final String descriptorContent, final String ext) {
+    public CompletionStage<Boolean> exists(final String descriptorContent, final String ext) {
         final var result = new AtomicBoolean(true);
         return forDescriptor(null, descriptorContent, ext, desc -> {
             final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
@@ -313,8 +313,16 @@ public class KubeClient implements ConfigHolder {
                         .build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .whenComplete((r, e) -> {
-                    if (r != null && r.statusCode() == 404) {
-                        result.set(false);
+                    if (r != null) {
+                        switch (r.statusCode()) {
+                            case 404:
+                                result.set(false);
+                                break;
+                            case 200:
+                                result.set(true);
+                                break;
+                            default:
+                        }
                     }
                 });
     }
@@ -551,7 +559,7 @@ public class KubeClient implements ConfigHolder {
 
     private String toBaseUri(final JsonObject desc, final String kindLowerCased, final String namespace) {
         return ofNullable(resourceMapping.get(kindLowerCased))
-                .map(mapped -> !mapped.startsWith("http") ? baseApi + mapped  : mapped)
+                .map(mapped -> !mapped.startsWith("http") ? baseApi + mapped : mapped)
                 .or(() -> ofNullable(baseUrls.get(kindLowerCased))
                         .map(url -> baseApi + url.replace("${namespace}", namespace)))
                 .orElseGet(() -> baseApi + findApiPrefix(kindLowerCased, desc) +

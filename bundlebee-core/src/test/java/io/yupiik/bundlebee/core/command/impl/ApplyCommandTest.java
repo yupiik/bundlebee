@@ -61,6 +61,20 @@ class ApplyCommandTest {
     }
 
     @Test
+    void applyAwait(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.applyAwait"));
+        assertEquals("" +
+                "Deploying 'ApplyCommandTest.applyAwait'\n" +
+                "Applying 's' (kind=services) for namespace 'default'\n" +
+                "", logs);
+
+        assertEquals(3/*test exists + create + await*/, spyingResponseLocator.getFound().size());
+    }
+
+    @Test
     void applyWithDependencies(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);

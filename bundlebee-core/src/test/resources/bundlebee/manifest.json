@@ -9,6 +9,15 @@
       ]
     },
     {
+      "name": "ApplyCommandTest.applyAwait",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d1",
+          "await": true
+        }
+      ]
+    },
+    {
       "name": "ApplyCommandTest.withdep",
       "descriptors": [
         {

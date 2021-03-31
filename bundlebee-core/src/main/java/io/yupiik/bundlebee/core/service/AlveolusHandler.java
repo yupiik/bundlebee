@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -136,10 +137,10 @@ public class AlveolusHandler {
     public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus alveolus,
                                                 final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
                                                 final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
-                                                final ArchiveReader.Cache cache) {
+                                                final ArchiveReader.Cache cache, final Function<LoadedDescriptor, CompletionStage<Void>> awaiter) {
         final var ref = new AtomicReference<Function<AlveolusContext, CompletionStage<?>>>();
         final Function<AlveolusContext, CompletionStage<?>> internalOnAlveolus = ctx ->
-                this.onAlveolus(prefixOnVisitLog, manifest, ctx.alveolus, ctx.patches, ctx.excludes, ctx.cache, ref.get(), onDescriptor);
+                this.onAlveolus(prefixOnVisitLog, manifest, ctx.alveolus, ctx.patches, ctx.excludes, ctx.cache, ref.get(), onDescriptor, awaiter);
         final Function<AlveolusContext, CompletionStage<?>> combinedOnAlveolus = onAlveolusUser == null ?
                 internalOnAlveolus :
                 ctx -> onAlveolusUser.apply(ctx).thenCompose(i -> internalOnAlveolus.apply(ctx));
@@ -196,7 +197,8 @@ public class AlveolusHandler {
                                           final Collection<Manifest.DescriptorRef> excludes,
                                           final ArchiveReader.Cache cache,
                                           final Function<AlveolusContext, CompletionStage<?>> onAlveolus,
-                                          final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor) {
+                                          final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
+                                          final Function<LoadedDescriptor, CompletionStage<Void>> awaiter) {
         if (prefixOnVisitLog != null) {
             log.info(() -> prefixOnVisitLog + " '" + from.getName() + "'");
         }
@@ -236,20 +238,65 @@ public class AlveolusHandler {
                         .collect(toList()),
                 counting(), true)
                 .thenCompose(ready -> all(
-                        ofNullable(from.getDescriptors()).orElseGet(List::of).stream()
-                                .filter(desc -> conditionEvaluator.test(desc.getIncludeIf()) && excludes.stream()
-                                        .noneMatch(d -> matches(d.getLocation(), desc.getLocation()) && matches(d.getName(), desc.getName())))
+                        selectDescriptors(from, excludes)
                                 .map(desc -> findDescriptor(desc, cache))
                                 .collect(toList()),
                         toList(),
                         true)
                         .thenCompose(descriptors -> {
                             log.finest(() -> "Applying " + descriptors);
-                            return all(descriptors.stream()
-                                    .map(it -> prepare(it, currentPatches))
-                                    .map(it -> onDescriptor.apply(new AlveolusContext(manifest, from, patches, excludes, cache), it))
+                            final Collection<Collection<LoadedDescriptor>> rankedDescriptors = rankDescriptors(descriptors);
+                            return all(rankedDescriptors.stream()
+                                    .map(descs -> {
+                                        final var descriptorApply = prepareDescriptors(manifest, from, patches, excludes, cache, onDescriptor, currentPatches, descs);
+                                        if (awaiter == null) {
+                                            return descriptorApply;
+                                        }
+                                        return descriptorApply.thenCompose(result -> {
+                                            final Collection<CompletionStage<Void>> awaiters = descriptors.stream()
+                                                    .map(awaiter)
+                                                    .collect(toList());
+                                            return all(awaiters, counting(), true).thenApply(it -> result);
+                                        });
+                                    })
                                     .collect(toList()), counting(), true);
                         }));
+    }
+
+    private Collection<Collection<LoadedDescriptor>> rankDescriptors(final List<LoadedDescriptor> descriptors) {
+        final Collection<Collection<LoadedDescriptor>> rankedDescriptors = new ArrayList<>(1 /*generally 1 or 2*/);
+        Collection<LoadedDescriptor> current = new ArrayList<>();
+        for (final LoadedDescriptor desc : descriptors) {
+            current.add(desc);
+            if (desc.getConfiguration().isAwait()) {
+                rankedDescriptors.add(current);
+                current = new ArrayList<>();
+            }
+        }
+        if (!current.isEmpty()) {
+            rankedDescriptors.add(current);
+        }
+        return rankedDescriptors;
+    }
+
+    private CompletionStage<Long> prepareDescriptors(final Manifest manifest, final Manifest.Alveolus from,
+                                                     final Map<Predicate<String>, Manifest.Patch> patches,
+                                                     final Collection<Manifest.DescriptorRef> excludes,
+                                                     final ArchiveReader.Cache cache,
+                                                     final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
+                                                     final Map<Predicate<String>, Manifest.Patch> currentPatches,
+                                                     final Collection<LoadedDescriptor> descs) {
+        return all(
+                descs.stream()
+                        .map(it -> prepare(it, currentPatches))
+                        .map(it -> onDescriptor.apply(new AlveolusContext(manifest, from, patches, excludes, cache), it))
+                        .collect(toList()), counting(), true);
+    }
+
+    private Stream<Manifest.Descriptor> selectDescriptors(final Manifest.Alveolus from, final Collection<Manifest.DescriptorRef> excludes) {
+        return ofNullable(from.getDescriptors()).orElseGet(List::of).stream()
+                .filter(desc -> conditionEvaluator.test(desc.getIncludeIf()) && excludes.stream()
+                        .noneMatch(d -> matches(d.getLocation(), desc.getLocation()) && matches(d.getName(), desc.getName())));
     }
 
     private boolean matches(final String expected, final String actual) {
