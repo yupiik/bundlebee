@@ -36,13 +36,16 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 
 @Log
@@ -76,6 +79,12 @@ public class DeleteCommand implements CompletingExecutable {
     @Description("If an integer > 0, how long (ms) to await for the actual deletion of components, default does not await.")
     @ConfigProperty(name = "bundlebee.delete.awaitTimeout", defaultValue = UNSET)
     private String await;
+
+    @Inject
+    @Description("" +
+            "For descriptors with `await` = `true` the max duration the test can last. It is per descriptor with await true and independent of `awaitTimeout`.")
+    @ConfigProperty(name = "bundlebee.apply.descriptorAwaitTimeout", defaultValue = "60000")
+    private long awaitTimeout;
 
     @Inject
     private KubeClient kube;
@@ -148,7 +157,7 @@ public class DeleteCommand implements CompletingExecutable {
                     }
                     return completedFuture(true);
                 },
-                cache)
+                cache, this::isDeleted)
                 .thenApply(done -> { // owner first
                     Collections.reverse(toDelete);
                     return toDelete;
@@ -168,6 +177,46 @@ public class DeleteCommand implements CompletingExecutable {
                     }
                     return testIfDeletedOrAwait(toDelete, Instant.now().plusMillis(await));
                 });
+    }
+
+    private CompletionStage<Void> isDeleted(final AlveolusHandler.LoadedDescriptor loadedDescriptor) {
+        if (!loadedDescriptor.getConfiguration().isAwait()) {
+            return completedFuture(null);
+        }
+
+        final var timeout = Instant.now().plusMillis(awaitTimeout);
+        final var result = new CompletableFuture<Void>();
+        final var future = new AtomicReference<ScheduledFuture<?>>();
+        final var scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(() -> {
+            kube
+                    .exists(loadedDescriptor.getContent(), loadedDescriptor.getExtension())
+                    .whenComplete((r, e) -> {
+                        if (result.isDone()) {
+                            cancel(future);
+                            return;
+                        }
+                        if (r != null && !r) {
+                            result.complete(null);
+                            cancel(future);
+                        } else if (e != null) {
+                            log.finest(() -> "waiting for " + loadedDescriptor + " deletion");
+                        }
+
+                        if (Instant.now().isAfter(timeout)) {
+                            cancel(future);
+                            result.completeExceptionally(new IllegalArgumentException("Timeout awaiting " + loadedDescriptor.getConfiguration().getName() + " creation."));
+                        }
+                    });
+        }, 500, 500, MILLISECONDS);
+        future.set(scheduledFuture);
+        return result;
+    }
+
+    private void cancel(final AtomicReference<ScheduledFuture<?>> future) {
+        final var f = future.get();
+        if (f != null) {
+            f.cancel(true);
+        }
     }
 
     private CompletionStage<Boolean> testIfDeletedOrAwait(final List<AlveolusHandler.LoadedDescriptor> descriptors, final Instant end) {

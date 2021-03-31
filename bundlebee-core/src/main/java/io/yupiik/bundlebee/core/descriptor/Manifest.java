@@ -140,6 +140,12 @@ public class Manifest {
         private String location;
 
         @Description("" +
+                "If set to `true`, apply/delete commands will await the actual creation of the resource before continuing to process next resources. " +
+                "It is useful for namespaces for example to ensure applications can be created in the newly created namespace. " +
+                "It avoids to run and rerun apply command in practise.")
+        private boolean await;
+
+        @Description("" +
                 "If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. " +
                 "You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`.")
         private boolean interpolate;

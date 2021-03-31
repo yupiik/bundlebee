@@ -125,7 +125,7 @@ public class InspectCommand implements CompletingExecutable {
                                             }
                                             return completedFuture(true);
                                         },
-                                        cache))
+                                        cache, null))
                                 .collect(toList()), toList(),
                         true))
                 .thenRun(() -> {
