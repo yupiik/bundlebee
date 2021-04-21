@@ -22,6 +22,7 @@ import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
+import io.yupiik.bundlebee.core.service.ConditionAwaiter;
 import io.yupiik.bundlebee.core.service.LabelSanitizerService;
 import io.yupiik.bundlebee.core.service.VersioningService;
 import lombok.extern.java.Log;
@@ -32,17 +33,13 @@ import javax.inject.Inject;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -101,6 +98,9 @@ public class ApplyCommand implements CompletingExecutable {
     private LabelSanitizerService labelSanitizerService;
 
     @Inject
+    private ConditionAwaiter conditionAwaiter;
+
+    @Inject
     @BundleBee
     private ScheduledExecutorService scheduledExecutorService;
 
@@ -157,46 +157,8 @@ public class ApplyCommand implements CompletingExecutable {
                     }
                     return kube.apply(desc.getContent(), desc.getExtension(), labels);
                 },
-                cache, this::isCreated);
-    }
-
-    private CompletionStage<Void> isCreated(final AlveolusHandler.LoadedDescriptor loadedDescriptor) {
-        if (!loadedDescriptor.getConfiguration().isAwait()) {
-            return completedFuture(null);
-        }
-
-        final var timeout = Instant.now().plusMillis(awaitTimeout);
-        final var result = new CompletableFuture<Void>();
-        final var future = new AtomicReference<ScheduledFuture<?>>();
-        final var scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(() -> {
-            kube
-                    .exists(loadedDescriptor.getContent(), loadedDescriptor.getExtension())
-                    .whenComplete((r, e) -> {
-                        if (result.isDone()) {
-                            cancel(future);
-                            return;
-                        }
-                        if (r != null && r) {
-                            result.complete(null);
-                            cancel(future);
-                        } else if (e != null) {
-                            log.finest(() -> "waiting for " + loadedDescriptor + " deletion");
-                        }
-                        if (Instant.now().isAfter(timeout)) {
-                            cancel(future);
-                            result.completeExceptionally(new IllegalArgumentException("Timeout awaiting " + loadedDescriptor.getConfiguration().getName() + " creation."));
-                        }
-                    });
-        }, 500, 500, MILLISECONDS);
-        future.set(scheduledFuture);
-        return result;
-    }
-
-    private void cancel(final AtomicReference<ScheduledFuture<?>> future) {
-        final var f = future.get();
-        if (f != null) {
-            f.cancel(true);
-        }
+                cache,
+                desc -> conditionAwaiter.await(name(), desc, scheduledExecutorService, awaitTimeout));
     }
 
     private Map<String, String> createLabels(final Manifest.Alveolus alveolus,

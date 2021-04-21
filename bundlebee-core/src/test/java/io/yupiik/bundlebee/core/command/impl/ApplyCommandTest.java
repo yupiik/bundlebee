@@ -32,6 +32,7 @@ import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import static java.util.logging.Level.INFO;
@@ -72,6 +73,43 @@ class ApplyCommandTest {
                 "", logs);
 
         assertEquals(3/*test exists + create + await*/, spyingResponseLocator.getFound().size());
+    }
+
+    @Test
+    void applyAwaitCondition(final CommandExecutor executor, final TestInfo info) {
+        final var retry = new AtomicInteger(2);
+        final var spyingResponseLocator = new SpyingResponseLocator(
+                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
+            @Override
+            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
+                                                final Predicate<String> headerFilter, final boolean exactMatching) {
+                switch (request.method()) {
+                    case "CONNECT":
+                        return Optional.empty();
+                    case "GET":
+                        if ("https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/services/s".equals(request.uri()) &&
+                                retry.getAndDecrement() <= 0) {
+                            return Optional.of(new ResponseImpl(Map.of(), 200, ("{\"status\":{\"phase\":\"Active\"}}").getBytes(StandardCharsets.UTF_8)));
+                        }
+                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                    case "PATCH":
+                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                    default:
+                        return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
+                }
+            }
+        };
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(INFO, () -> new BundleBee()
+                .launch("apply", "--alveolus", "ApplyCommandTest.applyAwaitCondition"));
+        assertEquals("" +
+                "Deploying 'ApplyCommandTest.applyAwaitCondition'\n" +
+                "Applying 's' (kind=services) for namespace 'default'\n" +
+                "", logs);
+
+        assertEquals(4/*test exists + create + 2.await*/, spyingResponseLocator.getFound().size());
+        assertEquals(-1, retry.get());
     }
 
     @Test
