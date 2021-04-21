@@ -163,9 +163,11 @@ public class ConditionAwaiter {
             } else if (result.isDone() || result.isCompletedExceptionally()) { // we schedule at fixed rate instead of chaining scheduling so can happen
                 result.cancel();
             } else if (ok) {
+                log.finest(() -> "Condition for descriptor " + descriptor + " reached: " + timeoutDescriptor.get());
                 result.complete(null);
                 result.cancel();
             } else if (Instant.now().isAfter(timeout)) {
+                log.finest(() -> "Timeout on condition " + descriptor + ": " + timeoutDescriptor.get());
                 result.completeExceptionally(new IllegalArgumentException("Timeout awaiting " + descriptor.getConfiguration().getName() + ", condition: " + timeoutDescriptor.get()));
                 result.cancel();
             } else {
