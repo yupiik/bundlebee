@@ -44,6 +44,79 @@ public class Manifest {
         ALL
     }
 
+    public enum JsonPointerOperator {
+        @Description("JSON Pointer exists model.")
+        EXISTS,
+
+        @Description("JSON Pointer does not exist in the resource model.")
+        MISSING,
+
+        @Description("JSON Pointer value is equal to (stringified comparison) value.")
+        EQUALS,
+
+        @Description("JSON Pointer is different from the provided value.")
+        NOT_EQUALS,
+
+        @Description("JSON Pointer value is equal (ignoring case) to (stringified comparison) value.")
+        EQUALS_IGNORE_CASE,
+
+        @Description("JSON Pointer is different (ignoring case) from the provided value.")
+        NOT_EQUALS_IGNORE_CASE,
+
+        @Description("JSON Pointer contains the configured value.")
+        CONTAINS
+    }
+
+    public enum AwaitConditionType {
+        @Description("JSON Pointer evaluation (fully custom).")
+        JSON_POINTER,
+
+        @Description("Evaluate items in `/status/conditions`.")
+        STATUS_CONDITION
+    }
+
+    @Data
+    public static class AwaitConditions {
+        @Description("Operator to combine the conditions.")
+        private ConditionOperator operator = ConditionOperator.ALL;
+
+        @Description("List of condition to match according `operator`.")
+        private List<AwaitCondition> conditions;
+
+        @Description("" +
+                "Command to apply these conditions to, if not set it will be applied on `apply` command only. " +
+                "Note that for now only `apply` and `delete` commands are supported, others will be ignored.")
+        private String command;
+    }
+
+    @Data
+    public static class AwaitCondition {
+        @Description("Type of condition.")
+        private AwaitConditionType type;
+
+        @Description("" +
+                "JSON Pointer to read from the resource. " +
+                "It can for example be on `/status/phase` to await a namespace creation. " +
+                "(for `type=JSON_POINTER`).")
+        private String pointer = "/";
+
+        @Description("" +
+                "The operation to evaluate if this condition is true or not. " +
+                "(for `type=JSON_POINTER`).")
+        private JsonPointerOperator operatorType = JsonPointerOperator.EQUALS;
+
+        @Description("" +
+                "When condition type is `STATUS_CONDITION` it is the expected type of the condition. " +
+                "This is ignored when condition type is `JSON_POINTER`.")
+        private String conditionType;
+
+        @Description("" +
+                "When condition type is `JSON_POINTER` and `operatorType` needs a value (`EQUALS` for example), the related value. " +
+                "It can be `Active` if you test namespace `/status/phase` for example. " +
+                "When condition type is `STATUS_CONDITION` it is the expected status.")
+        private String value;
+    }
+
     @Data
     public static class Conditions {
         @Description("Operator to combine the conditions.")
@@ -140,10 +213,17 @@ public class Manifest {
         private String location;
 
         @Description("" +
-                "If set to `true`, apply/delete commands will await the actual creation of the resource before continuing to process next resources. " +
+                "If set to `true`, apply/delete commands will await the actual creation of the resource (`GET /x` returns a HTTP 200) before continuing to process next resources. " +
                 "It is useful for namespaces for example to ensure applications can be created in the newly created namespace. " +
-                "It avoids to run and rerun apply command in practise.")
+                "It avoids to run and rerun apply command in practise. " +
+                "For more advanced tests, use `awaitConditions`.")
         private boolean await;
+
+        @Description("" +
+                "Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. " +
+                "For `apply` and `delete` commands, `descriptorAwaitTimeout` is still applied. " +
+                "Note that if you use multiple array entries for the same command it will be evaluated with an `AND`.")
+        private List<AwaitConditions> awaitConditions;
 
         @Description("" +
                 "If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. " +

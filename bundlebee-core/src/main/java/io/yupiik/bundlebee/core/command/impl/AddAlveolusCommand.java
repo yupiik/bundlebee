@@ -177,7 +177,7 @@ public class AddAlveolusCommand implements CompletingExecutable {
         final var alveolus = new Manifest.Alveolus();
         alveolus.setName(this.alveolus);
         alveolus.setDescriptors(Stream.of("configmap", "deployment", "service")
-                .map(ext -> new Manifest.Descriptor(null, descPrefix + ext, null, false, false, null))
+                .map(ext -> new Manifest.Descriptor(null, descPrefix + ext, null, false, null, false, null))
                 .collect(toList()));
         mf.getAlveoli().add(alveolus);
         try (final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig()

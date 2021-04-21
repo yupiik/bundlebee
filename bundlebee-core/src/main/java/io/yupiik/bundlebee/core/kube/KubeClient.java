@@ -17,6 +17,7 @@ package io.yupiik.bundlebee.core.kube;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.http.DryRunClient;
+import io.yupiik.bundlebee.core.http.JsonHttpResponse;
 import io.yupiik.bundlebee.core.http.LoggingClient;
 import io.yupiik.bundlebee.core.kube.model.APIResourceList;
 import io.yupiik.bundlebee.core.lang.ConfigHolder;
@@ -106,7 +107,6 @@ import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedStage;
 import static java.util.function.Function.identity;
 import static java.util.logging.Level.SEVERE;
-import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
@@ -300,31 +300,43 @@ public class KubeClient implements ConfigHolder {
         }).thenApply(ignored -> result.get());
     }
 
-    private CompletionStage<?> doExists(final AtomicBoolean result, final JsonObject desc, final String kindLowerCased) {
+    public CompletionStage<List<HttpResponse<JsonObject>>> getResources(final String descriptorContent, final String ext) {
+        return forDescriptor(null, descriptorContent, ext, desc -> {
+            final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+            return ensureResourceSpec(desc, kindLowerCased)
+                    .thenCompose(ignored -> doGet(desc, kindLowerCased));
+        }).thenApply(responses -> responses.stream()
+                .map(it -> new JsonHttpResponse(jsonb, it))
+                .collect(toList()));
+    }
+
+    private CompletionStage<HttpResponse<String>> doGet(final JsonObject desc, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
         final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
-
         return client.sendAsync(setAuth.apply(
                 HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
                         .GET()
                         .header("Accept", "application/json"))
                         .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-                .whenComplete((r, e) -> {
-                    if (r != null) {
-                        switch (r.statusCode()) {
-                            case 404:
-                                result.set(false);
-                                break;
-                            case 200:
-                                result.set(true);
-                                break;
-                            default:
-                        }
-                    }
-                });
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    private CompletionStage<?> doExists(final AtomicBoolean result, final JsonObject desc, final String kindLowerCased) {
+        return doGet(desc, kindLowerCased).whenComplete((r, e) -> {
+            if (r != null) {
+                switch (r.statusCode()) {
+                    case 404:
+                        result.set(false);
+                        break;
+                    case 200:
+                        result.set(true);
+                        break;
+                    default:
+                }
+            }
+        });
     }
 
     public CompletionStage<?> apply(final String descriptorContent, final String ext,
@@ -336,8 +348,8 @@ public class KubeClient implements ConfigHolder {
         return forDescriptor("Deleting", descriptorContent, ext, json -> doDelete(json, gracePeriod));
     }
 
-    private CompletionStage<?> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
-                                             final Function<JsonObject, CompletionStage<?>> descHandler) {
+    private <T> CompletionStage<List<T>> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
+                                                       final Function<JsonObject, CompletionStage<T>> descHandler) {
         if (verbose) {
             log.info(() -> prefixLog + " descriptor\n" + descriptorContent);
         }
@@ -352,14 +364,14 @@ public class KubeClient implements ConfigHolder {
                 return all(
                         json.asJsonArray().stream()
                                 .map(JsonValue::asJsonObject)
-                                .map(it -> descHandler.apply(it)
-                                        // small trick to type it and make all() working
-                                        .thenApply(ignored -> 1))
+                                .map(descHandler)
                                 .collect(toList()),
-                        counting(),
+                        toList(),
                         true);
             case OBJECT:
-                return descHandler.apply(json.asJsonObject());
+                return descHandler
+                        .apply(json.asJsonObject())
+                        .thenApply(List::of);
             default:
                 throw new IllegalArgumentException("Unsupported json type for apply: " + json);
         }

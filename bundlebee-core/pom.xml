@@ -178,19 +178,12 @@
   <profiles>
     <profile>
       <id>native</id>
-      <dependencies>
-        <dependency> <!-- to drop upgrading to 1.0.2 our plugin -->
-          <groupId>org.apache.geronimo.arthur.knights</groupId>
-          <artifactId>openwebbeans-knight</artifactId>
-          <version>1.0.1</version>
-        </dependency>
-      </dependencies>
       <build>
         <plugins>
           <plugin> <!-- mvn package arthur:native-image -Pnative -->
             <groupId>org.apache.geronimo.arthur</groupId>
             <artifactId>arthur-maven-plugin</artifactId>
-            <version>1.0.1</version>
+            <version>1.0.2</version>
             <executions>
               <execution>
                 <id>native</id>
@@ -201,7 +194,7 @@
               </execution>
             </executions>
             <configuration>
-              <graalVersion>21.0.0.2.r11</graalVersion>
+              <graalVersion>21.1.0.r11</graalVersion>
               <attach>true</attach>
               <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
               <output>${project.build.directory}/${project.artifactId}</output>
