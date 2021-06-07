@@ -28,5 +28,8 @@ spec:
     storage: 5Gi
   accessModes:
     - ReadWriteMany
+  claimRef:
+    name: postgres-pv-claim
+    namespace: default
   hostPath:
     path: "{{postgres-local.mountPath:-/data/postgres-local}}"
