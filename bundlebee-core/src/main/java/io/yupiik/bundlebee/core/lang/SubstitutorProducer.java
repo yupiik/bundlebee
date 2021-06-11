@@ -53,27 +53,44 @@ public class SubstitutorProducer {
                                 .getServer())
                         .getHost();
             }
+
+            // depending data key entry name we can switch the separator depending first one
             if (it.startsWith("kubernetes.")) {
-                final var segments = it.split("\\.");
-                switch (segments.length) {
-                    case 8:
-                    case 9: // adds timeout in last segment
-                        // kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]
-                        if ("serviceaccount".equals(segments[2]) && "secrets".equals(segments[4]) && "data".equals(segments[6])) {
-                            final var namespace = segments[1];
-                            final var account = segments[3];
-                            final var secretPrefix = segments[5];
-                            final var dataName = segments[7];
-                            final int timeout = segments.length == 9 ? Integer.parseInt(segments[8]) : 120;
-                            return findSecret(namespace, account, secretPrefix, dataName, timeout);
-                        }
-                        break;
-                    default:
-                        // try in config
+                final var value = findKubernetesValue(it, "\\.");
+                if (value != null) {
+                    return value;
+                }
+            } else if (it.startsWith("kubernetes/")) {
+                final var value = findKubernetesValue(it, "/");
+                if (value != null) {
+                    return value;
                 }
             }
+
             return config.getOptionalValue(it, String.class).orElse(null);
         });
+    }
+
+    private String findKubernetesValue(final String key, final String sep) {
+        // depending the key we should accept both
+        final var segments = key.split(sep);
+        switch (segments.length) {
+            case 8:
+            case 9: // adds timeout in last segment
+                // kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]
+                if ("serviceaccount".equals(segments[2]) && "secrets".equals(segments[4]) && "data".equals(segments[6])) {
+                    final var namespace = segments[1];
+                    final var account = segments[3];
+                    final var secretPrefix = segments[5];
+                    final var dataName = segments[7];
+                    final int timeout = segments.length == 9 ? Integer.parseInt(segments[8]) : 120;
+                    return findSecret(namespace, account, secretPrefix, dataName, timeout);
+                }
+                break;
+            default:
+                // try in config
+        }
+        return null;
     }
 
     private String findSecret(final String namespace, final String account, final String secretPrefix,
