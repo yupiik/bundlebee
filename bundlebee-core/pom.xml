@@ -199,7 +199,7 @@
               <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
               <output>${project.build.directory}/${project.artifactId}</output>
               <main>io.yupiik.bundlebee.core.BundleBee</main>
-              <buildStaticImage>true</buildStaticImage>
+              <buildStaticImage>false</buildStaticImage>
               <customOptions>
                 <customOption>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</customOption>
                 <customOption>-Djava.net.preferIPv4Stack=true</customOption>
