@@ -23,14 +23,20 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.json.JsonValue;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 @Log
 @ApplicationScoped
@@ -77,6 +83,7 @@ public class SubstitutorProducer {
         switch (segments.length) {
             case 8:
             case 9: // adds timeout in last segment
+            case 10: // adds an indent to prefix all new lines (except first one) in last segment
                 // kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]
                 if ("serviceaccount".equals(segments[2]) && "secrets".equals(segments[4]) && "data".equals(segments[6])) {
                     final var namespace = segments[1];
@@ -84,13 +91,26 @@ public class SubstitutorProducer {
                     final var secretPrefix = segments[5];
                     final var dataName = segments[7];
                     final int timeout = segments.length == 9 ? Integer.parseInt(segments[8]) : 120;
-                    return findSecret(namespace, account, secretPrefix, dataName, timeout);
+                    final var secret = findSecret(namespace, account, secretPrefix, dataName, timeout);
+                    if (segments.length == 10) {
+                        return indent(secret, IntStream.range(0, Integer.parseInt(segments[9])).mapToObj(i -> " ").collect(joining()));
+                    }
+                    return secret;
                 }
                 break;
             default:
                 // try in config
         }
         return null;
+    }
+
+    private String indent(final String secret, final String indent) {
+        try (final var reader = new BufferedReader(new StringReader(secret))) {
+            final var lines = reader.lines().collect(toList());
+            return (lines.get(0) + "\n" + lines.stream().skip(1).map(l -> indent + l).collect(joining("\n"))).strip();
+        } catch (final IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     private String findSecret(final String namespace, final String account, final String secretPrefix,
