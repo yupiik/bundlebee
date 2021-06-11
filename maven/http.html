@@ -111,6 +111,10 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1">awaiterRetryInterval (<code>long</code>)</dt>
+<dd>
+<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code>. Property: <code>${bundlebee.awaiter.retryInterval}</code>.</p>
+</dd>
 <dt class="hdlist1">failOnError (<code>boolean</code>)</dt>
 <dd>
 <p>If <code>true</code>, an exception if thrown if the status is not between 200 and 299 (making the execution a failure). Default value: <code>true</code>. Property: <code>${bundlebee.http.failOnError}</code>.</p>

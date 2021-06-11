@@ -111,6 +111,10 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
+<dt class="hdlist1">awaiterRetryInterval (<code>long</code>)</dt>
+<dd>
+<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code>. Property: <code>${bundlebee.awaiter.retryInterval}</code>.</p>
+</dd>
 <dt class="hdlist1">httpclientThreads (<code>int</code>)</dt>
 <dd>
 <p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code>. Property: <code>${bundlebee.httpclient.threads}</code>.</p>

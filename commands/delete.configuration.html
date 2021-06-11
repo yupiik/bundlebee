@@ -80,6 +80,10 @@
 <dd>
 <p>If an integer &gt; 0, how long (ms) to await for the actual deletion of components, default does not await.</p>
 </dd>
+<dt class="hdlist1">--bundlebee.apply.descriptorAwaitTimeout (<code>BUNDLEBEE_APPLY_DESCRIPTORAWAITTIMEOUT</code>)</dt>
+<dd>
+<p>For descriptors with <code>await</code> = <code>true</code> the max duration the test can last. It is per descriptor with await true and independent of <code>awaitTimeout</code>. Default value: <code>60000</code></p>
+</dd>
 <dt class="hdlist1">--from (<code>BUNDLEBEE_DELETE_FROM</code>)</dt>
 <dd>
 <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
@@ -110,6 +114,10 @@ for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code
 </div>
 <div class="dlist">
 <dl>
+<dt class="hdlist1">--bundlebee.awaiter.retryInterval (<code>BUNDLEBEE_AWAITER_RETRYINTERVAL</code>)</dt>
+<dd>
+<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code></p>
+</dd>
 <dt class="hdlist1">--bundlebee.httpclient.threads (<code>BUNDLEBEE_HTTPCLIENT_THREADS</code>)</dt>
 <dd>
 <p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code></p>

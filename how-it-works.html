@@ -273,6 +273,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">await</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>await</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If set to <code>true</code>, apply/delete commands will await the actual creation of the resource (<code>GET /x</code> returns a HTTP 200) before continuing to process next resources. It is useful for namespaces for example to ensure applications can be created in the newly created namespace. It avoids to run and rerun apply command in practise. For more advanced tests, use <code>awaitConditions</code>.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">interpolate</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>interpolate</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
@@ -295,6 +301,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>type</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Type of this descriptor. For now only <code>kubernetes</code> is supported. It also defines in which folder under <code>bundlebee</code> the descriptor(s) are looked for from its name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions">Descriptor.awaitConditions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>awaitConditions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. For <code>apply</code> and <code>delete</code> commands, <code>descriptorAwaitTimeout</code> is still applied. Note that if you use multiple array entries for the same command it will be evaluated with an <code>AND</code>.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.includeIf</a></p></td>
@@ -392,12 +404,110 @@ It provides the unique identifier of your recipe (application/library) and what 
 </table>
 </div>
 <div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions">Descriptor.awaitConditions</h4>
+<div class="paragraph">
+<p>Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. For <code>apply</code> and <code>delete</code> commands, <code>descriptorAwaitTimeout</code> is still applied. Note that if you use multiple array entries for the same command it will be evaluated with an <code>AND</code>.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 7. Descriptor.awaitConditions</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">command</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>command</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Command to apply these conditions to, if not set it will be applied on <code>apply</code> command only. Note that for now only <code>apply</code> and <code>delete</code> commands are supported, others will be ignored.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operator</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>operator</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operator to combine the conditions. Potential values: <code>ANY</code> (At least one condition must match.),<code>ALL</code> (All conditions must match.).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition">AwaitConditions.conditions</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>conditions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of condition to match according <code>operator</code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition">AwaitConditions.conditions</h4>
+<div class="paragraph">
+<p>List of condition to match according <code>operator</code>.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 8. AwaitConditions.conditions</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">conditionType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>conditionType</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">When condition type is <code>STATUS_CONDITION</code> it is the expected type of the condition. This is ignored when condition type is <code>JSON_POINTER</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">operatorType</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>operatorType</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The operation to evaluate if this condition is true or not. (for <code>type=JSON_POINTER</code>). Potential values: <code>EXISTS</code> (JSON Pointer exists model.),<code>MISSING</code> (JSON Pointer does not exist in the resource model.),<code>EQUALS</code> (JSON Pointer value is equal to (stringified comparison) value.),<code>NOT_EQUALS</code> (JSON Pointer is different from the provided value.),<code>EQUALS_IGNORE_CASE</code> (JSON Pointer value is equal (ignoring case) to (stringified comparison) value.),<code>NOT_EQUALS_IGNORE_CASE</code> (JSON Pointer is different (ignoring case) from the provided value.),<code>CONTAINS</code> (JSON Pointer contains the configured value.).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">pointer</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>pointer</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JSON Pointer to read from the resource. It can for example be on <code>/status/phase</code> to await a namespace creation. (for <code>type=JSON_POINTER</code>).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>type</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Type of condition. Potential values: <code>JSON_POINTER</code> (JSON Pointer evaluation (fully custom).),<code>STATUS_CONDITION</code> (Evaluate items in <code>/status/conditions</code>.).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>value</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">When condition type is <code>JSON_POINTER</code> and <code>operatorType</code> needs a value (<code>EQUALS</code> for example), the related value. It can be <code>Active</code> if you test namespace <code>/status/phase</code> for example. When condition type is <code>STATUS_CONDITION</code> it is the expected status.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
 <h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef">Alveolus.excludedDescriptors</h4>
 <div class="paragraph">
 <p>List of descriptors to ignore for this alveolus (generally coming from dependencies).</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 7. Alveolus.excludedDescriptors</caption>
+<caption class="title">Table 9. Alveolus.excludedDescriptors</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -434,7 +544,7 @@ It provides the unique identifier of your recipe (application/library) and what 
 <p>Patches on descriptors. It enables to inject configuration in descriptors by patching (using JSON-Patch or plain interpolation with <code>${key}</code> values) their JSON representation. The key is the descriptor name and each time the descriptor is found it will be applied.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 8. Alveolus.patches</caption>
+<caption class="title">Table 10. Alveolus.patches</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -586,6 +696,91 @@ It provides the unique identifier of your recipe (application/library) and what 
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
               "type":"object",
               "properties":{
+                "await":{
+                  "type":"boolean",
+                  "title":"Descriptor.await",
+                  "description":"If set to `true`, apply/delete commands will await the actual creation of the resource (`GET /x` returns a HTTP 200) before continuing to process next resources. It is useful for namespaces for example to ensure applications can be created in the newly created namespace. It avoids to run and rerun apply command in practise. For more advanced tests, use `awaitConditions`."
+                },
+                "awaitConditions":{
+                  "type":"array",
+                  "title":"Descriptor.awaitConditions",
+                  "description":"Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. For `apply` and `delete` commands, `descriptorAwaitTimeout` is still applied. Note that if you use multiple array entries for the same command it will be evaluated with an `AND`.",
+                  "items":{
+                    "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions",
+                    "type":"object",
+                    "properties":{
+                      "command":{
+                        "type":"string",
+                        "title":"AwaitConditions.command",
+                        "description":"Command to apply these conditions to, if not set it will be applied on `apply` command only. Note that for now only `apply` and `delete` commands are supported, others will be ignored."
+                      },
+                      "conditions":{
+                        "type":"array",
+                        "title":"AwaitConditions.conditions",
+                        "description":"List of condition to match according `operator`.",
+                        "items":{
+                          "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition",
+                          "type":"object",
+                          "properties":{
+                            "conditionType":{
+                              "type":"string",
+                              "title":"AwaitCondition.conditionType",
+                              "description":"When condition type is `STATUS_CONDITION` it is the expected type of the condition. This is ignored when condition type is `JSON_POINTER`."
+                            },
+                            "operatorType":{
+                              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_JsonPointerOperator",
+                              "type":"string",
+                              "title":"AwaitCondition.operatorType",
+                              "description":"The operation to evaluate if this condition is true or not. (for `type=JSON_POINTER`).",
+                              "enum":[
+                                "EXISTS",
+                                "MISSING",
+                                "EQUALS",
+                                "NOT_EQUALS",
+                                "EQUALS_IGNORE_CASE",
+                                "NOT_EQUALS_IGNORE_CASE",
+                                "CONTAINS"
+                              ],
+                              "nullable":true
+                            },
+                            "pointer":{
+                              "type":"string",
+                              "title":"AwaitCondition.pointer",
+                              "description":"JSON Pointer to read from the resource. It can for example be on `/status/phase` to await a namespace creation. (for `type=JSON_POINTER`)."
+                            },
+                            "type":{
+                              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditionType",
+                              "type":"string",
+                              "title":"AwaitCondition.type",
+                              "description":"Type of condition.",
+                              "enum":[
+                                "JSON_POINTER",
+                                "STATUS_CONDITION"
+                              ],
+                              "nullable":true
+                            },
+                            "value":{
+                              "type":"string",
+                              "title":"AwaitCondition.value",
+                              "description":"When condition type is `JSON_POINTER` and `operatorType` needs a value (`EQUALS` for example), the related value. It can be `Active` if you test namespace `/status/phase` for example. When condition type is `STATUS_CONDITION` it is the expected status."
+                            }
+                          }
+                        }
+                      },
+                      "operator":{
+                        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+                        "type":"string",
+                        "title":"AwaitConditions.operator",
+                        "description":"Operator to combine the conditions.",
+                        "enum":[
+                          "ANY",
+                          "ALL"
+                        ],
+                        "nullable":true
+                      }
+                    }
+                  }
+                },
                 "includeIf":{
                   "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
                   "type":"object",

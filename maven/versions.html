@@ -115,6 +115,10 @@
 <dd>
 <p>Bundle artifactId. Default value: <code>${project.artifactId}</code>. Property: <code>${bundlebee.versions.artifact}</code>.</p>
 </dd>
+<dt class="hdlist1">awaiterRetryInterval (<code>long</code>)</dt>
+<dd>
+<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code>. Property: <code>${bundlebee.awaiter.retryInterval}</code>.</p>
+</dd>
 <dt class="hdlist1">group (<code>String</code>)</dt>
 <dd>
 <p>Bundle groupId. Default value: <code>${project.groupId}</code>. Property: <code>${bundlebee.versions.group}</code>.</p>

@@ -105,6 +105,91 @@
               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
               "type":"object",
               "properties":{
+                "await":{
+                  "type":"boolean",
+                  "title":"Descriptor.await",
+                  "description":"If set to `true`, apply/delete commands will await the actual creation of the resource (`GET /x` returns a HTTP 200) before continuing to process next resources. It is useful for namespaces for example to ensure applications can be created in the newly created namespace. It avoids to run and rerun apply command in practise. For more advanced tests, use `awaitConditions`."
+                },
+                "awaitConditions":{
+                  "type":"array",
+                  "title":"Descriptor.awaitConditions",
+                  "description":"Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. For `apply` and `delete` commands, `descriptorAwaitTimeout` is still applied. Note that if you use multiple array entries for the same command it will be evaluated with an `AND`.",
+                  "items":{
+                    "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions",
+                    "type":"object",
+                    "properties":{
+                      "command":{
+                        "type":"string",
+                        "title":"AwaitConditions.command",
+                        "description":"Command to apply these conditions to, if not set it will be applied on `apply` command only. Note that for now only `apply` and `delete` commands are supported, others will be ignored."
+                      },
+                      "conditions":{
+                        "type":"array",
+                        "title":"AwaitConditions.conditions",
+                        "description":"List of condition to match according `operator`.",
+                        "items":{
+                          "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition",
+                          "type":"object",
+                          "properties":{
+                            "conditionType":{
+                              "type":"string",
+                              "title":"AwaitCondition.conditionType",
+                              "description":"When condition type is `STATUS_CONDITION` it is the expected type of the condition. This is ignored when condition type is `JSON_POINTER`."
+                            },
+                            "operatorType":{
+                              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_JsonPointerOperator",
+                              "type":"string",
+                              "title":"AwaitCondition.operatorType",
+                              "description":"The operation to evaluate if this condition is true or not. (for `type=JSON_POINTER`).",
+                              "enum":[
+                                "EXISTS",
+                                "MISSING",
+                                "EQUALS",
+                                "NOT_EQUALS",
+                                "EQUALS_IGNORE_CASE",
+                                "NOT_EQUALS_IGNORE_CASE",
+                                "CONTAINS"
+                              ],
+                              "nullable":true
+                            },
+                            "pointer":{
+                              "type":"string",
+                              "title":"AwaitCondition.pointer",
+                              "description":"JSON Pointer to read from the resource. It can for example be on `/status/phase` to await a namespace creation. (for `type=JSON_POINTER`)."
+                            },
+                            "type":{
+                              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditionType",
+                              "type":"string",
+                              "title":"AwaitCondition.type",
+                              "description":"Type of condition.",
+                              "enum":[
+                                "JSON_POINTER",
+                                "STATUS_CONDITION"
+                              ],
+                              "nullable":true
+                            },
+                            "value":{
+                              "type":"string",
+                              "title":"AwaitCondition.value",
+                              "description":"When condition type is `JSON_POINTER` and `operatorType` needs a value (`EQUALS` for example), the related value. It can be `Active` if you test namespace `/status/phase` for example. When condition type is `STATUS_CONDITION` it is the expected status."
+                            }
+                          }
+                        }
+                      },
+                      "operator":{
+                        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+                        "type":"string",
+                        "title":"AwaitConditions.operator",
+                        "description":"Operator to combine the conditions.",
+                        "enum":[
+                          "ANY",
+                          "ALL"
+                        ],
+                        "nullable":true
+                      }
+                    }
+                  }
+                },
                 "includeIf":{
                   "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
                   "type":"object",

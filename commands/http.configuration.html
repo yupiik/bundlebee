@@ -123,6 +123,10 @@ for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code
 </div>
 <div class="dlist">
 <dl>
+<dt class="hdlist1">--bundlebee.awaiter.retryInterval (<code>BUNDLEBEE_AWAITER_RETRYINTERVAL</code>)</dt>
+<dd>
+<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code></p>
+</dd>
 <dt class="hdlist1">--bundlebee.httpclient.threads (<code>BUNDLEBEE_HTTPCLIENT_THREADS</code>)</dt>
 <dd>
 <p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code></p>

@@ -119,6 +119,10 @@
 <dd>
 <p>If an integer &gt; 0, how long (ms) to await for the actual deletion of components - before redeploying. Default value: <code>120000</code>. Property: <code>${bundlebee.rollback.awaitTimeout}</code>.</p>
 </dd>
+<dt class="hdlist1">awaiterRetryInterval (<code>long</code>)</dt>
+<dd>
+<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code>. Property: <code>${bundlebee.awaiter.retryInterval}</code>.</p>
+</dd>
 <dt class="hdlist1">from (<code>String</code>)</dt>
 <dd>
 <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code>. Property: <code>${bundlebee.rollback.from}</code>.</p>
