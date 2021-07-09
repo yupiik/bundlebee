@@ -874,6 +874,10 @@ public class KubeClient implements ConfigHolder {
             setAuth = identity();
         }
 
+        if (cluster.getCertificateAuthorityData() == null && cluster.getCertificateAuthority() == null) {
+            return builder;
+        }
+
         final byte[] certificateBytes;
         try {
             certificateBytes = cluster.getCertificateAuthorityData() != null ?
