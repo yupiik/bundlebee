@@ -16,7 +16,6 @@
 package io.yupiik.bundlebee.core.lang;
 
 import javax.enterprise.inject.Vetoed;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -29,9 +28,9 @@ import static java.util.Optional.ofNullable;
 @Vetoed
 public class Substitutor {
     private static final char ESCAPE = '\\';
-    private static final char[] PREFIX = "{{".toCharArray();
-    private static final char[] SUFFIX = "}}".toCharArray();
-    private static final char[] VALUE_DELIMITER = ":-".toCharArray();
+    private static final String PREFIX = "{{";
+    private static final String SUFFIX = "}}";
+    private static final String VALUE_DELIMITER = ":-";
 
     private final BiFunction<String, String, String> lookup;
 
@@ -47,95 +46,55 @@ public class Substitutor {
         if (source == null) {
             return null;
         }
-        final StringBuilder builder = new StringBuilder(source);
-        if (substitute(builder, 0, source.length(), null) <= 0) {
-            return source;
-        }
-        return replace(builder.toString());
+        String current = source;
+        do {
+            final var previous = current;
+            current = substitute(current, 0);
+            if (previous.equals(current)) {
+                return previous;
+            }
+        } while (true);
     }
 
-    private int substitute(final StringBuilder buf, final int offset, final int length, List<String> priorVariables) {
-        final boolean top = priorVariables == null;
-        boolean altered = false;
-        int lengthChange = 0;
-        char[] chars = buf.toString().toCharArray();
-        int bufEnd = offset + length;
-        int pos = offset;
-        while (pos < bufEnd) {
-            final int startMatchLen = isMatch(PREFIX, chars, pos, bufEnd);
-            if (startMatchLen == 0) {
-                pos++;
-            } else {
-                if (pos > offset && chars[pos - 1] == ESCAPE) {
-                    buf.deleteCharAt(pos - 1);
-                    chars = buf.toString().toCharArray();
-                    lengthChange--;
-                    altered = true;
-                    bufEnd--;
-                } else {
-                    final int startPos = pos;
-                    pos += startMatchLen;
-                    int endMatchLen;
-                    while (pos < bufEnd) {
-                        endMatchLen = isMatch(SUFFIX, chars, pos, bufEnd);
-                        if (endMatchLen == 0) {
-                            pos++;
-                        } else {
-                            String varNameExpr = new String(chars, startPos
-                                    + startMatchLen, pos - startPos
-                                    - startMatchLen);
-                            pos += endMatchLen;
-                            final int endPos = pos;
-
-                            String varName = varNameExpr;
-                            String varDefaultValue = null;
-
-                            final char[] varNameExprChars = varNameExpr.toCharArray();
-                            for (int i = 0; i < varNameExprChars.length; i++) {
-                                if (isMatch(PREFIX, varNameExprChars, i, varNameExprChars.length) != 0) {
-                                    break;
-                                }
-                                final int match = isMatch(VALUE_DELIMITER, varNameExprChars, i, varNameExprChars.length);
-                                if (match != 0) {
-                                    varName = varNameExpr.substring(0, i);
-                                    varDefaultValue = varNameExpr.substring(i + match);
-                                    break;
-                                }
-                            }
-
-                            if (priorVariables == null) {
-                                priorVariables = new ArrayList<>();
-                                priorVariables.add(new String(chars,
-                                        offset, length));
-                            }
-
-                            checkCyclicSubstitution(varName, priorVariables);
-                            priorVariables.add(varName);
-
-                            final String varValue = getOrDefault(varName, varDefaultValue);
-                            if (varValue != null) {
-                                final int varLen = varValue.length();
-                                buf.replace(startPos, endPos, varValue);
-                                altered = true;
-                                int change = substitute(buf, startPos, varLen, priorVariables);
-                                change = change + varLen - (endPos - startPos);
-                                pos += change;
-                                bufEnd += change;
-                                lengthChange += change;
-                                chars = buf.toString().toCharArray();
-                            }
-
-                            priorVariables.remove(priorVariables.size() - 1);
-                            break;
-                        }
-                    }
-                }
+    private String substitute(final String input, int iteration) {
+        if (iteration > 25) {
+            return input;
+        }
+        int from = 0;
+        int start = -1;
+        while (start < 0 && from < input.length()) {
+            start = input.indexOf(PREFIX, from);
+            if (start < 0) {
+                return input;
             }
+            if (start != 0 && input.charAt(start - 1) != ESCAPE) {
+                break;
+            }
+            from = start + 1;
         }
-        if (top) {
-            return altered ? 1 : 0;
+        final var keyStart = start + PREFIX.length();
+        final var end = input.indexOf(SUFFIX, keyStart);
+        if (end < 0) {
+            return input;
         }
-        return lengthChange;
+        final var key = input.substring(start + PREFIX.length(), end);
+        final var nested = key.indexOf(PREFIX);
+        if (nested > 0) {
+            final var nestedPlaceholder = key + SUFFIX;
+            final var newKey = substitute(nestedPlaceholder, iteration + 1);
+            return input.replace(nestedPlaceholder, newKey);
+        }
+
+        final var startOfString = input.substring(0, start);
+        final var endOfString = input.substring(end + SUFFIX.length());
+
+        final int sep = key.indexOf(VALUE_DELIMITER);
+        if (sep > 0) {
+            final var actualKey = key.substring(0, sep);
+            final var fallback = key.substring(sep + VALUE_DELIMITER.length());
+            return startOfString + getOrDefault(actualKey, fallback) + endOfString;
+        }
+        return startOfString + getOrDefault(key, null) + endOfString;
     }
 
     protected String getOrDefault(final String varName, final String varDefaultValue) {
