@@ -29,4 +29,9 @@ class SubstitutorTest {
     void fallback() {
         assertEquals("foo or dummy", new Substitutor(k -> null).replace("foo {{key:-or}} dummy"));
     }
+
+    @Test
+    void nested() {
+        assertEquals("foo replaced dummy", new Substitutor(k -> "key".equals(k) ? "replaced" : null).replace("foo {{k{{missing:-e}}y}} dummy"));
+    }
 }
