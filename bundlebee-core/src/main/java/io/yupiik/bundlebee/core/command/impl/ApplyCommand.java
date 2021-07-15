@@ -71,7 +71,7 @@ public class ApplyCommand implements CompletingExecutable {
 
     @Inject
     @Description("" +
-            "If `true`, `bundlebee.*` labels will be injected into the descritors. " +
+            "If `true`, `bundlebee.*` labels will be injected into the descriptors. " +
             "This is required for rollback command to work.")
     @ConfigProperty(name = "bundlebee.apply.injectBundleBeeMetadata", defaultValue = "true")
     private boolean injectBundleBeeMetadata;
