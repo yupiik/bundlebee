@@ -471,5 +471,26 @@ public class AlveolusHandler {
     public static class ManifestAndAlveolus {
         private final Manifest manifest;
         private final Manifest.Alveolus alveolus;
+
+        public ManifestAndAlveolus exclude(final String excludedLocations, final String excludedDescriptors) {
+            if ("none".equals(excludedDescriptors) && "none".equals(excludedLocations)) {
+                return this;
+            }
+
+            final var alveolus = getAlveolus().copy();
+            alveolus.setExcludedDescriptors(Stream.concat(
+                    getAlveolus().getExcludedDescriptors() == null ?
+                            Stream.empty() :
+                            getAlveolus().getExcludedDescriptors().stream(),
+                    Stream.concat(
+                            "none".equals(excludedDescriptors) ?
+                                    Stream.empty() :
+                                    Stream.of(excludedDescriptors.split(",")).map(it -> new Manifest.DescriptorRef(it, "*")),
+                            "none".equals(excludedLocations) ?
+                                    Stream.empty() :
+                                    Stream.of(excludedLocations.split(",")).map(it -> new Manifest.DescriptorRef("*", it)))
+            ).collect(toList()));
+            return new AlveolusHandler.ManifestAndAlveolus(getManifest(), alveolus);
+        }
     }
 }

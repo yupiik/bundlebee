@@ -83,6 +83,19 @@ public class ApplyCommand implements CompletingExecutable {
     private long awaitTimeout;
 
     @Inject
+    @Description("" +
+            "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. " +
+            "Note that using this setting, location is set to `*` so only the name is matched.")
+    @ConfigProperty(name = "bundlebee.apply.excludedDescriptors", defaultValue = "none")
+    private String excludedDescriptors;
+
+    @Inject
+    @Description("" +
+            "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated.")
+    @ConfigProperty(name = "bundlebee.apply.excludedLocations", defaultValue = "none")
+    private String excludedLocations;
+
+    @Inject
     private KubeClient kube;
 
     @Inject
@@ -137,6 +150,7 @@ public class ApplyCommand implements CompletingExecutable {
                                             final ArchiveReader.Cache cache) {
         return visitor
                 .findRootAlveoli(from, manifest, alveolus)
+                .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
                                 .map(it -> doApply(injectTimestamp, injectBundleBeeMetadata, cache, it))

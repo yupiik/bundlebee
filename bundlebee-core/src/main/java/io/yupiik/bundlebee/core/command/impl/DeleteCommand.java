@@ -81,8 +81,21 @@ public class DeleteCommand implements CompletingExecutable {
     @Inject
     @Description("" +
             "For descriptors with `await` = `true` the max duration the test can last. It is per descriptor with await true and independent of `awaitTimeout`.")
-    @ConfigProperty(name = "bundlebee.apply.descriptorAwaitTimeout", defaultValue = "60000")
+    @ConfigProperty(name = "bundlebee.delete.descriptorAwaitTimeout", defaultValue = "60000")
     private long awaitTimeout;
+
+    @Inject
+    @Description("" +
+            "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. " +
+            "Note that using this setting, location is set to `*` so only the name is matched.")
+    @ConfigProperty(name = "bundlebee.delete.excludedDescriptors", defaultValue = "none")
+    private String excludedDescriptors;
+
+    @Inject
+    @Description("" +
+            "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated.")
+    @ConfigProperty(name = "bundlebee.delete.excludedLocations", defaultValue = "none")
+    private String excludedLocations;
 
     @Inject
     private KubeClient kube;
@@ -140,6 +153,7 @@ public class DeleteCommand implements CompletingExecutable {
         final int awaitTimeout = awaitValue;
         return visitor
                 .findRootAlveoli(from, manifest, alveolus)
+                .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
                                 .map(it -> doDelete(cache, it.getManifest(), it.getAlveolus(), gracePeriodSeconds, awaitTimeout))
