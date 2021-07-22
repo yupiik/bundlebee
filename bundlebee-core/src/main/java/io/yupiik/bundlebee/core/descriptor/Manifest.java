@@ -170,6 +170,17 @@ public class Manifest {
                 "(using JSON-Patch or plain interpolation with `${key}` values) their JSON representation. " +
                 "The key is the descriptor name and each time the descriptor is found it will be applied.")
         private List<Patch> patches;
+
+        public Alveolus copy() {
+            final var alveolus = new Manifest.Alveolus();
+            alveolus.setDependencies(getDependencies());
+            alveolus.setExcludedDescriptors(getExcludedDescriptors());
+            alveolus.setName(getName());
+            alveolus.setPatches(getPatches());
+            alveolus.setDescriptors(getDescriptors());
+            alveolus.setVersion(getVersion());
+            return alveolus;
+        }
     }
 
     @Data
