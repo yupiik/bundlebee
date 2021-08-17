@@ -35,10 +35,12 @@ import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.JsonBuilderFactory;
+import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbException;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -156,6 +158,11 @@ public class KubeClient implements ConfigHolder {
     @Description("Should SSL connector be validated or not.")
     @ConfigProperty(name = "bundlebee.kube.validateSSL", defaultValue = "true")
     private boolean validateSSL;
+
+    @Inject
+    @Description("Should YAML/JSON be logged when it can't be parsed.")
+    @ConfigProperty(name = "bundlebee.kube.logDescriptorOnParsingError", defaultValue = "true")
+    private boolean logDescriptorOnParsingError;
 
     @Inject
     @Description("When kubeconfig is not set the namespace to use.")
@@ -353,9 +360,7 @@ public class KubeClient implements ConfigHolder {
         if (verbose) {
             log.info(() -> prefixLog + " descriptor\n" + descriptorContent);
         }
-        final var json = "json".equals(ext) ?
-                jsonb.fromJson(descriptorContent.trim(), JsonValue.class) :
-                yaml2json.convert(JsonValue.class, descriptorContent.trim());
+        final var json = toJson(descriptorContent, ext);
         if (verbose) {
             log.info(() -> "Loaded descriptor(s)\n" + json);
         }
@@ -374,6 +379,19 @@ public class KubeClient implements ConfigHolder {
                         .thenApply(List::of);
             default:
                 throw new IllegalArgumentException("Unsupported json type for apply: " + json);
+        }
+    }
+
+    private JsonValue toJson(final String descriptorContent, final String ext) {
+        try {
+            return "json".equals(ext) ?
+                    jsonb.fromJson(descriptorContent.trim(), JsonValue.class) :
+                    yaml2json.convert(JsonValue.class, descriptorContent.trim());
+        } catch (final JsonbException | JsonException je) {
+            if (!logDescriptorOnParsingError) {
+                throw je;
+            }
+            throw new IllegalStateException("Can't read '\n" + descriptorContent + "'\n->: " + je.getMessage(), je);
         }
     }
 
@@ -752,8 +770,8 @@ public class KubeClient implements ConfigHolder {
         try {
             loadedKubeConfig = yaml2json.convert(KubeConfig.class, Files.readString(location, StandardCharsets.UTF_8));
             log.info("Read kubeconfig from " + location);
-        } catch (final IOException e) {
-            throw new IllegalArgumentException(e);
+        } catch (final IOException | JsonException | JsonbException jsonEx) {
+            throw new IllegalStateException("Can't read '" + location + "': " + jsonEx.getMessage(), jsonEx);
         }
 
         final var currentContext = of(kubeConfigContext)
