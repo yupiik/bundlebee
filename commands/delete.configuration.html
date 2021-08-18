@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//yupiik.github.io/bundlebee/css/theme.css?v=1.0.7-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//yupiik.github.io/bundlebee/css/theme.css?v=1.0.10">
     
 </head>
 
@@ -80,9 +80,17 @@
 <dd>
 <p>If an integer &gt; 0, how long (ms) to await for the actual deletion of components, default does not await.</p>
 </dd>
-<dt class="hdlist1">--bundlebee.apply.descriptorAwaitTimeout (<code>BUNDLEBEE_APPLY_DESCRIPTORAWAITTIMEOUT</code>)</dt>
+<dt class="hdlist1">--descriptorAwaitTimeout (<code>BUNDLEBEE_DELETE_DESCRIPTORAWAITTIMEOUT</code>)</dt>
 <dd>
 <p>For descriptors with <code>await</code> = <code>true</code> the max duration the test can last. It is per descriptor with await true and independent of <code>awaitTimeout</code>. Default value: <code>60000</code></p>
+</dd>
+<dt class="hdlist1">--excludedDescriptors (<code>BUNDLEBEE_DELETE_EXCLUDEDDESCRIPTORS</code>)</dt>
+<dd>
+<p>Enables to exclude descriptors from the command line. <code>none</code> to ignore. Value is comma separated. Note that using this setting, location is set to <code>*</code> so only the name is matched. Default value: <code>none</code></p>
+</dd>
+<dt class="hdlist1">--excludedLocations (<code>BUNDLEBEE_DELETE_EXCLUDEDLOCATIONS</code>)</dt>
+<dd>
+<p>Enables to exclude locations (descriptor is set to <code>*</code>) from the command line. <code>none</code> to ignore. Value is comma separated. Default value: <code>none</code></p>
 </dd>
 <dt class="hdlist1">--from (<code>BUNDLEBEE_DELETE_FROM</code>)</dt>
 <dd>
@@ -142,9 +150,17 @@ for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code
 <dd>
 <p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
 </dd>
+<dt class="hdlist1">--bundlebee.kube.logDescriptorOnParsingError (<code>BUNDLEBEE_KUBE_LOGDESCRIPTORONPARSINGERROR</code>)</dt>
+<dd>
+<p>Should YAML/JSON be logged when it can&#8217;t be parsed. Default value: <code>true</code></p>
+</dd>
 <dt class="hdlist1">--bundlebee.kube.namespace (<code>BUNDLEBEE_KUBE_NAMESPACE</code>)</dt>
 <dd>
 <p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
+</dd>
+<dt class="hdlist1">--bundlebee.kube.putOnUpdate (<code>BUNDLEBEE_KUBE_PUTONUPDATE</code>)</dt>
+<dd>
+<p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code></p>
 </dd>
 <dt class="hdlist1">--bundlebee.kube.resourceMapping (<code>BUNDLEBEE_KUBE_RESOURCEMAPPING</code>)</dt>
 <dd>
@@ -251,7 +267,7 @@ for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.initHighlightingOnLoad(); }</script>
-    <script src="//yupiik.github.io/bundlebee/js/minisite.js?v=1.0.7-SNAPSHOT"></script>
+    <script src="//yupiik.github.io/bundlebee/js/minisite.js?v=1.0.10"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

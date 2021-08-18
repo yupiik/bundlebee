@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Version</title>
+    <title>io.yupiik.alveoli:elasticsearch-local:1.0.0</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,24 +53,88 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Version</h1>
+                <h1>io.yupiik.alveoli:elasticsearch-local:1.0.0</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Shows the application version.</p>
+<p>Setup "elasticsearch-local" which runs an Elasticsearch instance usable by other applications.</p>
 </div>
-<div class="paragraph">
-<p>Name: <code>version</code>.</p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_maven_dependency">Maven Dependency</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+  &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
+  &lt;artifactId&gt;elasticsearch-local&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sample_usage">Sample Usage</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+  "alveoli": [
+    {
+      "//": "My alveolus.",
+      "name": "com.company:my-app:1.0.0",
+      "descriptors": []
+      "dependencies": [        {
+          "name": "io.yupiik.alveoli:elasticsearch-local:1.0.0",
+          "location": "io.yupiik.alveoli:elasticsearch-local:1.0.0",
+        }
+      ],
+      "patches": [{
+        "descriptorName": "io.yupiik.alveoli:elasticsearch-local:1.0.0",
+        "interpolate": true
+      }]
+    }
+  ]
+}</code></pre>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_configuration">Configuration</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>No configuration.</p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">elasticsearch-local.clusterName</dt>
+<dd>
+<p>The Elasticsearch cluster name.
+Default value: <code>elasticsearch-local</code>.</p>
+</dd>
+<dt class="hdlist1">elasticsearch-local.discoveryType</dt>
+<dd>
+<p>The discovery to use, default is for a single node so if you patch the descriptors to make it a cluster, ensure to tune it.
+Default value: <code>single-node</code>.</p>
+</dd>
+<dt class="hdlist1">elasticsearch-local.image</dt>
+<dd>
+<p>The elasticsearch image to use.
+Default value: <code>elasticsearch:7.10.1</code>.</p>
+</dd>
+<dt class="hdlist1">elasticsearch-local.javaOpts</dt>
+<dd>
+<p>The ES_JAVA_OPTS value.
+Default value: <code>-Dbundlebee=true</code>.</p>
+</dd>
+<dt class="hdlist1">elasticsearch-local.mountPath</dt>
+<dd>
+<p>Where to store Elasticsearch data on the host.
+Default value: <code>/data/elasticsearch-local</code>.</p>
+</dd>
+</dl>
 </div>
 </div>
 </div>

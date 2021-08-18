@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Version</title>
+    <title>io.yupiik.alveoli:postgres-local:1.0.0</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,24 +53,83 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Version</h1>
+                <h1>io.yupiik.alveoli:postgres-local:1.0.0</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Shows the application version.</p>
+<p>Setup "postgres-local" which runs a PostgreSQL instance usable by other applications.</p>
 </div>
-<div class="paragraph">
-<p>Name: <code>version</code>.</p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_maven_dependency">Maven Dependency</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+  &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
+  &lt;artifactId&gt;postgres-local&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sample_usage">Sample Usage</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+  "alveoli": [
+    {
+      "//": "My alveolus.",
+      "name": "com.company:my-app:1.0.0",
+      "descriptors": []
+      "dependencies": [        {
+          "name": "io.yupiik.alveoli:postgres-local:1.0.0",
+          "location": "io.yupiik.alveoli:postgres-local:1.0.0",
+        }
+      ],
+      "patches": [{
+        "descriptorName": "io.yupiik.alveoli:postgres-local:1.0.0",
+        "interpolate": true
+      }]
+    }
+  ]
+}</code></pre>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_configuration">Configuration</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>No configuration.</p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">postgres-local.db</dt>
+<dd>
+<p>The default database name in the PostgreSQL instance.
+Default value: <code>postgres</code>.</p>
+</dd>
+<dt class="hdlist1">postgres-local.mountPath</dt>
+<dd>
+<p>Where to persist data - using a hostPath mounting point by default.
+Default value: <code>/data/postgres-local</code>.</p>
+</dd>
+<dt class="hdlist1">postgres-local.password</dt>
+<dd>
+<p>The default user PostgreSQL password.
+Default value: <code>postgres</code>.</p>
+</dd>
+<dt class="hdlist1">postgres-local.username</dt>
+<dd>
+<p>The default user PostgreSQL username.
+Default value: <code>postgres</code>.</p>
+</dd>
+</dl>
 </div>
 </div>
 </div>

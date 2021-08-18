@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Version</title>
+    <title>io.yupiik.alveoli:prometheus-simple:1.0.0</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,24 +53,68 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Version</h1>
+                <h1>io.yupiik.alveoli:prometheus-simple:1.0.0</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Shows the application version.</p>
+<p>Prometheus local/dev setup. Will be available on <a href="http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT" class="bare">http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT</a>).</p>
 </div>
-<div class="paragraph">
-<p>Name: <code>version</code>.</p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_maven_dependency">Maven Dependency</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="xml" class="language-xml hljs">&lt;dependency&gt;
+  &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
+  &lt;artifactId&gt;prometheus-simple&lt;/artifactId&gt;
+  &lt;version&gt;1.0.0&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sample_usage">Sample Usage</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+  "alveoli": [
+    {
+      "//": "My alveolus.",
+      "name": "com.company:my-app:1.0.0",
+      "descriptors": []
+      "dependencies": [        {
+          "name": "io.yupiik.alveoli:prometheus-simple:1.0.0",
+          "location": "io.yupiik.alveoli:prometheus-simple:1.0.0",
+        }
+      ],
+      "patches": [{
+        "descriptorName": "io.yupiik.alveoli:prometheus-simple:1.0.0",
+        "interpolate": true
+      }]
+    }
+  ]
+}</code></pre>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_configuration">Configuration</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>No configuration.</p>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">prometheus-simple.image</dt>
+<dd>
+<p>The image to use.
+Default value: <code>quay.io/prometheus/prometheus:v1.0.1</code>.</p>
+</dd>
+</dl>
 </div>
 </div>
 </div>
