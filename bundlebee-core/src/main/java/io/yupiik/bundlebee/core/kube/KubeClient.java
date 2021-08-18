@@ -84,6 +84,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -163,6 +164,13 @@ public class KubeClient implements ConfigHolder {
     @Description("Should YAML/JSON be logged when it can't be parsed.")
     @ConfigProperty(name = "bundlebee.kube.logDescriptorOnParsingError", defaultValue = "true")
     private boolean logDescriptorOnParsingError;
+
+    @Inject
+    @Description("" +
+            "By default a descriptor update is done using `PATCH` with strategic merge patch logic, if set to `true` it will use a plain `PUT`. " +
+            "Note that `io.yupiik.bundlebee/putOnUpdate` annotations can be set to `true` to force that in the descriptor itself.")
+    @ConfigProperty(name = "bundlebee.kube.putOnUpdate", defaultValue = "false")
+    private boolean putOnUpdate;
 
     @Inject
     @Description("When kubeconfig is not set the namespace to use.")
@@ -442,7 +450,7 @@ public class KubeClient implements ConfigHolder {
         //   name: my-config
         //
         // 1. curl -H "Accept: application/json" 'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>/<name>'
-        // if HTTP 200 -> replace
+        // if HTTP 200 -> replace (patch by default, put if configured)
         //   2. curl -XPATCH -H "Content-Type: application/strategic-merge-patch+json" -H "Accept: application/json"
         //          'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>/<name>?fieldManager=kubectl-client-side-apply'
         //          <descriptor in json - or send yaml>
@@ -500,20 +508,14 @@ public class KubeClient implements ConfigHolder {
                     // but in case it is a list it is saner to do it this way
                     if (findResponse.statusCode() == 200) {
                         log.finest(() -> name + " (" + kindLowerCased + ") already exists, updating it");
-                        return client.sendAsync(
-                                setAuth.apply(HttpRequest.newBuilder(URI.create(baseUri + "/" + name + fieldManager))
-                                        .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
-                                        .header("Content-Type", "application/strategic-merge-patch+json")
-                                        .header("Accept", "application/json"))
-                                        .build(),
-                                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                        return doUpdate(desc, name, fieldManager, baseUri)
                                 .thenApply(response -> {
                                     if (verbose) {
                                         log.info(response::toString);
                                     }
                                     if (response.statusCode() != 200) {
                                         throw new IllegalStateException("" +
-                                                "Can't patch " + name + " (" + kindLowerCased + "): " + response + "\n" +
+                                                "Can't update " + name + " (" + kindLowerCased + "): " + response + "\n" +
                                                 response.body());
                                     }
                                     return response;
@@ -542,6 +544,40 @@ public class KubeClient implements ConfigHolder {
                                 });
                     }
                 });
+    }
+
+    private CompletableFuture<HttpResponse<String>> doUpdate(final JsonObject desc,
+                                                             final String name,
+                                                             final String fieldManager,
+                                                             final String baseUri) {
+        if (putOnUpdate || isUsePutOnUpdateForced(desc)) {
+            return client.sendAsync(
+                    setAuth.apply(HttpRequest.newBuilder(URI.create(baseUri + "/" + name + fieldManager))
+                            .method("PUT", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                            .header("Content-Type", "application/json")
+                            .header("Accept", "application/json"))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        }
+        return client.sendAsync(
+                setAuth.apply(HttpRequest.newBuilder(URI.create(baseUri + "/" + name + fieldManager))
+                        .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                        .header("Content-Type", "application/strategic-merge-patch+json")
+                        .header("Accept", "application/json"))
+                        .build(),
+                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    private boolean isUsePutOnUpdateForced(final JsonObject desc) {
+        try {
+            return ofNullable(desc.getJsonObject("metadata"))
+                    .map(it -> it.getJsonObject("annotations"))
+                    .map(it -> it.getString("io.yupiik.bundlebee/putOnUpdate"))
+                    .map(Boolean::parseBoolean)
+                    .orElse(false);
+        } catch (final RuntimeException re) {
+            return false;
+        }
     }
 
     private void processResourceListDefinition(final String base, final HttpResponse<String> response) {
