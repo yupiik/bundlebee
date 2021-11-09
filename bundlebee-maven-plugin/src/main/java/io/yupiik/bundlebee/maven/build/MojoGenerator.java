@@ -118,17 +118,17 @@ public final class MojoGenerator {
                                 "" :
                                 sharedParameters.keySet().stream()
                                         .flatMap(k -> Stream.of("\"--" + k + "\"", "String.valueOf(" + fromParameterToFieldName(k) + ")"))
-                                        .collect(joining(",\n            ", "            ", ""));
+                                        .collect(joining(",\n                                ", "                                ", ""));
 
                         final var specificParameters = parameterDeclarationPerName.keySet().stream()
                                 .flatMap(k -> {
                                     final var simpleName = prefix.matcher(k).replaceAll("");
                                     return Stream.of("\"--" + simpleName + "\"", "String.valueOf(" + fromParameterToFieldName(simpleName) + ")");
                                 })
-                                .collect(joining(",\n            ", "            ", ""));
+                                .collect(joining(",\n                                ", "                                ", ""));
 
                         final var launchArgs = Stream.of(
-                                "            \"" + name + "\"",
+                                "                                \"" + name + "\"",
                                 sharedConfigParameters,
                                 specificParameters)
                                 .filter(it -> !it.isBlank())
@@ -159,6 +159,9 @@ public final class MojoGenerator {
                                         "import io.yupiik.bundlebee.core.BundleBee;\n" +
                                         "import io.yupiik.bundlebee.maven.mojo.BaseMojo;\n" +
                                         "\n" +
+                                        "import java.util.Map;\n" +
+                                        "import java.util.stream.Stream;\n" +
+                                        "\n" +
                                         "/**\n" +
                                         " * " + instance.description().replace("// end of short description\n", "").replace('\n', ' ') + "\n" +
                                         " */\n" +
@@ -168,10 +171,22 @@ public final class MojoGenerator {
                                                 .collect(joining("\n\n", "", "\n\n"))) +
                                         parameterDeclarationPerName.values().stream()
                                                 .collect(joining("\n\n", "", "\n\n")) +
+                                        "    /**\n" +
+                                        "     * Custom properties injected in the main, it is often used for placeholders.\n" +
+                                        "     */\n" +
+                                        "    @Parameter(property = \"bundlebee." + name + ".customPlaceholders\")\n" +
+                                        "    private Map<String, String> customPlaceholders;\n" +
+                                        "\n" +
                                         "    @Override\n" +
                                         "    public void doExecute() {\n" +
-                                        "        new BundleBee().launch(\n" +
-                                        launchArgs + ");\n" +
+                                        "        new BundleBee().launch(Stream.concat(\n" +
+                                        "                        Stream.of(\n" +
+                                        launchArgs + "),\n" +
+                                        "                        customPlaceholders == null ?\n" +
+                                        "                                Stream.empty() :\n" +
+                                        "                                customPlaceholders.entrySet().stream()\n" +
+                                        "                                        .flatMap(it -> Stream.of(\"--\" + it.getKey(), it.getValue())))\n" +
+                                        "                .toArray(String[]::new));\n" +
                                         "    }\n" +
                                         "}" +
                                         "\n",

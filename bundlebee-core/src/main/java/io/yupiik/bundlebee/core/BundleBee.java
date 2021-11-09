@@ -27,7 +27,6 @@ import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +40,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.Locale.ROOT;
+import static java.util.Map.entry;
 import static java.util.stream.Collectors.toMap;
 
 @Log
@@ -70,8 +70,8 @@ public final class BundleBee {
             try { // we vetoed all other executable except the one we want
                 final var executables = container.select(Executable.class);
                 final var command = StreamSupport.stream(
-                        // we can just do executables.stream() but maven 3.6 integration would be broken
-                        Spliterators.spliteratorUnknownSize(executables.iterator(), Spliterator.IMMUTABLE), false)
+                                // we can just do executables.stream() but maven 3.6 integration would be broken
+                                Spliterators.spliteratorUnknownSize(executables.iterator(), Spliterator.IMMUTABLE), false)
                         .filter(it -> cmd.equals(it.name()))
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("No command " + cmd));
@@ -125,9 +125,9 @@ public final class BundleBee {
         // to only use "--property" on the CLI by prefixing the properties not starting with "bundlebee"
         return directMapping.entrySet().stream()
                 .flatMap(it -> it.getKey().startsWith("bundlebee.") ?
-                        Stream.of(it) : Stream.of(it, new AbstractMap.SimpleImmutableEntry<>("bundlebee." + cmd + "." + it.getKey(), it.getValue())))
+                        Stream.of(it) : Stream.of(it, entry("bundlebee." + cmd + "." + it.getKey(), it.getValue())))
                 .flatMap(it -> !it.getKey().contains("-") ?
-                        Stream.of(it) : Stream.of(it, new AbstractMap.SimpleImmutableEntry<>(it.getKey().replace('-', '.'), it.getValue())))
+                        Stream.of(it) : Stream.of(it, entry(it.getKey().replace('-', '.'), it.getValue())))
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a));
     }
 
