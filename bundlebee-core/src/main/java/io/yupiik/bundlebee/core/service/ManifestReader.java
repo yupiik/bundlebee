@@ -47,7 +47,8 @@ public class ManifestReader {
     public Manifest readManifest(final Supplier<InputStream> manifest) {
         try (final BufferedReader reader = new BufferedReader(
                 new InputStreamReader(manifest.get(), StandardCharsets.UTF_8))) {
-            return jsonb.fromJson(substitutor.replace(reader.lines().collect(joining("\n"))), Manifest.class);
+            final var content = substitutor.replace(reader.lines().collect(joining("\n")));
+            return jsonb.fromJson(content, Manifest.class);
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
