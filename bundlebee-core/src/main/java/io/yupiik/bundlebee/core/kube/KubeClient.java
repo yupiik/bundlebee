@@ -36,8 +36,10 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonException;
+import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbException;
@@ -161,6 +163,11 @@ public class KubeClient implements ConfigHolder {
     private boolean validateSSL;
 
     @Inject
+    @Description("List of _kind_ of descriptors updates can be skipped, it is often useful for `PersistentVolumeClaim`.")
+    @ConfigProperty(name = "bundlebee.kube.skipUpdateForKinds", defaultValue = "PersistentVolumeClaim")
+    private String skipUpdateForKinds;
+
+    @Inject
     @Description("Should YAML/JSON be logged when it can't be parsed.")
     @ConfigProperty(name = "bundlebee.kube.logDescriptorOnParsingError", defaultValue = "true")
     private boolean logDescriptorOnParsingError;
@@ -211,9 +218,11 @@ public class KubeClient implements ConfigHolder {
     private volatile CompletionStage<?> pending; // we don't want to do 2 calls to get base urls at the same time
     private final Collection<String> fetchedResourceLists = new HashSet<>();
     private final Map<String, String> baseUrls = new ConcurrentHashMap<>();
+    private List<String> kindsToSkipUpdateIfPossible;
 
     @PostConstruct
     private void init() {
+        kindsToSkipUpdateIfPossible = Stream.of(skipUpdateForKinds.split(",")).filter(it -> !it.isBlank()).collect(toList());
         client = doConfigure(HttpClient.newBuilder()
                 .executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool)))
                 .build();
@@ -508,18 +517,29 @@ public class KubeClient implements ConfigHolder {
                     // but in case it is a list it is saner to do it this way
                     if (findResponse.statusCode() == 200) {
                         log.finest(() -> name + " (" + kindLowerCased + ") already exists, updating it");
-                        return doUpdate(desc, name, fieldManager, baseUri)
-                                .thenApply(response -> {
-                                    if (verbose) {
-                                        log.info(response::toString);
-                                    }
-                                    if (response.statusCode() != 200) {
-                                        throw new IllegalStateException("" +
-                                                "Can't update " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                                response.body());
-                                    }
-                                    return response;
-                                });
+                        JsonObject obj = null;
+                        String kind = null;
+                        try {
+                            obj = jsonb.fromJson(findResponse.body(), JsonObject.class);
+                            kind = obj.getString("kind");
+                        } catch (final RuntimeException re) {
+                            // no-op
+                        }
+                        if (obj == null || !kindsToSkipUpdateIfPossible.contains(kind) || needsUpdate(obj, desc)) {
+                            return doUpdate(desc, name, fieldManager, baseUri)
+                                    .thenApply(response -> {
+                                        if (verbose) {
+                                            log.info(response::toString);
+                                        }
+                                        if (response.statusCode() != 200) {
+                                            throw new IllegalStateException("" +
+                                                    "Can't update " + name + " (" + kindLowerCased + "): " + response + "\n" +
+                                                    response.body());
+                                        }
+                                        return response;
+                                    });
+                        }
+                        return completedStage(findResponse);
                     } else {
                         log.finest(() -> name + " (" + kindLowerCased + ") does ont exist, creating it");
                         return client.sendAsync(
@@ -566,6 +586,33 @@ public class KubeClient implements ConfigHolder {
                         .header("Accept", "application/json"))
                         .build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    // if all user entries are the same in existing one we consider we don't need an update
+    private boolean needsUpdate(final JsonValue existing, final JsonValue user) {
+        if (existing == null && user == null) {
+            return false;
+        }
+        if (existing == null || user == null || existing.getValueType() != user.getValueType()) {
+            return true;
+        }
+        switch (existing.getValueType()) {
+            case STRING:
+                return !Objects.equals(JsonString.class.cast(existing).getString(), JsonString.class.cast(user).getString());
+            case NUMBER:
+                return !Objects.equals(JsonNumber.class.cast(existing).doubleValue(), JsonNumber.class.cast(user).doubleValue());
+            case OBJECT:
+                final var obj = existing.asJsonObject();
+                return user.asJsonObject().entrySet().stream()
+                        .filter(it -> !"bundlebee.timestamp".equals(it.getKey())) // this one moves but is not a real change
+                        .anyMatch(e -> needsUpdate(obj.get(e.getKey()), e.getValue()));
+            case TRUE:
+            case FALSE:
+            case NULL:
+            case ARRAY:
+            default:
+                return !Objects.equals(existing, user);
+        }
     }
 
     private boolean isUsePutOnUpdateForced(final JsonObject desc) {

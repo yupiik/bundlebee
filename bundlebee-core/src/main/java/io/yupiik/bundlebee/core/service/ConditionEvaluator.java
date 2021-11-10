@@ -16,8 +16,10 @@
 package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.descriptor.Manifest;
+import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
@@ -27,6 +29,9 @@ import static java.util.Optional.ofNullable;
 
 @ApplicationScoped
 public class ConditionEvaluator implements Predicate<Manifest.Conditions> {
+    @Inject
+    private Config config;
+
     @Override
     public boolean test(final Manifest.Conditions conditions) {
         return conditions == null ||
@@ -44,7 +49,7 @@ public class ConditionEvaluator implements Predicate<Manifest.Conditions> {
 
     private String read(final Manifest.ConditionType type, final String key) {
         return Manifest.ConditionType.SYSTEM_PROPERTY == type ?
-                System.getProperty(key, "") :
+                config.getOptionalValue(key, String.class).orElse("") :
                 ofNullable(System.getenv(key)).orElse("");
     }
 

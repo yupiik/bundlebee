@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.lang;
 
 import io.yupiik.bundlebee.core.kube.KubeClient;
+import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.Config;
 
@@ -23,11 +24,14 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.json.JsonValue;
+import javax.json.spi.JsonProvider;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Objects;
@@ -44,19 +48,33 @@ public class SubstitutorProducer {
     @Inject
     private KubeClient kubeClient;
 
+    @Inject
+    @BundleBee
+    private JsonProvider json;
+
     @Produces
-    public Substitutor substitutor(final Config config) {
+    public Substitutor substitutor(final Config config) { // todo: document all the helpers we support
         return new Substitutor(it -> {
+            try {
+                if (it.startsWith("bundlebee-inline-file:")) {
+                    return Files.readString(Path.of(it.substring("bundlebee-inline-file:".length())));
+                }
+                if (it.startsWith("bundlebee-json-inline-file:")) {
+                    return json.createValue(Files.readString(Path.of(it.substring("bundlebee-json-inline-file:".length())))).toString();
+                }
+            } catch (final IOException ioe) {
+                throw new IllegalStateException(ioe);
+            }
             if (it.startsWith("kubeconfig.cluster.") && it.endsWith(".ip")) {
                 final var name = it.substring("kubeconfig.cluster.".length(), it.length() - ".ip".length());
                 return URI.create(
-                        kubeClient.getLoadedKubeConfig()
-                                .getClusters().stream()
-                                .filter(c -> Objects.equals(c.getName(), name))
-                                .findFirst()
-                                .orElseThrow(() -> new IllegalArgumentException("No cluster named '" + name + "' found"))
-                                .getCluster()
-                                .getServer())
+                                kubeClient.getLoadedKubeConfig()
+                                        .getClusters().stream()
+                                        .filter(c -> Objects.equals(c.getName(), name))
+                                        .findFirst()
+                                        .orElseThrow(() -> new IllegalArgumentException("No cluster named '" + name + "' found"))
+                                        .getCluster()
+                                        .getServer())
                         .getHost();
             }
 

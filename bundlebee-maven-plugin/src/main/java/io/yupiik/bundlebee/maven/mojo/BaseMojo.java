@@ -20,9 +20,6 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -79,18 +76,7 @@ public abstract class BaseMojo extends AbstractMojo {
         return placeholders == null ?
                 Stream.empty() :
                 placeholders.entrySet().stream()
-                        .flatMap(it -> Stream.of("--" + it.getKey(), processArgValue(it.getValue())));
-    }
-
-    private String processArgValue(final String value) {
-        try {
-            return value.startsWith("bundlebee-maven-inline-file:") ?
-                    Files.readString(Path.of(value.substring("bundlebee-maven-inline-file:".length()))) :
-                    value;
-        } catch (final IOException e) {
-            getLog().warn(e.getMessage(), e);
-            return value;
-        }
+                        .flatMap(it -> Stream.of("--" + it.getKey(), it.getValue()));
     }
 
     // forward jul to maven logs to have a nicer output
