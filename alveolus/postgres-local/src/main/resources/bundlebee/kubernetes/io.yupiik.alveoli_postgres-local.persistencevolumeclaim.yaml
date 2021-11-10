@@ -21,7 +21,7 @@ metadata:
   labels:
     app: postgres-local
 spec:
-  storageClassName: local-storage
+  storageClassName: "{{bundlebee.alveolus.postgres-local.storage.class:-local-storage}}"
   accessModes:
     - ReadWriteMany
   resources:
