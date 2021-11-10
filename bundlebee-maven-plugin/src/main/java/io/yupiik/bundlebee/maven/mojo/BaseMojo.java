@@ -20,7 +20,11 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -57,8 +61,8 @@ public abstract class BaseMojo extends AbstractMojo {
     @Override
     public void execute() {
         final var reset = Stream.of(
-                setupLogger("org.apache.webbeans", Level.WARNING),
-                setupLogger("io.yupiik.bundlebee", Level.INFO))
+                        setupLogger("org.apache.webbeans", Level.WARNING),
+                        setupLogger("io.yupiik.bundlebee", Level.INFO))
                 .collect(toList());
         if (skip || (skipPackaging != null && skipPackaging.contains(packaging))) {
             getLog().info(getClass().getName() + " execution skipped");
@@ -68,6 +72,24 @@ public abstract class BaseMojo extends AbstractMojo {
             doExecute();
         } finally {
             reset.forEach(Runnable::run);
+        }
+    }
+
+    protected Stream<String> toArgs(final Map<String, String> placeholders) {
+        return placeholders == null ?
+                Stream.empty() :
+                placeholders.entrySet().stream()
+                        .flatMap(it -> Stream.of("--" + it.getKey(), processArgValue(it.getValue())));
+    }
+
+    private String processArgValue(final String value) {
+        try {
+            return value.startsWith("bundlebee-maven-inline-file:") ?
+                    Files.readString(Path.of(value.substring("bundlebee-maven-inline-file:".length()))) :
+                    value;
+        } catch (final IOException e) {
+            getLog().warn(e.getMessage(), e);
+            return value;
         }
     }
 

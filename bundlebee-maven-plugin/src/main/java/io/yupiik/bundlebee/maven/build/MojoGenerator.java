@@ -182,10 +182,7 @@ public final class MojoGenerator {
                                         "        new BundleBee().launch(Stream.concat(\n" +
                                         "                        Stream.of(\n" +
                                         launchArgs + "),\n" +
-                                        "                        customPlaceholders == null ?\n" +
-                                        "                                Stream.empty() :\n" +
-                                        "                                customPlaceholders.entrySet().stream()\n" +
-                                        "                                        .flatMap(it -> Stream.of(\"--\" + it.getKey(), it.getValue())))\n" +
+                                        "                        toArgs(customPlaceholders))\n" +
                                         "                .toArray(String[]::new));\n" +
                                         "    }\n" +
                                         "}" +
