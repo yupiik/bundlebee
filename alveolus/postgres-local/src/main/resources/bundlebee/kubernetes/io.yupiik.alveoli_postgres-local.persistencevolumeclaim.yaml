@@ -23,7 +23,7 @@ metadata:
 spec:
   storageClassName: "{{bundlebee.alveolus.postgres-local.storage.class:-local-storage}}"
   accessModes:
-    - ReadWriteMany
+    - "{{bundlebee.alveolus.postgres-local.accessMode:-ReadWriteMany}}"
   resources:
     requests:
-      storage: 5Gi
+      storage: "{{bundlebee.alveolus.postgres-local.request.storage:-5Gi}}"
