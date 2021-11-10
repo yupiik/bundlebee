@@ -59,8 +59,14 @@ public class SubstitutorProducer {
                 if (it.startsWith("bundlebee-inline-file:")) {
                     return Files.readString(Path.of(it.substring("bundlebee-inline-file:".length())));
                 }
+                if (it.startsWith("bundlebee-quote-escaped-inline-file:")) {
+                    return Files.readString(Path.of(it.substring("bundlebee-quote-escaped-inline-file:".length())))
+                            .replace("\"", "\\\"")
+                            .replace("\n", "\\\\n");
+                }
                 if (it.startsWith("bundlebee-json-inline-file:")) {
-                    return json.createValue(Files.readString(Path.of(it.substring("bundlebee-json-inline-file:".length())))).toString();
+                    final var value = json.createValue(Files.readString(Path.of(it.substring("bundlebee-json-inline-file:".length())))).toString();
+                    return value.substring(1, value.length() - 1);
                 }
             } catch (final IOException ioe) {
                 throw new IllegalStateException(ioe);
