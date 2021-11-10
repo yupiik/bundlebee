@@ -23,13 +23,13 @@ metadata:
     app: postgres-local
   finalizers: []
 spec:
-  storageClassName: local-storage
+  storageClassName: "{{bundlebee.alveolus.postgres-local.storage.class:-local-storage}}"
   capacity:
     storage: 5Gi
   accessModes:
     - ReadWriteMany
   claimRef:
     name: postgres-pv-claim
-    namespace: default
+    namespace: "{{bundlebee.alveolus.postgres-local.namespace:-default}}"
   hostPath:
     path: "{{postgres-local.mountPath:-/data/postgres-local}}"
