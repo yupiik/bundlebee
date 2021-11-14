@@ -180,6 +180,22 @@ bundlebee \
     --bundlebee.version 1.0.1
 ----
 
+=== More placeholders
+
+Placeholders can use some keywords to get some particular values:
+
+- `bundlebee-inline-file:<file path>`: load the file content as value,
+- `bundlebee-quote-escaped-inline-file:<file path>`: load the file content as a quoted value,
+- `bundlebee-json-inline-file:<file path>`: load the file content as a JSON string value - without quotes,
+- `kubeconfig.cluster.<cluster name>.ip`: extract cluster IP from your kubeconfig,
+- `timestamp`: current time in milliseconds (since epoch),
+- `timestampSec`: current time in seconds (since epoch),
+- `now`: `OffsetDateTime.now()` value,
+- `nowUTC`: `OffsetDateTime.now()` value with UTC `ZoneId`,
+- `kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]`: secret value looked up through Kubernetes API.
+
+If none of these placeholders match, then Microprofile Config is used to lookup the value (so system properties, environment variables and BundleBee args are used).
+
 == Windows and CLI
 
 On windows, the usage of the Java mode is recommended and the most reliable, however, if you want to speed up a bit the execution you can run the native bundlebee executable in a docker image.
