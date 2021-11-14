@@ -191,6 +191,7 @@ Placeholders can use some keywords to get some particular values:
 - `timestamp`: current time in milliseconds (since epoch),
 - `timestampSec`: current time in seconds (since epoch),
 - `now`: `OffsetDateTime.now()` value,
+- `date:<pattern>`: format `OffsetDateTime.now()` value using the provided pattern,
 - `nowUTC`: `OffsetDateTime.now()` value with UTC `ZoneId`,
 - `kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]`: secret value looked up through Kubernetes API.
 
