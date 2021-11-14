@@ -35,10 +35,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
@@ -75,6 +77,13 @@ public class ApplyCommand implements CompletingExecutable {
             "This is required for rollback command to work.")
     @ConfigProperty(name = "bundlebee.apply.injectBundleBeeMetadata", defaultValue = "true")
     private boolean injectBundleBeeMetadata;
+
+    @Inject
+    @Description("" +
+            "If `true`, each descriptor installation awaits previous ones instead of being concurrent. " +
+            "Enable an easier debugging for errors.")
+    @ConfigProperty(name = "bundlebee.apply.useChainInsteadOfAll", defaultValue = "false")
+    private boolean useChainInsteadOfAll;
 
     @Inject
     @Description("" +
@@ -151,11 +160,16 @@ public class ApplyCommand implements CompletingExecutable {
         return visitor
                 .findRootAlveoli(from, manifest, alveolus)
                 .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
-                .thenCompose(alveoli -> all(
-                        alveoli.stream()
-                                .map(it -> doApply(injectTimestamp, injectBundleBeeMetadata, cache, it))
-                                .collect(toList()), toList(),
-                        true));
+                .thenCompose(alveoli -> useChainInsteadOfAll ?
+                        chain(alveoli.stream()
+                                .map(it -> (Supplier<CompletionStage<?>>) () -> doApply(injectTimestamp, injectBundleBeeMetadata, cache, it))
+                                .iterator(), true) :
+                        all(
+                                alveoli.stream()
+                                        .map(it -> doApply(injectTimestamp, injectBundleBeeMetadata, cache, it))
+                                        .collect(toList()), toList(),
+                                true)
+                                .thenApply(ignored -> null));
     }
 
     public CompletionStage<?> doApply(final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
@@ -179,14 +193,14 @@ public class ApplyCommand implements CompletingExecutable {
                                              final boolean injectTimestamp,
                                              final boolean injectBundleBeeMetadata) {
         return Stream.of(
-                injectTimestamp ?
-                        Map.of("bundlebee.timestamp", Long.toString(Instant.now().toEpochMilli())) :
-                        Map.<String, String>of(),
-                injectBundleBeeMetadata ?
-                        Map.of(
-                                "bundlebee.root.alveolus.version", labelSanitizerService.sanitize(findVersion(alveolus)),
-                                "bundlebee.root.alveolus.name", labelSanitizerService.sanitize(alveolus.getName())) :
-                        Map.<String, String>of())
+                        injectTimestamp ?
+                                Map.of("bundlebee.timestamp", Long.toString(Instant.now().toEpochMilli())) :
+                                Map.<String, String>of(),
+                        injectBundleBeeMetadata ?
+                                Map.of(
+                                        "bundlebee.root.alveolus.version", labelSanitizerService.sanitize(findVersion(alveolus)),
+                                        "bundlebee.root.alveolus.name", labelSanitizerService.sanitize(alveolus.getName())) :
+                                Map.<String, String>of())
                 .flatMap(m -> m.entrySet().stream())
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
