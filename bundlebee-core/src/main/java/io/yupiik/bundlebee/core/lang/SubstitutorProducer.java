@@ -33,6 +33,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -82,6 +85,22 @@ public class SubstitutorProducer {
                                         .getCluster()
                                         .getServer())
                         .getHost();
+            }
+            if ("timestamp".equals(it)) {
+                return Long.toString(Instant.now().toEpochMilli());
+            }
+            if ("timestampSec".equals(it)) {
+                return Long.toString(Instant.now().getEpochSecond());
+            }
+            if ("now".equals(it)) {
+                return OffsetDateTime.now().toString();
+            }
+            if ("nowUTC".equals(it)) {
+                return OffsetDateTime.now().atZoneSameInstant(ZoneId.of("UTC")).toString();
+            }
+            if (it.startsWith("date:")) {
+                final var pattern = it.substring("date:".length());
+                return OffsetDateTime.now().format(DateTimeFormatter.ofPattern(pattern));
             }
 
             // depending data key entry name we can switch the separator depending first one
