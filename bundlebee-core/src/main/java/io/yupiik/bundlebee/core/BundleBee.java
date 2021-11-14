@@ -84,9 +84,14 @@ public final class BundleBee {
                 log.warning("No command found for args: " + List.of(args));
                 container.select(HelpCommand.class).get().execute();
             } catch (final InterruptedException e) {
+                log.warning("Execution interrupted");
                 Thread.currentThread().interrupt();
             } catch (final ExecutionException e) {
-                throw new IllegalStateException(e.getCause());
+                final var cause = e.getCause();
+                if (RuntimeException.class.isInstance(cause)) {
+                    throw RuntimeException.class.cast(cause);
+                }
+                throw new IllegalStateException(cause);
             }
         }
     }

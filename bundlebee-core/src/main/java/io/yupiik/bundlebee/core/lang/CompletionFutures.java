@@ -21,14 +21,18 @@ import javax.enterprise.inject.Vetoed;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collector;
+import java.util.stream.Stream;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.joining;
 import static lombok.AccessLevel.PRIVATE;
 
 @Vetoed
@@ -59,7 +63,7 @@ public final class CompletionFutures {
                     .thenCompose(done -> chain(promises, stopOnError))
                     .whenComplete((r, e) -> {
                         if (e != null) {
-                            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+                            LOGGER.log(Level.FINEST, e.getMessage(), e);
                             if (stopOnError || !promises.hasNext()) {
                                 result.completeExceptionally(e);
                             } else {
@@ -115,14 +119,20 @@ public final class CompletionFutures {
                 if (err == null) {
                     accumulator.accept(agg, res);
                 } else {
-                    LOGGER.log(Level.SEVERE, err.getMessage(), err);
-                    errors.addSuppressed(err);
+                    LOGGER.log(Level.FINEST, err.getMessage(), err);
+                    errors.addSuppressed(CompletionException.class.isInstance(err) ?
+                            err.getCause() : err);
                 }
                 if (remaining.decrementAndGet() == 0) {
                     if (!failOnError || errors.getSuppressed().length == 0) {
                         result.complete(finisher.apply(agg));
                     } else {
-                        result.completeExceptionally(errors);
+                        // recreate the exception to ensure the message is more readable
+                        final var thrown = new IllegalStateException(Stream.of(errors.getSuppressed())
+                                .map(t -> ofNullable(t.getMessage()).orElseGet(() -> t.getClass().getName()))
+                                .collect(joining("\n")), null);
+                        Stream.of(errors.getSuppressed()).forEach(thrown::addSuppressed);
+                        result.completeExceptionally(thrown);
                     }
                 }
             }
