@@ -4,5 +4,24 @@ See https://yupiik.github.io/bundlebee/.
 
 == Release
 
-. `mvn release:prepare release:perform -Pnative -Prelease`
-. `git checkout -b <release-tag> <release-tag> && mvn clean package -Pgh-pages`
+Build and publish to central:
+
+[source, bash]
+----
+mvn release:prepare release:perform -Pnative -Prelease
+----
+
+Publish documentation on github page:
+
+[source, bash]
+----
+git checkout -b <release-tag> <release-tag> && mvn clean package -Pgh-pages`
+----
+
+Pubish release on Github by running in https://github.com/yupiik/yupiik.github.io project:
+
+[source, bash]
+----
+mvn yupiik-tools:synchronize-github-releases@bundlebee -Psynchronize-github-releases
+----
+
