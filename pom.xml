@@ -21,7 +21,7 @@
 
   <groupId>io.yupiik</groupId>
   <artifactId>bundlebee</artifactId>
-  <version>1.0.11</version>
+  <version>1.0.12-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>BundleBee</name>
   <description>A light Kubernetes package manager inheriting from Apache Maven infrastructure.</description>
