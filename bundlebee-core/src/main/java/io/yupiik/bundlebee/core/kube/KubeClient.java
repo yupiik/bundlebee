@@ -281,9 +281,9 @@ public class KubeClient implements ConfigHolder {
 
     public CompletionStage<JsonObject> findSecret(final String namespace, final String name) {
         return client.sendAsync(setAuth.apply(HttpRequest.newBuilder())
-                        .uri(URI.create(baseApi + "/api/v1/namespaces/" + namespace + "/secrets/" + name))
-                        .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                                .uri(URI.create(baseApi + "/api/v1/namespaces/" + namespace + "/secrets/" + name))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(r -> {
                     if (r.statusCode() != 200) {
                         throw new IllegalArgumentException("Can't read secret '" + namespace + "'/'" + name + "': " + r.body());
@@ -294,9 +294,9 @@ public class KubeClient implements ConfigHolder {
 
     public CompletionStage<JsonObject> findServiceAccount(final String namespace, final String name) {
         return client.sendAsync(setAuth.apply(HttpRequest.newBuilder())
-                        .uri(URI.create(baseApi + "/api/v1/namespaces/" + namespace + "/serviceaccounts/" + name))
-                        .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                                .uri(URI.create(baseApi + "/api/v1/namespaces/" + namespace + "/serviceaccounts/" + name))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(r -> {
                     if (r.statusCode() != 200) {
                         throw new IllegalArgumentException("Can't read account '" + namespace + "'/'" + name + "': " + r.body());
@@ -340,9 +340,9 @@ public class KubeClient implements ConfigHolder {
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
         final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
         return client.sendAsync(setAuth.apply(
-                HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
-                        .GET()
-                        .header("Accept", "application/json"))
+                                HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
+                                        .GET()
+                                        .header("Accept", "application/json"))
                         .build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
     }
@@ -426,21 +426,21 @@ public class KubeClient implements ConfigHolder {
 
         final var uri = toBaseUri(desc, kindLowerCased, namespace) + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
         return client.sendAsync(setAuth.apply(
-                HttpRequest.newBuilder(URI.create(uri))
-                        .method("DELETE", HttpRequest.BodyPublishers.ofString(jsonBuilderFactory.createObjectBuilder()
-                                .add("kind", "DeleteOptions")
-                                .add("apiVersion", "v1")
-                                // todo: .add("gracePeriodSeconds", config)
-                                // .add("orphanDependents", true) // this one is deprecated, this is why we use propagationPolicy too
-                                .add("propagationPolicy", metadata.containsKey("bundlebee.delete.propagationPolicy") ?
-                                        metadata.getString("bundlebee.delete.propagationPolicy") :
-                                        defaultPropagationPolicy)
-                                .build()
-                                .toString(), StandardCharsets.UTF_8))
-                        .header("Content-Type", "application/json")
-                        .header("Accept", "application/json"))
-                        .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                                        HttpRequest.newBuilder(URI.create(uri))
+                                                .method("DELETE", HttpRequest.BodyPublishers.ofString(jsonBuilderFactory.createObjectBuilder()
+                                                        .add("kind", "DeleteOptions")
+                                                        .add("apiVersion", "v1")
+                                                        // todo: .add("gracePeriodSeconds", config)
+                                                        // .add("orphanDependents", true) // this one is deprecated, this is why we use propagationPolicy too
+                                                        .add("propagationPolicy", metadata.containsKey("bundlebee.delete.propagationPolicy") ?
+                                                                metadata.getString("bundlebee.delete.propagationPolicy") :
+                                                                defaultPropagationPolicy)
+                                                        .build()
+                                                        .toString(), StandardCharsets.UTF_8))
+                                                .header("Content-Type", "application/json")
+                                                .header("Accept", "application/json"))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(it -> {
                     if (it.statusCode() == 422) {
                         log.warning("Invalid deletion on " + uri + ":\n" + it.body());
@@ -492,7 +492,7 @@ public class KubeClient implements ConfigHolder {
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
-        final var fieldManager = "?fieldManager=kubectl-client-side-apply";
+        final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!dryRun ? "" : ("&dryRun=All"));
         final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
 
         if (verbose) {
@@ -500,11 +500,11 @@ public class KubeClient implements ConfigHolder {
         }
 
         return client.sendAsync(setAuth.apply(
-                HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
-                        .GET()
-                        .header("Accept", "application/json"))
-                        .build(),
-                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                                        HttpRequest.newBuilder(URI.create(baseUri + "/" + name))
+                                                .GET()
+                                                .header("Accept", "application/json"))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenCompose(findResponse -> {
                     if (verbose) {
                         log.info(findResponse::toString);
@@ -543,12 +543,12 @@ public class KubeClient implements ConfigHolder {
                     } else {
                         log.finest(() -> name + " (" + kindLowerCased + ") does ont exist, creating it");
                         return client.sendAsync(
-                                setAuth.apply(HttpRequest.newBuilder(URI.create(baseUri + fieldManager))
-                                        .POST(HttpRequest.BodyPublishers.ofString(desc.toString()))
-                                        .header("Content-Type", "application/json")
-                                        .header("Accept", "application/json"))
-                                        .build(),
-                                HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                                        setAuth.apply(HttpRequest.newBuilder(URI.create(baseUri + fieldManager))
+                                                        .POST(HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                                        .header("Content-Type", "application/json")
+                                                        .header("Accept", "application/json"))
+                                                .build(),
+                                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                                 .thenApply(response -> {
                                     if (verbose) {
                                         log.info(response::toString);
@@ -573,17 +573,17 @@ public class KubeClient implements ConfigHolder {
         if (putOnUpdate || isUsePutOnUpdateForced(desc)) {
             return client.sendAsync(
                     setAuth.apply(HttpRequest.newBuilder(URI.create(baseUri + "/" + name + fieldManager))
-                            .method("PUT", HttpRequest.BodyPublishers.ofString(desc.toString()))
-                            .header("Content-Type", "application/json")
-                            .header("Accept", "application/json"))
+                                    .method("PUT", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                    .header("Content-Type", "application/json")
+                                    .header("Accept", "application/json"))
                             .build(),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         }
         return client.sendAsync(
                 setAuth.apply(HttpRequest.newBuilder(URI.create(baseUri + "/" + name + fieldManager))
-                        .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
-                        .header("Content-Type", "application/strategic-merge-patch+json")
-                        .header("Accept", "application/json"))
+                                .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                .header("Content-Type", "application/strategic-merge-patch+json")
+                                .header("Accept", "application/json"))
                         .build(),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
     }
@@ -768,8 +768,8 @@ public class KubeClient implements ConfigHolder {
                             return mergeLabels(entry, metadata, labelsJson);
                         }
                         return Stream.of(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), Stream.concat(
-                                metadata.entrySet().stream().sorted(Map.Entry.comparingByKey()),
-                                Stream.of(new AbstractMap.SimpleImmutableEntry<>(customMetadataInjectionPoint, labelsJson)))
+                                        metadata.entrySet().stream().sorted(Map.Entry.comparingByKey()),
+                                        Stream.of(new AbstractMap.SimpleImmutableEntry<>(customMetadataInjectionPoint, labelsJson)))
                                 .collect(Collector.of(
                                         jsonBuilderFactory::createObjectBuilder,
                                         (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
@@ -797,10 +797,10 @@ public class KubeClient implements ConfigHolder {
                                 return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
                                         metadataEntry.getKey(),
                                         Stream.concat(
-                                                metadataEntry.getValue().asJsonObject().entrySet().stream()
-                                                        .sorted(Map.Entry.comparingByKey())
-                                                        .filter(e -> !customLabels.containsKey(e.getKey())),
-                                                customLabels.entrySet().stream())
+                                                        metadataEntry.getValue().asJsonObject().entrySet().stream()
+                                                                .sorted(Map.Entry.comparingByKey())
+                                                                .filter(e -> !customLabels.containsKey(e.getKey())),
+                                                        customLabels.entrySet().stream())
                                                 .collect(Collector.of(
                                                         jsonBuilderFactory::createObjectBuilder,
                                                         (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
