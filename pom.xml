@@ -173,6 +173,7 @@ under the License.
             <exclude>**/target/**</exclude>
             <exclude>**/generated/**</exclude>
             <exclude>**/minisite/**</exclude>
+            <exclude>**/file</exclude>
             <exclude>**/.m2/**</exclude>
           </excludes>
         </configuration>
