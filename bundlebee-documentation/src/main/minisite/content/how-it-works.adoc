@@ -197,6 +197,8 @@ Placeholders can use some keywords to get some particular values:
 
 If none of these placeholders match, then Microprofile Config is used to lookup the value (so system properties, environment variables and BundleBee args are used).
 
+TIP: file placeholders can also read a resource from the classpath if the path does not match any existing file.
+
 == Windows and CLI
 
 On windows, the usage of the Java mode is recommended and the most reliable, however, if you want to speed up a bit the execution you can run the native bundlebee executable in a docker image.

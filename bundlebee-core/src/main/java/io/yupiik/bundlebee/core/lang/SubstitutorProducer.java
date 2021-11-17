@@ -60,15 +60,20 @@ public class SubstitutorProducer {
         return new Substitutor(it -> {
             try {
                 if (it.startsWith("bundlebee-inline-file:")) {
-                    return Files.readString(Path.of(it.substring("bundlebee-inline-file:".length())));
+                    return readResource(it, "bundlebee-inline-file:");
                 }
                 if (it.startsWith("bundlebee-quote-escaped-inline-file:")) {
-                    return Files.readString(Path.of(it.substring("bundlebee-quote-escaped-inline-file:".length())))
+                    final var resource = readResource(it, "bundlebee-quote-escaped-inline-file:");
+                    return resource == null ? null : resource
                             .replace("\"", "\\\"")
                             .replace("\n", "\\\\n");
                 }
                 if (it.startsWith("bundlebee-json-inline-file:")) {
-                    final var value = json.createValue(Files.readString(Path.of(it.substring("bundlebee-json-inline-file:".length())))).toString();
+                    final var resource = readResource(it, "bundlebee-json-inline-file:");
+                    if (resource == null) {
+                        return null;
+                    }
+                    final var value = json.createValue(resource).toString();
                     return value.substring(1, value.length() - 1);
                 }
             } catch (final IOException ioe) {
@@ -118,6 +123,21 @@ public class SubstitutorProducer {
 
             return config.getOptionalValue(it, String.class).orElse(null);
         });
+    }
+
+    private String readResource(final String text, final String prefix) throws IOException {
+        final var name = text.substring(prefix.length());
+        final var path = Path.of(name);
+        if (Files.exists(path)) {
+            return Files.readString(path);
+        }
+        try (final var stream = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream(name)) {
+            if (stream == null) {
+                return null;
+            }
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        }
     }
 
     private String findKubernetesValue(final String key, final String sep) {
