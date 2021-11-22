@@ -137,7 +137,7 @@ public class Maven implements ConfigHolder {
     private String httpHeaders;
 
     @Inject
-    @Description("Enables to disable the download, i.e. ensure it runs only with local maven repository.")
+    @Description("Enable the download, i.e. ensure it runs only with local maven repository.")
     @ConfigProperty(name = "bundlebee.maven.repositories.downloads.enabled", defaultValue = "false")
     private boolean canDownload;
 
