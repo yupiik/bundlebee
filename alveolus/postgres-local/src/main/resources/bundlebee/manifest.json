@@ -10,7 +10,18 @@
         },
         {
           "name": "${project.groupId}_${project.artifactId}.persistencevolume",
-          "interpolate": true
+          "interpolate": true,
+          "includeIf": {
+            "operator": "ANY",
+            "conditions": [
+              {
+                "negate": true,
+                "type": "SYSTEM_PROPERTY",
+                "key": "bundlebee.alveolus.${project.groupId}_${project.artifactId}.persistencevolume.exclude",
+                "value": "true"
+              }
+            ]
+          }
         },
         {
           "name": "${project.groupId}_${project.artifactId}.persistencevolumeclaim",
