@@ -60,11 +60,17 @@ public class SubstitutorProducer {
         return new Substitutor(it -> {
             try {
                 if (it.startsWith("bundlebee-inline-file:")) {
-                    return readResource(it, "bundlebee-inline-file:");
+                    final var bytes = readResource(it, "bundlebee-inline-file:");
+                    return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
+                }
+                if (it.startsWith("bundlebee-base64-file:")) {
+                    final var src = readResource(it, "bundlebee-base64-file:");
+                    return src == null ? null : Base64.getEncoder().encodeToString(src);
                 }
                 if (it.startsWith("bundlebee-quote-escaped-inline-file:")) {
                     final var resource = readResource(it, "bundlebee-quote-escaped-inline-file:");
-                    return resource == null ? null : resource
+                    return resource == null ? null : new String(resource, StandardCharsets.UTF_8)
+                            .replace("'", "\\'")
                             .replace("\"", "\\\"")
                             .replace("\n", "\\\\n");
                 }
@@ -73,7 +79,7 @@ public class SubstitutorProducer {
                     if (resource == null) {
                         return null;
                     }
-                    final var value = json.createValue(resource).toString();
+                    final var value = json.createValue(new String(resource, StandardCharsets.UTF_8)).toString();
                     return value.substring(1, value.length() - 1);
                 }
             } catch (final IOException ioe) {
@@ -125,18 +131,18 @@ public class SubstitutorProducer {
         });
     }
 
-    private String readResource(final String text, final String prefix) throws IOException {
+    private byte[] readResource(final String text, final String prefix) throws IOException {
         final var name = text.substring(prefix.length());
         final var path = Path.of(name);
         if (Files.exists(path)) {
-            return Files.readString(path);
+            return Files.readAllBytes(path);
         }
         try (final var stream = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(name)) {
             if (stream == null) {
                 return null;
             }
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+            return stream.readAllBytes();
         }
     }
 

@@ -22,8 +22,10 @@ import org.junit.jupiter.api.io.TempDir;
 
 import javax.json.spi.JsonProvider;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -42,6 +44,15 @@ class SubstitutorProducerTest {
         } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Test
+    void base64File(@TempDir final Path root) throws IOException {
+        final var file = root.resolve("test.txt");
+        Files.writeString(file, "content");
+        assertEquals(
+                Base64.getEncoder().encodeToString("content".getBytes(StandardCharsets.UTF_8)),
+                substitutor.getOrDefault("bundlebee-base64-file:" + file, "failed"));
     }
 
     @Test
