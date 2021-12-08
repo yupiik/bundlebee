@@ -61,7 +61,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -138,7 +137,7 @@ public class KubeClient implements ConfigHolder {
     @Description("Kubeconfig location. " +
             "If set to `auto` it will try to guess from your " +
             "`$HOME/.kube/config` file until you set it so `explicit` where it will use other `bundlebee.kube` properties " +
-            "to create the client.")
+            "to create the client. The content can also be set inline!")
     @ConfigProperty(name = "kubeconfig" /* to match KUBECONFIG env var */, defaultValue = "auto")
     private String kubeConfig;
 
@@ -820,13 +819,25 @@ public class KubeClient implements ConfigHolder {
         if (!"auto".equals(kubeConfig) && !"explicit".equals(kubeConfig)) {
             final var location = Paths.get(kubeConfig);
             if (Files.exists(location)) {
-                return doConfigureFrom(location, builder);
+                try {
+                    return doConfigureFrom(location.toString(), Files.readString(location, StandardCharsets.UTF_8), builder);
+                } catch (final IOException ioe) {
+                    throw new IllegalStateException(ioe);
+                }
+            }
+            if (kubeConfig.startsWith("{") /* json */ || kubeConfig.contains("apiVersion") /* weak yaml test */) {
+                log.info(() -> "Using in memory kubeconfig");
+                return doConfigureFrom("in-memory", kubeConfig.strip(), builder);
             }
         }
         if (!"explicit".equals(kubeConfig)) {
             final var location = Paths.get(System.getProperty("user.home")).resolve(".kube/config");
             if (Files.exists(location)) {
-                return doConfigureFrom(location, builder);
+                try {
+                    return doConfigureFrom(location.toString(), Files.readString(location, StandardCharsets.UTF_8), builder);
+                } catch (final IOException ioe) {
+                    throw new IllegalStateException(ioe);
+                }
             }
         }
         if (setAuth == null) {
@@ -849,14 +860,17 @@ public class KubeClient implements ConfigHolder {
         return builder;
     }
 
-    private HttpClient.Builder doConfigureFrom(final Path location, final HttpClient.Builder builder) {
+    private HttpClient.Builder doConfigureFrom(final String from, final String content, final HttpClient.Builder builder) {
         try {
-            loadedKubeConfig = yaml2json.convert(KubeConfig.class, Files.readString(location, StandardCharsets.UTF_8));
-            log.info("Read kubeconfig from " + location);
-        } catch (final IOException | JsonException | JsonbException jsonEx) {
-            throw new IllegalStateException("Can't read '" + location + "': " + jsonEx.getMessage(), jsonEx);
+            loadedKubeConfig = yaml2json.convert(KubeConfig.class, content);
+            log.info("Read kubeconfig from " + from);
+        } catch (final JsonException | JsonbException jsonEx) {
+            throw new IllegalStateException("Can't read '" + from + "': " + jsonEx.getMessage(), jsonEx);
         }
+        return doConfigureFromLoadedKubeConfig(from, builder);
+    }
 
+    private HttpClient.Builder doConfigureFromLoadedKubeConfig(final String location, final HttpClient.Builder builder) {
         final var currentContext = of(kubeConfigContext)
                 .filter(it -> !UNSET.equals(it))
                 .orElseGet(() -> ofNullable(loadedKubeConfig.getCurrentContext())
