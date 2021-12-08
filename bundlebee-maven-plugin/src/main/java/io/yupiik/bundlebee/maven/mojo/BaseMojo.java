@@ -42,6 +42,12 @@ public abstract class BaseMojo extends AbstractMojo {
     private boolean skip;
 
     /**
+     * Should JUL logging redirected to Maven logging (enable it only if you set up maven to use JUL).
+     */
+    @Parameter(property = "bundlebee.useDefaultLogging", defaultValue = "false")
+    private boolean useDefaultLogging;
+
+    /**
      * Skipped packaging types.
      */
     @Parameter(property = "bundlebee.skipPackaging", defaultValue = "pom")
@@ -83,16 +89,23 @@ public abstract class BaseMojo extends AbstractMojo {
     private Runnable setupLogger(final String name, final Level newLevel) {
         final var logger = Logger.getLogger(name);
 
-        final var originalHandlers = logger.getHandlers();
-        Stream.of(originalHandlers).forEach(logger::removeHandler);
-
         final var originalUseParent = logger.getUseParentHandlers();
-        logger.setUseParentHandlers(false);
+
+        final Handler[] originalHandlers;
+        if (!useDefaultLogging) {
+            originalHandlers = logger.getHandlers();
+            Stream.of(originalHandlers).forEach(logger::removeHandler);
+
+            logger.setUseParentHandlers(false);
+
+            logger.addHandler(new ForwardingHandler(getLog()));
+        } else {
+            originalHandlers = new Handler[0];
+        }
 
         final var oldLevel = logger.getLevel();
         logger.setLevel(newLevel);
 
-        logger.addHandler(new ForwardingHandler(getLog()));
         return () -> {
             logger.setLevel(oldLevel);
             logger.setUseParentHandlers(originalUseParent);
