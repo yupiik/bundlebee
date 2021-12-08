@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.service;
 
 import org.apache.openwebbeans.junit5.Cdi;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -32,6 +33,8 @@ class SetSystemProperty implements BeforeAllCallback, AfterAllCallback {
     @Override
     public void beforeAll(ExtensionContext context) {
         System.setProperty("bundlebee.maven.cache", System.getProperty("m2.location", "auto"));
+        System.setProperty("bundlebee.maven.repositories.downloads.enabled", "true");
+        System.setProperty("bundlebee.maven.repositories.snapshot", "https://oss.sonatype.org/content/repositories/snapshots/");
     }
 
     @Override
@@ -45,6 +48,12 @@ class SetSystemProperty implements BeforeAllCallback, AfterAllCallback {
 class MavenTest {
     @Inject
     private Maven resolver;
+
+    @Test
+    @Disabled("only for manual test with oss sonatype snapshot (when they change certificates for ex)")
+    void resolveRemote() throws ExecutionException, InterruptedException {
+        System.out.println(resolver.findOrDownload("io.yupiik.alveoli:postgres-local:1.0.12-SNAPSHOT").toCompletableFuture().get());
+    }
 
     @Test
     void resolveLocal() throws ExecutionException, InterruptedException {
