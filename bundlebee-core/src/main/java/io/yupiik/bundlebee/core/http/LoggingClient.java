@@ -129,6 +129,6 @@ public class LoggingClient extends DelegatingClient {
     }
 
     private <T> void logSuccess(final HttpRequest request, final HttpResponse<T> response) {
-        logger.info(() -> "Request suceeded:\n" + toCurl(request) + "\n" + toResponse(response));
+        logger.info(() -> "Request succeeded:\n" + toCurl(request) + "\n" + toResponse(response));
     }
 }
