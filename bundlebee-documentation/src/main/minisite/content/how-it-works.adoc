@@ -188,6 +188,8 @@ Placeholders can use some keywords to get some particular values:
 - `bundlebee-base64-file:<file path>`: converts the file in base64 (useful to write `data:xxxx,<base64>` values for ex keeping the raw file in the filesystem, very helpful for images),
 - `bundlebee-quote-escaped-inline-file:<file path>`: load the file content as a quoted value,
 - `bundlebee-json-inline-file:<file path>`: load the file content as a JSON string value - without quotes,
+- `bundlebee-maven-server-username:<server id>`: extract from your maven `settings.xml` a server username (see configuration for a custom settings.xml location),
+- `bundlebee-maven-server-password:<server id>`: extract from your maven `settings.xml` a server password (potentially deciphered),
 - `kubeconfig.cluster.<cluster name>.ip`: extract cluster IP from your kubeconfig,
 - `timestamp`: current time in milliseconds (since epoch),
 - `timestampSec`: current time in seconds (since epoch),
