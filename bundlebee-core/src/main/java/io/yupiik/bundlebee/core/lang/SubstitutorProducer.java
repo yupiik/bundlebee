@@ -17,6 +17,7 @@ package io.yupiik.bundlebee.core.lang;
 
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import io.yupiik.bundlebee.core.service.Maven;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.Config;
 
@@ -55,8 +56,11 @@ public class SubstitutorProducer {
     @BundleBee
     private JsonProvider json;
 
+    @Inject
+    private Maven maven;
+
     @Produces
-    public Substitutor substitutor(final Config config) { // todo: document all the helpers we support
+    public Substitutor substitutor(final Config config) {
         return new Substitutor(it -> {
             try {
                 if (it.startsWith("bundlebee-inline-file:")) {
@@ -84,6 +88,16 @@ public class SubstitutorProducer {
                 }
             } catch (final IOException ioe) {
                 throw new IllegalStateException(ioe);
+            }
+            if (it.startsWith("bundlebee-maven-server-username:")) {
+                return maven.findServerPassword(it.substring("bundlebee-maven-server-username:".length()))
+                        .map(Maven.Server::getUsername)
+                        .orElse(null);
+            }
+            if (it.startsWith("bundlebee-maven-server-password:")) {
+                return maven.findServerPassword(it.substring("bundlebee-maven-server-password:".length()))
+                        .map(Maven.Server::getPassword)
+                        .orElse(null);
             }
             if (it.startsWith("kubeconfig.cluster.") && it.endsWith(".ip")) {
                 final var name = it.substring("kubeconfig.cluster.".length(), it.length() - ".ip".length());
