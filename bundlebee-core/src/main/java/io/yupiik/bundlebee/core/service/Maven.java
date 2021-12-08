@@ -365,7 +365,7 @@ public class Maven implements ConfigHolder {
             throw new MalformedURLException("Invalid artifactId: " + raw);
         }
 
-        final Path file = m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type));
+        final Path file = m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type, version));
         if (Files.exists(file)) {
             log.finest(() -> "Found " + file + ", skipping download");
             return completedFuture(file);
@@ -382,7 +382,8 @@ public class Maven implements ConfigHolder {
         return findVersion(repoBase, group, artifact, version)
                 .thenCompose(actualVersion -> download(
                         group, artifact, actualVersion, fullClassifier, type,
-                        toRelativePath(repoBase, group, artifact, actualVersion, fullClassifier, type)));
+                        toRelativePath(repoBase, group, artifact, actualVersion, fullClassifier, type, version),
+                        version));
     }
 
     private CompletionStage<String> findVersion(final String repoBase, final String group, final String artifact, final String version) {
@@ -437,18 +438,20 @@ public class Maven implements ConfigHolder {
     }
 
     private CompletionStage<Path> download(final String group, final String artifact, final String version,
-                                           final String fullClassifier, final String type, final String url) {
+                                           final String fullClassifier, final String type, final String url,
+                                           final String rootVersion) {
         if (!canDownload) {
             throw new IllegalStateException("Download are disabled so can't download '" + url + "'");
         }
-        return doDownload(group, artifact, version, fullClassifier, type, url);
+        return doDownload(group, artifact, version, fullClassifier, type, url, rootVersion);
     }
 
     public CompletionStage<Path> doDownload(final String group, final String artifact, final String version,
-                                            final String fullClassifier, final String type, final String url) {
+                                            final String fullClassifier, final String type, final String url,
+                                            final String rootVersion) {
         log.info(() -> "Downloading " + url);
         final var uri = URI.create(url);
-        final var target = m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type));
+        final var target = m2.resolve(toRelativePath(null, group, artifact, version, fullClassifier, type, rootVersion));
         try {
             Files.createDirectories(target.getParent());
         } catch (final IOException e) {
@@ -474,7 +477,7 @@ public class Maven implements ConfigHolder {
 
     private String getDefaultRepository(final String raw) {
         String base;
-        if (raw.contains(SNAPSHOT_SUFFIX) && raw.contains("apache")) {
+        if (raw.contains(SNAPSHOT_SUFFIX)) {
             base = requireNonNull(snapshotRepository, "No snapshot repository set.");
         } else {
             base = releaseRepository;
@@ -513,11 +516,11 @@ public class Maven implements ConfigHolder {
     }
 
     public String toRelativePath(final String base, final String group, final String artifact, final String version,
-                                 final String classifier, final String type) {
+                                 final String classifier, final String type, final String rootVersion) {
         final var builder = new StringBuilder(base == null ? "" : (base.endsWith("/") ? base : (base + '/')));
         builder.append(group.replace('.', '/')).append('/');
         builder.append(artifact).append('/');
-        builder.append(version).append('/');
+        builder.append(rootVersion).append('/');
         builder.append(artifact).append('-').append(version);
         if (classifier != null && !classifier.isBlank()) {
             builder.append(classifier);
