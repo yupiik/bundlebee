@@ -89,6 +89,28 @@ public class SubstitutorProducer {
             } catch (final IOException ioe) {
                 throw new IllegalStateException(ioe);
             }
+            if (it.startsWith("bundlebee-indent:")) {
+                final var sub = it.substring("bundlebee-indent:".length());
+                final var sep = sub.indexOf(':');
+                if (sep < 0) {
+                    return it;
+                }
+                return indent(
+                        sub.substring(sep + 1),
+                        IntStream.range(0, Integer.parseInt(sub.substring(0, sep)))
+                                .mapToObj(i -> " ")
+                                .collect(joining()),
+                        true);
+            }
+            if (it.startsWith("bundlebee-strip:")) {
+                return it.substring("bundlebee-strip:".length()).strip();
+            }
+            if (it.startsWith("bundlebee-strip-leading:")) {
+                return it.substring("bundlebee-strip-leading:".length()).stripLeading();
+            }
+            if (it.startsWith("bundlebee-strip-trailing:")) {
+                return it.substring("bundlebee-strip-trailing:".length()).stripTrailing();
+            }
             if (it.startsWith("bundlebee-maven-server-username:")) {
                 return maven.findServerPassword(it.substring("bundlebee-maven-server-username:".length()))
                         .map(Maven.Server::getUsername)
@@ -176,7 +198,7 @@ public class SubstitutorProducer {
                     final int timeout = segments.length == 9 ? Integer.parseInt(segments[8]) : 120;
                     final var secret = findSecret(namespace, account, secretPrefix, dataName, timeout);
                     if (segments.length == 10) {
-                        return indent(secret, IntStream.range(0, Integer.parseInt(segments[9])).mapToObj(i -> " ").collect(joining()));
+                        return indent(secret, IntStream.range(0, Integer.parseInt(segments[9])).mapToObj(i -> " ").collect(joining()), false);
                     }
                     return secret;
                 }
@@ -187,9 +209,12 @@ public class SubstitutorProducer {
         return null;
     }
 
-    private String indent(final String secret, final String indent) {
+    private String indent(final String secret, final String indent, final boolean indentFirstLine) {
         try (final var reader = new BufferedReader(new StringReader(secret))) {
             final var lines = reader.lines().collect(toList());
+            if (indentFirstLine) {
+                return lines.stream().map(l -> indent + l).collect(joining("\n"));
+            }
             return (lines.get(0) + "\n" + lines.stream().skip(1).map(l -> indent + l).collect(joining("\n"))).strip();
         } catch (final IOException e) {
             throw new IllegalStateException(e);

@@ -184,6 +184,10 @@ bundlebee \
 
 Placeholders can use some keywords to get some particular values:
 
+- `bundlebee-strip:<value>`: strips the provided value,
+- `bundlebee-strip-leading:<value>`: strips the provided value at the beginning,
+- `bundlebee-strip-trailing:<value>`: strips the provided value at the end,
+- `bundlebee-indent:<indent size>:<value>`: indents a value with the provided space size, it is generally combined with another interpolation (file ones in particular) as value, ex `{{bundlebee-indent:8:{{bundlebee-inline-file:myfile.txt}}}}`,
 - `bundlebee-inline-file:<file path>`: load the file content as value,
 - `bundlebee-base64-file:<file path>`: converts the file in base64 (useful to write `data:xxxx,<base64>` values for ex keeping the raw file in the filesystem, very helpful for images),
 - `bundlebee-quote-escaped-inline-file:<file path>`: load the file content as a quoted value,

@@ -56,6 +56,20 @@ class SubstitutorProducerTest {
     }
 
     @Test
+    void indent(@TempDir final Path root) throws IOException {
+        final var file = root.resolve("test.txt");
+        Files.writeString(file, "content\n" +
+                "  foo\n" +
+                "bar\n" +
+                "\n");
+        assertEquals(
+                "    content\n" +
+                        "      foo\n" +
+                        "    bar",
+                substitutor.replace("{{bundlebee-strip-trailing:{{bundlebee-indent:4:{{bundlebee-inline-file:" + file + "}}}}}}"));
+    }
+
+    @Test
     void inlineFileFromFile(@TempDir final Path root) throws IOException {
         final var file = root.resolve("test.txt");
         Files.writeString(file, "content");
