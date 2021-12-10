@@ -152,6 +152,11 @@ public class KubeClient implements ConfigHolder {
     private String baseApi;
 
     @Inject
+    @Description("When `kubeconfig` is set to `explicit`, the bearer token to use (if set).")
+    @ConfigProperty(name = "bundlebee.kube.token", defaultValue = UNSET)
+    private String token;
+
+    @Inject
     @Description("When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.")
     @ConfigProperty(name = "bundlebee.kube.context", defaultValue = UNSET)
     private String kubeConfigContext;
@@ -841,7 +846,7 @@ public class KubeClient implements ConfigHolder {
             }
         }
         if (setAuth == null) {
-            setAuth = identity();
+            setAuth = UNSET.equals(token) ? identity() : r -> r.header("Authorization", "Bearer " + token);
         }
         if (!validateSSL && baseApi.startsWith("https")) {
             // can be too late but let's try anyway, drawback is it is global but it is protected by this validateSSL toggle
