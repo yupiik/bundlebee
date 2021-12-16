@@ -29,7 +29,7 @@
 
   <properties>
     <owb.version>2.0.23</owb.version>
-    <xbean.version>4.18</xbean.version>
+    <xbean.version>4.20</xbean.version>
 
     <m2.location>${settings.localRepository}</m2.location>
   </properties>
