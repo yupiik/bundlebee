@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.kube;
 
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.http.DelegatingClient;
 import io.yupiik.bundlebee.core.http.DryRunClient;
 import io.yupiik.bundlebee.core.http.JsonHttpResponse;
 import io.yupiik.bundlebee.core.http.LoggingClient;
@@ -227,9 +228,18 @@ public class KubeClient implements ConfigHolder {
     @PostConstruct
     private void init() {
         kindsToSkipUpdateIfPossible = Stream.of(skipUpdateForKinds.split(",")).filter(it -> !it.isBlank()).collect(toList());
-        client = doConfigure(HttpClient.newBuilder()
+        client = new DelegatingClient(doConfigure(HttpClient.newBuilder()
                 .executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool)))
-                .build();
+                .build()) {
+            @Override
+            public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
+                                                                    final HttpResponse.BodyHandler<T> responseBodyHandler) {
+                return super.sendAsync(request, responseBodyHandler)
+                        // enforce the right classloader
+                        .whenCompleteAsync((r, t) -> {
+                        }, client.executor().orElseGet(ForkJoinPool::commonPool));
+            }
+        };
         if (dryRun) {
             client = new LoggingClient(log, new DryRunClient(client));
         } else if (verbose) {
