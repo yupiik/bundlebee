@@ -29,6 +29,8 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Collection;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -128,9 +130,9 @@ public final class MojoGenerator {
                                 .collect(joining(",\n                                ", "                                ", ""));
 
                         final var launchArgs = Stream.of(
-                                "                                \"" + name + "\"",
-                                sharedConfigParameters,
-                                specificParameters)
+                                        "                                \"" + name + "\"",
+                                        sharedConfigParameters,
+                                        specificParameters)
                                 .filter(it -> !it.isBlank())
                                 .collect(joining(",\n"));
 
@@ -165,7 +167,7 @@ public final class MojoGenerator {
                                         "/**\n" +
                                         " * " + instance.description().replace("// end of short description\n", "").replace('\n', ' ') + "\n" +
                                         " */\n" +
-                                        "@Mojo(name = \"" + name + "\", threadSafe = true /* not strictly true but avoids warning inaccurate for builds */)\n" +
+                                        "@Mojo(name = \"" + name + "\", requiresProject = " + needsProject(parameterDeclarationPerName.values()) + ", threadSafe = true /* not strictly true but avoids warning inaccurate for builds */)\n" +
                                         "public class " + className + " extends BaseMojo {\n" +
                                         (skipSharedConfig ? "" : sharedParameters.values().stream()
                                                 .collect(joining("\n\n", "", "\n\n"))) +
@@ -193,6 +195,10 @@ public final class MojoGenerator {
                         throw new IllegalArgumentException(e);
                     }
                 });
+    }
+
+    private static boolean needsProject(final Collection<String> parameters) {
+        return parameters.stream().anyMatch(it -> it.contains("${project."));
     }
 
     private static String findDefault(final String key, final String defaultDefault) {
