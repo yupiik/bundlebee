@@ -82,10 +82,11 @@ To describe an application, you have to create a `manifest.json` file in this `b
 {
   "alveoli": [
     {
-      "name": "hello",
+      "name": "hello", <1>
       "descriptors": [
         {
-          "name": "hello-world"
+          "name": "hello-world", <2>
+          "location": "src/main/resources" <3>
         }
       ]
     }
@@ -93,7 +94,11 @@ To describe an application, you have to create a `manifest.json` file in this `b
 }
 ----
 
-And add the referenced Kubernetes descriptor in `kubernetes` subfolder:
+<.> Creates an alveolus named "hello",
+<.> "hello" alveolus will use as descriptor (.yaml) "hello-world.yaml" which will be found in src/main/resources/`bundlebee/kubernetes`,
+<.> References Bundlebee base folder because we are deploying in exploded mode (and not in a packaged jar).
+
+Then add the referenced Kubernetes descriptor in `kubernetes` subfolder:
 
 [source,yaml]
 .src/main/resources/bundlebee/kubernetes/hello-world.yaml
@@ -117,38 +122,46 @@ spec:
       containers:
         - name: hello
           image: hello-world:latest
-          envFrom:apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: hello-kubernetes
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: hello-kubernetes
-  template:
-    metadata:
-      labels:
-        app: hello-kubernetes
-    spec:
-      containers:
-      - name: hello-kubernetes
-        image: paulbouwer/hello-kubernetes:1.8
-        ports:
-        - containerPort: 8080
 ----
 
-Now you can install your alveolus: `mvn install`.
+Here nothing changes from a "normal" .yaml used with kubectl.
 
-This will create a `target/my-app-alveolus-1.0-SNAPSHOT.jar` file which is the entry point to deploy your application.
-
-Now you can deploy this executing `bundlebee apply --from com.company:my-app-alveolus:1.0-SNAPSHOT` --descriptor hello.
+Now you can deploy this executing `bundlebee apply --alveolus hello --manifest ./src/main/resources/bundlebee/manifest.json`.
 
 And that's it, now hello world application should be up and running in your Kubernetes cluster.
 
 TIP: it is more than encouraged to name the kubernetes descriptor based on the project unique identifier.
 For example `<groupId>.<artifactId>.<alveolus_name>.yaml`.
 It will avoid conflicts when multiple alveolus are in the same classpath using native java mode and not file driven mode.
+
+You could also have used the `bundlebee-maven-plugin`, simply add it in the plugins section of the pom.xml :
+
+[source,`xml`]
+.pom.xml
+----
+<plugins>
+    <plugin>
+      <groupId>io.yupiik</groupId>
+      <artifactId>bundlebee-maven-plugin</artifactId>
+      <version>${bundlebee.version}</version>
+      <executions>
+        <execution>
+          <id>hello-world</id>
+          <phase>none</phase>
+          <goals>
+            <goal>apply</goal>
+          </goals>
+          <configuration>
+            <manifest>${project.basedir}/src/main/resources/bundlebee/manifest.json</manifest> <1>
+            <alveolus>hello</alveolus>
+          </configuration>
+        </execution>
+      </executions>
+    </plugin>
+  </plugins>
+----
+
+Then you can deploy this executing `mvn bundlebee:apply@hello-world`.
 
 === Start from scratch (without Java and Maven)
 
