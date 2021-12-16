@@ -32,13 +32,10 @@ public class Scheduler {
     @BundleBee
     @ApplicationScoped
     public ScheduledExecutorService scheduledExecutorService() {
-        return Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-            @Override
-            public Thread newThread(final Runnable r) {
-                final var thread = new Thread(r, Scheduler.class.getName());
-                thread.setContextClassLoader(Scheduler.class.getClassLoader());
-                return thread;
-            }
+        return Executors.newSingleThreadScheduledExecutor(r -> {
+            final var thread = new Thread(r, Scheduler.class.getName());
+            thread.setContextClassLoader(Scheduler.class.getClassLoader());
+            return thread;
         });
     }
 

@@ -25,6 +25,7 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.net.http.HttpClient;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -43,8 +44,9 @@ public class HttpClientProducer implements ConfigHolder {
     @BundleBee
     @ApplicationScoped
     public HttpClient httpClient() {
-        return HttpClient.newBuilder()
-                .executor(threads <= 0 ? ForkJoinPool.commonPool() : Executors.newFixedThreadPool(threads, new ThreadFactory() {
+        final var executor = threads <= 0 && !isMaven() ?
+                ForkJoinPool.commonPool() :
+                Executors.newFixedThreadPool(Math.max(1, threads), new ThreadFactory() {
                     private final AtomicInteger counter = new AtomicInteger();
 
                     @Override
@@ -53,8 +55,16 @@ public class HttpClientProducer implements ConfigHolder {
                         thread.setContextClassLoader(HttpClientProducer.class.getClassLoader());
                         return thread;
                     }
-                }))
+                });
+        return HttpClient.newBuilder()
+                .executor(executor)
                 .build();
+    }
+
+    private boolean isMaven() {
+        return getClass().getClassLoader() != null &&
+                getClass().getClassLoader().getClass() != null &&
+                "org.codehaus.plexus.classworlds.realm.ClassRealm".equals(getClass().getClassLoader().getClass().getName());
     }
 
     public void release(@Disposes @BundleBee final HttpClient client) {
