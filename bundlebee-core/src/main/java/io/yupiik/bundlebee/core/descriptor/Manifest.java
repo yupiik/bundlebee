@@ -220,7 +220,7 @@ public class Manifest {
         @Description("Name of the descriptor to install. For kubernetes descriptors you can omit the `.yaml` extension.")
         private String name;
 
-        @Description("Optional, if coming form another manifest, the dependency to download to get the alveolus.")
+        @Description("Optional, if coming from another manifest, the dependency to download to get the alveolus.")
         private String location;
 
         @Description("" +
