@@ -89,14 +89,12 @@ import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
@@ -739,16 +737,10 @@ public class KubeClient implements ConfigHolder {
             if (!fetchedResourceLists.add(marker)) {
                 return ofNullable(pending).orElseGet(() -> completedStage(null));
             }
-            final var refSet = new CountDownLatch(1);
-            final var promise = new AtomicReference<CompletionStage<?>>();
-            final var fetch = supplier.get().whenComplete((r, e) -> {
-                try {
-                    refSet.await();
-                } catch (final InterruptedException interruptedException) {
-                    Thread.currentThread().interrupt();
-                }
+            final CompletionStage<?> root = supplier.get();
+            root.whenComplete((r, e) -> {
                 synchronized (KubeClient.this) {
-                    if (KubeClient.this.pending == promise.get()) {
+                    if (KubeClient.this.pending == root) {
                         KubeClient.this.pending = null; // let it be gc
                     }
                 }
@@ -756,10 +748,7 @@ public class KubeClient implements ConfigHolder {
                     log.severe(e.getMessage());
                 }
             });
-            final var facade = this.pending == null ? fetch : this.pending.thenCompose(ignored -> fetch);
-            promise.set(facade);
-            refSet.countDown();
-            this.pending = facade;
+            pending = pending == null ? root : pending.thenCompose(ignored -> root);
             return this.pending;
         }
     }
