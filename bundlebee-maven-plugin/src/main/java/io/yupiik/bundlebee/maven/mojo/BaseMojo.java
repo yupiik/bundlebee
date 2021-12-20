@@ -78,13 +78,18 @@ public abstract class BaseMojo extends AbstractMojo {
             return;
         }
 
-        // todo: something more thread safe but can need to use a custom boot classloader for OWB
-        MavenConfigSource.expressionEvaluator = new PluginParameterExpressionEvaluator(session);
-        try {
+        if (session == null) {
             doExecute();
-        } finally {
-            reset.forEach(Runnable::run);
-            MavenConfigSource.expressionEvaluator = null;
+            return;
+        }
+        synchronized (session) {
+            MavenConfigSource.expressionEvaluator = new PluginParameterExpressionEvaluator(session);
+            try {
+                doExecute();
+            } finally {
+                reset.forEach(Runnable::run);
+                MavenConfigSource.expressionEvaluator = null;
+            }
         }
     }
 
