@@ -20,6 +20,7 @@ import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator
 import org.eclipse.microprofile.config.spi.ConfigSource;
 
 import java.util.Map;
+import java.util.Objects;
 
 public class MavenConfigSource implements ConfigSource {
     public static ExpressionEvaluator expressionEvaluator;
@@ -36,7 +37,7 @@ public class MavenConfigSource implements ConfigSource {
         }
         try {
             final var evaluate = expressionEvaluator.evaluate(s);
-            return evaluate == null ? null : String.valueOf(evaluate);
+            return evaluate == null || Objects.equals(s, evaluate) ? null : String.valueOf(evaluate);
         } catch (final ExpressionEvaluationException e) {
             return null;
         }

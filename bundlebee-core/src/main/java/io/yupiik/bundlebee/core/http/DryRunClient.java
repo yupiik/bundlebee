@@ -55,7 +55,18 @@ public class DryRunClient extends DelegatingClient {
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
                                                             final HttpResponse.BodyHandler<T> responseBodyHandler) {
-        return completedFuture(mockResponse(request, responseBodyHandler));
+        final var httpResponse = mockResponse(request, responseBodyHandler);
+        return delegate.executor()
+                .map(e -> { // try to respect async contract
+                    final var res = new CompletableFuture<HttpResponse<T>>();
+                    try {
+                        e.execute(() -> res.complete(httpResponse));
+                    } catch (final RuntimeException re) {
+                        res.complete(httpResponse);
+                    }
+                    return res;
+                })
+                .orElseGet(() -> completedFuture(httpResponse));
     }
 
     @Override
