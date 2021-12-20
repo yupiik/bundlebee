@@ -31,7 +31,7 @@ class ManifestReaderTest {
 
     @Test
     void read() {
-        final var manifest = reader.readManifest(() -> new ByteArrayInputStream(("{" +
+        final var manifest = reader.readManifest(null, () -> new ByteArrayInputStream(("{" +
                 "  \"alveoli\":[" +
                 "    {" +
                 "      \"name\": \"test\"," +

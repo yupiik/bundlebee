@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,7 +92,7 @@ public class AlveolusHandler {
 
     public CompletionStage<Manifest> findManifest(final String from, final String manifest) {
         if (!"skip".equals(manifest)) {
-            return completedFuture(readManifest(manifest));
+            return completedFuture(readManifest(null, manifest));
         }
         if (from == null || "auto".equals(from)) { // can't do
             return completedFuture(null);
@@ -102,7 +103,7 @@ public class AlveolusHandler {
     public CompletionStage<List<ManifestAndAlveolus>> findRootAlveoli(final String from, final String manifest,
                                                                       final String alveolus) {
         if (!"skip".equals(manifest)) {
-            final var mf = readManifest(manifest);
+            final var mf = readManifest(null, manifest);
             if (mf.getAlveoli() == null) {
                 throw new IllegalArgumentException("No alveoli in manifest '" + manifest + "'");
             }
@@ -148,13 +149,14 @@ public class AlveolusHandler {
         return combinedOnAlveolus.apply(new AlveolusContext(manifest, alveolus, Map.of(), List.of(), cache));
     }
 
-    private Manifest readManifest(final String manifest) {
-        return manifestReader.readManifest(() -> {
-            if (manifest.startsWith("{")) {
-                return new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8));
-            }
+    private Manifest readManifest(final Path location, final String manifest) {
+        if (manifest.startsWith("{")) {
+            return manifestReader.readManifest(null, () -> new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8)));
+        }
+        final var path = Paths.get(manifest);
+        return manifestReader.readManifest(path, () -> {
             try {
-                return Files.newInputStream(Paths.get(manifest));
+                return Files.newInputStream(path);
             } catch (final IOException e) {
                 throw new IllegalArgumentException(e);
             }
@@ -177,7 +179,7 @@ public class AlveolusHandler {
                     .getContextClassLoader()
                     .getResources("bundlebee/manifest.json"))
                     .stream()
-                    .map(manifest -> manifestReader.readManifest(() -> {
+                    .map(manifest -> manifestReader.readManifest(null, () -> {
                         try {
                             return manifest.openStream();
                         } catch (final IOException e) {
@@ -205,8 +207,8 @@ public class AlveolusHandler {
         final var currentExcludes = from.getExcludedDescriptors() == null ?
                 excludes :
                 Stream.concat(
-                        excludes.stream(),
-                        from.getExcludedDescriptors() != null ? from.getExcludedDescriptors().stream() : Stream.empty())
+                                excludes.stream(),
+                                from.getExcludedDescriptors() != null ? from.getExcludedDescriptors().stream() : Stream.empty())
                         .distinct()
                         .collect(toList());
         final var currentPatches = from.getPatches() == null || from.getPatches().isEmpty() ?
