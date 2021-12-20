@@ -30,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
-import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -105,7 +104,6 @@ public final class MojoGenerator {
                                                     "     * " + desc.replace('\n', ' ') + "\n" +
                                                     "     */\n" +
                                                     "    @Parameter(property = \"" + key + "\"" +
-                                                    addParameterAliasIfNeeded(key) +
                                                     ", defaultValue = \"" + findDefault(key, defaultValue.replaceAll("\n", "\\n")) + "\")\n" +
                                                     "    private " + it.getType().getName().replace("java.lang.", "") + " " + paramName + ";";
                                         },
@@ -123,10 +121,18 @@ public final class MojoGenerator {
                                         .flatMap(k -> Stream.of("\"--" + k + "\"", "String.valueOf(" + fromParameterToFieldName(k) + ")"))
                                         .collect(joining(",\n                                ", "                                ", ""));
 
+                        final var addManifestAlias = parameterDeclarationPerName.keySet().stream()
+                                .anyMatch(MojoGenerator::shouldAddManifestAlias);
+
                         final var specificParameters = parameterDeclarationPerName.keySet().stream()
                                 .flatMap(k -> {
                                     final var simpleName = prefix.matcher(k).replaceAll("");
-                                    return Stream.of("\"--" + simpleName + "\"", "String.valueOf(" + fromParameterToFieldName(simpleName) + ")");
+                                    final var fieldName = fromParameterToFieldName(simpleName);
+                                    return Stream.of(
+                                            "\"--" + simpleName + "\"",
+                                            "manifest".equals(simpleName) ?
+                                                    "String.valueOf(\"skip\".equals(" + fieldName + ") ? defaultManifest : " + fieldName + ")" :
+                                                    "String.valueOf(" + fieldName + ")");
                                 })
                                 .collect(joining(",\n                                ", "                                ", ""));
 
@@ -179,6 +185,12 @@ public final class MojoGenerator {
                                         "     */\n" +
                                         "    @Parameter(property = \"bundlebee." + name + ".customPlaceholders\")\n" +
                                         "    private Map<String, String> customPlaceholders;\n" +
+                                        (!addManifestAlias ? "" : "\n" +
+                                                "    /**\n" +
+                                                "     * Just an alias for the built-in manifest property to ease the pom configuration for all commands.\n" +
+                                                "     */\n" +
+                                                "    @Parameter(property = \"bundlebee.manifest\", defaultValue = \"skip\")\n" +
+                                                "    private String defaultManifest;\n") +
                                         "\n" +
                                         "    @Override\n" +
                                         "    public void doExecute() {\n" +
@@ -198,11 +210,8 @@ public final class MojoGenerator {
                 });
     }
 
-    private static String addParameterAliasIfNeeded(final String key) {
-        if (key.startsWith("bundlebee.") && key.endsWith(".manifest")) {
-            return ", alias = \"bundlebee.manifest\"";
-        }
-        return "";
+    private static boolean shouldAddManifestAlias(final String key) {
+        return key.startsWith("bundlebee.") && key.endsWith(".manifest") && !"bundlebee.manifest".equals(key);
     }
 
     private static boolean needsProject(final Collection<String> parameters) {
