@@ -15,8 +15,11 @@
  */
 package io.yupiik.bundlebee.maven.mojo;
 
+import io.yupiik.bundlebee.maven.interpolation.MavenConfigSource;
 import lombok.RequiredArgsConstructor;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 
@@ -59,6 +62,9 @@ public abstract class BaseMojo extends AbstractMojo {
     @Parameter(defaultValue = "${project.packaging}")
     private String packaging;
 
+    @Parameter(defaultValue = "${session}", readonly = true)
+    private MavenSession session;
+
     protected abstract void doExecute();
 
     @Override
@@ -71,10 +77,14 @@ public abstract class BaseMojo extends AbstractMojo {
             getLog().info(getClass().getName() + " execution skipped");
             return;
         }
+
+        // todo: something more thread safe but can need to use a custom boot classloader for OWB
+        MavenConfigSource.expressionEvaluator = new PluginParameterExpressionEvaluator(session);
         try {
             doExecute();
         } finally {
             reset.forEach(Runnable::run);
+            MavenConfigSource.expressionEvaluator = null;
         }
     }
 
