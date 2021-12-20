@@ -29,6 +29,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.joining;
@@ -51,19 +53,13 @@ public class ManifestReader {
             final var content = substitutor.replace(reader.lines().collect(joining("\n")));
             final var mf = jsonb.fromJson(content, Manifest.class);
             if (location != null && mf.getAlveoli() != null) {
-                final var locationAsString = location.toAbsolutePath().normalize().toString();
-                mf.getAlveoli().forEach(alveolus -> {
-                    if (alveolus.getDescriptors() != null) {
-                        alveolus.getDescriptors().stream()
-                                .filter(it -> it.getLocation() == null)
-                                .forEach(desc -> desc.setLocation(locationAsString));
-                    }
-                    if (alveolus.getDependencies() != null) {
-                        alveolus.getDependencies().stream()
-                                .filter(it -> it.getLocation() == null)
-                                .forEach(desc -> desc.setLocation(locationAsString));
-                    }
-                });
+                final var locationAsString = location.toAbsolutePath().normalize().getParent().getParent().toString();
+                mf.getAlveoli().stream()
+                        .map(Manifest.Alveolus::getDescriptors)
+                        .filter(Objects::nonNull)
+                        .flatMap(Collection::stream)
+                        .filter(it -> it.getLocation() == null)
+                        .forEach(desc -> desc.setLocation(locationAsString));
             }
             return mf;
         } catch (final IOException e) {
