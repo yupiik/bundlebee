@@ -58,7 +58,7 @@ public class ArchiveReader {
         if (Files.isDirectory(zipLocation)) {
             final var manifest = zipLocation.resolve("bundlebee/manifest.json");
             if (Files.exists(manifest)) {
-                final var manifestJson = manifestReader.readManifest(() -> {
+                final var manifestJson = manifestReader.readManifest(zipLocation, () -> {
                     try {
                         return Files.newInputStream(manifest);
                     } catch (final IOException e) {
@@ -85,7 +85,7 @@ public class ArchiveReader {
                 } catch (final IOException e) {
                     throw new IllegalStateException(e);
                 }
-                return new Archive(manifestJson, descriptors);
+                return new Archive(zipLocation, manifestJson, descriptors);
             }
             throw new IllegalArgumentException("No '" + manifest + "' found");
         }
@@ -94,7 +94,7 @@ public class ArchiveReader {
             if (manifestEntry == null) {
                 throw new IllegalStateException("No manifest.json in " + zipLocation);
             }
-            final var manifest = manifestReader.readManifest(() -> {
+            final var manifest = manifestReader.readManifest(zipLocation, () -> {
                 try {
                     return zip.getInputStream(manifestEntry);
                 } catch (final IOException e) {
@@ -102,6 +102,7 @@ public class ArchiveReader {
                 }
             });
             return new Archive(
+                    zipLocation,
                     manifest,
                     list(zip.entries()).stream()
                             .filter(it -> !it.isDirectory() && it.getName().startsWith("bundlebee/kubernetes/"))
@@ -144,6 +145,7 @@ public class ArchiveReader {
     @Data
     @Vetoed
     public static class Archive {
+        private final Path location;
         private final Manifest manifest;
         private final Map<String, String> descriptors;
     }

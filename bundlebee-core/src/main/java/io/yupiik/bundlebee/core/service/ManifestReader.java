@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.joining;
@@ -44,11 +45,27 @@ public class ManifestReader {
     @Inject
     private Substitutor substitutor;
 
-    public Manifest readManifest(final Supplier<InputStream> manifest) {
+    public Manifest readManifest(final Path location, final Supplier<InputStream> manifest) {
         try (final BufferedReader reader = new BufferedReader(
                 new InputStreamReader(manifest.get(), StandardCharsets.UTF_8))) {
             final var content = substitutor.replace(reader.lines().collect(joining("\n")));
-            return jsonb.fromJson(content, Manifest.class);
+            final var mf = jsonb.fromJson(content, Manifest.class);
+            if (location != null && mf.getAlveoli() != null) {
+                final var locationAsString = location.toAbsolutePath().normalize().toString();
+                mf.getAlveoli().forEach(alveolus -> {
+                    if (alveolus.getDescriptors() != null) {
+                        alveolus.getDescriptors().stream()
+                                .filter(it -> it.getLocation() == null)
+                                .forEach(desc -> desc.setLocation(locationAsString));
+                    }
+                    if (alveolus.getDependencies() != null) {
+                        alveolus.getDependencies().stream()
+                                .filter(it -> it.getLocation() == null)
+                                .forEach(desc -> desc.setLocation(locationAsString));
+                    }
+                });
+            }
+            return mf;
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
