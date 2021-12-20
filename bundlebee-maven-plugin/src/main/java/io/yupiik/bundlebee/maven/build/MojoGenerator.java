@@ -105,6 +105,7 @@ public final class MojoGenerator {
                                                     "     * " + desc.replace('\n', ' ') + "\n" +
                                                     "     */\n" +
                                                     "    @Parameter(property = \"" + key + "\"" +
+                                                    addParameterAliasIfNeeded(key) +
                                                     ", defaultValue = \"" + findDefault(key, defaultValue.replaceAll("\n", "\\n")) + "\")\n" +
                                                     "    private " + it.getType().getName().replace("java.lang.", "") + " " + paramName + ";";
                                         },
@@ -195,6 +196,13 @@ public final class MojoGenerator {
                         throw new IllegalArgumentException(e);
                     }
                 });
+    }
+
+    private static String addParameterAliasIfNeeded(final String key) {
+        if (key.startsWith("bundlebee.") && key.endsWith(".manifest")) {
+            return ", alias = \"bundlebee.manifest\"";
+        }
+        return "";
     }
 
     private static boolean needsProject(final Collection<String> parameters) {
