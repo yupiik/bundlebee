@@ -278,11 +278,7 @@
                   "title": "Descriptor.type",
                   "description": "Type of this descriptor. For now only `kubernetes` is supported. It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name."
                 }
-              },
-              "required": [
-                "$doc",
-                "name"
-              ]
+              }
             }
           },
           "excludedDescriptors": {
@@ -347,7 +343,11 @@
             "title": "Alveolus.version",
             "description": "If name does not follow `<groupId>:<artifactId>:<version>` naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced)."
           }
-        }
+        },
+        "required": [
+          "$doc",
+          "name"
+        ]
       }
     }
   }
