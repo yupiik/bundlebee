@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,7 +91,7 @@ public class AlveolusHandler {
 
     public CompletionStage<Manifest> findManifest(final String from, final String manifest) {
         if (!"skip".equals(manifest)) {
-            return completedFuture(readManifest(null, manifest));
+            return completedFuture(readManifest(manifest));
         }
         if (from == null || "auto".equals(from)) { // can't do
             return completedFuture(null);
@@ -103,7 +102,7 @@ public class AlveolusHandler {
     public CompletionStage<List<ManifestAndAlveolus>> findRootAlveoli(final String from, final String manifest,
                                                                       final String alveolus) {
         if (!"skip".equals(manifest)) {
-            final var mf = readManifest(null, manifest);
+            final var mf = readManifest(manifest);
             if (mf.getAlveoli() == null) {
                 throw new IllegalArgumentException("No alveoli in manifest '" + manifest + "'");
             }
@@ -149,12 +148,12 @@ public class AlveolusHandler {
         return combinedOnAlveolus.apply(new AlveolusContext(manifest, alveolus, Map.of(), List.of(), cache));
     }
 
-    private Manifest readManifest(final Path location, final String manifest) {
+    private Manifest readManifest(final String manifest) {
         if (manifest.startsWith("{")) {
             return manifestReader.readManifest(null, () -> new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8)));
         }
         final var path = Paths.get(manifest);
-        return manifestReader.readManifest(path, () -> {
+        return manifestReader.readManifest(path.toAbsolutePath().getParent().getParent().normalize().toString(), () -> {
             try {
                 return Files.newInputStream(path);
             } catch (final IOException e) {

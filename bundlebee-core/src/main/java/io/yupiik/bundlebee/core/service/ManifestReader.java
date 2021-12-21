@@ -47,19 +47,18 @@ public class ManifestReader {
     @Inject
     private Substitutor substitutor;
 
-    public Manifest readManifest(final Path location, final Supplier<InputStream> manifest) {
+    public Manifest readManifest(final String location, final Supplier<InputStream> manifest) {
         try (final BufferedReader reader = new BufferedReader(
                 new InputStreamReader(manifest.get(), StandardCharsets.UTF_8))) {
             final var content = substitutor.replace(reader.lines().collect(joining("\n")));
             final var mf = jsonb.fromJson(content, Manifest.class);
-            if (location != null && mf.getAlveoli() != null) {
-                final var locationAsString = location.toAbsolutePath().normalize().getParent().getParent().toString();
+            if (location != null && !location.isBlank() && mf.getAlveoli() != null) {
                 mf.getAlveoli().stream()
                         .map(Manifest.Alveolus::getDescriptors)
                         .filter(Objects::nonNull)
                         .flatMap(Collection::stream)
                         .filter(it -> it.getLocation() == null)
-                        .forEach(desc -> desc.setLocation(locationAsString));
+                        .forEach(desc -> desc.setLocation(location));
             }
             return mf;
         } catch (final IOException e) {
