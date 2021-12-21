@@ -20,5 +20,5 @@ import lombok.Data;
 @Data
 public class Tuple2<A, B> {
     private final A first;
-    private final A second;
+    private final B second;
 }
