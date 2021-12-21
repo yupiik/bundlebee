@@ -179,7 +179,8 @@ public class RollbackCommand implements CompletingExecutable {
                         true));
     }
 
-    private CompletionStage<?> rollback(final ArchiveReader.Cache cache, final Tuple2<AlveolusHandler.ManifestAndAlveolus, Object> v) {
+    private CompletionStage<?> rollback(final ArchiveReader.Cache cache,
+                                        final Tuple2<AlveolusHandler.ManifestAndAlveolus, AlveolusHandler.ManifestAndAlveolus> v) {
         return delete
                 .doDelete(cache, v.getFirst().getManifest(), v.getFirst().getAlveolus(), gracePeriodSeconds, Integer.parseInt(await))
                 .thenCompose(it -> {
