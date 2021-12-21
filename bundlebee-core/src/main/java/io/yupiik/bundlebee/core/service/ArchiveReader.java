@@ -53,12 +53,13 @@ public class ArchiveReader {
     @Inject
     private Maven mvn;
 
-    public Archive read(final Path zipLocation) {
+    public Archive read(final String coords, final Path zipLocation) {
         log.finest(() -> "Reading " + zipLocation);
         if (Files.isDirectory(zipLocation)) {
             final var manifest = zipLocation.resolve("bundlebee/manifest.json");
             if (Files.exists(manifest)) {
-                final var manifestJson = manifestReader.readManifest(zipLocation, () -> {
+                final var manifestJson = manifestReader.readManifest(
+                        zipLocation.toAbsolutePath().normalize().toString(), () -> {
                     try {
                         return Files.newInputStream(manifest);
                     } catch (final IOException e) {
@@ -94,7 +95,7 @@ public class ArchiveReader {
             if (manifestEntry == null) {
                 throw new IllegalStateException("No manifest.json in " + zipLocation);
             }
-            final var manifest = manifestReader.readManifest(zipLocation, () -> {
+            final var manifest = manifestReader.readManifest(coords, () -> {
                 try {
                     return zip.getInputStream(manifestEntry);
                 } catch (final IOException e) {
@@ -135,9 +136,9 @@ public class ArchiveReader {
             return cache.computeIfAbsent(coords, k -> {
                 final var local = Paths.get(coords);
                 if (Files.exists(local)) {
-                    return completedFuture(read(local));
+                    return completedFuture(read(coords, local));
                 }
-                return mvn.findOrDownload(k).thenApply(ArchiveReader.this::read);
+                return mvn.findOrDownload(k).thenApply(it -> read(coords, it));
             });
         }
     }
