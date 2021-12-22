@@ -182,6 +182,8 @@ public final class MojoGenerator {
                                                 .collect(joining("\n\n", "", "\n\n")) +
                                         "    /**\n" +
                                         "     * Custom properties injected in the main, it is often used for placeholders.\n" +
+                                        "     * If the key (tag in pom) starts with `bundlebee-placeholder-import` then the value is resolved as a properties file\n" +
+                                        "     * which is injected in the resulting placeholders (indirect placeholders).\n" +
                                         "     */\n" +
                                         "    @Parameter(property = \"bundlebee." + name + ".customPlaceholders\")\n" +
                                         "    private Map<String, String> customPlaceholders;\n" +
