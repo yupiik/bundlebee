@@ -22,16 +22,26 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.MissingResourceException;
+import java.util.Properties;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Map.entry;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -97,7 +107,51 @@ public abstract class BaseMojo extends AbstractMojo {
         return placeholders == null ?
                 Stream.empty() :
                 placeholders.entrySet().stream()
+                        .flatMap(this::loadPlaceholder)
                         .flatMap(it -> Stream.of("--" + it.getKey(), it.getValue()));
+    }
+
+    private Stream<Map.Entry<String, String>> loadPlaceholder(final Map.Entry<String, String> entry) {
+        return !entry.getKey().startsWith("bundlebee-placeholder-import") ?
+                Stream.of(entry) :
+                loadProperties(entry.getValue());
+    }
+
+    private Stream<Map.Entry<String, String>> loadProperties(final String value) {
+        final var props = new Properties();
+        try (final var reader = resolveReader(value)) {
+            props.load(reader);
+        } catch (final IOException e) {
+            throw new IllegalArgumentException(e);
+        }
+        final var base = props.stringPropertyNames().stream()
+                .map(k -> entry(k, props.getProperty(k)));
+        if (session == null) {
+            return base;
+        }
+        final var interpolator = new PluginParameterExpressionEvaluator(session);
+        return base.map(e -> entry(e.getKey(), interpolate(interpolator, e.getValue())));
+    }
+
+    private String interpolate(final PluginParameterExpressionEvaluator interpolator, final String value) {
+        try {
+            final var evaluate = interpolator.evaluate(value);
+            return evaluate == null ? value : String.valueOf(evaluate);
+        } catch (final ExpressionEvaluationException | RuntimeException e) {
+            getLog().debug(e);
+            return value;
+        }
+    }
+
+    private Reader resolveReader(final String value) throws IOException {
+        final var path = Path.of(value);
+        if (Files.exists(path)) {
+            return Files.newBufferedReader(path, UTF_8);
+        }
+        final var from = requireNonNull(
+                Thread.currentThread().getContextClassLoader().getResourceAsStream(value),
+                () -> "Can't find '" + value + "'");
+        return new InputStreamReader(from, UTF_8);
     }
 
     // forward jul to maven logs to have a nicer output
