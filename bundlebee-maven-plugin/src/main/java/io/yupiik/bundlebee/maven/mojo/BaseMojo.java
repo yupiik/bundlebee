@@ -19,6 +19,7 @@ import io.yupiik.bundlebee.maven.interpolation.MavenConfigSource;
 import lombok.RequiredArgsConstructor;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -75,6 +76,9 @@ public abstract class BaseMojo extends AbstractMojo {
     @Parameter(defaultValue = "${session}", readonly = true)
     private MavenSession session;
 
+    @Parameter(defaultValue = "${mojoExecution}", readonly = true)
+    private MojoExecution mojoExecution;
+
     protected abstract void doExecute();
 
     @Override
@@ -93,7 +97,7 @@ public abstract class BaseMojo extends AbstractMojo {
             return;
         }
         synchronized (session) {
-            MavenConfigSource.expressionEvaluator = new PluginParameterExpressionEvaluator(session);
+            MavenConfigSource.expressionEvaluator = new PluginParameterExpressionEvaluator(session, mojoExecution);
             try {
                 doExecute();
             } finally {
@@ -107,11 +111,11 @@ public abstract class BaseMojo extends AbstractMojo {
         return placeholders == null ?
                 Stream.empty() :
                 placeholders.entrySet().stream()
-                        .flatMap(this::loadPlaceholder)
+                        .flatMap(this::loadPlaceholders)
                         .flatMap(it -> Stream.of("--" + it.getKey(), it.getValue()));
     }
 
-    private Stream<Map.Entry<String, String>> loadPlaceholder(final Map.Entry<String, String> entry) {
+    private Stream<Map.Entry<String, String>> loadPlaceholders(final Map.Entry<String, String> entry) {
         return !entry.getKey().startsWith("bundlebee-placeholder-import") ?
                 Stream.of(entry) :
                 loadProperties(entry.getValue());
@@ -129,7 +133,7 @@ public abstract class BaseMojo extends AbstractMojo {
         if (session == null) {
             return base;
         }
-        final var interpolator = new PluginParameterExpressionEvaluator(session);
+        final var interpolator = new PluginParameterExpressionEvaluator(session, mojoExecution);
         return base.map(e -> entry(e.getKey(), interpolate(interpolator, e.getValue())));
     }
 
