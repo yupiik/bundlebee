@@ -42,6 +42,8 @@ Here is its configuration specification:
 
 include::content/_partials/generated/jsonschema/manifest.descriptor.adoc[leveloffset=+2]
 
+TIP: manifest content can be wrapped in a `bundlebee` key (you wrap the whole content) which enables you to add other metadata in the manifest and still reuse BundleeBee JSON-Schema for the validation (by composition).
+
 === JSON-Schema
 
 If you use JSON-Schema facilities in your preferred editor, here is the raw JSON-Schema for the manifest descriptor:

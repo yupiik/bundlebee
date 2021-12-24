@@ -18,10 +18,12 @@ package io.yupiik.bundlebee.core.service;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import org.apache.johnzon.jsonb.extension.JsonValueReader;
 import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.JsonObject;
 import javax.json.bind.Jsonb;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,7 +53,14 @@ public class ManifestReader {
         try (final BufferedReader reader = new BufferedReader(
                 new InputStreamReader(manifest.get(), StandardCharsets.UTF_8))) {
             final var content = substitutor.replace(reader.lines().collect(joining("\n")));
-            final var mf = jsonb.fromJson(content, Manifest.class);
+            final var json = jsonb.fromJson(content, JsonObject.class);
+            final Manifest mf;
+            if (json.containsKey("bundlebee")) { // it is a wrapped manifest, we enable that to easily enrich manifest.json with custom attributes without breaking jsonschema
+                final var subJson = json.getJsonObject("bundlebee");
+                mf = jsonb.fromJson(new JsonValueReader<>(subJson), Manifest.class);
+            } else {
+                mf = jsonb.fromJson(content, Manifest.class);
+            }
             if (location != null && !location.isBlank() && mf.getAlveoli() != null) {
                 mf.getAlveoli().stream()
                         .map(Manifest.Alveolus::getDescriptors)
