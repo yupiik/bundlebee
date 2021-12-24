@@ -25,6 +25,9 @@ import java.util.List;
 
 @Data
 public class Manifest {
+    @Description("Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.")
+    private List<Requirement> requirements;
+
     @Description("List of described applications/libraries.")
     private List<Alveolus> alveoli;
 
@@ -73,6 +76,18 @@ public class Manifest {
 
         @Description("Evaluate items in `/status/conditions`.")
         STATUS_CONDITION
+    }
+
+    @Data
+    public static class Requirement {
+        @Description("Minimum bundlebee version, use `*` to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.")
+        private String minBundlebeeVersion;
+
+        @Description("Minimum bundlebee version, use `*`to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.")
+        private String maxBundlebeeVersion;
+
+        @Description("List of forbidden version (due to a bug or equivalent). Here too snapshot suffix is ignored. `*` is usable there too to replace any digit in a segment (ex: `1.*.*`). Note that `1.*` would *NOT* match `1.*.*`, version are always 3 segments.")
+        private List<String> forbiddenVersions;
     }
 
     @Data
