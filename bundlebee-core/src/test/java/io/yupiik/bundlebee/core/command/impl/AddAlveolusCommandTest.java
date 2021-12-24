@@ -38,7 +38,8 @@ class AddAlveolusCommandTest {
     @Test
     void addService(final CommandExecutor executor, @TempDir final Path dir) throws IOException {
         // create a bundle
-        new BundleBee().launch("new", "--dir", dir.toString(), "--group", "com.company", "--artifact", "foo");
+        final var dirString = dir.toString().replace('\\', '/');
+        new BundleBee().launch("new", "--dir", dirString.toString(), "--group", "com.company", "--artifact", "foo");
 
         // now add a web alveolus
         final var logs = executor.wrap(INFO, () -> new BundleBee()
@@ -47,10 +48,10 @@ class AddAlveolusCommandTest {
                         "--alveolus", "test",
                         "--image", "deploy"));
         assertEquals("" +
-                "Created " + dir + "/bundlebee/kubernetes/test.configmap.yaml\n" +
-                "Created " + dir + "/bundlebee/kubernetes/test.deployment.yaml\n" +
-                "Created " + dir + "/bundlebee/kubernetes/test.service.yaml\n" +
-                "Added alveolus 'test' to '" + dir + "/bundlebee/manifest.json'\n" +
+                "Created " + dirString + "/bundlebee/kubernetes/test.configmap.yaml\n" +
+                "Created " + dirString + "/bundlebee/kubernetes/test.deployment.yaml\n" +
+                "Created " + dirString + "/bundlebee/kubernetes/test.service.yaml\n" +
+                "Added alveolus 'test' to '" + dirString + "/bundlebee/manifest.json'\n" +
                 "", logs);
         assertEquals("" +
                 "apiVersion: v1\n" +

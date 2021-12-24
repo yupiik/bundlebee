@@ -35,14 +35,15 @@ class NewBundleCommandTest {
 
     @Test
     void create(final CommandExecutor executor, @TempDir final Path dir) throws IOException {
+        final var dirString = dir.toString().replace('\\', '/');
         assertEquals("" +
-                "Created " + dir + "/bundlebee/kubernetes\n" +
-                "Created " + dir + "/bundlebee/manifest.json\n" +
-                "Created " + dir + "/bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml\n" +
-                "Created " + dir + "/pom.xml\n" +
-                "Creation completed, you can go in " + dir + " and build it with 'bundlebee build'\n" +
+                "Created " + dirString + "/bundlebee/kubernetes\n" +
+                "Created " + dirString + "/bundlebee/manifest.json\n" +
+                "Created " + dirString + "/bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml\n" +
+                "Created " + dirString + "/pom.xml\n" +
+                "Creation completed, you can go in " + dirString + " and build it with 'bundlebee build'\n" +
                 "", executor.wrap(Level.INFO, () -> new BundleBee().launch(
-                "new", "--dir", dir.toString(), "--group", "com.company", "--artifact", "foo")));
+                "new", "--dir", dirString, "--group", "com.company", "--artifact", "foo")));
         assertEquals("" +
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                 "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +

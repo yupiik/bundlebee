@@ -55,7 +55,7 @@ public class CommandExecutor {
         logger.addHandler(handler);
         try {
             task.run();
-            return content.toString();
+            return content.toString().replace('\\', '/');
         } finally {
             logger.removeHandler(handler);
             logger.setLevel(oldLevel);

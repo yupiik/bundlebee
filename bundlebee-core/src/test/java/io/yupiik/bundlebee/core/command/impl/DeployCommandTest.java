@@ -63,12 +63,13 @@ class DeployCommandTest {
                 "--nexusBaseApi", "http://admin:admin@localhost:" + handler.getPort(),
                 "--deployInLocalRepository", "false",
                 "--dir", temp.toString()));
+        final var dirString = temp.toString().replace('\\', '/');
         assertEquals("" +
                 "Including bundlebee/manifest.json\n" +
                 "Including bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml\n" +
-                "Built " + temp + "/target/foo-1.0.0.jar\n" +
+                "Built " + dirString + "/target/foo-1.0.0.jar\n" +
                 "Project successfully built.\n" +
-                "Uploaded " + temp + "/target/foo-1.0.0.jar on Nexus repository maven-releases\n" +
+                "Uploaded " + dirString + "/target/foo-1.0.0.jar on Nexus repository maven-releases\n" +
                 "", logs);
         assertEquals(4 /*test v2, test v3, test jar exists, upload jar */, spy.getFound().size());
     }
