@@ -23,6 +23,9 @@ import lombok.NoArgsConstructor;
 import javax.json.JsonArray;
 import java.util.List;
 
+/**
+ * IMPORTANT: the key "bundlebee" is forbidden, see {@link io.yupiik.bundlebee.core.service.ManifestReader}.
+ */
 @Data
 public class Manifest {
     @Description("Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.")

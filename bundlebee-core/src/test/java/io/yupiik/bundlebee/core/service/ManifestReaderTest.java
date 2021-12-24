@@ -15,6 +15,7 @@
  */
 package io.yupiik.bundlebee.core.service;
 
+import io.yupiik.bundlebee.core.descriptor.Manifest;
 import org.apache.openwebbeans.junit5.Cdi;
 import org.junit.jupiter.api.Test;
 
@@ -44,7 +45,28 @@ class ManifestReaderTest {
                 "    }" +
                 "  ]" +
                 "}").getBytes(StandardCharsets.UTF_8)));
+        assertManifest(manifest);
+    }
 
+    @Test
+    void wrappedRead() {
+        final var manifest = reader.readManifest(null, () -> new ByteArrayInputStream(("{\"bundlebee\":{" +
+                "  \"alveoli\":[" +
+                "    {" +
+                "      \"name\": \"test\"," +
+                "      \"descriptors\":[" +
+                "        {" +
+                "          \"name\": \"foo\"," +
+                "          \"location\": \"com.company:alv:1.0.0\"" +
+                "        }" +
+                "      ]" +
+                "    }" +
+                "  ]" +
+                "}}").getBytes(StandardCharsets.UTF_8)));
+        assertManifest(manifest);
+    }
+
+    private void assertManifest(final Manifest manifest) {
         assertEquals(1, manifest.getAlveoli().size());
 
         final var alveolus = manifest.getAlveoli().iterator().next();
