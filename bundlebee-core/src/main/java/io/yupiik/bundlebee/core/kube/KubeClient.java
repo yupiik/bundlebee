@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.kube;
 
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.event.OnKubeRequest;
 import io.yupiik.bundlebee.core.http.DelegatingClient;
 import io.yupiik.bundlebee.core.http.DryRunClient;
 import io.yupiik.bundlebee.core.http.JsonHttpResponse;
@@ -34,6 +35,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonException;
@@ -211,6 +213,9 @@ public class KubeClient implements ConfigHolder {
     @ConfigProperty(name = "bundlebee.kube.dryRun", defaultValue = "false")
     private boolean dryRun;
 
+    @Inject
+    private Event<OnKubeRequest> onKubeRequestEvent;
+
     private Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
     private HttpClient client;
 
@@ -232,6 +237,19 @@ public class KubeClient implements ConfigHolder {
             @Override
             public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
                                                                     final HttpResponse.BodyHandler<T> responseBodyHandler) {
+                final OnKubeRequest kubeRequest = new OnKubeRequest(request);
+                onKubeRequestEvent.fire(kubeRequest);
+                if (kubeRequest.getUserResponse() != null) {
+                    return CompletableFuture.class.cast(kubeRequest.getUserResponse().toCompletableFuture());
+                }
+                if (kubeRequest.getUserRequest() != null) {
+                    return doSendAsync(kubeRequest.getUserRequest(), responseBodyHandler);
+                }
+                return doSendAsync(request, responseBodyHandler);
+            }
+
+            private <T> CompletableFuture<HttpResponse<T>> doSendAsync(final HttpRequest request,
+                                                                       final HttpResponse.BodyHandler<T> responseBodyHandler) {
                 return super.sendAsync(request, responseBodyHandler)
                         // enforce the right classloader
                         .whenCompleteAsync((r, t) -> {
@@ -318,7 +336,8 @@ public class KubeClient implements ConfigHolder {
     }
 
     public CompletionStage<HttpResponse<String>> execute(final HttpRequest.Builder builder, final String urlOrPath) {
-        return client.sendAsync(setAuth.apply(builder)
+        return client.sendAsync(
+                setAuth.apply(builder)
                         .uri(URI.create(
                                 urlOrPath.startsWith("http:") || urlOrPath.startsWith("https:") ?
                                         urlOrPath :
