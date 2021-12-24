@@ -31,16 +31,22 @@ public class MavenConfigSource implements ConfigSource {
     }
 
     @Override
-    public String getValue(final String s) {
+    public String getValue(final String key) {
         if (expressionEvaluator == null) {
             return null;
         }
         try {
-            final var evaluate = expressionEvaluator.evaluate(s);
-            return evaluate == null || Objects.equals(s, evaluate) ? null : String.valueOf(evaluate);
+            final var evaluate = expressionEvaluator.evaluate(key);
+            return wasFiltered(key, evaluate) ?
+                    String.valueOf(evaluate) :
+                    null;
         } catch (final ExpressionEvaluationException e) {
             return null;
         }
+    }
+
+    private boolean wasFiltered(final String key, final Object evaluate) {
+        return evaluate != null && !Objects.equals(key, evaluate);
     }
 
     @Override

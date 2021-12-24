@@ -73,7 +73,7 @@ public class CheckUpdateCommand implements Executable {
 
     @Inject
     @Description("Where to install bundlebee if `update` is `true`.")
-    @ConfigProperty(name = "bundlebee.check-update.installLocation", defaultValue = "${user.home}/.yupiik/bundlebee/bin/bundlebee")
+    @ConfigProperty(name = "bundlebee.check-update.installLocation", defaultValue = "{{user.home}}/.yupiik/bundlebee/bin/bundlebee")
     private String installLocation;
 
     @Inject
@@ -110,7 +110,10 @@ public class CheckUpdateCommand implements Executable {
                 log.info(() -> "You can download it with this link: " + maven.toRelativePath(repository, groupId, artifactId, last, "-Linux-amd64", "bin", last));
                 return completedFuture(last);
             }
-            final var target = Paths.get(installLocation.replace("${user.home}", System.getProperty("user.home")));
+            final var home = System.getProperty("user.home", ".");
+            final var target = Paths.get(installLocation
+                    .replace("$" + "{user.home}" /*writtten this way to abuse the filtering + backward compat*/, home)
+                    .replace("{{user.home}}", home));
             if (Files.exists(target.getParent())) {
                 try {
                     Files.createDirectories(target.getParent());
