@@ -24,6 +24,7 @@ import java.util.Objects;
 
 public class MavenConfigSource implements ConfigSource {
     public static ExpressionEvaluator expressionEvaluator;
+    public static Config config;
 
     @Override
     public Map<String, String> getProperties() {
@@ -36,10 +37,17 @@ public class MavenConfigSource implements ConfigSource {
             return null;
         }
         try {
-            final var evaluate = expressionEvaluator.evaluate(key);
-            return wasFiltered(key, evaluate) ?
-                    String.valueOf(evaluate) :
-                    null;
+            var evaluate = expressionEvaluator.evaluate(key);
+            if (wasFiltered(key, evaluate)) {
+                return String.valueOf(evaluate);
+            }
+            if (config != null && config.allowForcedFiltering) {
+                evaluate = expressionEvaluator.evaluate("${" + key + "}");
+                if (wasFiltered(key, evaluate)) {
+                    return String.valueOf(evaluate);
+                }
+            }
+            return null;
         } catch (final ExpressionEvaluationException e) {
             return null;
         }
@@ -52,5 +60,13 @@ public class MavenConfigSource implements ConfigSource {
     @Override
     public String getName() {
         return "maven";
+    }
+
+    public static class Config {
+        private final boolean allowForcedFiltering;
+
+        public Config(final boolean allowForcedFiltering) {
+            this.allowForcedFiltering = allowForcedFiltering;
+        }
     }
 }
