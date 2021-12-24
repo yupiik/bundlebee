@@ -42,14 +42,15 @@ class BuildCommandTest {
         // create a bundle
         new BundleBee().launch("new", "--dir", dir.toString(), "--group", "com.company", "--artifact", "foo");
 
+        final var dirString = dir.toString().replace('\\', '/');
         assertEquals("" +
                 "Including bundlebee/manifest.json\n" +
                 "Including bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml\n" +
-                "Built " + dir + "/target/foo-1.0.0.jar\n" +
-                "Installed " + dir + "/m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar\n" +
+                "Built " + dirString + "/target/foo-1.0.0.jar\n" +
+                "Installed " + dirString + "/m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar\n" +
                 "Project successfully built.\n" +
                 "", executor.wrap(INFO, () -> new BundleBee().launch(
-                "build", "--dir", dir.toString(), "--bundlebee-maven-cache", dir.resolve("m2/repository").toString())));
+                "build", "--dir", dirString, "--bundlebee-maven-cache", dir.resolve("m2/repository").toString())));
 
         try (final JarFile file = new JarFile(dir.resolve("m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar").toFile())) {
             assertEquals(

@@ -38,14 +38,15 @@ class MavenPasswordCommandsTest {
     @Test
     void masterAndServer(@TempDir final Path m2,
                          final CommandExecutor executor) throws Exception {
+        final var m2String = m2.toString().replace('\\', '/');
         // 1. generate a master password
         assertEquals("" +
-                        "Created " + m2 + "/settings.xml\n" +
+                        "Created " + m2String + "/settings.xml\n" +
                         "Created master password: {xxx}\n" +
-                        "Created " + m2 + "/settings-security.xml\n" +
+                        "Created " + m2String + "/settings-security.xml\n" +
                         "",
                 executor.wrap(INFO, () -> new BundleBee().launch("create-master-password",
-                        "--bundlebee-maven-cache", m2.toString(),
+                        "--bundlebee-maven-cache", m2String,
                         "--bundlebee-maven-preferCustomSettingsXml", "true",
                         "--bundlebee-maven-forceCustomSettingsXml", "true",
                         "--password", "secret"))
@@ -53,12 +54,12 @@ class MavenPasswordCommandsTest {
 
         // 2. generate a server password
         final var logs = executor.wrap(INFO, () -> new BundleBee().launch("cipher-password",
-                "--bundlebee-maven-cache", m2.toString(),
+                "--bundlebee-maven-cache", m2String,
                 "--bundlebee-maven-preferCustomSettingsXml", "true",
                 "--bundlebee-maven-forceCustomSettingsXml", "true",
                 "--password", "server-secret"));
         assertEquals("" +
-                        "You can add this server in " + m2 + "/settings.xml:\n" +
+                        "You can add this server in " + m2String + "/settings.xml:\n" +
                         "\n" +
                         "    <server>\n" +
                         "      <id>my-server</id>\n" +
