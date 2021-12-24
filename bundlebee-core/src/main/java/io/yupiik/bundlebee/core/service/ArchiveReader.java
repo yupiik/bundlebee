@@ -16,10 +16,12 @@
 package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.bundlebee.core.event.OnLoadArchive;
 import lombok.Data;
 import lombok.extern.java.Log;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.Vetoed;
 import javax.inject.Inject;
 import java.io.BufferedReader;
@@ -52,6 +54,9 @@ public class ArchiveReader {
 
     @Inject
     private Maven mvn;
+
+    @Inject
+    private Event<OnLoadArchive> onLoadArchiveEvent;
 
     public Archive read(final String coords, final Path zipLocation) {
         log.finest(() -> "Reading " + zipLocation);
@@ -133,13 +138,21 @@ public class ArchiveReader {
         private final Map<String, CompletionStage<Archive>> cache = new ConcurrentHashMap<>();
 
         public CompletionStage<Archive> loadArchive(final String coords) {
-            return cache.computeIfAbsent(coords, k -> {
-                final var local = Paths.get(coords);
-                if (Files.exists(local)) {
-                    return completedFuture(read(coords, local));
-                }
-                return mvn.findOrDownload(k).thenApply(it -> read(coords, it));
-            });
+            return cache.computeIfAbsent(coords, this::doLoadArchive);
+        }
+
+        private CompletionStage<Archive> doLoadArchive(final String coords) {
+            final var archive = new OnLoadArchive(coords);
+            onLoadArchiveEvent.fire(archive);
+            if (archive.getLoader() != null) {
+                return archive.getLoader();
+            }
+
+            final var local = Paths.get(coords);
+            if (Files.exists(local)) {
+                return completedFuture(read(coords, local));
+            }
+            return mvn.findOrDownload(coords).thenApply(it -> read(coords, it));
         }
     }
 

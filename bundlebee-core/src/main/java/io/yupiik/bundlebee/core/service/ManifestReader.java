@@ -16,12 +16,14 @@
 package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.bundlebee.core.event.OnManifestRead;
 import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import org.apache.johnzon.jsonb.extension.JsonValueReader;
 import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.json.JsonObject;
 import javax.json.bind.Jsonb;
@@ -30,7 +32,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -48,6 +49,9 @@ public class ManifestReader {
 
     @Inject
     private Substitutor substitutor;
+
+    @Inject
+    private Event<OnManifestRead> onManifestReadEvent;
 
     public Manifest readManifest(final String location, final Supplier<InputStream> manifest) {
         try (final BufferedReader reader = new BufferedReader(
@@ -69,6 +73,7 @@ public class ManifestReader {
                         .filter(it -> it.getLocation() == null)
                         .forEach(desc -> desc.setLocation(location));
             }
+            onManifestReadEvent.fire(new OnManifestRead(mf));
             return mf;
         } catch (final IOException e) {
             throw new IllegalStateException(e);
