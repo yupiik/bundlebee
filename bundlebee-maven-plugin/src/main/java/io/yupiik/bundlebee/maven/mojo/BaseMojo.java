@@ -15,6 +15,7 @@
  */
 package io.yupiik.bundlebee.maven.mojo;
 
+import io.yupiik.bundlebee.core.lang.Tuple2;
 import io.yupiik.bundlebee.maven.interpolation.MavenConfigSource;
 import lombok.RequiredArgsConstructor;
 import org.apache.maven.execution.MavenSession;
@@ -49,6 +50,13 @@ import static java.util.stream.Collectors.toList;
  * Enables to have some global extension points - to change the classloader for ex.
  */
 public abstract class BaseMojo extends AbstractMojo {
+    /**
+     * If `true`, bundlebee lookup in maven context will be one level only which means `foo`
+     * will be looked up as such in maven and not ``${foo}` which will work.
+     */
+    @Parameter(property = "bundlebee.skipMavenForcedFilteringForPlaceholders", defaultValue = "false")
+    private boolean skipMavenForcedFilteringForPlaceholders;
+
     /**
      * Skip execution.
      */
@@ -96,13 +104,16 @@ public abstract class BaseMojo extends AbstractMojo {
             doExecute();
             return;
         }
-        synchronized (session) {
+        synchronized (session) { // todo: better locking
+            final var old = new Tuple2<>(MavenConfigSource.expressionEvaluator, MavenConfigSource.config);
             MavenConfigSource.expressionEvaluator = new PluginParameterExpressionEvaluator(session, mojoExecution);
+            MavenConfigSource.config = new MavenConfigSource.Config(!skipMavenForcedFilteringForPlaceholders);
             try {
                 doExecute();
             } finally {
                 reset.forEach(Runnable::run);
-                MavenConfigSource.expressionEvaluator = null;
+                MavenConfigSource.expressionEvaluator = old.getFirst();
+                MavenConfigSource.config = old.getSecond();
             }
         }
     }
