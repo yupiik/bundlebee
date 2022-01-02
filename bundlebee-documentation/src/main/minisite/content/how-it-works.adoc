@@ -192,6 +192,7 @@ Placeholders can use some keywords to get some particular values:
 - `bundlebee-indent:<indent size>:<value>`: indents a value with the provided space size, it is generally combined with another interpolation (file ones in particular) as value, ex `{{bundlebee-indent:8:{{bundlebee-inline-file:myfile.txt}}}}`,
 - `bundlebee-inline-file:<file path>`: load the file content as value,
 - `bundlebee-base64-file:<file path>`: converts the file in base64 (useful to write `data:xxxx,<base64>` values for ex keeping the raw file in the filesystem, very helpful for images),
+- `bundlebee-base64::<text>`: encodes in base64 the text,
 - `bundlebee-quote-escaped-inline-file:<file path>`: load the file content as a quoted value,
 - `bundlebee-json-inline-file:<file path>`: load the file content as a JSON string value - without quotes,
 - `bundlebee-maven-server-username:<server id>`: extract from your maven `settings.xml` a server username (see configuration for a custom settings.xml location),
