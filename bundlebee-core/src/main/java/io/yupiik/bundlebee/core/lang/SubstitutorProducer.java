@@ -71,6 +71,9 @@ public class SubstitutorProducer {
                     final var src = readResource(it, "bundlebee-base64-file:");
                     return src == null ? null : Base64.getEncoder().encodeToString(src);
                 }
+                if (it.startsWith("bundlebee-base64:")) {
+                    return Base64.getEncoder().encodeToString(it.substring("bundlebee-base64:".length()).getBytes(StandardCharsets.UTF_8));
+                }
                 if (it.startsWith("bundlebee-quote-escaped-inline-file:")) {
                     final var resource = readResource(it, "bundlebee-quote-escaped-inline-file:");
                     return resource == null ? null : new String(resource, StandardCharsets.UTF_8)
