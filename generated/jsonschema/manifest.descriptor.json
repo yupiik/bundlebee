@@ -254,7 +254,7 @@
                 "location":{
                   "type":"string",
                   "title":"Descriptor.location",
-                  "description":"Optional, if coming form another manifest, the dependency to download to get the alveolus."
+                  "description":"Optional, if coming from another manifest, the dependency to download to get the alveolus."
                 },
                 "name":{
                   "type":"string",
@@ -331,6 +331,35 @@
             "type":"string",
             "title":"Alveolus.version",
             "description":"If name does not follow `<groupId>:<artifactId>:<version>` naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced)."
+          }
+        }
+      }
+    },
+    "requirements":{
+      "type":"array",
+      "title":"Manifest.requirements",
+      "description":"Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Requirement",
+        "type":"object",
+        "properties":{
+          "forbiddenVersions":{
+            "type":"array",
+            "title":"Requirement.forbiddenVersions",
+            "description":"List of forbidden version (due to a bug or equivalent). Here too snapshot suffix is ignored. `*` is usable there too to replace any digit in a segment (ex: `1.*.*`). Note that `1.*` would *NOT* match `1.*.*`, version are always 3 segments.",
+            "items":{
+              "type":"string"
+            }
+          },
+          "maxBundlebeeVersion":{
+            "type":"string",
+            "title":"Requirement.maxBundlebeeVersion",
+            "description":"Minimum bundlebee version, use `*`to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison."
+          },
+          "minBundlebeeVersion":{
+            "type":"string",
+            "title":"Requirement.minBundlebeeVersion",
+            "description":"Minimum bundlebee version, use `*` to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison."
           }
         }
       }

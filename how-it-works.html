@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//yupiik.github.io/bundlebee/css/theme.css?v=1.0.12">
+    <link id="theme-style" rel="stylesheet" href="//yupiik.github.io/bundlebee/css/theme.css?v=1.0.13">
     
 </head>
 
@@ -143,6 +143,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>alveoli</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of described applications/libraries.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Requirement">Manifest.requirements</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>requirements</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.</p></td>
 </tr>
 </tbody>
 </table>
@@ -288,7 +294,7 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">location</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>location</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Optional, if coming form another manifest, the dependency to download to get the alveolus.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional, if coming from another manifest, the dependency to download to get the alveolus.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
@@ -581,6 +587,61 @@ It provides the unique identifier of your recipe (application/library) and what 
 </tbody>
 </table>
 </div>
+<div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_Requirement">Manifest.requirements</h4>
+<div class="paragraph">
+<p>Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 11. Manifest.requirements</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">maxBundlebeeVersion</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>maxBundlebeeVersion</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Minimum bundlebee version, use `*`to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">minBundlebeeVersion</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>minBundlebeeVersion</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Minimum bundlebee version, use <code>*</code> to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">forbiddenVersions</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>forbiddenVersions</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of forbidden version (due to a bug or equivalent). Here too snapshot suffix is ignored. <code><strong></code> is usable there too to replace any digit in a segment (ex: <code>1.</strong>.<strong></code>). Note that <code>1.</strong></code> would <strong>NOT</strong> match <code>1.<strong>.</strong></code>, version are always 3 segments.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the whole content) which enables you to add other metadata in the manifest and still reuse BundleeBee JSON-Schema for the validation (by composition).
+</td>
+</tr>
+</table>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_json_schema">JSON-Schema</h3>
@@ -845,7 +906,7 @@ It provides the unique identifier of your recipe (application/library) and what 
                 "location":{
                   "type":"string",
                   "title":"Descriptor.location",
-                  "description":"Optional, if coming form another manifest, the dependency to download to get the alveolus."
+                  "description":"Optional, if coming from another manifest, the dependency to download to get the alveolus."
                 },
                 "name":{
                   "type":"string",
@@ -922,6 +983,35 @@ It provides the unique identifier of your recipe (application/library) and what 
             "type":"string",
             "title":"Alveolus.version",
             "description":"If name does not follow `&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;` naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced)."
+          }
+        }
+      }
+    },
+    "requirements":{
+      "type":"array",
+      "title":"Manifest.requirements",
+      "description":"Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Requirement",
+        "type":"object",
+        "properties":{
+          "forbiddenVersions":{
+            "type":"array",
+            "title":"Requirement.forbiddenVersions",
+            "description":"List of forbidden version (due to a bug or equivalent). Here too snapshot suffix is ignored. `*` is usable there too to replace any digit in a segment (ex: `1.*.*`). Note that `1.*` would *NOT* match `1.*.*`, version are always 3 segments.",
+            "items":{
+              "type":"string"
+            }
+          },
+          "maxBundlebeeVersion":{
+            "type":"string",
+            "title":"Requirement.maxBundlebeeVersion",
+            "description":"Minimum bundlebee version, use `*`to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison."
+          },
+          "minBundlebeeVersion":{
+            "type":"string",
+            "title":"Requirement.minBundlebeeVersion",
+            "description":"Minimum bundlebee version, use `*` to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison."
           }
         }
       }
@@ -1156,6 +1246,9 @@ Even if not recommended it can be done using <code>{{xxx}}</code> placeholders -
 <p><code>bundlebee-base64-file:&lt;file path&gt;</code>: converts the file in base64 (useful to write <code>data:xxxx,&lt;base64&gt;</code> values for ex keeping the raw file in the filesystem, very helpful for images),</p>
 </li>
 <li>
+<p><code>bundlebee-base64::&lt;text&gt;</code>: encodes in base64 the text,</p>
+</li>
+<li>
 <p><code>bundlebee-quote-escaped-inline-file:&lt;file path&gt;</code>: load the file content as a quoted value,</p>
 </li>
 <li>
@@ -1335,7 +1428,7 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.initHighlightingOnLoad(); }</script>
-    <script src="//yupiik.github.io/bundlebee/js/minisite.js?v=1.0.12"></script>
+    <script src="//yupiik.github.io/bundlebee/js/minisite.js?v=1.0.13"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
