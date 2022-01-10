@@ -148,7 +148,7 @@ public class DeleteCommand implements CompletingExecutable {
         try {
             awaitValue = Integer.parseInt(await);
         } catch (final NumberFormatException nfe) {
-            awaitValue = 0;
+            // no-op
         }
         final int awaitTimeout = awaitValue;
         return visitor
