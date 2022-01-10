@@ -30,7 +30,7 @@ class InspectCommandTest {
 
     @Test
     void inspect(final CommandExecutor executor) {
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
                 "inspect", "--alveolus", "ApplyCommandTest.withdep"));
         assertEquals("" +
                 "Inspection Report for alveolus=ApplyCommandTest.withdep\n" +
@@ -46,7 +46,7 @@ class InspectCommandTest {
 
     @Test
     void inspectVerbose(final CommandExecutor executor) {
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
                 "inspect", "--alveolus", "ApplyCommandTest.withdep", "--verbose", "true"));
         assertEquals("" +
                 "Inspection Report for alveolus=ApplyCommandTest.withdep\n" +
@@ -88,7 +88,7 @@ class InspectCommandTest {
 
     @Test
     void inspectVerboseFilterDescriptorName(final CommandExecutor executor) {
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
                 "inspect", "--alveolus", "ApplyCommandTest.withdep", "--verbose", "true",
                 "--descriptor", "ApplyCommandTest.d2"));
         assertEquals("" +
@@ -115,7 +115,7 @@ class InspectCommandTest {
 
     @Test
     void inspectVerboseFilterDescriptorRegexMatches(final CommandExecutor executor) {
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
                 "inspect", "--alveolus", "ApplyCommandTest.withdep", "--verbose", "true",
                 "--descriptor", "r/ApplyCommandTest.d."));
         assertEquals("" +
@@ -158,7 +158,7 @@ class InspectCommandTest {
 
     @Test
     void inspectVerboseFilterDescriptorRegexNoMatch(final CommandExecutor executor) {
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch(
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
                 "inspect", "--alveolus", "ApplyCommandTest.withdep", "--verbose", "true",
                 "--descriptor", "r/ApplyCommandTest.d.."));
         assertEquals("" +

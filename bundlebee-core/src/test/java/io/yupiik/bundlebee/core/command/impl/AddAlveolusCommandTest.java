@@ -39,10 +39,10 @@ class AddAlveolusCommandTest {
     void addService(final CommandExecutor executor, @TempDir final Path dir) throws IOException {
         // create a bundle
         final var dirString = dir.toString().replace('\\', '/');
-        new BundleBee().launch("new", "--dir", dirString.toString(), "--group", "com.company", "--artifact", "foo");
+        new BundleBee().launch("new", "--dir", dirString, "--group", "com.company", "--artifact", "foo");
 
         // now add a web alveolus
-        final var logs = executor.wrap(INFO, () -> new BundleBee()
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee()
                 .launch("add-alveolus",
                         "--manifest", dir.resolve("bundlebee/manifest.json").toString(),
                         "--alveolus", "test",

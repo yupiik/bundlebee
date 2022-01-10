@@ -51,7 +51,7 @@ class ApplyCommandTest {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.apply"));
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.apply"));
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.apply'\n" +
                 "Applying 's' (kind=services) for namespace 'default'\n" +
@@ -66,7 +66,7 @@ class ApplyCommandTest {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.applyAwait"));
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.applyAwait"));
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.applyAwait'\n" +
                 "Applying 's' (kind=services) for namespace 'default'\n" +
@@ -101,7 +101,7 @@ class ApplyCommandTest {
         };
         handler.setResponseLocator(spyingResponseLocator);
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee()
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
                 .launch("apply", "--alveolus", "ApplyCommandTest.applyAwaitCondition"));
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.applyAwaitCondition'\n" +
@@ -117,7 +117,7 @@ class ApplyCommandTest {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withdep"));
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withdep"));
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.withdep'\n" +
                 "Deploying 'ApplyCommandTest.apply'\n" +
@@ -134,7 +134,7 @@ class ApplyCommandTest {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee()
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
                 .launch("apply", "--alveolus", "ApplyCommandTest.withdep", "--excludedDescriptors", "ApplyCommandTest.d1"));
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.withdep'\n" +
@@ -149,7 +149,7 @@ class ApplyCommandTest {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withexclude"));
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withexclude"));
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.withexclude'\n" +
                 "Deploying 'ApplyCommandTest.apply'\n" +
@@ -164,7 +164,7 @@ class ApplyCommandTest {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withsamedep"));
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withsamedep"));
         assertEquals("" +
                 "Deploying 'ApplyCommandTest.withsamedep'\n" +
                 "Deploying 'ApplyCommandTest.apply'\n" +

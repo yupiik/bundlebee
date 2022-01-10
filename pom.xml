@@ -110,8 +110,7 @@
             <bundlebee.kube.api>https://kubernetes.bundlebee.yupiik.test</bundlebee.kube.api>
             <bundlebee.kube.validateSSL>false</bundlebee.kube.validateSSL>
             <m2.location>${m2.location}</m2.location>
-            <jdk.internal.httpclient.disableHostnameVerification>true
-            </jdk.internal.httpclient.disableHostnameVerification>
+            <jdk.internal.httpclient.disableHostnameVerification>true</jdk.internal.httpclient.disableHostnameVerification>
             <kubeconfig>explicit</kubeconfig>
             <java.util.logging.manager>io.yupiik.logging.jul.YupiikLogManager</java.util.logging.manager>
             <org.talend.__shade__.io.netty.noUnsafe>true</org.talend.__shade__.io.netty.noUnsafe>

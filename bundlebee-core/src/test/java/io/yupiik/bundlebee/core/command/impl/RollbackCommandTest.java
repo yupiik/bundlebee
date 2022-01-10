@@ -50,7 +50,7 @@ class RollbackCommandTest {
     @Test
     void rollback(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
-        final var logs = executor.wrap(INFO, () -> new BundleBee()
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
                 .launch("rollback",
                         "--previousAlveolus", "RollbackCommandTest.first",
                         "--alveolus", "RollbackCommandTest.second"));
