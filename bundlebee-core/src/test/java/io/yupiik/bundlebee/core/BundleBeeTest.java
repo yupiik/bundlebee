@@ -31,9 +31,9 @@ class BundleBeeTest {
 
     @Test
     void help(final CommandExecutor executor) {
-        final var noArg = executor.wrap(INFO, () -> new BundleBee().launch());
-        final var explicitHelp = executor.wrap(INFO, () -> new BundleBee().launch("help"));
-        final var missingCommand = executor.wrap(INFO, () -> new BundleBee().launch("missing"));
+        final var noArg = executor.wrap(null, INFO, () -> new BundleBee().launch());
+        final var explicitHelp = executor.wrap(null, INFO, () -> new BundleBee().launch("help"));
+        final var missingCommand = executor.wrap(null, INFO, () -> new BundleBee().launch("missing"));
         Stream.of(noArg, explicitHelp, missingCommand)
                 .forEach(content -> assertTrue(content.contains("  [] help: print help for all available commands.\n"), content));
 

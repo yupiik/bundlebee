@@ -42,7 +42,7 @@ class NewBundleCommandTest {
                 "Created " + dirString + "/bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml\n" +
                 "Created " + dirString + "/pom.xml\n" +
                 "Creation completed, you can go in " + dirString + " and build it with 'bundlebee build'\n" +
-                "", executor.wrap(Level.INFO, () -> new BundleBee().launch(
+                "", executor.wrap(null, Level.INFO, () -> new BundleBee().launch(
                 "new", "--dir", dirString, "--group", "com.company", "--artifact", "foo")));
         assertEquals("" +
                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +

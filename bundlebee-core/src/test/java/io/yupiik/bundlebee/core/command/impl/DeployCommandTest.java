@@ -59,7 +59,7 @@ class DeployCommandTest {
                 "--artifact", "foo",
                 "--dir", temp.toString());
 
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("deploy",
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("deploy",
                 "--nexusBaseApi", "http://admin:admin@localhost:" + handler.getPort(),
                 "--deployInLocalRepository", "false",
                 "--dir", temp.toString()));

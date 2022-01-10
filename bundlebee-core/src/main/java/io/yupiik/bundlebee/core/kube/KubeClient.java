@@ -403,8 +403,8 @@ public class KubeClient implements ConfigHolder {
         return forDescriptor("Deleting", descriptorContent, ext, json -> doDelete(json, gracePeriod));
     }
 
-    private <T> CompletionStage<List<T>> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
-                                                       final Function<JsonObject, CompletionStage<T>> descHandler) {
+    public <T> CompletionStage<List<T>> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
+                                                      final Function<JsonObject, CompletionStage<T>> descHandler) {
         if (verbose) {
             log.info(() -> prefixLog + " descriptor\n" + descriptorContent);
         }
@@ -772,7 +772,7 @@ public class KubeClient implements ConfigHolder {
         }
     }
 
-    private JsonObject injectMetadata(final JsonObject rawDesc, final Map<String, String> customLabels) {
+    public JsonObject injectMetadata(final JsonObject rawDesc, final Map<String, String> customLabels) {
         return rawDesc.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .flatMap(entry -> {

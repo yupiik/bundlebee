@@ -45,7 +45,7 @@ class MavenPasswordCommandsTest {
                         "Created master password: {xxx}\n" +
                         "Created " + m2String + "/settings-security.xml\n" +
                         "",
-                executor.wrap(INFO, () -> new BundleBee().launch("create-master-password",
+                executor.wrap(null, INFO, () -> new BundleBee().launch("create-master-password",
                         "--bundlebee-maven-cache", m2String,
                         "--bundlebee-maven-preferCustomSettingsXml", "true",
                         "--bundlebee-maven-forceCustomSettingsXml", "true",
@@ -53,7 +53,7 @@ class MavenPasswordCommandsTest {
                         .replaceFirst("\\{[^}]+}", "{xxx}"));
 
         // 2. generate a server password
-        final var logs = executor.wrap(INFO, () -> new BundleBee().launch("cipher-password",
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch("cipher-password",
                 "--bundlebee-maven-cache", m2String,
                 "--bundlebee-maven-preferCustomSettingsXml", "true",
                 "--bundlebee-maven-forceCustomSettingsXml", "true",

@@ -66,13 +66,13 @@ class HttpCommandTest {
         handler.setResponseLocator(spyingResponseLocator);
 
         // payload only
-        assertEquals("{\"msg\":\"ok\"}\n", executor.wrap(INFO, () -> new BundleBee().launch("http")));
+        assertEquals("{\"msg\":\"ok\"}\n", executor.wrap(handler, INFO, () -> new BundleBee().launch("http")));
         assertEquals("" +
                 "HTTP/1.1\n" +
                 "content-length: 12\n" +
                 "x-talend-proxy-junit: true\n" +
                 "\n" +
-                "{\"msg\":\"ok\"}\n", executor.wrap(INFO, () -> new BundleBee().launch("http", "--payloadOnly", "false")));
+                "{\"msg\":\"ok\"}\n", executor.wrap(handler, INFO, () -> new BundleBee().launch("http", "--payloadOnly", "false")));
 
         // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
         assertEquals(2/*test exists + create*/, spyingResponseLocator.getFound().size(),

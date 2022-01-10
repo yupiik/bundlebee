@@ -49,7 +49,7 @@ class BuildCommandTest {
                 "Built " + dirString + "/target/foo-1.0.0.jar\n" +
                 "Installed " + dirString + "/m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar\n" +
                 "Project successfully built.\n" +
-                "", executor.wrap(INFO, () -> new BundleBee().launch(
+                "", executor.wrap(null, INFO, () -> new BundleBee().launch(
                 "build", "--dir", dirString, "--bundlebee-maven-cache", dir.resolve("m2/repository").toString())));
 
         try (final JarFile file = new JarFile(dir.resolve("m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar").toFile())) {

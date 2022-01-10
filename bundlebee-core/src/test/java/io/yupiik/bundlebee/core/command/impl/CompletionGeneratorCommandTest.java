@@ -43,7 +43,7 @@ class CompletionGeneratorCommandTest {
             "'bundlebee add-alveolus --type foo --',36,'--alveolus\n--image\n--manifest\n--overwrite'",
     })
     void complete(final String line, final int point, final String expected, final CommandExecutor executor) {
-        assertEquals(expected, executor.wrap(INFO, () ->
+        assertEquals(expected, executor.wrap(null, INFO, () ->
                 new BundleBee().launch("completion",
                         "--comp.line", line, "--comp.point", String.valueOf(point), "--useLogger", "true"))
                 .trim());

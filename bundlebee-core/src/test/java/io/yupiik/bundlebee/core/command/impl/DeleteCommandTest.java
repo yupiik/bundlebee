@@ -51,7 +51,7 @@ class DeleteCommandTest {
             final var spyingResponseLocator = newSpyingHandler(info, false);
             handler.setResponseLocator(spyingResponseLocator);
 
-            final var logs = executor.wrap(INFO, () -> new BundleBee()
+            final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
                     .launch("delete", "--alveolus", "DeleteCommandTest.deleteMaven"));
             assertEquals("" +
                     "Deleting 'DeleteCommandTest.deleteMaven'\n" +
@@ -65,7 +65,7 @@ class DeleteCommandTest {
             final var spyingResponseLocator = newSpyingHandler(info, true);
             handler.setResponseLocator(spyingResponseLocator);
 
-            final var logs = executor.wrap(INFO, () -> new BundleBee()
+            final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
                     .launch("delete", "--alveolus", "DeleteCommandTest.deleteMaven"));
             assertEquals("" +
                     "Deleting 'DeleteCommandTest.deleteMaven'\n" +
