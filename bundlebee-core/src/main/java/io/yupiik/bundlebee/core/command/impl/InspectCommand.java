@@ -115,7 +115,7 @@ public class InspectCommand implements CompletingExecutable {
                 .findRootAlveoli(from, manifest, alveolus)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
-                                .map(it -> visitor.executeOnAlveolus(
+                                .map(it -> visitor.executeOnceOnAlveolus(
                                         null, it.getManifest(), it.getAlveolus(), null,
                                         (ctx, desc) -> {
                                             if (filter.test(desc.getConfiguration().getName())) {
@@ -125,7 +125,7 @@ public class InspectCommand implements CompletingExecutable {
                                             }
                                             return completedFuture(true);
                                         },
-                                        cache, null))
+                                        cache, null, "inspected"))
                                 .collect(toList()), toList(),
                         true))
                 .thenRun(() -> {

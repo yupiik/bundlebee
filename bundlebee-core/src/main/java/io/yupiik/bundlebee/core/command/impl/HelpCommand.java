@@ -111,6 +111,7 @@ public class HelpCommand implements CompletingExecutable {
                 (showAllCommands ? " Available commands:\n\n" : "") +
                 stream(executables)
                         .filter(it -> showAllCommands || command.equals(it.name()))
+                        .filter(it -> !it.hidden())
                         .map(executable -> {
                             final var parameters = findParameters(executable).collect(toList());
                             final var description = executable.description();

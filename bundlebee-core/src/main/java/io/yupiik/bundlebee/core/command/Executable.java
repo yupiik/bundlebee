@@ -36,6 +36,13 @@ public interface Executable {
     String name();
 
     /**
+     * @return the command must not be seen in the healp.
+     */
+    default boolean hidden() {
+        return false;
+    }
+
+    /**
      * The command help text.
      *
      * @return command description.

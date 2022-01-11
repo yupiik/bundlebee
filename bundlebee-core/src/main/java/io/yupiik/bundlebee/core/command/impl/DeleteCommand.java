@@ -164,7 +164,7 @@ public class DeleteCommand implements CompletingExecutable {
     public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest manifest, final Manifest.Alveolus it,
                                        final String gracePeriodSeconds, final int await) {
         final var toDelete = new ArrayList<AlveolusHandler.LoadedDescriptor>();
-        return visitor.executeOnAlveolus(
+        return visitor.executeOnceOnAlveolus(
                 "Deleting", manifest, it, null,
                 (ctx, desc) -> {
                     synchronized (toDelete) { // it is concurrent but we mainly want owner order here so "ok"
@@ -172,7 +172,7 @@ public class DeleteCommand implements CompletingExecutable {
                     }
                     return completedFuture(true);
                 },
-                cache, desc -> conditionAwaiter.await(name(), desc, scheduledExecutorService, awaitTimeout))
+                cache, desc -> conditionAwaiter.await(name(), desc, scheduledExecutorService, awaitTimeout), "deleted")
                 .thenApply(done -> { // owner first
                     Collections.reverse(toDelete);
                     return toDelete;
