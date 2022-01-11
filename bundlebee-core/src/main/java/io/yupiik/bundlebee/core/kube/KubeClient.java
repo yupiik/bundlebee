@@ -104,11 +104,6 @@ public class KubeClient implements ConfigHolder {
     private boolean putOnUpdate;
 
     @Inject
-    @Description("When kubeconfig is not set the namespace to use.")
-    @ConfigProperty(name = "bundlebee.kube.namespace", defaultValue = "default")
-    private String namespace;
-
-    @Inject
     @Description("Default value for deletions of `propagationPolicy`. Values can be `Orphan`, `Foreground` and `Background`.")
     @ConfigProperty(name = "bundlebee.kube.defaultPropagationPolicy", defaultValue = "Foreground")
     private String defaultPropagationPolicy;
@@ -187,7 +182,7 @@ public class KubeClient implements ConfigHolder {
     private CompletionStage<HttpResponse<String>> doGet(final JsonObject desc, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
         final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
         return api.execute(HttpRequest.newBuilder().GET().header("Accept", "application/json"), baseUri + "/" + name);
     }
@@ -266,7 +261,7 @@ public class KubeClient implements ConfigHolder {
     private CompletionStage<?> doDelete(final JsonObject desc, final int gracePeriod, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
         log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
         final var uri = toBaseUri(desc, kindLowerCased, namespace) + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
@@ -321,7 +316,7 @@ public class KubeClient implements ConfigHolder {
     private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject desc, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : this.namespace;
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
 
         final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!api.isDryRun() ? "" : ("&dryRun=All"));
