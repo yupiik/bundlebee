@@ -128,6 +128,7 @@ public class HttpKubeClient implements ConfigHolder {
     private boolean validateSSL;
 
     @Inject
+    @Getter
     @Description("When kubeconfig is not set the namespace to use.")
     @ConfigProperty(name = "bundlebee.kube.namespace", defaultValue = "default")
     private String namespace;
