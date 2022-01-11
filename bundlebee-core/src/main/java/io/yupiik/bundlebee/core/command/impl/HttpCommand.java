@@ -17,7 +17,7 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.kube.KubeClient;
+import io.yupiik.bundlebee.core.kube.HttpKubeClient;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -41,7 +41,7 @@ import static java.util.stream.Collectors.joining;
 @Dependent
 public class HttpCommand implements CompletingExecutable {
     @Inject
-    private KubeClient kube;
+    private HttpKubeClient kube;
 
     @Inject
     @Description("HTTP verb to use for the request.")

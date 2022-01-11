@@ -38,6 +38,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -132,6 +133,21 @@ public class AlveolusHandler {
             return completedFuture(List.of(findAlveolusInClasspath(alveolus)));
         }
         return findAlveolus(from, alveolus, archives.newCache()).thenApply(List::of);
+    }
+
+    public CompletionStage<?> executeOnceOnAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus alveolus,
+                                                    final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
+                                                    final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
+                                                    final ArchiveReader.Cache cache, final Function<LoadedDescriptor, CompletionStage<Void>> awaiter,
+                                                    final String alreadyHandledMarker) {
+        final var alreadyDone = new HashSet<String>();
+        return executeOnAlveolus(prefixOnVisitLog, manifest, alveolus, onAlveolusUser, (ctx, desc) -> {
+            if (!alreadyDone.add(desc.getContent())) {
+                log.info(() -> desc.getConfiguration().getName() + " already " + alreadyHandledMarker + ", skipping");
+                return completedFuture(false);
+            }
+            return onDescriptor.apply(ctx, desc);
+        }, cache, awaiter);
     }
 
     public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus alveolus,

@@ -174,22 +174,15 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
                                         final ArchiveReader.Cache cache, final AlveolusHandler.ManifestAndAlveolus it,
                                         final BiConsumer<String, JsonObject> onDescriptor) {
         final var labels = createLabels(it.getAlveolus(), injectTimestamp, injectBundleBeeMetadata);
-        final var alreadyDone = new HashSet<String>();
-        return visitor.executeOnAlveolus(
+        return visitor.executeOnceOnAlveolus(
                 "Processing", it.getManifest(), it.getAlveolus(), null,
-                (ctx, desc) -> {
-                    if (!alreadyDone.add(desc.getContent())) {
-                        log.info(() -> desc.getConfiguration().getName() + " already processed, skipping");
-                        return completedFuture(false);
-                    }
-                    return kube.forDescriptor("Processing", desc.getContent(), desc.getExtension(), json -> {
-                        final var processed = labels.isEmpty() ? json : kube.injectMetadata(json, labels);
-                        onDescriptor.accept(desc.getConfiguration().getName(), processed);
-                        return completedFuture(processed);
-                    });
-                },
+                (ctx, desc) -> kube.forDescriptor("Processing", desc.getContent(), desc.getExtension(), json -> {
+                    final var processed = labels.isEmpty() ? json : kube.injectMetadata(json, labels);
+                    onDescriptor.accept(desc.getConfiguration().getName(), processed);
+                    return completedFuture(processed);
+                }),
                 cache,
-                desc -> completedFuture(null));
+                desc -> completedFuture(null), "processed");
     }
 
     private String format(final JsonObject content,
