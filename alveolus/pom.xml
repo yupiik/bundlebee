@@ -37,6 +37,7 @@
     <module>loki-simple</module>
     <module>grafana-simple</module>
     <module>monitoring-alveolus</module>
+    <module>minio-local</module>
   </modules>
 
   <build>
