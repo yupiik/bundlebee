@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2021 - Yupiik SAS - https://www.yupiik.com
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+#
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio-local
+  labels:
+    app: minio-local
+spec:
+  serviceName: "minio-local"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio-local
+  template:
+    metadata:
+      labels:
+        app: minio-local
+    spec:
+      containers:
+        - name: minio
+          image: "{{minio-local.image:-minio/minio:latest}}"
+          envFrom:
+            - configMapRef:
+                name: minio-local-config
+          ports:
+            - name: minio-api
+              containerPort: 9000
+            - name: minio-console
+              containerPort: 9100
+          command:
+            - /bin/sh
+            - -ce
+            - /usr/bin/docker-entrypoint.sh minio server /data --console-address :9100 --address :9000
+          volumeMounts:
+            - name: pv-data
+              mountPath: /data
+      volumes:
+        - name: pv-data
+          persistentVolumeClaim:
+            claimName: minio-pv-claim
