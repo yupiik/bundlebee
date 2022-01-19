@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>bundlebee:apply</title>
+    <title>bundlebee:process</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,13 +53,13 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>bundlebee:apply</h1>
+                <h1>bundlebee:process</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Apply/deploy a set of descriptors from a root one.</p>
+<p>Process all descriptors - as in an apply command - from a root descriptor. If <code>output</code> is set, it dumps the descriptors in this directory. Don&#8217;t forget to set <code>--kubeconfig explicit</code> to ignore kube setup.</p>
 </div>
 </div>
 </div>
@@ -76,7 +76,7 @@
 </div>
 </div>
 <div class="paragraph">
-<p>To call this goal from the command line execute: <code>mvn bundlebee:apply</code>.</p>
+<p>To call this goal from the command line execute: <code>mvn bundlebee:process</code>.</p>
 </div>
 <div class="paragraph">
 <p>To bind this goal in the build you can use:</p>
@@ -91,7 +91,7 @@
     &lt;execution&gt;
       &lt;id&gt;my-execution&lt;/id&gt;
       &lt;goals&gt;
-        &lt;goal&gt;apply&lt;/goal&gt;
+        &lt;goal&gt;process&lt;/goal&gt;
       &lt;/goals&gt;
       &lt;configuration&gt;
         &lt;!-- execution specific configuration come there --&gt;
@@ -102,7 +102,7 @@
 </div>
 </div>
 <div class="paragraph">
-<p>You can execute this goal particularly with <code>mvn bundlebee:apply@my-execution</code> command.</p>
+<p>You can execute this goal particularly with <code>mvn bundlebee:process@my-execution</code> command.</p>
 </div>
 </div>
 </div>
@@ -113,7 +113,7 @@
 <dl>
 <dt class="hdlist1">alveolus (<code>String</code>)</dt>
 <dd>
-<p>Alveolus name to deploy. When set to <code>auto</code>, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code>. Property: <code>${bundlebee.apply.alveolus}</code>.</p>
+<p>Alveolus name to deploy. When set to <code>auto</code>, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code>. Property: <code>${bundlebee.process.alveolus}</code>.</p>
 </dd>
 <dt class="hdlist1">awaiterRetryInterval (<code>long</code>)</dt>
 <dd>
@@ -123,7 +123,7 @@
 <dd>
 <p>Custom properties injected in the main, it is often used for placeholders.
 If the key (tag in pom) starts with <code>bundlebee-placeholder-import</code> then the value is resolved as a properties file
-which is injected in the resulting placeholders (indirect placeholders). Property: <code>${bundlebee.apply.customPlaceholders}</code>.</p>
+which is injected in the resulting placeholders (indirect placeholders). Property: <code>${bundlebee.process.customPlaceholders}</code>.</p>
 </dd>
 <dt class="hdlist1">defaultManifest (<code>String</code>)</dt>
 <dd>
@@ -131,19 +131,19 @@ which is injected in the resulting placeholders (indirect placeholders). Propert
 </dd>
 <dt class="hdlist1">descriptorAwaitTimeout (<code>long</code>)</dt>
 <dd>
-<p>For descriptors with <code>await</code> = <code>true</code> the max duration the test can last. Default value: <code>60000</code>. Property: <code>${bundlebee.apply.descriptorAwaitTimeout}</code>.</p>
+<p>For descriptors with <code>await</code> = <code>true</code> the max duration the test can last. Default value: <code>60000</code>. Property: <code>${bundlebee.process.descriptorAwaitTimeout}</code>.</p>
 </dd>
 <dt class="hdlist1">excludedDescriptors (<code>String</code>)</dt>
 <dd>
-<p>Enables to exclude descriptors from the command line. <code>none</code> to ignore. Value is comma separated. Note that using this setting, location is set to <code>*</code> so only the name is matched. Default value: <code>none</code>. Property: <code>${bundlebee.apply.excludedDescriptors}</code>.</p>
+<p>Enables to exclude descriptors from the command line. <code>none</code> to ignore. Value is comma separated. Note that using this setting, location is set to <code>*</code> so only the name is matched. Default value: <code>none</code>. Property: <code>${bundlebee.process.excludedDescriptors}</code>.</p>
 </dd>
 <dt class="hdlist1">excludedLocations (<code>String</code>)</dt>
 <dd>
-<p>Enables to exclude locations (descriptor is set to <code>*</code>) from the command line. <code>none</code> to ignore. Value is comma separated. Default value: <code>none</code>. Property: <code>${bundlebee.apply.excludedLocations}</code>.</p>
+<p>Enables to exclude locations (descriptor is set to <code>*</code>) from the command line. <code>none</code> to ignore. Value is comma separated. Default value: <code>none</code>. Property: <code>${bundlebee.process.excludedLocations}</code>.</p>
 </dd>
 <dt class="hdlist1">from (<code>String</code>)</dt>
 <dd>
-<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code>. Property: <code>${bundlebee.apply.from}</code>.</p>
+<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code>. Property: <code>${bundlebee.process.from}</code>.</p>
 </dd>
 <dt class="hdlist1">httpclientThreads (<code>int</code>)</dt>
 <dd>
@@ -151,11 +151,11 @@ which is injected in the resulting placeholders (indirect placeholders). Propert
 </dd>
 <dt class="hdlist1">injectBundleBeeMetadata (<code>boolean</code>)</dt>
 <dd>
-<p>If <code>true</code>, <code>bundlebee.*</code> labels will be injected into the descriptors. This is required for rollback command to work. Default value: <code>true</code>. Property: <code>${bundlebee.apply.injectBundleBeeMetadata}</code>.</p>
+<p>If <code>true</code>, <code>bundlebee.*</code> labels will be injected into the descriptors. This is required for rollback command to work. Default value: <code>true</code>. Property: <code>${bundlebee.process.injectBundleBeeMetadata}</code>.</p>
 </dd>
 <dt class="hdlist1">injectTimestamp (<code>boolean</code>)</dt>
 <dd>
-<p>If <code>true</code>, a <code>bundlebee.timestamp</code> label will be injected into the descritors with current date before applying the descriptor. Default value: <code>true</code>. Property: <code>${bundlebee.apply.injectTimestamp}</code>.</p>
+<p>If <code>true</code>, a <code>bundlebee.timestamp</code> label will be injected into the descritors with current date before applying the descriptor. Default value: <code>true</code>. Property: <code>${bundlebee.process.injectTimestamp}</code>.</p>
 </dd>
 <dt class="hdlist1">kubeApi (<code>String</code>)</dt>
 <dd>
@@ -219,7 +219,7 @@ which is injected in the resulting placeholders (indirect placeholders). Propert
 </dd>
 <dt class="hdlist1">manifest (<code>String</code>)</dt>
 <dd>
-<p>Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code>. Property: <code>${bundlebee.apply.manifest}</code>.</p>
+<p>Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code>. Property: <code>${bundlebee.process.manifest}</code>.</p>
 </dd>
 <dt class="hdlist1">mavenCache (<code>String</code>)</dt>
 <dd>
@@ -253,6 +253,10 @@ which is injected in the resulting placeholders (indirect placeholders). Propert
 <dd>
 <p>Default snapshot repository, not set by default. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
 </dd>
+<dt class="hdlist1">output (<code>String</code>)</dt>
+<dd>
+<p>If set, represents where to dump processed descriptors. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.process.output}</code>.</p>
+</dd>
 <dt class="hdlist1">packaging (<code>String</code>)</dt>
 <dd>
 <p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: ``.</p>
@@ -272,7 +276,7 @@ will be looked up as such in maven and not <code>`${foo}</code> which will work.
 </dd>
 <dt class="hdlist1">useChainInsteadOfAll (<code>boolean</code>)</dt>
 <dd>
-<p>If <code>true</code>, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors. Default value: <code>false</code>. Property: <code>${bundlebee.apply.useChainInsteadOfAll}</code>.</p>
+<p>If <code>true</code>, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors. Default value: <code>false</code>. Property: <code>${bundlebee.process.useChainInsteadOfAll}</code>.</p>
 </dd>
 <dt class="hdlist1">useDefaultLogging (<code>boolean</code>)</dt>
 <dd>

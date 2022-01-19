@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Apply</title>
+    <title>Process</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -53,16 +53,16 @@
 
         <div class="container page-content">
             <div class="page-header">
-                <h1>Apply</h1>
+                <h1>Process</h1>
             </div>
             <div class="page-content-body">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Apply/deploy a set of descriptors from a root one.</p>
+<p>Process all descriptors - as in an apply command - from a root descriptor. If <code>output</code> is set, it dumps the descriptors in this directory. Don&#8217;t forget to set <code>--kubeconfig explicit</code> to ignore kube setup.</p>
 </div>
 <div class="paragraph">
-<p>Name: <code>apply</code>.</p>
+<p>Name: <code>process</code>.</p>
 </div>
 </div>
 </div>
@@ -71,39 +71,43 @@
 <div class="sectionbody">
 <div class="dlist">
 <dl>
-<dt class="hdlist1">--alveolus (<code>BUNDLEBEE_APPLY_ALVEOLUS</code>)</dt>
+<dt class="hdlist1">--alveolus (<code>BUNDLEBEE_PROCESS_ALVEOLUS</code>)</dt>
 <dd>
 <p>Alveolus name to deploy. When set to <code>auto</code>, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">--descriptorAwaitTimeout (<code>BUNDLEBEE_APPLY_DESCRIPTORAWAITTIMEOUT</code>)</dt>
+<dt class="hdlist1">--descriptorAwaitTimeout (<code>BUNDLEBEE_PROCESS_DESCRIPTORAWAITTIMEOUT</code>)</dt>
 <dd>
 <p>For descriptors with <code>await</code> = <code>true</code> the max duration the test can last. Default value: <code>60000</code></p>
 </dd>
-<dt class="hdlist1">--excludedDescriptors (<code>BUNDLEBEE_APPLY_EXCLUDEDDESCRIPTORS</code>)</dt>
+<dt class="hdlist1">--excludedDescriptors (<code>BUNDLEBEE_PROCESS_EXCLUDEDDESCRIPTORS</code>)</dt>
 <dd>
 <p>Enables to exclude descriptors from the command line. <code>none</code> to ignore. Value is comma separated. Note that using this setting, location is set to <code>*</code> so only the name is matched. Default value: <code>none</code></p>
 </dd>
-<dt class="hdlist1">--excludedLocations (<code>BUNDLEBEE_APPLY_EXCLUDEDLOCATIONS</code>)</dt>
+<dt class="hdlist1">--excludedLocations (<code>BUNDLEBEE_PROCESS_EXCLUDEDLOCATIONS</code>)</dt>
 <dd>
 <p>Enables to exclude locations (descriptor is set to <code>*</code>) from the command line. <code>none</code> to ignore. Value is comma separated. Default value: <code>none</code></p>
 </dd>
-<dt class="hdlist1">--from (<code>BUNDLEBEE_APPLY_FROM</code>)</dt>
+<dt class="hdlist1">--from (<code>BUNDLEBEE_PROCESS_FROM</code>)</dt>
 <dd>
 <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
 </dd>
-<dt class="hdlist1">--injectBundleBeeMetadata (<code>BUNDLEBEE_APPLY_INJECTBUNDLEBEEMETADATA</code>)</dt>
+<dt class="hdlist1">--injectBundleBeeMetadata (<code>BUNDLEBEE_PROCESS_INJECTBUNDLEBEEMETADATA</code>)</dt>
 <dd>
 <p>If <code>true</code>, <code>bundlebee.*</code> labels will be injected into the descriptors. This is required for rollback command to work. Default value: <code>true</code></p>
 </dd>
-<dt class="hdlist1">--injectTimestamp (<code>BUNDLEBEE_APPLY_INJECTTIMESTAMP</code>)</dt>
+<dt class="hdlist1">--injectTimestamp (<code>BUNDLEBEE_PROCESS_INJECTTIMESTAMP</code>)</dt>
 <dd>
 <p>If <code>true</code>, a <code>bundlebee.timestamp</code> label will be injected into the descritors with current date before applying the descriptor. Default value: <code>true</code></p>
 </dd>
-<dt class="hdlist1">--manifest (<code>BUNDLEBEE_APPLY_MANIFEST</code>)</dt>
+<dt class="hdlist1">--manifest (<code>BUNDLEBEE_PROCESS_MANIFEST</code>)</dt>
 <dd>
 <p>Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
 </dd>
-<dt class="hdlist1">--useChainInsteadOfAll (<code>BUNDLEBEE_APPLY_USECHAININSTEADOFALL</code>)</dt>
+<dt class="hdlist1">--output (<code>BUNDLEBEE_PROCESS_OUTPUT</code>)</dt>
+<dd>
+<p>If set, represents where to dump processed descriptors.</p>
+</dd>
+<dt class="hdlist1">--useChainInsteadOfAll (<code>BUNDLEBEE_PROCESS_USECHAININSTEADOFALL</code>)</dt>
 <dd>
 <p>If <code>true</code>, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors. Default value: <code>false</code></p>
 </dd>
