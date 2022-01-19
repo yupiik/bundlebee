@@ -66,7 +66,6 @@ public class CommandExecutor {
         } finally {
             logger.removeHandler(handler);
             logger.setLevel(oldLevel);
-            System.clearProperty("kubeconfig");
         }
     }
 }
