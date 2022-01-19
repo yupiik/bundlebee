@@ -149,9 +149,17 @@ public class HttpKubeClient implements ConfigHolder {
     private boolean dryRun;
 
     @Inject
+    @Getter
+    @Description("If `true` GET http requests are not skipped when `dryRun` is true.")
+    @ConfigProperty(name = "bundlebee.kube.skipDryRunForGet", defaultValue = "false")
+    private boolean skipDryRunForGet;
+
+    @Inject
     private Event<OnKubeRequest> onKubeRequestEvent;
 
     private Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
+
+    @Getter
     private HttpClient client;
 
     @Getter
@@ -188,7 +196,7 @@ public class HttpKubeClient implements ConfigHolder {
             }
         };
         if (dryRun) {
-            client = new LoggingClient(log, new DryRunClient(client));
+            client = new LoggingClient(log, new DryRunClient(client, skipDryRunForGet));
         } else if (verbose) {
             client = new LoggingClient(log, client);
         }
@@ -207,13 +215,17 @@ public class HttpKubeClient implements ConfigHolder {
 
     public CompletionStage<HttpResponse<String>> execute(final HttpRequest.Builder builder, final String urlOrPath) {
         return client.sendAsync(
-                setAuth.apply(builder)
-                        .uri(URI.create(
-                                urlOrPath.startsWith("http:") || urlOrPath.startsWith("https:") ?
-                                        urlOrPath :
-                                        (baseApi + urlOrPath)))
-                        .build(),
+                prepareRequest(builder, urlOrPath),
                 HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+    }
+
+    public HttpRequest prepareRequest(final HttpRequest.Builder builder, final String urlOrPath) {
+        return setAuth.apply(builder)
+                .uri(URI.create(
+                        urlOrPath.startsWith("http:") || urlOrPath.startsWith("https:") ?
+                                urlOrPath :
+                                (baseApi + urlOrPath)))
+                .build();
     }
 
     private HttpClient.Builder doConfigure(final HttpClient.Builder builder) {
@@ -415,7 +427,7 @@ public class HttpKubeClient implements ConfigHolder {
 
     private TrustManager[] findTrustManager(final KubeConfig.Cluster cluster, final byte[] certificateBytes)
             throws NoSuchAlgorithmException, KeyStoreException, CertificateException, IOException {
-        if (!cluster.isInsecureSkipTlsVerify()) {
+        if (cluster.isInsecureSkipTlsVerify()) {
             return newNoopTrustManager();
         }
         final var trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());

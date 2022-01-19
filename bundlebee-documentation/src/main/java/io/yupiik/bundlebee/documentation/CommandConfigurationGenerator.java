@@ -24,15 +24,18 @@ import org.apache.xbean.finder.ClassFinder;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
+import static java.util.Map.entry;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -77,16 +80,28 @@ public class CommandConfigurationGenerator implements Runnable {
 
     private List<Map.Entry<Path, String>> generate(final Path base, final AnnotationFinder finder) {
         final var formatter = new DocEntryFormatter();
+        final var sharedConfig = finder.findAnnotatedFields(ConfigProperty.class).stream()
+                .filter(it -> it.isAnnotationPresent(Description.class))
+                .filter(it -> !it.getDeclaringClass().getName().startsWith("io.yupiik.bundlebee.core.command."))
+                .collect(toList());
         final var sharedConfigDoc = "\n=== Inherited Global Configuration\n" +
                 "\n" +
                 "TIP: for these configurations, don't hesitate to use `~/.bundlebeerc` or `--config-file <path to config>` (just remove the `--` prefix from option keys).\n" +
                 "\n" +
-                finder.findAnnotatedFields(ConfigProperty.class).stream()
-                        .filter(it -> it.isAnnotationPresent(Description.class))
-                        .filter(it -> !it.getDeclaringClass().getName().startsWith("io.yupiik.bundlebee.core.command."))
+                sharedConfig.stream()
                         .map(it -> formatter.format(it, k -> "--" + k))
                         .sorted() // by key name to ensure it is deterministic
                         .collect(joining("\n\n")) + '\n';
+        try {
+            Files.writeString(
+                    base.resolve("../_partials/generated/shared.env.configuration.adoc"),
+                    sharedConfig.stream()
+                            .map(it -> formatter.format(it, k -> "--" + k, true))
+                            .sorted()
+                            .collect(joining("\n\n")) + '\n');
+        } catch (final IOException e) {
+            throw new IllegalStateException(e);
+        }
         return finder.enableFindImplementations().findImplementations(Executable.class).stream()
                 .filter(it -> !Modifier.isAbstract(it.getModifiers()) && !it.isInterface())
                 .map(command -> {
@@ -100,7 +115,7 @@ public class CommandConfigurationGenerator implements Runnable {
                                 .collect(joining("\n\n"));
                         final var conf = base.resolve(name + ".configuration.adoc");
                         final var description = instance.description();
-                        java.nio.file.Files.writeString(
+                        Files.writeString(
                                 conf,
                                 "= " + Character.toUpperCase(name.charAt(0)) + name.substring(1) + "\n" +
                                         "\n" +
@@ -115,9 +130,7 @@ public class CommandConfigurationGenerator implements Runnable {
                                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         log.info("Created " + conf);
                         final int end = description.indexOf("\n//");
-                        return new AbstractMap.SimpleImmutableEntry<>(
-                                conf,
-                                end > 0 ? description.substring(0, end) : description);
+                        return entry(conf, end > 0 ? description.substring(0, end) : description);
                     } catch (final IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                         throw new IllegalArgumentException(e);
                     }

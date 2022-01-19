@@ -1,0 +1,44 @@
+{
+  "apiVersion": "apiextensions.k8s.io/v1",
+  "kind": "CustomResourceDefinition",
+  "metadata": {
+    "name": "alveoli.bundlebee.yupiik.io"
+  },
+  "spec": {
+    "group": "bundlebee.yupiik.io",
+    "scope": "{{bundlebee.operator.crd.scope:-Namespaced}}",
+    "names": {
+      "plural": "alveoli",
+      "singular": "alveolus",
+      "kind": "Alveolus",
+      "shortNames": [
+        "av"
+      ]
+    },
+    "versions": [
+      {
+        "name": "v1",
+        "served": true,
+        "storage": true,
+        "schema": {
+          "openAPIV3Schema": {
+            "type": "object",
+            "properties": {
+              "spec": {
+                "type": "object",
+                "properties": {
+                  "args": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
