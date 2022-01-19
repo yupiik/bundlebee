@@ -26,6 +26,10 @@ import static java.util.Locale.ROOT;
 
 public class DocEntryFormatter {
     public String format(final Field it, final Function<String, String> nameMapper) {
+        return format(it, nameMapper, false);
+    }
+
+    public String format(final Field it, final Function<String, String> nameMapper, final boolean envOnly) {
         final var annotation = it.getAnnotation(ConfigProperty.class);
         final var description = it.getAnnotation(Description.class);
         if (description == null) {
@@ -37,8 +41,9 @@ public class DocEntryFormatter {
             key = it.getDeclaringClass().getName() + "." + it.getName();
         }
         final var defaultValue = annotation.defaultValue();
+        final var envKey = key.replaceAll("[^A-Za-z0-9]", "_").toUpperCase(ROOT);
         return "" +
-                nameMapper.apply(key) + " (`" + key.replaceAll("[^A-Za-z0-9]", "_").toUpperCase(ROOT) + "`" + ")::\n" +
+                (envOnly ? envKey : (nameMapper.apply(key) + " (`" + envKey + "`)")) + "::\n" +
                 (desc.endsWith(".") ?
                         desc :
                         (desc + '.')) +

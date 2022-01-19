@@ -31,7 +31,7 @@
     <dependency> <!-- todo: replace it by something lighter without the mapping feature? -->
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.27</version>
+      <version>1.29</version>
     </dependency>
 
     <dependency>
@@ -62,12 +62,10 @@
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-json_1.1_spec</artifactId>
-      <version>1.5</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jsonb_1.0_spec</artifactId>
-      <version>1.4</version>
     </dependency>
     <dependency>
       <groupId>org.apache.openwebbeans</groupId>
@@ -82,12 +80,11 @@
     <dependency>
       <groupId>org.apache.johnzon</groupId>
       <artifactId>johnzon-jsonb</artifactId>
-      <version>1.2.10</version>
     </dependency>
     <dependency>
       <groupId>io.yupiik.logging</groupId>
       <artifactId>yupiik-logging-jul</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.2</version>
     </dependency>
 
     <dependency>
@@ -99,13 +96,11 @@
     <dependency>
       <groupId>org.talend.sdk.component</groupId>
       <artifactId>component-runtime-http-junit</artifactId>
-      <version>1.29.2</version>
       <scope>test</scope>
     </dependency>
     <dependency> <!-- for talend mock http server -->
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
-      <version>1.7.30</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

@@ -37,6 +37,11 @@
       <artifactId>bundlebee-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-operator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
     <dependency> <!-- for the reactor -->
       <groupId>${project.groupId}</groupId>
       <artifactId>bundlebee-maven-plugin</artifactId>
@@ -167,6 +172,9 @@
                 <title>Manifest Descriptor</title>
                 <description>BundleBee manifest descriptor.</description>
               </configuration>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.OperatorGenerator</type>
             </action>
           </preActions>
           <git>

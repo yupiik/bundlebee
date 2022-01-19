@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2021 - Yupiik SAS - https://www.yupiik.com
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>bundlebee</artifactId>
+    <groupId>io.yupiik</groupId>
+    <version>1.0.14-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>bundlebee-operator</artifactId>
+  <name>BundleBee :: Operator</name>
+  <description>A simple operator wrapping bundlebee to deploy directly alveoli!</description>
+  <!--
+  TODO: configure arthur to make the operator native (+ jib configuration).
+  -->
+
+  <properties>
+    <image.base>ossyupiik/java:17.0.1@sha256:5e8040466437f8b04e8f08a26e65b80142b130d0652fd75fe28d8a19416f36c5</image.base>
+    <image.workdir>/opt/yupiik/applications/${project.artifactId}</image.workdir>
+    <image.version>${project.version}</image.version>
+    <image.name>yupiik/bundlebee/operator:${image.version}</image.name>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.talend.sdk.component</groupId>
+      <artifactId>component-runtime-http-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>3.1.4</version>
+        <!--
+        mvn package jib:build [-Dimage.registry=...] -> will be pushed
+        mvn package -Pdocker -> local docker image
+        -->
+        <configuration>
+          <containerizingMode>packaged</containerizingMode>
+          <from>
+            <image>${image.base}</image>
+          </from>
+          <to>
+            <image>${image.name}</image>
+          </to>
+          <container>
+            <mainClass>io.yupiik.bundlebee.operator.BundlebeeOperator</mainClass>
+            <appRoot>${image.workdir}</appRoot>
+            <workingDirectory>${image.workdir}</workingDirectory>
+            <extraClasspath>${image.workdir}/custom/*:${image.workdir}/custom</extraClasspath>
+            <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
+            <jvmFlags>
+              <jvmFlag>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</jvmFlag>
+              <jvmFlag>-Dio.yupiik.logging.jul.handler.StandardHandler.formatter=json</jvmFlag>
+              <jvmFlag>-Djava.security.egd=file:/dev/./urandom</jvmFlag>
+              <jvmFlag>-Djdk.serialFilter=!*</jvmFlag>
+              <jvmFlag>-Djdk.jndi.object.factoriesFilter=!*</jvmFlag>
+              <jvmFlag>-Dcom.sun.jndi.ldap.object.trustSerialData=false</jvmFlag>
+            </jvmFlags>
+            <labels>
+              <org.opencontainers.image.revision>${git.commit.id}</org.opencontainers.image.revision>
+              <org.opencontainers.image.ref.name>${git.branch}</org.opencontainers.image.ref.name>
+              <org.opencontainers.image.source>${git.remote.origin.url}</org.opencontainers.image.source>
+              <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>
+              <org.opencontainers.image.authors>Yupiik</org.opencontainers.image.authors>
+              <org.opencontainers.image.vendor>Yupiik</org.opencontainers.image.vendor>
+              <org.opencontainers.image.url>${project.parent.scm.url}</org.opencontainers.image.url>
+              <org.opencontainers.image.documentation>${project.parent.scm.url}</org.opencontainers.image.documentation>
+              <org.opencontainers.image.title>Yupiik Bundlebee Operator</org.opencontainers.image.title>
+              <org.opencontainers.image.description>${project.description}</org.opencontainers.image.description>
+              <org.opencontainers.image.version>${project.version}</org.opencontainers.image.version>
+              <com.yupiik.bundlebee.params>_JAVA_OPTIONS=...</com.yupiik.bundlebee.params>
+              <com.yupiik.bundlebee.cmd>docker run ${image.name} &lt;args&gt;</com.yupiik.bundlebee.cmd>
+            </labels>
+          </container>
+          <outputPaths>
+            <imageJson>${project.build.directory}/jib-image.json</imageJson>
+          </outputPaths>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>docker</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>docker</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>dockerBuild</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>image</id>
+
+      <!-- TBD -->
+      <properties>
+        <image.registry>docker.io/yupiik/</image.registry>
+        <image.name>${image.registry}${project.artifactId}:${image.version}</image.name>
+      </properties>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>com.google.cloud.tools</groupId>
+            <artifactId>jib-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>image</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

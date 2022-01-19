@@ -1,0 +1,74 @@
+= Bundlebee K8s Operator
+
+WARNING: this module is new and can change.
+
+Bundlebee operator provides a Kubernetes operator which creates a custom resource of type `Alveolus`.
+This way you can deploy directly an alveolus and the operator will take care to deploy it.
+Similarly, if you delete the alveolus, the operator will delete it all.
+
+IMPORTANT: in current version there is no catch up logic so if the deletion fails you should re-run it or finish to clean up the data manually (this is on the roadmap).
+
+== Installation
+
+WARNING: as of today, the image is not yet available on docker hub (>= 1.0.14) so you will need to build it yourself.
+This can be done 1. cloning the project, 2. building it with `mvn install -DskipTests -Pdocker`, 3. push the `yupiik/bundlebee/operator:<version>` on your kubernetes image registry.
+
+You can install the Bundlebee operator using bundlebee client on your machine
+(or the maven plugin/fat jar if you prefer):
+`bundlebee --from io.yupiik:bundlebee-operator:<version> --alveolis io.yupiik:bundlebee-operator:<version`.
+
+The bundlebee alveolus installation supports the following configuration:
+
+include::content/_partials/generated/operator.configuration.adoc[]
+
+Alternatively you can use the following "all in file" JSON file you can use with `kubectl apply -f <bundlebee.operator.install.json>`.
+See <<#all-in-one-installation, all in one>> descriptor.
+
+TIP: if you don't install it in default namespace, don't hesitate to customize `KUBECONFIG` value in the all in one descriptor or use placeholders for the bundlebee installation.
+You can also desire to customize the roles affected to the `ServiceAccount` mounted in the operator `Deployment` to give it more or less permissions on what it can deploy/delete.
+
+== Configuration
+
+The operator configuration is globally the same than standard Bundlebee with a small difference: the global configuration is configured once - in the `Deployment` of the installation part - and only command configuration can be set in the `Alveolus` descriptors.
+
+=== Global configuration
+
+BUNDLEBEE_OPERATOR_STORAGE::
+Where to store the internal operator state to not restart from scratch when restarting.
+Default value: `/opt/yupiik/state/bundlebee-operator`.
+
+include::content/_partials/generated/shared.env.configuration.adoc[]
+
+== Delete/Apply an alveolus
+
+To apply a custmo `Alveolus` you can write a descriptor like:
+
+[source,yaml]
+----
+apiVersion: bundlebee.yupiik.io/v1 <1>
+kind: Alveolus <2>
+metadata: <3>
+  name: test-alveolus
+spec:
+  args: <4>
+    - "--from"
+    - "io.yupiik.alveoli:elasticsearch-local:1.0.13"
+    - "--alveolus"
+    - "io.yupiik.alveoli:elasticsearch-local:1.0.13"
+----
+<.> Use `apiVersion` `bundlebee.yupiik.io/v1`,
+<.> Use `kind` `Alveolus`,
+<.> `metadata` object is a standard one so you can set a name, labels, etc...,
+<.> `args` are the options of the `apply` command for this deployment (without the global configuration indeed).
+
+TIP: you can check <<commands/apply.adoc#, `apply` documentation to see all the options available>>.
+
+[#all-in-one-installation]
+== Appendix, all in one installation
+
+[source,json]
+.bundlebee.operator.install.json
+----
+include::content/_partials/generated/operator.allinone.json[]
+----
+

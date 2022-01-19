@@ -18,6 +18,7 @@ package io.yupiik.bundlebee.core.http;
 import lombok.RequiredArgsConstructor;
 
 import javax.net.ssl.SSLSession;
+import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
@@ -35,8 +36,11 @@ import java.util.concurrent.Flow;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class DryRunClient extends DelegatingClient {
-    public DryRunClient(final HttpClient delegate) {
+    private final boolean skipDryRunForGet;
+
+    public DryRunClient(final HttpClient delegate, final boolean skipDryRunForGet) {
         super(delegate);
+        this.skipDryRunForGet = skipDryRunForGet;
     }
 
     private <T> HttpResponse<T> mockResponse(final HttpRequest request,
@@ -48,13 +52,19 @@ public class DryRunClient extends DelegatingClient {
     }
 
     @Override
-    public <T> HttpResponse<T> send(final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler) {
+    public <T> HttpResponse<T> send(final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler) throws IOException, InterruptedException {
+        if (passthrough(request)) {
+            return super.send(request, responseBodyHandler);
+        }
         return mockResponse(request, responseBodyHandler);
     }
 
     @Override
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
                                                             final HttpResponse.BodyHandler<T> responseBodyHandler) {
+        if (passthrough(request)) {
+            return super.sendAsync(request, responseBodyHandler);
+        }
         final var httpResponse = mockResponse(request, responseBodyHandler);
         return delegate.executor()
                 .map(e -> { // try to respect async contract
@@ -73,7 +83,14 @@ public class DryRunClient extends DelegatingClient {
     public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
                                                             final HttpResponse.BodyHandler<T> responseBodyHandler,
                                                             final HttpResponse.PushPromiseHandler<T> pushPromiseHandler) {
+        if (passthrough(request)) {
+            return super.sendAsync(request, responseBodyHandler, pushPromiseHandler);
+        }
         return sendAsync(request, responseBodyHandler);
+    }
+
+    private boolean passthrough(final HttpRequest request) {
+        return "GET".equalsIgnoreCase(request.method()) && skipDryRunForGet;
     }
 
     @RequiredArgsConstructor

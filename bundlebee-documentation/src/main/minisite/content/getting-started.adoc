@@ -201,3 +201,7 @@ zip "$base.zip" -r . <2>
 And that's it.
 
 TIP: this trick to create a zip can be adapted to any language (javascript, typescript, go, python, ruby, ...) and enables to bundle an alveolus in any build tool very easily.
+
+== Going futher (K8s operator)
+
+To learn how to deploy directly an `Alveolus` on Kubernetes you can check out our <<operator.adoc#,Operator>> documentation.
