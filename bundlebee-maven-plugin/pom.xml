@@ -57,7 +57,7 @@
           <artifactId>guice</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>org.apache.commons</groupId>
+          <groupId>commons-io</groupId>
           <artifactId>commons-io</artifactId>
         </exclusion>
       </exclusions>
