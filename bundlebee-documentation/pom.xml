@@ -86,6 +86,11 @@
       <artifactId>monitoring-alveolus</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>minio-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>
