@@ -26,18 +26,20 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.JsonArray;
 import javax.json.JsonBuilderFactory;
 import javax.json.JsonException;
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.JsonPatch;
 import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbException;
+import javax.json.spi.JsonProvider;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -79,6 +81,10 @@ public class KubeClient implements ConfigHolder {
 
     @Inject
     @BundleBee
+    private JsonProvider jsonProvider;
+
+    @Inject
+    @BundleBee
     private JsonBuilderFactory jsonBuilderFactory;
 
     @Inject
@@ -95,6 +101,14 @@ public class KubeClient implements ConfigHolder {
     @Description("Should YAML/JSON be logged when it can't be parsed.")
     @ConfigProperty(name = "bundlebee.kube.logDescriptorOnParsingError", defaultValue = "true")
     private boolean logDescriptorOnParsingError;
+
+    @Inject
+    @Description("" +
+            "Enables to tolerate custom attributes in the descriptors. " +
+            "Typically used to drop `/$schema` attribute which enables a nice completion in editors. " +
+            "Values are `|` delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch.")
+    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema")
+    private String implicitlyDroppedAttributes;
 
     @Inject
     @Description("" +
@@ -116,6 +130,7 @@ public class KubeClient implements ConfigHolder {
 
     private Map<String, String> resourceMapping;
     private List<String> kindsToSkipUpdateIfPossible;
+    private List<JsonPatch> implicitlyDrops;
 
     @PostConstruct
     private void init() {
@@ -133,6 +148,17 @@ public class KubeClient implements ConfigHolder {
         } else {
             resourceMapping = Map.of();
         }
+
+        this.implicitlyDrops = Stream.of(implicitlyDroppedAttributes.split("\\|"))
+                .map(it -> jsonProvider.createPatch(
+                        it.startsWith("[") ?
+                                jsonb.fromJson(it, JsonArray.class) :
+                                jsonBuilderFactory.createArrayBuilder()
+                                        .add(jsonBuilderFactory.createObjectBuilder()
+                                                .add("op", JsonPatch.Operation.REMOVE.operationName())
+                                                .add("path", it))
+                                        .build()))
+                .collect(toList());
     }
 
     // for backward compatibility
@@ -226,17 +252,33 @@ public class KubeClient implements ConfigHolder {
                 return all(
                         json.asJsonArray().stream()
                                 .map(JsonValue::asJsonObject)
+                                .map(this::sanitizeJson)
                                 .map(descHandler)
                                 .collect(toList()),
                         toList(),
                         true);
             case OBJECT:
                 return descHandler
-                        .apply(json.asJsonObject())
+                        .apply(sanitizeJson(json.asJsonObject()))
                         .thenApply(List::of);
             default:
                 throw new IllegalArgumentException("Unsupported json type for apply: " + json);
         }
+    }
+
+    private JsonObject sanitizeJson(final JsonObject json) {
+        if (implicitlyDrops.isEmpty()) {
+            return json;
+        }
+        var out = json;
+        for (final var patch : implicitlyDrops) {
+            try {
+                out = patch.apply(out);
+            } catch (final JsonException je) {
+                // no-op
+            }
+        }
+        return out;
     }
 
     private JsonValue toJson(final String descriptorContent, final String ext) {
