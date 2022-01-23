@@ -29,9 +29,11 @@ jobs:
       - name: Clone
         uses: actions/checkout@v1
       - name: Cache Maven Repository
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
-          path: /home/runner/work/bundlebee/bundlebee/.m2
+          path: |
+            /home/runner/work/bundlebee/bundlebee/.m2
+            /home/runner/work/bundlebee/bundlebee/bundlebee-documentation/src/main/minisite/assets/generated/kubernetes
           key: m2_repository
       - name: Set up JDK
         uses: actions/setup-java@v1

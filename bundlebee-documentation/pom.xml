@@ -27,6 +27,13 @@
   <artifactId>bundlebee-documentation</artifactId>
   <name>BundleBee :: Documentation</name>
 
+  <properties>
+    <!-- skip jsonschema synchronization - keep the ones already present -->
+    <minisite.kubernetes.jsonschema.skip>false</minisite.kubernetes.jsonschema.skip>
+    <!-- if set to true all descriptors are regenerated else only the ones not locally present -->
+    <minisite.kubernetes.jsonschema.force>false</minisite.kubernetes.jsonschema.force>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.apache.xbean</groupId>
@@ -180,6 +187,15 @@
             </action>
             <action>
               <type>io.yupiik.bundlebee.documentation.OperatorGenerator</type>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.K8sJSONSchemasGenerator</type>
+              <configuration>
+                <specUrlTemplate>https://raw.githubusercontent.com/kubernetes/kubernetes/{{version}}/api/openapi-spec/swagger.json</specUrlTemplate>
+                <tagsUrl>https://api.github.com/repos/kubernetes/kubernetes/tags</tagsUrl>
+                <skip>${minisite.kubernetes.jsonschema.skip}</skip>
+                <force>${minisite.kubernetes.jsonschema.force}</force>
+              </configuration>
             </action>
           </preActions>
           <git>
