@@ -53,6 +53,7 @@ class InspectCommandTest {
                 "\n" +
                 "* Alveolus 'ApplyCommandTest.apply'\n" +
                 "  > Descriptor 'ApplyCommandTest.d1'\n" +
+                "    $schema: bar\n" +
                 "    apiVersion: v1\n" +
                 "    kind: Service\n" +
                 "    metadata:\n" +
@@ -123,6 +124,7 @@ class InspectCommandTest {
                 "\n" +
                 "* Alveolus 'ApplyCommandTest.apply'\n" +
                 "  > Descriptor 'ApplyCommandTest.d1'\n" +
+                "    $schema: bar\n" +
                 "    apiVersion: v1\n" +
                 "    kind: Service\n" +
                 "    metadata:\n" +

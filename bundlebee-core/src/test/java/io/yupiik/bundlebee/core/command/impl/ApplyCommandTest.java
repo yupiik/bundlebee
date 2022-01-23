@@ -37,6 +37,7 @@ import java.util.function.Predicate;
 
 import static java.util.logging.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @HttpApi(useSsl = true)
 class ApplyCommandTest {
@@ -189,7 +190,9 @@ class ApplyCommandTest {
                     case "CONNECT":
                         return Optional.empty();
                     case "GET":
+                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
                     case "PATCH":
+                        assertFalse(request.payload().contains("$schema"), request::payload);
                         return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
                     default:
                         return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
