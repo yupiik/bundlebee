@@ -37,10 +37,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -64,18 +68,43 @@ public class K8sJSONSchemasGenerator implements Runnable {
         final var jsonReaderFactory = Json.createReaderFactory(Map.of());
         final var jsonBuilderFactory = Json.createBuilderFactory(Map.of());
         final var jsonWriterFactory = Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
+        final var tasks = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors()), new ThreadFactory() {
+            private final AtomicInteger counter = new AtomicInteger();
+
+            @Override
+            public Thread newThread(final Runnable r) {
+                return new Thread(r, getClass().getName() + "-" + counter.incrementAndGet());
+            }
+        });
         try {
             final var root = Files.createDirectories(sourceBase.resolve("assets/generated/kubernetes/jsonschema"));
             for (final var version : fetchTags(httpClient, tagsUrl, jsonReaderFactory)) {
                 final var url = urlTemplate.replace("{{version}}", version);
-                generate(
-                        Files.createDirectories(root.resolve(version)), url, httpClient,
-                        jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory);
+                tasks.submit(() -> {
+                    try {
+                        generate(
+                                Files.createDirectories(root.resolve(version)), url, httpClient,
+                                jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory);
+                    } catch (final IOException ioe) {
+                        throw new IllegalStateException(ioe);
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
             }
         } catch (final IOException ioe) {
             throw new IllegalStateException(ioe);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
+        } finally {
+            tasks.shutdownNow();
+            try {
+                if (!tasks.awaitTermination(1, MINUTES)) {
+                    log.warning(() -> "Wrong interruption of generation task");
+                }
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 
