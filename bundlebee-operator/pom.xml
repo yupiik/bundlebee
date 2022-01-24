@@ -34,7 +34,8 @@
   -->
 
   <properties>
-    <image.base>ossyupiik/java:17.0.1@sha256:5e8040466437f8b04e8f08a26e65b80142b130d0652fd75fe28d8a19416f36c5</image.base>
+    <image.base>ossyupiik/java:17.0.1@sha256:5e8040466437f8b04e8f08a26e65b80142b130d0652fd75fe28d8a19416f36c5
+    </image.base>
     <image.workdir>/opt/yupiik/applications/${project.artifactId}</image.workdir>
     <image.version>${project.version}</image.version>
     <image.name>yupiik/bundlebee/operator:${image.version}</image.name>
@@ -167,6 +168,29 @@
                 </goals>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>native</id>
+      <build>
+        <plugins>
+          <plugin> <!-- mvn package -Pnative -DskipTests -->
+            <groupId>org.apache.geronimo.arthur</groupId>
+            <artifactId>arthur-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>native</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>native-image</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <main>io.yupiik.bundlebee.operator.BundlebeeOperator</main>
+            </configuration>
           </plugin>
         </plugins>
       </build>
