@@ -113,6 +113,10 @@
             <customOption>-Djava.net.preferIPv4Stack=true</customOption>
             <customOption>--enable-http</customOption>
             <customOption>--enable-https</customOption>
+            <!-- to investigate what is in the native binaries/image(s) https://www.graalvm.org/dashboard/
+            <customOption>-H:DashboardDump=target/dashboard</customOption>
+            <customOption>-H:+DashboardAll</customOption>
+            -->
           </customOptions>
           <graalExtensions>
             <graalExtension>openwebbeans</graalExtension>
