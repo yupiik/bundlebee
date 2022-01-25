@@ -102,7 +102,7 @@
         <artifactId>arthur-maven-plugin</artifactId>
         <version>1.0.2</version>
         <configuration>
-          <graalVersion>21.3.0.r11</graalVersion>
+          <graalVersion>22.0.0.2.r11</graalVersion>
           <attach>true</attach>
           <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
           <output>${project.build.directory}/${project.artifactId}</output>
