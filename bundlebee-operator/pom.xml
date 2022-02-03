@@ -29,9 +29,6 @@
   <artifactId>bundlebee-operator</artifactId>
   <name>BundleBee :: Operator</name>
   <description>A simple operator wrapping bundlebee to deploy directly alveoli!</description>
-  <!--
-  TODO: configure arthur to make the operator native (+ jib configuration).
-  -->
 
   <properties>
     <image.base>ossyupiik/java:17.0.1@sha256:5e8040466437f8b04e8f08a26e65b80142b130d0652fd75fe28d8a19416f36c5

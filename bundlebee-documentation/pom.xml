@@ -49,6 +49,17 @@
       <artifactId>bundlebee-operator</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-junit5</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency> <!-- for the reactor -->
       <groupId>${project.groupId}</groupId>
       <artifactId>bundlebee-maven-plugin</artifactId>

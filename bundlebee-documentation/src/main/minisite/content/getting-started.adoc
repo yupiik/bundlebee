@@ -210,3 +210,8 @@ To learn how to deploy directly an `Alveolus` on Kubernetes you can check out ou
 
 You can use an alveolus as a template for others providing contextual placeholders.
 Learn more about this in <<template.adoc#,template>> documentation.
+
+== Testing your alveoli with JUnit 5
+
+Bundlebee provides a light testing framework integrated with JUnit 5 to ease the validation of alveoli.
+Learn more about this in <<junit5.adoc#,template>> documentation.
