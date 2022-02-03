@@ -80,16 +80,19 @@ public final class MojoGenerator {
         finder
                 .findImplementations(Executable.class).stream()
                 .filter(it -> !Modifier.isAbstract(it.getModifiers()) && !it.isInterface())
-                .forEach(executable -> {
+                .map(it -> {
                     try {
-                        final Executable instance = executable.asSubclass(Executable.class).getConstructor().newInstance();
+                        return it.asSubclass(Executable.class).getConstructor().newInstance();
+                    } catch (final InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                        throw new IllegalArgumentException(e);
+                    }
+                })
+                .filter(it -> !it.hidden() && !"help".equals(it.name()))
+                .forEach(instance -> {
+                    try {
                         final var name = instance.name();
-                        if ("help".equals(name)) {
-                            return;
-                        }
-
                         final var prefix = Pattern.compile("^bundlebee\\." + name + "\\."); // see io.yupiik.bundlebee.core.BundleBee.toProperties
-                        final var parameterDeclarationPerName = new ClassFinder(executable)
+                        final var parameterDeclarationPerName = new ClassFinder(instance.getClass())
                                 .findAnnotatedFields(ConfigProperty.class).stream()
                                 .collect(toMap(
                                         it -> it.getAnnotation(ConfigProperty.class).name(),
@@ -206,7 +209,7 @@ public final class MojoGenerator {
                                         "\n",
                                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
                         LOGGER.info("Created " + mojo);
-                    } catch (final IOException | InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    } catch (final IOException e) {
                         throw new IllegalArgumentException(e);
                     }
                 });
