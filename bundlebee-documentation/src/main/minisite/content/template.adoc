@@ -68,7 +68,7 @@ NOTE: this is a valid alveolus, if you provide all the placeholders you can inst
 To use the template previously defined, just define another alveolus which binds the required placeholders in its definition:
 
 [source,json]
-.manifest.json snipper
+.manifest.json snippet
 ----
 {
   "name": "my-service-7070",
