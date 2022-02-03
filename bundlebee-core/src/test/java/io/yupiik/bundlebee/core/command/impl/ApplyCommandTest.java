@@ -30,8 +30,10 @@ import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
@@ -46,6 +48,39 @@ class ApplyCommandTest {
 
     @HttpApiInject
     private HttpApiHandler<?> handler;
+
+    @Test
+    void fromTemplate(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
+                "apply", "--alveolus", "ApplyCommandTest.fromTemplate",
+                "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
+        assertEquals("" +
+                "Deploying 'ApplyCommandTest.fromTemplate'\n" +
+                "Deploying 'ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate'\n" +
+                "Deploying 'ApplyCommandTest.template'\n" +
+                "Deploying 'ApplyCommandTest.template'\n" +
+                "Applying 'bar' (kind=services) for namespace 'default'\n" +
+                "Applying 'foo' (kind=services) for namespace 'default'\n" +
+                "", logs);
+
+        assertEquals(4, spyingResponseLocator.getFound().size());
+        assertEquals(2, spyingResponseLocator.requests.size());
+        assertEquals("" +
+                "{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
+                "\"metadata\":{\"name\":\"bar\",\"labels\":{\"app\":\"my-app-2\"}}," +
+                "\"spec\":{\"type\":\"NodePort2\",\"ports\":[{\"port\":7070,\"targetPort\":7070}]," +
+                "\"selector\":{\"app\":\"my-app-2\"}}}" +
+                "", spyingResponseLocator.requests.get(0).payload());
+        assertEquals("" +
+                "{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
+                "\"metadata\":{\"name\":\"foo\",\"labels\":{\"app\":\"my-app\"}}," +
+                "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":9090,\"targetPort\":9090}]," +
+                "\"selector\":{\"app\":\"my-app\"}}}" +
+                "", spyingResponseLocator.requests.get(1).payload());
+    }
 
     @Test
     void apply(final CommandExecutor executor, final TestInfo info) {
@@ -180,24 +215,32 @@ class ApplyCommandTest {
         assertEquals(6, spyingResponseLocator.getFound().size());
     }
 
-    private SpyingResponseLocator newSpyingHandler(final TestInfo info) {
-        return new SpyingResponseLocator(
-                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
-            @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
-                switch (request.method()) {
-                    case "CONNECT":
-                        return Optional.empty();
-                    case "GET":
-                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
-                    case "PATCH":
-                        assertFalse(request.payload().contains("$schema"), request::payload);
-                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
-                    default:
-                        return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
-                }
+    private StoringSpyingResponseLocator newSpyingHandler(final TestInfo info) {
+        return new StoringSpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName());
+    }
+
+    private static class StoringSpyingResponseLocator extends SpyingResponseLocator {
+        private final List<Request> requests = new CopyOnWriteArrayList<>();
+
+        public StoringSpyingResponseLocator(final String s) {
+            super(s);
+        }
+
+        @Override
+        protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
+                                            final Predicate<String> headerFilter, final boolean exactMatching) {
+            switch (request.method()) {
+                case "CONNECT":
+                    return Optional.empty();
+                case "GET":
+                    return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                case "PATCH":
+                    requests.add(request);
+                    assertFalse(request.payload().contains("$schema"), request::payload);
+                    return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                default:
+                    return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
             }
-        };
+        }
     }
 }

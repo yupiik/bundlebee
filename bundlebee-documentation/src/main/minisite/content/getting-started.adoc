@@ -205,3 +205,8 @@ TIP: this trick to create a zip can be adapted to any language (javascript, type
 == Going futher (K8s operator)
 
 To learn how to deploy directly an `Alveolus` on Kubernetes you can check out our <<operator.adoc#,Operator>> documentation.
+
+== Define custom templates
+
+You can use an alveolus as a template for others providing contextual placeholders.
+Learn more about this in <<template.adoc#,template>> documentation.
