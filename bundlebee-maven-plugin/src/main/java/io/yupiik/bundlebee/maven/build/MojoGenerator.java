@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 - Yupiik SAS - https://www.yupiik.com
+ * Copyright (c) 2021, 2022 - Yupiik SAS - https://www.yupiik.com
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
@@ -149,7 +149,7 @@ public final class MojoGenerator {
                         Files.writeString(
                                 mojo,
                                 "/*\n" +
-                                        " * Copyright (c) 2021 - Yupiik SAS - https://www.yupiik.com\n" +
+                                        " * Copyright (c) 2021, 2022 - Yupiik SAS - https://www.yupiik.com\n" +
                                         " * Licensed under the Apache License, Version 2.0 (the \"License\");\n" +
                                         " * you may not use this file except in compliance\n" +
                                         " * with the License.  You may obtain a copy of the License at\n" +
