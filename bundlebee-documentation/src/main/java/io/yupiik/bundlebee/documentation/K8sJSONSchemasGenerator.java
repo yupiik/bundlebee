@@ -154,7 +154,12 @@ public class K8sJSONSchemasGenerator implements Runnable {
                             .findFirst()
                             .map(it -> URI.create(it.substring(it.indexOf("<") + 1, it.indexOf(">"))))
                             .orElse(null);
-                    delegate = array.stream().map(JsonValue::asJsonObject).map(i -> i.getString("name")).iterator();
+                    delegate = array.stream()
+                            .map(JsonValue::asJsonObject)
+                            .map(i -> i.getString("name"))
+                            // keep only releases
+                            .filter(it -> !it.contains("-alpha.") && !it.contains("-beta.") && !it.contains("-rc."))
+                            .iterator();
                     if (!delegate.hasNext()) {
                         return hasNext(); // check next if exists (unlikely)
                     }
