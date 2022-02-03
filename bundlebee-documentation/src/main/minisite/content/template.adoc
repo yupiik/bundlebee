@@ -1,5 +1,7 @@
 = Create your own templates
 
+IMPORTANT: feature available since Bundlebee 1.0.14.
+
 A template is an alveolus which is not intended to be installed by itself in general - even if it is possible.
 It relies on placeholders to be contextualized and, in general, placeholders are provided in the context if a _contextual alveolus_ which represents the consumer.
 
