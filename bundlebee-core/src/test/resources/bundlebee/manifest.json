@@ -1,6 +1,46 @@
 {
   "alveoli": [
     {
+      "name": "ApplyCommandTest.template",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.template",
+          "interpolate": true
+        }
+      ]
+    },
+    {
+      "name": "ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate",
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.template"
+        }
+      ],
+      "placeholders": {
+        "service.app": "my-app-2",
+        "service.name": "bar",
+        "service.type": "NodePort2",
+        "service.port": "7070"
+      }
+    },
+    {
+      "name": "ApplyCommandTest.fromTemplate",
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate"
+        },
+        {
+          "name": "ApplyCommandTest.template"
+        }
+      ],
+      "placeholders": {
+        "service.app": "my-app",
+        "service.name": "foo",
+        "service.type": "NodePort",
+        "service.port": "9090"
+      }
+    },
+    {
       "name": "ApplyCommandTest.apply",
       "descriptors": [
         {

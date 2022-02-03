@@ -170,7 +170,8 @@ public class InspectCommand implements CompletingExecutable {
                                 .map(desc -> "  > Descriptor '" + desc.getConfiguration().getName() + "'" +
                                         toFrom(desc.getConfiguration().getLocation()) +
                                         (verbose ? '\n' + formatDescriptorContent(desc.getContent()) : "") +
-                                        toPatches(alveolus, desc)),
+                                        toPatches(alveolus, desc) +
+                                        toPlacheolders(alveolus)),
                         alveolus.getDependencies() != null && !alveolus.getDependencies().isEmpty() ?
                                 alveolus.getDependencies().stream()
                                         .map(it -> "  - Dependency '" + it.getName() + "'" + toFrom(it.getLocation())) :
@@ -203,5 +204,16 @@ public class InspectCommand implements CompletingExecutable {
                 .collect(joining("\n", "", ""))
                 .trim();
         return patches.isBlank() ? "" : ("\n" + patches + "\n");
+    }
+
+    private String toPlacheolders(final Manifest.Alveolus alveolus) {
+        if (alveolus.getPlaceholders() == null || alveolus.getPlaceholders().isEmpty()) {
+            return "";
+        }
+        final var all = alveolus.getPlaceholders().entrySet().stream()
+                .map(it -> "    . Placeholder " + it.getKey() + ": '" + it.getValue() + "'")
+                .collect(joining("\n", "", ""))
+                .strip();
+        return all.isBlank() ? "" : ("\n" + all + "\n");
     }
 }

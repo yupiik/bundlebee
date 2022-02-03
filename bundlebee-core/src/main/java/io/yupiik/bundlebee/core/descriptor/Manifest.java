@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 
 import javax.json.JsonArray;
 import java.util.List;
+import java.util.Map;
 
 /**
  * IMPORTANT: the key "bundlebee" is forbidden, see {@link io.yupiik.bundlebee.core.service.ManifestReader}.
@@ -189,12 +190,18 @@ public class Manifest {
                 "The key is the descriptor name and each time the descriptor is found it will be applied.")
         private List<Patch> patches;
 
+        @Description("" +
+                "Local placeholders for this particular alveolus and its dependencies. " +
+                "It is primarly intended to be able to create a template alveolus and inject the placeholders inline.")
+        private Map<String, String> placeholders;
+
         public Alveolus copy() {
             final var alveolus = new Manifest.Alveolus();
             alveolus.setDependencies(getDependencies());
             alveolus.setExcludedDescriptors(getExcludedDescriptors());
             alveolus.setName(getName());
             alveolus.setPatches(getPatches());
+            alveolus.setPlaceholders(getPlaceholders());
             alveolus.setDescriptors(getDescriptors());
             alveolus.setVersion(getVersion());
             return alveolus;
