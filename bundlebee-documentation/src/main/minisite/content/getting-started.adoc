@@ -214,4 +214,4 @@ Learn more about this in <<template.adoc#,template>> documentation.
 == Testing your alveoli with JUnit 5
 
 Bundlebee provides a light testing framework integrated with JUnit 5 to ease the validation of alveoli.
-Learn more about this in <<junit5.adoc#,template>> documentation.
+Learn more about this in <<junit5.adoc#,junit5>> documentation.
