@@ -327,6 +327,14 @@
               }
             }
           },
+          "placeholders":{
+            "type":"object",
+            "title":"Alveolus.placeholders",
+            "description":"Local placeholders for this particular alveolus and its dependencies. It is primarly intended to be able to create a template alveolus and inject the placeholders inline.",
+            "properties":{
+
+            }
+          },
           "version":{
             "type":"string",
             "title":"Alveolus.version",
