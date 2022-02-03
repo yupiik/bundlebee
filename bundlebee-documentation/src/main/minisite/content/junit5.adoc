@@ -1,0 +1,90 @@
+= JUnit 5
+
+To ensure your recipes/alveoli can be installed, you can test them.
+There are a lot of solutions out there from the lightest to the heaviest (using minikube locally).
+
+Bundlebee brings an in-between solution with `bundlebee-junit5` module which enables to write simple tests in plain JUnit 5.
+
+== How it works
+
+`bundlebee-junit5` sets up a "ok" Kubernetes API mock (always responding HTTP 200 `{}`) - indeed you can control that, see later.
+The test are executed against this API mock ensuring all the resolution of descriptors, placeholders and patches are successfully passed.
+
+This mock also enables you to inject validation in it which means you can also validate the shape or context of what is sent to kubernetes (after interpolations and enrichment).
+
+== Get started
+
+After having added the following dependency:
+
+[source,xml]
+----
+<dependency>
+  <groupId>io.yupiik</groupId>
+  <artifactId>bundlebee-junit5</artifactId>
+  <version>${bundlebee.version}</version>
+</dependency>
+----
+
+You can start writing tests with `@ValidateAlveolus` API (equivalent to `@Test`):
+
+[source,java]
+.AlveolusTest.java
+----
+class ValidateAlveolusTest {
+    @ValidateAlveolus("my-app")
+    void apply_app() {
+    }
+}
+----
+
+Just putting the annotation on a test method will run implicitly `bundlebee apply`.
+
+However, it is recommended to use a setup closer to the deployment and to assert what happens at deploy time:
+
+[source,java]
+.AlveolusTest.java
+----
+class ValidateAlveolusTest {
+    @ValidateAlveolus("my-app")
+    void apply_app(final CommandExecutor executor, final LogCapturer logCapturer) {
+        executor.run();
+
+        final var all = logCapturer.all();
+        assertEquals(4, all.size());
+        assertEquals("xxxxxx", all.iterator().next().getMessage());
+    }
+}
+----
+
+Here , we injected `CommandExecutor` and `LogCapturer`.
+The first one enables to manually control when the command is applied and last one enables to retrieve the logs associated to the command execution (what is printed).
+This enables to check the command output.
+
+== Validate the API usage
+
+You can go further injecting in the method parameters `KubernetesApi`.
+Similarly to log validation, it enables to validate the sent requests to Kubernetes API:
+
+[source,java]
+----
+@ValidateAlveolus("my-app")
+void apply_app(final CommandExecutor executor, final KubernetesApi kubernetesApi) {
+    kubernetesApi.capture(); // enable the capture
+    executor.run();
+
+    final var all = kubernetesApi.captured(); // get what was captured
+    // todo: do asserts on payloads
+}
+----
+
+TIP: indeed you can combine log and API validations in the same test.
+
+== Going further
+
+The API is richer than just these example, for example, `KubernetesApi` enables you to inject your own `IOPredicate<HttpExchange>` which basically gives you the keys of the mock.
+In this mode the capture does not work anymore but you don't really care since you see all requests going through and you can handle your validations there (ensure to fail in the test thread and not predicate which is using a HTTP server thread).
+It also enables you to respond more complex responses and potentially start from a different - not empty - state in your mocked kubernetes (reinstallation, deletion etc...).
+
+Finally, you can also check the API in the package `io.yupiik.bundlebee.junit5` since `@ValidateAlveolus` enables, for example, to fully customize the command to execute.
+
+TIP: last tip is that `options` of `@ValidateAlveolus` support to use placeholders filled from system properties in the form of `{{xxx}}`. This enables to inject `m2` location for example if needed.
