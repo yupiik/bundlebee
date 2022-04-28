@@ -98,6 +98,9 @@ public class AlveolusHandler {
     @Inject
     private Config config;
 
+    @Inject
+    private RequirementService requirementService;
+
     private ThreadLocalConfigSource threadLocalConfigSource;
 
     @PostConstruct
@@ -121,6 +124,18 @@ public class AlveolusHandler {
 
     public CompletionStage<List<ManifestAndAlveolus>> findRootAlveoli(final String from, final String manifest,
                                                                       final String alveolus) {
+        return doFindRootAlveoli(from, manifest, alveolus)
+                .thenApply(a -> {
+                    // only check root one since we assume it enforces dependencies ones if any +
+                    // we want to be able to bypass it if needed
+                    a.forEach(it -> requirementService.checkRequirements(it.getManifest()));
+                    return a;
+                });
+    }
+
+    private CompletionStage<List<ManifestAndAlveolus>> doFindRootAlveoli(final String from,
+                                                                         final String manifest,
+                                                                         final String alveolus) {
         if (!"skip".equals(manifest)) {
             final var mf = readManifest(manifest);
             if (mf.getAlveoli() == null) {

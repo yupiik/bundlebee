@@ -27,14 +27,12 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
-import java.util.HashSet;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 
 @Log
