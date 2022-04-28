@@ -101,6 +101,12 @@ public class DryRunClient extends DelegatingClient {
         private final BodyHandler<T> bodyHandler;
 
         @Override
+        public String toString() {
+            final URI uri = request().uri();
+            return '(' + request().method() + " " + (uri == null ? "" : uri.toString()) + ") " + statusCode();
+        }
+
+        @Override
         public int statusCode() {
             return status;
         }
