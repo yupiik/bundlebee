@@ -440,7 +440,9 @@ public class AlveolusHandler {
         var content = desc.getContent();
 
         final var descPatches = patches.entrySet().stream()
-                .filter(e -> e.getKey().test(desc.configuration.getName()))
+                .filter(e -> e.getKey().test(desc.configuration.getName()) ||
+                        // extensions can be implicit so ensure we support both
+                        e.getKey().test(desc.configuration.getName() + "." + desc.extension))
                 .map(Map.Entry::getValue)
                 .collect(toList());
         if (!descPatches.isEmpty()) {
