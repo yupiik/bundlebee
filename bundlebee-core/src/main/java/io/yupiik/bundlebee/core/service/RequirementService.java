@@ -52,7 +52,7 @@ public class RequirementService {
 
     private String sanitize(final String version) {
         if (version.endsWith("-SNAPSHOT")) {
-            return version.substring(version.length() - "-SNAPSHOT".length());
+            return version.substring(0, version.length() - "-SNAPSHOT".length());
         }
         return version;
     }
