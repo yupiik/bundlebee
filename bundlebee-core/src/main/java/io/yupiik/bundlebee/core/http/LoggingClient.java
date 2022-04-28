@@ -106,9 +106,9 @@ public class LoggingClient extends DelegatingClient {
                                 delegate.onComplete();
                             }
                         });
-                        return "-d " + delegate.getBody().toCompletableFuture().get();
+                        return " -d '" + delegate.getBody().toCompletableFuture().get().replace("'", "\\'") + "'";
                     } catch (final RuntimeException | ExecutionException re) {
-                        return "-d '?'";
+                        return " -d '?'";
                     } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
                         return "";
