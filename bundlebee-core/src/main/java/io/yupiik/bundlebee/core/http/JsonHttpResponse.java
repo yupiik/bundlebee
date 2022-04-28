@@ -35,6 +35,12 @@ public class JsonHttpResponse implements HttpResponse<JsonObject> {
     private final HttpResponse<String> delegate;
 
     @Override
+    public String toString() {
+        final URI uri = request().uri();
+        return '(' + request().method() + " " + (uri == null ? "" : uri.toString()) + ") " + statusCode();
+    }
+
+    @Override
     public Optional<HttpResponse<JsonObject>> previousResponse() {
         return empty();
     }
