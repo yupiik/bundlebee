@@ -438,7 +438,7 @@ public class KubeClient implements ConfigHolder {
         if (putOnUpdate || isUsePutOnUpdateForced(desc)) {
             return api.execute(
                             HttpRequest.newBuilder()
-                                    .method("PUT", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                    .PUT(HttpRequest.BodyPublishers.ofString(desc.toString()))
                                     .header("Content-Type", "application/json")
                                     .header("Accept", "application/json"),
                             baseUri + "/" + name + fieldManager)
