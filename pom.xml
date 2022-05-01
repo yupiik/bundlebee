@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright (c) 2021, 2022 - Yupiik SAS - https://www.yupiik.com
+    Copyright (c) 2021-2022 - Yupiik SAS - https://www.yupiik.com
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance
     with the License.  You may obtain a copy of the License at
@@ -26,6 +26,12 @@
   <name>BundleBee</name>
   <description>A light Kubernetes package manager inheriting from Apache Maven infrastructure.</description>
   <url>https://github.com/yupiik/bundlebee</url>
+
+  <organization>
+    <name>Yupiik SAS</name>
+    <url>https://www.yupiik.com</url>
+  </organization>
+  <inceptionYear>2021-2022</inceptionYear>
 
   <properties>
     <owb.version>2.0.26</owb.version>
@@ -203,7 +209,7 @@
       <plugin>
         <groupId>com.mycila</groupId>
         <artifactId>license-maven-plugin</artifactId>
-        <version>4.0.rc2</version>
+        <version>4.1</version>
         <executions>
           <execution>
             <id>check-license</id>
@@ -216,7 +222,7 @@
         <inherited>false</inherited>
         <configuration>
           <aggregate>true</aggregate>
-          <inlineHeader><![CDATA[Copyright (c) 2021, 2022 - ${organization.name} - ${organization.url}
+          <inlineHeader><![CDATA[Copyright (c) ${project.inceptionYear} - ${project.organization.name} - ${project.organization.url}
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance
 with the License.  You may obtain a copy of the License at
@@ -230,10 +236,6 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 ]]></inlineHeader>
-          <properties>
-            <organization.name>Yupiik SAS</organization.name>
-            <organization.url>https://www.yupiik.com</organization.url>
-          </properties>
           <mapping>
             <adoc>DOUBLESLASH_STYLE</adoc>
           </mapping>
