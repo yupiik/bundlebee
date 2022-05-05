@@ -25,7 +25,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
@@ -44,6 +50,38 @@ class SubstitutorProducerTest {
         } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Test
+    void logResolutions() {
+        final var logger = Logger.getLogger(SubstitutorProducer.class.getName());
+        final var captures = new ArrayList<String>();
+        final var captureHandler = new Handler() {
+            @Override
+            public void publish(final LogRecord record) {
+                captures.add(record.getMessage());
+            }
+
+            @Override
+            public void flush() {
+                // no-op
+            }
+
+            @Override
+            public void close() throws SecurityException {
+                flush();
+            }
+        };
+        final var level = logger.getLevel();
+        logger.setLevel(Level.ALL);
+        logger.addHandler(captureHandler);
+        try {
+            substitutor.getOrDefault("bundlebee-base64:content", "failed");
+        } finally {
+            logger.setLevel(level);
+            logger.removeHandler(captureHandler);
+        }
+        assertEquals(List.of("Resolved 'bundlebee-base64:content' to 'Y29udGVudA=='"), captures);
     }
 
     @Test
