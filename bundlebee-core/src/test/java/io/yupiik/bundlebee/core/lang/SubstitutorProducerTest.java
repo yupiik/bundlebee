@@ -53,6 +53,13 @@ class SubstitutorProducerTest {
     }
 
     @Test
+    void jsr223() {
+        assertEquals(
+                "was executed properly",
+                substitutor.getOrDefault("jsr223:'was executed properly';", "failed"));
+    }
+
+    @Test
     void logResolutions() {
         final var logger = Logger.getLogger(SubstitutorProducer.class.getName());
         final var captures = new ArrayList<String>();

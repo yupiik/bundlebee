@@ -23,6 +23,8 @@ import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Produces;
+import javax.enterprise.inject.spi.Bean;
+import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
 import javax.json.JsonValue;
 import javax.json.spi.JsonProvider;
@@ -40,9 +42,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.logging.Level.SEVERE;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -58,6 +65,9 @@ public class SubstitutorProducer {
 
     @Inject
     private Maven maven;
+
+    @Inject
+    private BeanManager beanManager;
 
     @Produces
     public Substitutor substitutor(final Config config) {
@@ -151,6 +161,20 @@ public class SubstitutorProducer {
             if (it.startsWith("date:")) {
                 final var pattern = it.substring("date:".length());
                 return OffsetDateTime.now().format(DateTimeFormatter.ofPattern(pattern));
+            }
+            if (it.startsWith("jsr223:")) {
+                try {
+                    final var resourceContent = readResource(it, "jsr223:");
+                    final var script = ofNullable(resourceContent)
+                            .map(c -> new String(c, StandardCharsets.UTF_8))
+                            .orElseGet(() -> it.substring("jsr223:".length()));
+                    return Scripts.execute(
+                            script,
+                            resourceContent == null ? null : it.substring(it.lastIndexOf('.') + 1),
+                            beanManager);
+                } catch (final IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             // depending data key entry name we can switch the separator depending first one
@@ -298,5 +322,62 @@ public class SubstitutorProducer {
                 "namespace=" + namespace + "/account=" + account + "/prefix=" + secretPrefix + " in " + timeout + "s";
         log.warning(error);
         throw new IllegalStateException(error);
+    }
+
+    private static final class Scripts {
+        private Scripts() {
+            // no-op
+        }
+
+        private static String execute(final String content, final String lang, final BeanManager beanManager) {
+            final var lg = ofNullable(lang).orElseGet(() -> guessLang(content));
+            final var manager = new javax.script.ScriptEngineManager();
+            var engine = manager.getEngineByExtension(lg);
+            if (engine == null) {
+                engine = manager.getEngineByName(lg);
+                if (engine == null) {
+                    engine = manager.getEngineByMimeType(lg);
+                    if (engine == null) {
+                        throw new IllegalStateException("" +
+                                "No engine matching lang: '" + lg + "', " +
+                                "add a comment line with `bundlebee.language: <lang>` to refine the language or " +
+                                "ensure your JSR223 implementation is in the classpath.");
+                    }
+                }
+            }
+            final var bindings = engine.createBindings();
+            bindings.put("lookupByName", (Function<String, Object>) name -> {
+                final Bean<?> bean = beanManager.resolve(beanManager.getBeans(name));
+                if (bean == null) {
+                    throw new IllegalArgumentException("No bean '" + name + "' found.");
+                }
+                // important: on dependent beans it will leak the creation context, accepted cause it is a script and rare but not recommended
+                return beanManager.getReference(bean, bean.getBeanClass(), beanManager.createCreationalContext(null));
+            });
+            bindings.put("lookupByType", (Function<Class<?>, Object>) type -> {
+                final Bean<?> bean = beanManager.resolve(beanManager.getBeans(type));
+                if (bean == null) {
+                    throw new IllegalArgumentException("No bean " + type + " found.");
+                }
+                // important: on dependent beans it will leak the creation context, accepted cause it is a script and rare but not recommended
+                return beanManager.getReference(bean, bean.getBeanClass(), beanManager.createCreationalContext(null));
+            });
+            try {
+                return ofNullable(engine.eval(content, bindings)).map(String::valueOf).orElse(null);
+            } catch (final javax.script.ScriptException e) {
+                Logger.getLogger(Scripts.class.getName()).log(SEVERE, e, e::getMessage);
+                throw new IllegalStateException(e);
+            }
+        }
+
+        private static String guessLang(final String content) {
+            final var marker = "bundlebee.language:";
+            return Stream.of(content.split("\n"))
+                    .map(String::trim)
+                    .filter(it -> it.contains(marker))
+                    .map(it -> it.substring(it.indexOf(marker + marker.length())).trim())
+                    .findFirst()
+                    .orElse("js");
+        }
     }
 }

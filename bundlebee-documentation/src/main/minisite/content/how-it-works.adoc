@@ -204,6 +204,7 @@ Placeholders can use some keywords to get some particular values:
 - `date:<pattern>`: format `OffsetDateTime.now()` value using the provided pattern,
 - `nowUTC`: `OffsetDateTime.now()` value with UTC `ZoneId`,
 - `kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]`: secret value looked up through Kubernetes API.
+- `jsr223:<script path as file or resource or inline script>`: executes a JSR223 script to get the result, assumes that the script engine implementation is available in the JVM (not by default). To find the engine it uses the file extension or a comment in the file (for inline script) containing `bundlebee.language: <lang>`. The script contains the two functions `lookupByName` and `lookupByType` which can lookup a CDI bean to reuse BundleBee utilities (ex: `const bean = lookupByType.apply(getType('io.yupiik.bundlebee.core.kube.KubeClient'))`). If no language is found it defaults on `js`.
 
 If none of these placeholders match, then Microprofile Config is used to lookup the value (so system properties, environment variables and BundleBee args are used).
 
