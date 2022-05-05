@@ -16,9 +16,6 @@
 package io.yupiik.bundlebee.core.lang;
 
 import javax.enterprise.inject.Vetoed;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -105,44 +102,6 @@ public class Substitutor {
                 return varDefaultValue;
             }
             throw re;
-        }
-    }
-
-    private int isMatch(final char[] chars, final char[] buffer, int pos,
-                        final int bufferEnd) {
-        final int len = chars.length;
-        if (pos + len > bufferEnd) {
-            return 0;
-        }
-        for (int i = 0; i < chars.length; i++, pos++) {
-            if (chars[i] != buffer[pos]) {
-                return 0;
-            }
-        }
-        return len;
-    }
-
-    private void checkCyclicSubstitution(final String varName, final List<String> priorVariables) {
-        if (!priorVariables.contains(varName)) {
-            return;
-        }
-        final StringBuilder buf = new StringBuilder(256);
-        buf.append("Infinite loop in property interpolation of ");
-        buf.append(priorVariables.remove(0));
-        buf.append(": ");
-        appendWithSeparators(buf, priorVariables);
-        throw new IllegalStateException(buf.toString());
-    }
-
-    private void appendWithSeparators(final StringBuilder builder, final Collection<String> iterable) {
-        if (iterable != null && !iterable.isEmpty()) {
-            final Iterator<?> it = iterable.iterator();
-            while (it.hasNext()) {
-                builder.append(it.next());
-                if (it.hasNext()) {
-                    builder.append("->");
-                }
-            }
         }
     }
 }

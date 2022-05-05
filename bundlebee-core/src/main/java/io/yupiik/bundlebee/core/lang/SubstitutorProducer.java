@@ -167,7 +167,14 @@ public class SubstitutorProducer {
             }
 
             return config.getOptionalValue(it, String.class).orElse(null);
-        });
+        }) {
+            @Override
+            protected String getOrDefault(final String varName, final String varDefaultValue) {
+                final var value = super.getOrDefault(varName, varDefaultValue);
+                log.finest(() -> "Resolved '" + varName + "' to '" + value + "'");
+                return value;
+            }
+        };
     }
 
     private byte[] readResource(final String text, final String prefix) throws IOException {
