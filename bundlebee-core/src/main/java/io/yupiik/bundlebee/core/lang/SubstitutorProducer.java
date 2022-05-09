@@ -42,6 +42,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
@@ -71,7 +72,8 @@ public class SubstitutorProducer {
 
     @Produces
     public Substitutor substitutor(final Config config) {
-        return new Substitutor(it -> {
+        final var self = new AtomicReference<Substitutor>();
+        final var ref = new Substitutor(it -> {
             try {
                 if (it.startsWith("bundlebee-inline-file:")) {
                     final var bytes = readResource(it, "bundlebee-inline-file:");
@@ -96,7 +98,9 @@ public class SubstitutorProducer {
                     if (resource == null) {
                         return null;
                     }
-                    final var value = json.createValue(new String(resource, StandardCharsets.UTF_8)).toString();
+                    // ensure nested interpolation is done before otherwise double escaping is way harder to handle
+                    final var content = self.get().replace(new String(resource, StandardCharsets.UTF_8));
+                    final var value = json.createValue(content).toString();
                     return value.substring(1, value.length() - 1);
                 }
                 if (it.startsWith("bundlebee-json-string:")) {
@@ -203,6 +207,8 @@ public class SubstitutorProducer {
                 return value;
             }
         };
+        self.set(ref);
+        return ref;
     }
 
     private byte[] readResource(final String text, final String prefix) throws IOException {
