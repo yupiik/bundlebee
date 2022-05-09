@@ -99,6 +99,10 @@ public class SubstitutorProducer {
                     final var value = json.createValue(new String(resource, StandardCharsets.UTF_8)).toString();
                     return value.substring(1, value.length() - 1);
                 }
+                if (it.startsWith("bundlebee-json-string:")) {
+                    final var value = json.createValue(it.substring("bundlebee-json-string:".length())).toString();
+                    return value.substring(1, value.length() - 1);
+                }
             } catch (final IOException ioe) {
                 throw new IllegalStateException(ioe);
             }
