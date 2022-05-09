@@ -195,6 +195,7 @@ Placeholders can use some keywords to get some particular values:
 - `bundlebee-base64::<text>`: encodes in base64 the text,
 - `bundlebee-quote-escaped-inline-file:<file path>`: load the file content as a quoted value,
 - `bundlebee-json-inline-file:<file path>`: load the file content as a JSON string value - without quotes,
+- `bundlebee-json-string:content`: escapes a string to be a JSON string (useful when you inject with `bundlebee-json-inline-file` a string in another string like in JSON `ConfigMap` in a JSON configuration),
 - `bundlebee-maven-server-username:<server id>`: extract from your maven `settings.xml` a server username (see configuration for a custom settings.xml location),
 - `bundlebee-maven-server-password:<server id>`: extract from your maven `settings.xml` a server password (potentially deciphered),
 - `kubeconfig.cluster.<cluster name>.ip`: extract cluster IP from your kubeconfig,
