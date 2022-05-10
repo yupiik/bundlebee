@@ -108,9 +108,9 @@
       <plugin>
         <groupId>org.apache.geronimo.arthur</groupId>
         <artifactId>arthur-maven-plugin</artifactId>
-        <version>1.0.2</version>
+        <version>1.0.5</version>
         <configuration>
-          <graalVersion>22.0.0.2.r11</graalVersion>
+          <graalVersion>22.1.0</graalVersion>
           <attach>true</attach>
           <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
           <output>${project.build.directory}/${project.artifactId}</output>
