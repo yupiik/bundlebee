@@ -117,7 +117,7 @@
         <groupId>io.yupiik.maven</groupId>
         <artifactId>yupiik-tools-maven-plugin</artifactId>
         <configuration>
-          <siteBase>//yupiik.github.io/bundlebee</siteBase>
+          <siteBase>//www.yupiik.io/bundlebee</siteBase>
           <logoText>Yupiik BundleBee</logoText>
           <indexText>Yupiik BundleBee</indexText>
           <indexSubTitle>A light Java Kubernetes package manager.</indexSubTitle>
