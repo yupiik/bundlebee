@@ -1,247 +1,211 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/add-alveolus.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/add-alveolus.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/apply.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/apply.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/build.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/build.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven-plugin.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven-plugin.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/operator.html</loc>
+        <loc>//www.yupiik.io/bundlebee/operator.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/bundlebee-maven-plugin.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/bundlebee-maven-plugin.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/check-update.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/check-update.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/cipher-password.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/cipher-password.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/completion.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/completion.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/template.html</loc>
+        <loc>//www.yupiik.io/bundlebee/template.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/create-master-password.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/create-master-password.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/delete.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/delete.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/deploy.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/deploy.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/getting-started.html</loc>
+        <loc>//www.yupiik.io/bundlebee/getting-started.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/help.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/help.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/how-it-works.html</loc>
+        <loc>//www.yupiik.io/bundlebee/how-it-works.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/http.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/http.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/inspect.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/inspect.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/junit5.html</loc>
+        <loc>//www.yupiik.io/bundlebee/junit5.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/new.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/new.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/process.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/process.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/rollback.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/rollback.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/run.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/run.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/user-configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/user-configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/version.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/version.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/commands/versions.configuration.html</loc>
+        <loc>//www.yupiik.io/bundlebee/commands/versions.configuration.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/add-alveolus.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/add-alveolus.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/apply.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/apply.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/build.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/build.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/check-update.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/check-update.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/cipher-password.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/cipher-password.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/completion.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/completion.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/create-master-password.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/create-master-password.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/delete.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/delete.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/deploy.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/deploy.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/http.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/http.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/inspect.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/inspect.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/new.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/new.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/process.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/process.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/rollback.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/rollback.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/run.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/version.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/version.html</loc>
+        <loc>//www.yupiik.io/bundlebee/maven/versions.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/maven/versions.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local-1-0-0.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/grafana-simple-io-yupiik-alveoli-grafana-simple.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local-1-0-0-SNAPSHOT.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/loki-simple-io-yupiik-alveoli-loki-simple.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/minio-local-io-yupiik-alveoli-minio-local.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/grafana-simple-io-yupiik-alveoli-grafana-simple.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/loki-simple-io-yupiik-alveoli-loki-simple.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/postgres-local-io-yupiik-alveoli-postgres-local.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/minio-local-io-yupiik-alveoli-minio-local.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
     <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/postgres-local-io-yupiik-alveoli-postgres-local-1-0-0.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/postgres-local-io-yupiik-alveoli-postgres-local-1-0-0-SNAPSHOT.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/postgres-local-io-yupiik-alveoli-postgres-local.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple-1-0-0.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple-1-0-0-SNAPSHOT.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple-1-0-0.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple-1-0-0-SNAPSHOT.html</loc>
-        <lastmod>2022-05-11</lastmod>
-    </url>
-    <url>
-        <loc>//yupiik.github.io/bundlebee/alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple.html</loc>
+        <loc>//www.yupiik.io/bundlebee/alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple.html</loc>
         <lastmod>2022-05-11</lastmod>
     </url>
 </urlset>
