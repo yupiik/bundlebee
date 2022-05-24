@@ -37,6 +37,7 @@
     <owb.version>2.0.26</owb.version>
     <xbean.version>4.21</xbean.version>
     <junit5.version>5.8.2</junit5.version>
+    <arthur.version>1.0.5</arthur.version>
 
     <m2.location>${settings.localRepository}</m2.location>
   </properties>
@@ -108,7 +109,7 @@
       <plugin>
         <groupId>org.apache.geronimo.arthur</groupId>
         <artifactId>arthur-maven-plugin</artifactId>
-        <version>1.0.5</version>
+        <version>${arthur.version}</version>
         <configuration>
           <graalVersion>22.1.0</graalVersion>
           <attach>true</attach>
@@ -116,6 +117,10 @@
           <output>${project.build.directory}/${project.artifactId}</output>
           <buildStaticImage>false</buildStaticImage>
           <enableAllSecurityServices>false</enableAllSecurityServices>
+          <allowIncompleteClasspath>false</allowIncompleteClasspath>
+          <graalExtensions>
+            <graalExtension>openwebbeans</graalExtension>
+          </graalExtensions>
           <customOptions>
             <customOption>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</customOption>
             <customOption>-Djava.net.preferIPv4Stack=true</customOption>
@@ -126,9 +131,12 @@
             <customOption>-H:+DashboardAll</customOption>
             -->
           </customOptions>
-          <graalExtensions>
-            <graalExtension>openwebbeans</graalExtension>
-          </graalExtensions>
+          <reflections>
+            <reflection>
+              <name>org.eclipse.microprofile.config.Config</name>
+              <allPublicMethods>true</allPublicMethods>
+            </reflection>
+          </reflections>
           <extensionProperties>
             <!-- to keep reflection meta for jsonb models without listing them (manifest + kubeconfig) -->
             <extension.annotation.custom.annotations.properties>
