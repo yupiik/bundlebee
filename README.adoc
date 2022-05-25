@@ -8,7 +8,7 @@ Build and publish to central:
 
 [source, bash]
 ----
-mvn release:prepare release:perform -Pnative -Prelease
+mvn release:prepare release:perform -Pnative -Prelease -Dusername=$GIT_HUB_ACCOUNT -Dpassword=$GIT_HUB_TOKEN
 ----
 
 Publish documentation on github page:
