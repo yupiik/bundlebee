@@ -1,6 +1,6 @@
 = Yupiik BundleBee
 
-See https://yupiik.github.io/bundlebee/.
+See https://www.yupiik.io/bundlebee/
 
 == Release
 
