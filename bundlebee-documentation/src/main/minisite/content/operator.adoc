@@ -61,7 +61,7 @@ spec:
 <.> `metadata` object is a standard one so you can set a name, labels, etc...,
 <.> `args` are the options of the `apply` command for this deployment (without the global configuration indeed).
 
-TIP: you can check <<commands/apply.adoc#, `apply` documentation to see all the options available>>.
+TIP: you can check <<commands/apply.configuration.adoc#, `apply` documentation to see all the options available>>.
 
 [#all-in-one-installation]
 == Appendix, all in one installation
