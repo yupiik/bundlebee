@@ -16,7 +16,8 @@
     under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>bundlebee</artifactId>
     <groupId>io.yupiik</groupId>
@@ -31,7 +32,7 @@
     <dependency> <!-- todo: replace it by something lighter without the mapping feature? -->
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.29</version>
+      <version>1.30</version>
     </dependency>
 
     <dependency>
@@ -141,11 +142,12 @@
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>io.yupiik.bundlebee.core.BundleBee</mainClass>
                 </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.XmlAppendingTransformer">
                   <resource>META-INF/beans.xml</resource>
                 </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer" />
+                <transformer
+                    implementation="org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer"/>
               </transformers>
               <filters>
                 <filter>
@@ -173,7 +175,10 @@
   <profiles>
     <profile>
       <id>native</id>
+
       <build>
+        <finalName>${project.artifactId}</finalName>
+
         <plugins>
           <plugin> <!-- mvn package -Pnative -DskipTests  -->
             <groupId>org.apache.geronimo.arthur</groupId>
@@ -190,6 +195,116 @@
             <configuration>
               <main>io.yupiik.bundlebee.core.BundleBee</main>
             </configuration>
+          </plugin>
+
+          <!-- enable to work with krew kubectl plugin manager (zip + manifest filtering) -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>kubectl-bundlebee-zip</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <descriptors>
+                    <descriptor>${project.basedir}/src/main/assembly/kubectl-bundlebee.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>net.nicoulaj.maven.plugins</groupId>
+            <artifactId>checksum-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>krew-sha256</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>files</goal>
+                </goals>
+                <configuration>
+                  <csvSummary>false</csvSummary>
+                  <fileSets>
+                    <fileSet>
+                      <directory>${project.build.directory}</directory>
+                      <includes>
+                        <include>${project.build.finalName}-kubectl-bundlebee.zip</include>
+                      </includes>
+                    </fileSet>
+                  </fileSets>
+                  <algorithms>
+                    <algorithm>SHA-256</algorithm>
+                  </algorithms>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.honton.chas</groupId>
+            <artifactId>readfiles-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>read-kubectl-bundlebee-sha256</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>readfiles</goal>
+                </goals>
+                <configuration>
+                  <files>
+                    <file>${project.build.directory}/${project.build.finalName}-kubectl-bundlebee.zip.sha256</file>
+                  </files>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <version>3.3.0</version>
+            <executions>
+              <execution>
+                <id>copy-krew-manifest</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.basedir}/target/krew</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>src/main/krew</directory>
+                      <filtering>true</filtering>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>build-helper-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>add-krew</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>attach-artifact</goal>
+                </goals>
+                <configuration>
+                  <artifacts>
+                    <artifact>
+                      <file>${project.basedir}/target/krew/manifest.yaml</file>
+                      <type>yaml</type>
+                      <classifier>krew.manifest</classifier>
+                    </artifact>
+                  </artifacts>
+                </configuration>
+              </execution>
+            </executions>
           </plugin>
         </plugins>
       </build>

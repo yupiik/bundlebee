@@ -16,7 +16,8 @@
     under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.yupiik</groupId>
@@ -175,7 +176,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.0</version>
         <configuration>
           <encoding>UTF-8</encoding>
         </configuration>
@@ -207,7 +208,8 @@
             <bundlebee.kube.api>https://kubernetes.bundlebee.yupiik.test</bundlebee.kube.api>
             <bundlebee.kube.validateSSL>false</bundlebee.kube.validateSSL>
             <m2.location>${m2.location}</m2.location>
-            <jdk.internal.httpclient.disableHostnameVerification>true</jdk.internal.httpclient.disableHostnameVerification>
+            <jdk.internal.httpclient.disableHostnameVerification>true
+            </jdk.internal.httpclient.disableHostnameVerification>
             <kubeconfig>explicit</kubeconfig>
             <java.util.logging.manager>io.yupiik.logging.jul.YupiikLogManager</java.util.logging.manager>
             <org.talend.__shade__.io.netty.noUnsafe>true</org.talend.__shade__.io.netty.noUnsafe>
@@ -269,6 +271,21 @@ under the License.
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.0.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.4.2</version>
+      </plugin>
+      <plugin>
+        <groupId>net.nicoulaj.maven.plugins</groupId>
+        <artifactId>checksum-maven-plugin</artifactId>
+        <version>1.10</version>
+      </plugin>
+      <plugin>
+        <groupId>org.honton.chas</groupId>
+        <artifactId>readfiles-maven-plugin</artifactId>
+        <version>0.0.1</version>
       </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
@@ -338,7 +355,7 @@ under the License.
         <executions>
           <execution>
             <id>audit-dependencies</id>
-            <phase />
+            <phase/>
             <goals>
               <goal>audit</goal>
             </goals>
