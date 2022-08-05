@@ -39,7 +39,7 @@ spec:
             name: grafana-simple-config
       containers:
         - name: grafana
-          image: {{grafana-simple.image:-grafana/grafana:7.4.2}}
+          image: {{grafana-simple.image:-grafana/grafana:9.0.6}}
           env:
             - name: GF_SECURITY_ADMIN_USER
               value: "admin"

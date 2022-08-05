@@ -5,10 +5,12 @@
       "name": "${project.groupId}:${project.artifactId}:${project.version}",
       "descriptors": [
         {
-          "name": "${project.groupId}_${project.artifactId}.clusterrole"
+          "name": "${project.groupId}_${project.artifactId}.clusterrole",
+          "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.clusterrolebinding"
+          "name": "${project.groupId}_${project.artifactId}.clusterrolebinding",
+          "interpolate": true
         },
         {
           "name": "${project.groupId}_${project.artifactId}.configmap"
@@ -25,6 +27,10 @@
         {
           "name": "prometheus-simple.image",
           "description": "The image to use."
+        },
+        {
+          "name": "{{prometheus-simple.rbac.apiVersion}}",
+          "description": "API version for RBAC API, enables to get back on `rbac.authorization.k8s.io/v1` for old clusters."
         }
       ]
     }

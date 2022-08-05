@@ -8,10 +8,12 @@
           "name": "${project.groupId}_${project.artifactId}.serviceaccount"
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.clusterrole"
+          "name": "${project.groupId}_${project.artifactId}.clusterrole",
+          "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.rolebinding"
+          "name": "${project.groupId}_${project.artifactId}.rolebinding",
+          "interpolate": true
         },
         {
           "name": "${project.groupId}_${project.artifactId}.configmap",
@@ -47,6 +49,10 @@
         {
           "name": "loki-simple.loki.pipeline_stage",
           "description": "Pipeline stage to use, generally `cri` or `docker`."
+        },
+        {
+          "name": "{{loki-simple.rbac.apiVersion}}",
+          "description": "API version for RBAC API, enables to get back on `rbac.authorization.k8s.io/v1` for old clusters."
         }
       ]
     }
