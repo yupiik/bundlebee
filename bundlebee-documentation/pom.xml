@@ -32,8 +32,6 @@
     <minisite.kubernetes.jsonschema.skip>false</minisite.kubernetes.jsonschema.skip>
     <!-- if set to true all descriptors are regenerated else only the ones not locally present -->
     <minisite.kubernetes.jsonschema.force>false</minisite.kubernetes.jsonschema.force>
-    <!-- enables to skip pages already contributed and just handle last ones -->
-    <minisite.kubernetes.fromPage>25</minisite.kubernetes.fromPage>
   </properties>
 
   <dependencies>
@@ -208,7 +206,6 @@
                 <tagsUrl>https://api.github.com/repos/kubernetes/kubernetes/tags</tagsUrl>
                 <skip>${minisite.kubernetes.jsonschema.skip}</skip>
                 <force>${minisite.kubernetes.jsonschema.force}</force>
-                <fromPage>${minisite.kubernetes.fromPage}</fromPage>
               </configuration>
             </action>
           </preActions>
