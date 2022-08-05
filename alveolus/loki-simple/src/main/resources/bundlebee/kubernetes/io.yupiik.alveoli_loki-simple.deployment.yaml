@@ -46,7 +46,7 @@ spec:
           name: pods
       containers:
         - name: promtail-container
-          image: {{loki-simple.promtail.image:-grafana/promtail:2.1.0}}
+          image: {{loki-simple.promtail.image:-grafana/promtail:2.6.1}}
           args:
             - -config.file=/etc/promtail/promtail.yaml
             - -client.url=http://$(LOKI_SERVICE_HOST):$(LOKI_SERVICE_PORT)/loki/api/v1/push
