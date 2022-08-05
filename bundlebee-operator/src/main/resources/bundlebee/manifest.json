@@ -21,6 +21,9 @@
           "interpolate": true
         },
         {
+          "name": "${project.groupId}/bundlebee-operator/token.json"
+        },
+        {
           "name": "${project.groupId}/bundlebee-operator/deployment.json",
           "interpolate": true
         }
