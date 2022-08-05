@@ -8,6 +8,9 @@
           "name": "${project.groupId}_${project.artifactId}.serviceaccount"
         },
         {
+          "name": "${project.groupId}_${project.artifactId}.token"
+        },
+        {
           "name": "${project.groupId}_${project.artifactId}.clusterrole",
           "interpolate": true
         },
