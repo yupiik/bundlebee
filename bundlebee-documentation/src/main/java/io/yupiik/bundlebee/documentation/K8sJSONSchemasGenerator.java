@@ -54,12 +54,14 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final String tagsUrl;
     private final String urlTemplate;
     private final boolean force;
+    private final int fromPage;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
         this.sourceBase = sourceBase;
         this.tagsUrl = requireNonNull(configuration.get("tagsUrl"), () -> "No tagsUrl in " + configuration);
         this.urlTemplate = requireNonNull(configuration.get("specUrlTemplate"), () -> "No specUrlTemplate in " + configuration);
         this.force = Boolean.parseBoolean(configuration.get("force"));
+        this.fromPage = Integer.parseInt(configuration.get("fromPage"));
     }
 
     @Override
@@ -110,7 +112,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
     private Iterable<String> fetchTags(final HttpClient httpClient, final String uri, final JsonReaderFactory jsonReaderFactory) throws IOException, InterruptedException {
         return () -> new Iterator<>() {
-            private URI next = URI.create(uri);
+            private URI next = URI.create(uri + "page=" + fromPage + "&per_page=100");
             private Iterator<String> delegate;
 
             @Override
