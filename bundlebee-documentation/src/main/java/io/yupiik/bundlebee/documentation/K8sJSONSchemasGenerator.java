@@ -90,7 +90,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
         final var jsonReaderFactory = Json.createReaderFactory(Map.of());
         final var jsonBuilderFactory = Json.createBuilderFactory(Map.of());
         final var jsonWriterFactory = Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
-        final var tasks = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime().availableProcessors()), new ThreadFactory() {
+        final var tasks = Executors.newFixedThreadPool(Math.max(4, Math.max(1, Runtime.getRuntime().availableProcessors())), new ThreadFactory() {
             private final AtomicInteger counter = new AtomicInteger();
 
             @Override
