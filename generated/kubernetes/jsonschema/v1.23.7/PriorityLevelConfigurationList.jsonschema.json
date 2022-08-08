@@ -292,7 +292,7 @@
           {
             "group":"flowcontrol.apiserver.k8s.io",
             "kind":"PriorityLevelConfiguration",
-            "version":"v1beta2"
+            "version":"v1beta1"
           }
         ]
       },
@@ -334,7 +334,7 @@
     {
       "group":"flowcontrol.apiserver.k8s.io",
       "kind":"PriorityLevelConfigurationList",
-      "version":"v1beta2"
+      "version":"v1beta1"
     }
   ]
 }

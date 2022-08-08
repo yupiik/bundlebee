@@ -323,7 +323,7 @@
           {
             "group":"events.k8s.io",
             "kind":"Event",
-            "version":"v1"
+            "version":"v1beta1"
           }
         ]
       },
@@ -365,7 +365,7 @@
     {
       "group":"events.k8s.io",
       "kind":"EventList",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }
