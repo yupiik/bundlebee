@@ -90,7 +90,8 @@ public class K8sJSONSchemasGenerator implements Runnable {
         final var jsonReaderFactory = Json.createReaderFactory(Map.of());
         final var jsonBuilderFactory = Json.createBuilderFactory(Map.of());
         final var jsonWriterFactory = Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
-        final var tasks = Executors.newFixedThreadPool(Math.max(4, Math.max(1, Runtime.getRuntime().availableProcessors())), new ThreadFactory() {
+        final var concurrency = Math.min(4, Math.max(1, Runtime.getRuntime().availableProcessors()));
+        final var tasks = Executors.newFixedThreadPool(concurrency, new ThreadFactory() {
             private final AtomicInteger counter = new AtomicInteger();
 
             @Override
@@ -98,6 +99,9 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 return new Thread(r, getClass().getName() + "-" + counter.incrementAndGet());
             }
         });
+
+        log.info(() -> "Using " + concurrency + " threads");
+
         final var errorCapture = new IllegalStateException("An error occurred during generation");
         final var awaited = new CopyOnWriteArrayList<Future<?>>();
         try {
