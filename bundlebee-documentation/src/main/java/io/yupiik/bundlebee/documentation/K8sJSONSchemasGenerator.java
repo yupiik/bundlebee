@@ -27,24 +27,38 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.json.JsonWriterFactory;
 import javax.json.stream.JsonGenerator;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import static java.net.http.HttpClient.Version.HTTP_1_1;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.function.Function.identity;
+import static java.util.logging.Level.SEVERE;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -54,12 +68,20 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final String tagsUrl;
     private final String urlTemplate;
     private final boolean force;
+    private final Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
         this.sourceBase = sourceBase;
         this.tagsUrl = requireNonNull(configuration.get("tagsUrl"), () -> "No tagsUrl in " + configuration);
         this.urlTemplate = requireNonNull(configuration.get("specUrlTemplate"), () -> "No specUrlTemplate in " + configuration);
         this.force = Boolean.parseBoolean(configuration.get("force"));
+
+        final var token = configuration.get("githubToken");
+        if (token != null && !token.isBlank()) {
+            setAuth = b -> b.header("Authorization", "Bearer " + token);
+        } else {
+            setAuth = identity();
+        }
     }
 
     @Override
@@ -76,35 +98,80 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 return new Thread(r, getClass().getName() + "-" + counter.incrementAndGet());
             }
         });
+        final var errorCapture = new IllegalStateException("An error occurred during generation");
+        final var awaited = new CopyOnWriteArrayList<Future<?>>();
         try {
             final var root = Files.createDirectories(sourceBase.resolve("assets/generated/kubernetes/jsonschema"));
             for (final var version : fetchTags(httpClient, tagsUrl, jsonReaderFactory)) {
+                if (version.startsWith("1.4.") || version.startsWith("1.3.") ||
+                        version.startsWith("1.2.") || version.startsWith("1.1.") ||
+                        version.startsWith("1.0.") || version.startsWith("v0.")) {
+                    log.fine(() -> "Skipping version without an openapi: " + version);
+                    continue;
+                }
+
                 final var url = urlTemplate.replace("{{version}}", version);
-                tasks.submit(() -> {
+                awaited.add(tasks.submit(() -> {
+                    synchronized (errorCapture) {
+                        if (errorCapture.getSuppressed().length > 0) {
+                            log.warning(() -> "Cancelling task '" + url + "' since there is(are) error(s).");
+                            return;
+                        }
+                    }
                     try {
                         generate(
                                 Files.createDirectories(root.resolve(version)), url, httpClient,
                                 jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory);
-                    } catch (final IOException ioe) {
+                    } catch (final IOException | RuntimeException ioe) {
+                        log.log(SEVERE, ioe, ioe::getMessage);
+                        synchronized (errorCapture) {
+                            errorCapture.addSuppressed(ioe);
+                        }
                         throw new IllegalStateException(ioe);
                     } catch (final InterruptedException e) {
+                        log.log(SEVERE, e, e::getMessage);
+                        synchronized (errorCapture) {
+                            errorCapture.addSuppressed(e);
+                        }
                         Thread.currentThread().interrupt();
                     }
-                });
+                }));
             }
         } catch (final IOException ioe) {
             throw new IllegalStateException(ioe);
         } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            tasks.shutdownNow();
+            tasks.shutdown();
             try {
+                for (final var future : awaited) {
+                    try {
+                        future.get();
+                    } catch (final ExecutionException e) {
+                        log.log(SEVERE, e, e::getMessage);
+                        synchronized (errorCapture) {
+                            errorCapture.addSuppressed(e);
+                        }
+                    }
+                }
                 if (!tasks.awaitTermination(1, MINUTES)) {
                     log.warning(() -> "Wrong interruption of generation task");
                 }
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        }
+
+        if (errorCapture.getSuppressed().length > 0) {
+            throw new IllegalStateException(Stream.of(errorCapture.getSuppressed())
+                    .map(e -> {
+                        final var out = new ByteArrayOutputStream();
+                        try (final var ps = new PrintStream(out)) {
+                            e.printStackTrace(ps);
+                        }
+                        return out.toString(StandardCharsets.UTF_8);
+                    })
+                    .collect(joining("\n- ", "\n- ", "")));
         }
     }
 
@@ -124,10 +191,12 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 try {
                     log.info(() -> "Fetching " + next);
                     final var response = httpClient.send(
-                            HttpRequest.newBuilder()
-                                    .GET()
-                                    .uri(next)
-                                    .header("accept", "application/json")
+                            setAuth.apply(
+                                            HttpRequest.newBuilder()
+                                                    .GET()
+                                                    .uri(next)
+                                                    .version(HTTP_1_1)
+                                                    .header("accept", "application/json"))
                                     .build(),
                             ofString());
 
@@ -136,7 +205,18 @@ public class K8sJSONSchemasGenerator implements Runnable {
                             // all good
                             break;
                         case 403:
-                            log.warning(() -> "Rate limit hit, skipping for this run: " + response);
+                            log.warning(() -> "Rate limit hit, skipping for this run: " + response + "\n" +
+                                    "X-RateLimit-Limit=" +
+                                    response.headers()
+                                            .firstValue("X-RateLimit-Limit")
+                                            .orElse("?") + "\n" +
+                                    "X-RateLimit-Reset=" +
+                                    response.headers()
+                                            .firstValue("X-RateLimit-Reset")
+                                            .map(Long::parseLong)
+                                            .map(Instant::ofEpochSecond)
+                                            .map(i -> i.atZone(ZoneOffset.systemDefault()))
+                                            .orElse(null));
                             return false;
                         default:
                             throw new IllegalStateException("Invalid response: " + response);
@@ -182,12 +262,27 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private void generate(final Path root, final String url, final HttpClient httpClient,
                           final JsonBuilderFactory jsonBuilderFactory, final JsonReaderFactory jsonReaderFactory,
                           final JsonWriterFactory jsonWriterFactory) throws IOException, InterruptedException {
-        final var response = httpClient.send(
-                HttpRequest.newBuilder()
-                        .GET()
-                        .uri(URI.create(url))
-                        .build(),
-                ofString());
+        final var response = retry(3, () -> {
+            final var thread = Thread.currentThread();
+            final var oldName = thread.getName();
+            thread.setName(oldName + "[" + url + "]");
+            try {
+                return httpClient.send(
+                        setAuth.apply(HttpRequest.newBuilder()
+                                        .GET()
+                                        .uri(URI.create(url))
+                                        .version(HTTP_1_1))
+                                .build(),
+                        ofString());
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException(e);
+            } finally {
+                thread.setName(oldName);
+            }
+        });
 
         switch (response.statusCode()) {
             case 200:
@@ -227,6 +322,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
                 final var filename = kind + ".jsonschema.json";
                 final var versionned = Files.createDirectories(root.resolve(version)).resolve(filename);
+                final var raw = versionned.getParent().resolve(kind + ".jsonschema.raw.json");
                 final var versionless = root.resolve(filename);
 
                 String jsonString = null;
@@ -234,6 +330,10 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     jsonString = doResolve(jsonBuilderFactory, jsonWriterFactory, definitions, obj);
                     Files.writeString(versionned, jsonString);
                     log.info(() -> "Wrote '" + versionned + "'");
+                }
+                if (force || !Files.exists(raw)) {
+                    Files.writeString(raw, toString(jsonWriterFactory, obj));
+                    log.info(() -> "Wrote '" + raw + "'");
                 }
                 if (force || !Files.exists(versionless)) {
                     if (jsonString == null) {
@@ -246,19 +346,41 @@ public class K8sJSONSchemasGenerator implements Runnable {
         }
     }
 
+    private <T> T retry(final int max, final Supplier<T> supplier) {
+        for (int i = 0; i < max; i++) {
+            try {
+                return supplier.get();
+            } catch (final RuntimeException ie) {
+                try {
+                    Thread.sleep(500);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                }
+                if (i == max - 1) {
+                    throw ie;
+                }
+            }
+        }
+        throw new IllegalStateException("unlikely");
+    }
+
     private String doResolve(final JsonBuilderFactory jsonBuilderFactory, final JsonWriterFactory jsonWriterFactory,
                              final Map<String, JsonObject> definitions, final JsonObject obj) {
         final var resolved = resolveRefs(jsonBuilderFactory, definitions, obj).build();
-        final var out = new StringWriter();
-        try (final var writer = jsonWriterFactory.createWriter(out)) {
-            writer.write(resolved);
-        }
-
-        final var jsonString = out.toString();
+        final String jsonString = toString(jsonWriterFactory, resolved);
         if (jsonString.contains("$ref")) {
             throw new IllegalStateException("$ref should have been replaced: " + jsonString);
         }
         return jsonString;
+    }
+
+    private static String toString(final JsonWriterFactory jsonWriterFactory, final JsonObject resolved) {
+        final var out = new StringWriter();
+        try (final var writer = jsonWriterFactory.createWriter(out)) {
+            writer.write(resolved);
+        }
+        return out.toString();
     }
 
     private JsonObjectBuilder resolveRefs(final JsonBuilderFactory jsonBuilderFactory, final Map<String, JsonObject> definitions, final JsonObject root) {

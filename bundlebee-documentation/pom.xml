@@ -206,6 +206,8 @@
                 <tagsUrl>https://api.github.com/repos/kubernetes/kubernetes/tags</tagsUrl>
                 <skip>${minisite.kubernetes.jsonschema.skip}</skip>
                 <force>${minisite.kubernetes.jsonschema.force}</force>
+                <!-- optional but when rate limiting is hit it enables to continue to work -->
+                <githubToken>${minisite.githubToken}</githubToken>
               </configuration>
             </action>
           </preActions>
