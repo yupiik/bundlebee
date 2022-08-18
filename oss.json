@@ -4,6 +4,7 @@
   "description": "BundleBee is a light Java package manager for Kubernetes applications.",
   "website": "https://www.yupiik.io/bundlebee/",
   "logo": "https://www.yupiik.com/img/logo.png",
+  "group": "Yupiik Stack",
   "categories": [
     "kubernetes",
     "cloud"
