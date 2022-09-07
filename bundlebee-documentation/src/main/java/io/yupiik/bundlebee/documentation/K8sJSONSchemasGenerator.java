@@ -35,6 +35,7 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,6 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 
 import static java.net.http.HttpClient.Version.HTTP_1_1;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
@@ -68,6 +70,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final String tagsUrl;
     private final String urlTemplate;
     private final boolean force;
+    private final int maxThreads;
     private final Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
@@ -75,6 +78,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
         this.tagsUrl = requireNonNull(configuration.get("tagsUrl"), () -> "No tagsUrl in " + configuration);
         this.urlTemplate = requireNonNull(configuration.get("specUrlTemplate"), () -> "No specUrlTemplate in " + configuration);
         this.force = Boolean.parseBoolean(configuration.get("force"));
+        this.maxThreads = Integer.parseInt(configuration.get("maxThreads"));
 
         final var token = configuration.get("githubToken");
         if (token != null && !token.isBlank()) {
@@ -86,11 +90,11 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
     @Override
     public void run() {
-        final var httpClient = HttpClient.newHttpClient();
+        final var httpClient = HttpClient.newBuilder().version(HTTP_1_1).build();
         final var jsonReaderFactory = Json.createReaderFactory(Map.of());
         final var jsonBuilderFactory = Json.createBuilderFactory(Map.of());
         final var jsonWriterFactory = Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
-        final var concurrency = Math.min(4, Math.max(1, Runtime.getRuntime().availableProcessors()));
+        final var concurrency = Math.max(maxThreads, Math.min(4, Math.max(1, Runtime.getRuntime().availableProcessors())));
         final var tasks = Executors.newFixedThreadPool(concurrency, new ThreadFactory() {
             private final AtomicInteger counter = new AtomicInteger();
 
@@ -266,6 +270,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private void generate(final Path root, final String url, final HttpClient httpClient,
                           final JsonBuilderFactory jsonBuilderFactory, final JsonReaderFactory jsonReaderFactory,
                           final JsonWriterFactory jsonWriterFactory) throws IOException, InterruptedException {
+        log.info(() -> "Fetching '" + url + "'");
         final var response = retry(3, () -> {
             final var thread = Thread.currentThread();
             final var oldName = thread.getName();
@@ -275,9 +280,10 @@ public class K8sJSONSchemasGenerator implements Runnable {
                         setAuth.apply(HttpRequest.newBuilder()
                                         .GET()
                                         .uri(URI.create(url))
+                                        .header("accept-encoding", "gzip")
                                         .version(HTTP_1_1))
                                 .build(),
-                        ofString());
+                        HttpResponse.BodyHandlers.ofInputStream());
             } catch (final IOException e) {
                 throw new IllegalStateException(e);
             } catch (final InterruptedException e) {
@@ -300,7 +306,12 @@ public class K8sJSONSchemasGenerator implements Runnable {
         }
 
         final JsonObject spec;
-        try (final var reader = jsonReaderFactory.createReader(new StringReader(response.body()))) {
+        try (final var reader = jsonReaderFactory.createReader(
+                response.headers().firstValue("content-encoding")
+                        .map(it -> it.contains("gzip"))
+                        .orElse(false) ?
+                        new GZIPInputStream(response.body()) :
+                        response.body())) {
             spec = reader.readObject();
         }
 

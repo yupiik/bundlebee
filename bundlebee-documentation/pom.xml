@@ -32,6 +32,8 @@
     <minisite.kubernetes.jsonschema.skip>false</minisite.kubernetes.jsonschema.skip>
     <!-- if set to true all descriptors are regenerated else only the ones not locally present -->
     <minisite.kubernetes.jsonschema.force>false</minisite.kubernetes.jsonschema.force>
+    <!-- can be needed to reduce it to avoid to have too much latency -->
+    <minisite.kubernetes.jsonschema.maxThreads>16</minisite.kubernetes.jsonschema.maxThreads>
   </properties>
 
   <dependencies>
@@ -206,6 +208,7 @@
                 <tagsUrl>https://api.github.com/repos/kubernetes/kubernetes/tags</tagsUrl>
                 <skip>${minisite.kubernetes.jsonschema.skip}</skip>
                 <force>${minisite.kubernetes.jsonschema.force}</force>
+                <maxThreads>${minisite.kubernetes.jsonschema.maxThreads}</maxThreads>
                 <!-- optional but when rate limiting is hit it enables to continue to work -->
                 <githubToken>${minisite.githubToken}</githubToken>
               </configuration>
