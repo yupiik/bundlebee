@@ -165,14 +165,19 @@ public class DeleteCommand implements CompletingExecutable {
                                        final String gracePeriodSeconds, final int await) {
         final var toDelete = new ArrayList<AlveolusHandler.LoadedDescriptor>();
         return visitor.executeOnceOnAlveolus(
-                "Deleting", manifest, it, null,
-                (ctx, desc) -> {
-                    synchronized (toDelete) { // it is concurrent but we mainly want owner order here so "ok"
-                        toDelete.add(desc);
-                    }
-                    return completedFuture(true);
-                },
-                cache, desc -> conditionAwaiter.await(name(), desc, scheduledExecutorService, awaitTimeout), "deleted")
+                        "Deleting", manifest, it, null,
+                        (ctx, desc) -> {
+                            synchronized (toDelete) { // it is concurrent but we mainly want owner order here so "ok"
+                                toDelete.add(desc);
+                            }
+                            return completedFuture(true);
+                        },
+                        cache, desc -> {
+                            if (!desc.getConfiguration().isAwaitOnDelete()) {
+                                return completedFuture(null);
+                            }
+                            return conditionAwaiter.await(name(), desc, scheduledExecutorService, awaitTimeout);
+                        }, "deleted")
                 .thenApply(done -> { // owner first
                     Collections.reverse(toDelete);
                     return toDelete;
@@ -180,8 +185,8 @@ public class DeleteCommand implements CompletingExecutable {
                 .thenCompose(descs -> chain(
                         descs.stream()
                                 .map(desc -> (Supplier<CompletionStage<?>>) () -> kube.delete(
-                                        desc.getContent(), desc.getExtension(),
-                                        UNSET.equals(gracePeriodSeconds) ? -1 : Integer.parseInt(gracePeriodSeconds))
+                                                desc.getContent(), desc.getExtension(),
+                                                UNSET.equals(gracePeriodSeconds) ? -1 : Integer.parseInt(gracePeriodSeconds))
                                         .thenApply(ignored -> desc))
                                 .collect(toList())
                                 .iterator(),

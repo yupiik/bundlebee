@@ -255,6 +255,9 @@ public class Manifest {
                 "For more advanced tests, use `awaitConditions`.")
         private boolean await;
 
+        @Description("On delete we rarely want to check the resource exists before but in these rare case you can set this toggle to `true`.")
+        private boolean awaitOnDelete;
+
         @Description("" +
                 "Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. " +
                 "For `apply` and `delete` commands, `descriptorAwaitTimeout` is still applied. " +
