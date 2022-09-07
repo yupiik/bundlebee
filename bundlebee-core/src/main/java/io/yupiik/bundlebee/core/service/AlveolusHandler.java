@@ -307,13 +307,23 @@ public class AlveolusHandler {
                             CompletionStage<?> promise = completedFuture(true);
                             for (final var next : rankedDescriptors.stream()
                                     .map(descs -> {
-                                        final var descriptorApply = prepareDescriptors(
-                                                manifest, from, patches, placeholders, excludes, cache, onDescriptor, currentPatches, descs);
                                         if (awaiter == null) {
-                                            return descriptorApply;
+                                            return prepareDescriptors(
+                                                    manifest, from, patches, placeholders, excludes, cache, onDescriptor, currentPatches, descs);
                                         }
+
+                                        final var filteredDescs = new ArrayList<LoadedDescriptor>();
+                                        final var descriptorApply = prepareDescriptors(
+                                                manifest, from, patches, placeholders, excludes, cache,
+                                                (ctx, desc) -> {
+                                                    synchronized (filteredDescs) {
+                                                        filteredDescs.add(desc);
+                                                    }
+                                                    return onDescriptor.apply(ctx, desc);
+                                                },
+                                                currentPatches, descs);
                                         return descriptorApply.thenCompose(result -> {
-                                            final Collection<CompletionStage<Void>> awaiters = descriptors.stream()
+                                            final Collection<CompletionStage<Void>> awaiters = filteredDescs.stream()
                                                     .map(awaiter)
                                                     .collect(toList());
                                             return all(awaiters, counting(), true).thenApply(it -> result);
