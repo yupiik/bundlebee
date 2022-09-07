@@ -90,8 +90,8 @@ public class AddAlveolusCommand implements CompletingExecutable {
         switch (optionName) {
             case "type":
                 return Stream.concat(
-                        Stream.of("web"),
-                        types().map(AddAlveolusTypeHandler::name))
+                                Stream.of("web"),
+                                types().map(AddAlveolusTypeHandler::name))
                         .distinct()
                         .sorted();
             case "overwrite":
@@ -177,7 +177,7 @@ public class AddAlveolusCommand implements CompletingExecutable {
         final var alveolus = new Manifest.Alveolus();
         alveolus.setName(this.alveolus);
         alveolus.setDescriptors(Stream.of("configmap", "deployment", "service")
-                .map(ext -> new Manifest.Descriptor(null, descPrefix + ext, null, false, null, false, null))
+                .map(ext -> new Manifest.Descriptor(null, descPrefix + ext, null, false, false, null, false, null))
                 .collect(toList()));
         mf.getAlveoli().add(alveolus);
         try (final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig()
