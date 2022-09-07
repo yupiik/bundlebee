@@ -394,21 +394,37 @@ public class KubeClient implements ConfigHolder {
                         }
                         if (obj == null || !kindsToSkipUpdateIfPossible.contains(kind) || needsUpdate(obj, desc)) {
                             return doUpdate(desc, name, fieldManager, baseUri)
-                                    .thenApply(response -> {
+                                    .thenCompose(response -> {
                                         if (api.isVerbose()) {
                                             log.info(response::toString);
                                         }
-                                        if (response.statusCode() != 200) {
-                                            throw new IllegalStateException("" +
-                                                    "Can't update " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                                    response.body());
+
+                                        final var errorMessage = "" +
+                                                "Can't update " + name + " (" + kindLowerCased + "): " + response + "\n" +
+                                                response.body();
+                                        if (response.statusCode() == 422) { // try to get then update to forward the existing id
+                                            return injectResourceVersionInDescriptor(desc, name, baseUri, errorMessage)
+                                                    .thenCompose(descWithResourceVersion -> doUpdate(descWithResourceVersion, name, fieldManager, baseUri)
+                                                            .thenApply(recoverResponse -> {
+                                                                if (api.isVerbose()) {
+                                                                    log.info(recoverResponse::toString);
+                                                                }
+                                                                if (recoverResponse.statusCode() != 200) {
+                                                                    throw new IllegalStateException(errorMessage);
+                                                                }
+                                                                return recoverResponse;
+                                                            }));
                                         }
-                                        return response;
+
+                                        if (response.statusCode() != 200) {
+                                            throw new IllegalStateException(errorMessage);
+                                        }
+                                        return completedStage(response);
                                     });
                         }
                         return completedStage(findResponse);
                     } else {
-                        log.finest(() -> name + " (" + kindLowerCased + ") does ont exist, creating it");
+                        log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
                         return api.execute(HttpRequest.newBuilder()
                                                 .POST(HttpRequest.BodyPublishers.ofString(desc.toString()))
                                                 .header("Content-Type", "application/json")
@@ -428,6 +444,46 @@ public class KubeClient implements ConfigHolder {
                                     return response;
                                 });
                     }
+                });
+    }
+
+    private CompletionStage<JsonObject> injectResourceVersionInDescriptor(final JsonObject desc,
+                                                                          final String name, final String baseUri,
+                                                                          final String errorMessage) {
+        return api.execute(
+                        HttpRequest.newBuilder()
+                                .GET()
+                                .header("Accept", "application/json"),
+                        baseUri + "/" + name)
+                .thenApply(test -> {
+                    if (test.statusCode() != 200 || !desc.containsKey("metadata")) {
+                        // behave as previous execution since we didn't recover there
+                        throw new IllegalStateException(errorMessage);
+                    }
+
+                    // inject in desc the "last-applied-configuration" and submit again
+                    final var jsonObject = jsonb.fromJson(test.body(), JsonObject.class);
+                    final var metadataValue = jsonObject.get("metadata");
+                    if (metadataValue == null || metadataValue.getValueType() != JsonValue.ValueType.OBJECT) {
+                        throw new IllegalStateException(errorMessage);
+                    }
+
+                    final var resourceVersion = metadataValue.asJsonObject().get("resourceVersion");
+                    if (resourceVersion == null || resourceVersion.getValueType() != JsonValue.ValueType.STRING) {
+                        throw new IllegalStateException(errorMessage);
+                    }
+
+                    return jsonBuilderFactory.createObjectBuilder(
+                                    desc.entrySet().stream()
+                                            .filter(it -> !"metadata".equals(it.getKey()))
+                                            .collect(Collector.of(
+                                                    jsonBuilderFactory::createObjectBuilder,
+                                                    (a, b) -> a.add(b.getKey(), b.getValue()),
+                                                    JsonObjectBuilder::addAll,
+                                                    JsonObjectBuilder::build)))
+                            .add("metadata", jsonBuilderFactory.createObjectBuilder(desc.getJsonObject("metadata"))
+                                    .add("resourceVersion", resourceVersion))
+                            .build();
                 });
     }
 
