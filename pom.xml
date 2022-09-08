@@ -39,6 +39,7 @@
     <xbean.version>4.21</xbean.version>
     <junit5.version>5.9.0</junit5.version>
     <arthur.version>1.0.5</arthur.version>
+    <yupiik-logging.version>1.0.6</yupiik-logging.version>
 
     <m2.location>${settings.localRepository}</m2.location>
   </properties>
