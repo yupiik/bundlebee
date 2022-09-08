@@ -180,6 +180,11 @@ public class Manifest {
         @Description("Dependencies of this alveolus. It is a way to import transitively a set of descriptors.")
         private List<AlveolusDependency> dependencies;
 
+        @Description("" +
+                "Should dependencies be installed one after the other or in parallel (default). " +
+                "It is useful when you install a namespace for example which must be awaited before next dependencies are installed.")
+        private boolean chainDependencies;
+
         @Description("List of descriptors to ignore for this alveolus (generally coming from dependencies).")
         private List<DescriptorRef> excludedDescriptors;
 

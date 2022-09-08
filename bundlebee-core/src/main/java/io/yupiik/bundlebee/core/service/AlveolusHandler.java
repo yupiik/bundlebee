@@ -52,10 +52,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.handled;
 import static java.util.Collections.list;
 import static java.util.Locale.ROOT;
@@ -268,72 +270,94 @@ public class AlveolusHandler {
                 placeholders :
                 mergePlaceholders(placeholders, from.getPlaceholders());
         final var dependencies = ofNullable(from.getDependencies()).orElseGet(List::of);
-        return all(
-                dependencies.stream()
-                        // note we can't filter it *here* even if all descriptors are excluded because it can have depdencies
-                        .filter(dep -> conditionEvaluator.test(dep.getIncludeIf()))
-                        .map(it -> {
-                            if (it.getLocation() == null) {
-                                if (manifest.getAlveoli() != null) { // prefer in the same manifest first
-                                    final var found = manifest.getAlveoli().stream()
-                                            .filter(a -> Objects.equals(it.getName(), a.getName()))
-                                            .findFirst()
-                                            .orElse(null);
-                                    if (found != null) {
-                                        return onAlveolus.apply(new AlveolusContext(
-                                                manifest, found, currentPatches, currentPlaceholders, currentExcludes, cache));
-                                    }
-                                }
-                                final var alveolus = findAlveolusInClasspath(it.getName());
-                                return onAlveolus.apply(new AlveolusContext(
-                                        alveolus.getManifest(), alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache));
+        final var dependenciesTasks = dependencies.stream()
+                // note we can't filter it *here* even if all descriptors are excluded because it can have depdencies
+                .filter(dep -> conditionEvaluator.test(dep.getIncludeIf()))
+                .map(it -> {
+                    if (it.getLocation() == null) {
+                        if (manifest.getAlveoli() != null) { // prefer in the same manifest first
+                            final var found = manifest.getAlveoli().stream()
+                                    .filter(a -> Objects.equals(it.getName(), a.getName()))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (found != null) {
+                                return (Supplier<CompletionStage<?>>) () -> onAlveolus.apply(new AlveolusContext(
+                                        manifest, found, currentPatches, currentPlaceholders, currentExcludes, cache));
                             }
-                            return findAlveolus(it.getLocation(), it.getName(), cache)
-                                    .thenCompose(alveolus -> onAlveolus.apply(new AlveolusContext(
-                                            manifest, alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache)));
-                        })
+                        }
+                        final var alveolus = findAlveolusInClasspath(it.getName());
+                        return (Supplier<CompletionStage<?>>) () -> onAlveolus.apply(new AlveolusContext(
+                                alveolus.getManifest(), alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache));
+                    }
+                    return (Supplier<CompletionStage<?>>) () -> findAlveolus(it.getLocation(), it.getName(), cache)
+                            .thenCompose(alveolus -> onAlveolus.apply(new AlveolusContext(
+                                    manifest, alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache)));
+                });
+        if (from.isChainDependencies()) {
+            return chain(dependenciesTasks.iterator(), true)
+                    .thenCompose(ready -> all(
+                            selectDescriptors(from, excludes)
+                                    .map(desc -> findDescriptor(desc, cache))
+                                    .collect(toList()), toList(), true)
+                            .thenCompose(descriptors -> afterDependencies(
+                                    manifest, from, patches, excludes, cache, onDescriptor,
+                                    awaiter, placeholders, currentPatches, descriptors)));
+        }
+        return all(
+                dependenciesTasks
+                        .map(Supplier::get)
                         .map(it -> it.thenApply(ignored -> 1)) // just to match the signature of all()
                         .collect(toList()),
                 counting(), true)
                 .thenCompose(ready -> all(
                         selectDescriptors(from, excludes)
                                 .map(desc -> findDescriptor(desc, cache))
-                                .collect(toList()),
-                        toList(),
-                        true)
-                        .thenCompose(descriptors -> {
-                            log.finest(() -> "Applying " + descriptors);
-                            final Collection<Collection<LoadedDescriptor>> rankedDescriptors = rankDescriptors(descriptors);
-                            CompletionStage<?> promise = completedFuture(true);
-                            for (final var next : rankedDescriptors.stream()
-                                    .map(descs -> {
-                                        if (awaiter == null) {
-                                            return prepareDescriptors(
-                                                    manifest, from, patches, placeholders, excludes, cache, onDescriptor, currentPatches, descs);
-                                        }
+                                .collect(toList()), toList(), true)
+                        .thenCompose(descriptors -> afterDependencies(
+                                manifest, from, patches, excludes, cache, onDescriptor,
+                                awaiter, placeholders, currentPatches, descriptors)));
+    }
 
-                                        final var filteredDescs = new ArrayList<LoadedDescriptor>();
-                                        final var descriptorApply = prepareDescriptors(
-                                                manifest, from, patches, placeholders, excludes, cache,
-                                                (ctx, desc) -> {
-                                                    synchronized (filteredDescs) {
-                                                        filteredDescs.add(desc);
-                                                    }
-                                                    return onDescriptor.apply(ctx, desc);
-                                                },
-                                                currentPatches, descs);
-                                        return descriptorApply.thenCompose(result -> {
-                                            final Collection<CompletionStage<Void>> awaiters = filteredDescs.stream()
-                                                    .map(awaiter)
-                                                    .collect(toList());
-                                            return all(awaiters, counting(), true).thenApply(it -> result);
-                                        });
-                                    })
-                                    .collect(toList())) {
-                                promise = promise.thenCompose(ignored -> next);
-                            }
-                            return promise;
-                        }));
+    private CompletionStage<?> afterDependencies(final Manifest manifest, final Manifest.Alveolus from,
+                                                 final Map<Predicate<String>, Manifest.Patch> patches,
+                                                 final Collection<Manifest.DescriptorRef> excludes,
+                                                 final ArchiveReader.Cache cache,
+                                                 final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
+                                                 final Function<LoadedDescriptor, CompletionStage<Void>> awaiter,
+                                                 final Map<String, String> placeholders,
+                                                 final Map<Predicate<String>, Manifest.Patch> currentPatches,
+                                                 final List<LoadedDescriptor> descriptors) {
+        log.finest(() -> "Applying " + descriptors);
+        final Collection<Collection<LoadedDescriptor>> rankedDescriptors = rankDescriptors(descriptors);
+        CompletionStage<?> promise = completedFuture(true);
+        for (final var next : rankedDescriptors.stream()
+                .map(descs -> {
+                    if (awaiter == null) {
+                        return prepareDescriptors(
+                                manifest, from, patches, placeholders, excludes, cache, onDescriptor, currentPatches, descs);
+                    }
+
+                    final var filteredDescs = new ArrayList<LoadedDescriptor>();
+                    final var descriptorApply = prepareDescriptors(
+                            manifest, from, patches, placeholders, excludes, cache,
+                            (ctx, desc) -> {
+                                synchronized (filteredDescs) {
+                                    filteredDescs.add(desc);
+                                }
+                                return onDescriptor.apply(ctx, desc);
+                            },
+                            currentPatches, descs);
+                    return descriptorApply.thenCompose(result -> {
+                        final Collection<CompletionStage<Void>> awaiters = filteredDescs.stream()
+                                .map(awaiter)
+                                .collect(toList());
+                        return all(awaiters, counting(), true).thenApply(it -> result);
+                    });
+                })
+                .collect(toList())) {
+            promise = promise.thenCompose(ignored -> next);
+        }
+        return promise;
     }
 
     private Collection<Collection<LoadedDescriptor>> rankDescriptors(final List<LoadedDescriptor> descriptors) {
