@@ -106,8 +106,8 @@ public final class HelmChart2Bundlebee {
                             final var prefix = IntStream.rangeClosed(0, labels).mapToObj(it -> "").collect(joining(" "));
                             out.add(prefix + "deploy.tool: \"bundlebee\"");
                             out.add(prefix + "deploy.by: \"{{user.name:-unknown}}\"");
-                            out.add(prefix + "deploy.time: \"{{annotation.deploytime}}\"");
-                            out.add(prefix + "deploy.environment: \"{{annotation.environment}}\"");
+                            out.add(prefix + "deploy.time: \"{{annotations.deploytime}}\"");
+                            out.add(prefix + "deploy.environment: \"{{annotations.environment}}\"");
                             out.add(prefix + "project.version: \"{{project.version}}\"");
                             labels = -1;
                             out.add(line);
