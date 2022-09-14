@@ -44,6 +44,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -101,6 +102,11 @@ public class KubeClient implements ConfigHolder {
     @Description("Should YAML/JSON be logged when it can't be parsed.")
     @ConfigProperty(name = "bundlebee.kube.logDescriptorOnParsingError", defaultValue = "true")
     private boolean logDescriptorOnParsingError;
+
+    @Inject
+    @Description("Should YAML/JSON be logged when it can't be parsed.")
+    @ConfigProperty(name = "bundlebee.kube.filters.statefuleset.spec.allowed", defaultValue = "replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds")
+    private List<String> statefulsetSpecAllowedAttributes;
 
     @Inject
     @Description("" +
@@ -355,14 +361,15 @@ public class KubeClient implements ConfigHolder {
                 .thenCompose(ignored -> doApply(rawDesc, desc, kindLowerCased));
     }
 
-    private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject desc, final String kindLowerCased) {
-        final var metadata = desc.getJsonObject("metadata");
+    private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc, final String kindLowerCased) {
+        final var metadata = preparedDesc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
-        log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
+        log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ")" +
+                (!"namespace".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
 
         final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!api.isDryRun() ? "" : ("&dryRun=All"));
-        final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
+        final var baseUri = toBaseUri(preparedDesc, kindLowerCased, namespace);
 
         if (api.isVerbose()) {
             log.info(() -> "Will apply descriptor " + rawDesc + " on " + baseUri);
@@ -392,6 +399,8 @@ public class KubeClient implements ConfigHolder {
                         } catch (final RuntimeException re) {
                             // no-op
                         }
+
+                        final var desc = filterForApply(preparedDesc, kindLowerCased);
                         if (obj == null || !kindsToSkipUpdateIfPossible.contains(kind) || needsUpdate(obj, desc)) {
                             return doUpdate(desc, name, fieldManager, baseUri)
                                     .thenCompose(response -> {
@@ -426,7 +435,7 @@ public class KubeClient implements ConfigHolder {
                     } else {
                         log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
                         return api.execute(HttpRequest.newBuilder()
-                                                .POST(HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                                .POST(HttpRequest.BodyPublishers.ofString(preparedDesc.toString()))
                                                 .header("Content-Type", "application/json")
                                                 .header("Accept", "application/json"),
                                         baseUri + fieldManager)
@@ -445,6 +454,30 @@ public class KubeClient implements ConfigHolder {
                                 });
                     }
                 });
+    }
+
+    private JsonObject filterForApply(final JsonObject desc, final String kind) {
+        switch (kind) {
+            case "statefulsets":
+                return filterSpec(desc, statefulsetSpecAllowedAttributes);
+            default: // for now other descriptors are passthrough
+                return desc;
+        }
+    }
+
+    private JsonObject filterSpec(final JsonObject desc, final List<String> allowed) {
+        final var spec = desc.getJsonObject("spec");
+        if (spec == null || new HashSet<>(allowed).containsAll(spec.keySet())) {
+            return desc;
+        }
+        // drop spec forbidden fields for updates
+        return jsonBuilderFactory.createObjectBuilder(spec.entrySet().stream()
+                        .filter(it -> !"spec".equals(it.getKey()))
+                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .add("spec", jsonBuilderFactory.createObjectBuilder(spec.entrySet().stream()
+                        .filter(it -> allowed.contains(it.getKey()))
+                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue))))
+                .build();
     }
 
     private CompletionStage<JsonObject> injectResourceVersionInDescriptor(final JsonObject desc,
