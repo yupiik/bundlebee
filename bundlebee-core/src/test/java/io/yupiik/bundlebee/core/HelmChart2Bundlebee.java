@@ -72,7 +72,12 @@ public final class HelmChart2Bundlebee {
             final var descriptors = new ArrayList<String>(yamls.size());
             for (final var file : yamls) {
                 final var w = toFormatted(yaml, converter, jsonWriterFactory, file);
-                logger.info("Write '" + Files.writeString(to.resolve(w.getSecond()), w.getFirst()) + "'");
+                if (Boolean.getBoolean("debug")) {
+                    System.out.println("---- " + w.getSecond());
+                    System.out.println(w.getFirst());
+                } else {
+                    logger.info("Write '" + Files.writeString(to.resolve(w.getSecond()), w.getFirst()) + "'");
+                }
                 descriptors.add(w.getSecond());
             }
 
@@ -105,6 +110,8 @@ public final class HelmChart2Bundlebee {
                             out.add(prefix + "deploy.environment: \"{{annotation.environment}}\"");
                             out.add(prefix + "project.version: \"{{project.version}}\"");
                             labels = -1;
+                            out.add(line);
+                        } else if (line.strip().startsWith("app:")) {
                             out.add(line);
                         }
                         break;
