@@ -44,11 +44,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -61,6 +62,7 @@ import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedStage;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
@@ -105,8 +107,8 @@ public class KubeClient implements ConfigHolder {
 
     @Inject
     @Description("Should YAML/JSON be logged when it can't be parsed.")
-    @ConfigProperty(name = "bundlebee.kube.filters.statefuleset.spec.allowed", defaultValue = "replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds")
-    private List<String> statefulsetSpecAllowedAttributes;
+    @ConfigProperty(name = "bundlebee.kube.filters.statefuleset.spec.allowed", defaultValue = "replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector")
+    private Set<String> statefulsetSpecAllowedAttributes;
 
     @Inject
     @Description("" +
@@ -400,7 +402,7 @@ public class KubeClient implements ConfigHolder {
                             // no-op
                         }
 
-                        final var desc = filterForApply(preparedDesc, kindLowerCased);
+                        final var desc = filterForApply("@" + kindLowerCased + "/" + namespace + '/' + name, preparedDesc, kindLowerCased);
                         if (obj == null || !kindsToSkipUpdateIfPossible.contains(kind) || needsUpdate(obj, desc)) {
                             return doUpdate(desc, name, fieldManager, baseUri)
                                     .thenCompose(response -> {
@@ -456,21 +458,24 @@ public class KubeClient implements ConfigHolder {
                 });
     }
 
-    private JsonObject filterForApply(final JsonObject desc, final String kind) {
+    private JsonObject filterForApply(final String ref, final JsonObject desc, final String kind) {
         switch (kind) {
             case "statefulsets":
-                return filterSpec(desc, statefulsetSpecAllowedAttributes);
+                return filterSpec(ref, desc, statefulsetSpecAllowedAttributes);
             default: // for now other descriptors are passthrough
                 return desc;
         }
     }
 
-    private JsonObject filterSpec(final JsonObject desc, final List<String> allowed) {
+    private JsonObject filterSpec(final String ref, final JsonObject desc, final Collection<String> allowed) {
         final var spec = desc.getJsonObject("spec");
-        if (spec == null || new HashSet<>(allowed).containsAll(spec.keySet())) {
+        if (spec == null || allowed.containsAll(spec.keySet())) {
             return desc;
         }
         // drop spec forbidden fields for updates
+        log.info(() -> "Important: filtering descriptor spec attributes (" + ref + ") for update (" +
+                spec.keySet().stream().filter(it -> !allowed.contains(it)).collect(joining(", ")) +
+                " update is not supported)");
         return jsonBuilderFactory.createObjectBuilder(spec.entrySet().stream()
                         .filter(it -> !"spec".equals(it.getKey()))
                         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
