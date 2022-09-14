@@ -25,6 +25,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.JsonObject;
+import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -125,8 +126,13 @@ public class ConditionAwaiter {
         return withRetry(
                 scheduledExecutorService, timeout, loadedDescriptor, condition::toString,
                 () -> kube.getResources(loadedDescriptor.getContent(), loadedDescriptor.getExtension())
-                        .thenApply(it -> it.stream().noneMatch(r -> r.statusCode() != 200) &&
-                                it.stream().anyMatch(r -> evaluate(condition, r.body()))));
+                        .thenApply(it -> isDryRun(it) ||
+                                (it.stream().noneMatch(r -> r.statusCode() != 200) &&
+                                        it.stream().anyMatch(r -> evaluate(condition, r.body())))));
+    }
+
+    private boolean isDryRun(final List<HttpResponse<JsonObject>> it) {
+        return it.stream().anyMatch(i -> i.headers().firstValue("x-dry-run").map(Boolean::parseBoolean).orElse(false));
     }
 
     private boolean evaluate(final Manifest.AwaitCondition condition, final JsonObject body) {
