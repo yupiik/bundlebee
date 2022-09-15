@@ -68,13 +68,16 @@ public final class MojoGenerator {
                             final var defaultValue = configProperty.defaultValue();
                             final var desc = it.getAnnotation(Description.class).value();
                             final var paramName = fromParameterToFieldName(key);
+                            final var type = it.getType().getName();
                             return "" +
                                     "    /**\n" +
                                     "     * " + desc.replace('\n', ' ') + "\n" +
                                     "     */\n" +
                                     "    @Parameter(property = \"" + key + "\"" +
                                     ", defaultValue = \"" + defaultValue.replaceAll("\n", "\\n") + "\")\n" +
-                                    "    private " + it.getType().getName().replace("java.lang.", "") + " " + paramName + ";";
+                                    "    private " +
+                                    ("java.util.Set".equals(type) ? "Set<String>" : type.replace("java.lang.", "")) + " " +
+                                    paramName + ";";
                         }));
 
         finder
@@ -83,7 +86,8 @@ public final class MojoGenerator {
                 .map(it -> {
                     try {
                         return it.asSubclass(Executable.class).getConstructor().newInstance();
-                    } catch (final InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                    } catch (final InstantiationException | IllegalAccessException | InvocationTargetException |
+                                   NoSuchMethodException e) {
                         throw new IllegalArgumentException(e);
                     }
                 })
@@ -121,7 +125,11 @@ public final class MojoGenerator {
                         final var sharedConfigParameters = skipSharedConfig ?
                                 "" :
                                 sharedParameters.keySet().stream()
-                                        .flatMap(k -> Stream.of("\"--" + k + "\"", "String.valueOf(" + fromParameterToFieldName(k) + ")"))
+                                        .flatMap(k -> Stream.of(
+                                                "\"--" + k + "\"",
+                                                "bundlebee.kube.filters.statefuleset.spec.allowed".equals(k) ?
+                                                        "String.join(\",\", " + fromParameterToFieldName(k) + ")" :
+                                                        "String.valueOf(" + fromParameterToFieldName(k) + ")"))
                                         .collect(joining(",\n                                ", "                                ", ""));
 
                         final var addManifestAlias = parameterDeclarationPerName.keySet().stream()
@@ -172,6 +180,7 @@ public final class MojoGenerator {
                                         "import io.yupiik.bundlebee.maven.mojo.BaseMojo;\n" +
                                         "\n" +
                                         "import java.util.Map;\n" +
+                                        (!skipSharedConfig ? "import java.util.Set;\n" : "") +
                                         "import java.util.stream.Stream;\n" +
                                         "\n" +
                                         "/**\n" +
