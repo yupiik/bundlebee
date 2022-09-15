@@ -32,7 +32,7 @@
     <dependency> <!-- todo: replace it by something lighter without the mapping feature? -->
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.31</version>
+      <version>1.32</version>
     </dependency>
 
     <dependency>
