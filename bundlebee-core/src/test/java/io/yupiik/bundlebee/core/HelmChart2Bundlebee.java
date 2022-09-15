@@ -104,15 +104,23 @@ public final class HelmChart2Bundlebee {
                         if (i != labels) {
                             // inject labels now
                             final var prefix = IntStream.rangeClosed(0, labels).mapToObj(it -> "").collect(joining(" "));
-                            out.add(prefix + "deploy.tool: \"bundlebee\"");
+                            out.add(prefix + "app.kubernetes.io/managed-by: \"bundlebee\"");
                             out.add(prefix + "deploy.by: \"{{user.name:-unknown}}\"");
                             out.add(prefix + "deploy.time: \"{{annotations.deploytime}}\"");
                             out.add(prefix + "deploy.environment: \"{{annotations.environment}}\"");
                             out.add(prefix + "project.version: \"{{project.version}}\"");
                             labels = -1;
                             out.add(line);
-                        } else if (line.strip().startsWith("app:")) {
-                            out.add(line);
+                        } else {
+                            final var stripped = line.strip();
+                            if (!stripped.startsWith("helm.sh/") &&
+                                    !stripped.startsWith("app.kubernetes.io/managed-by:") &&
+                                    !stripped.startsWith("release:") &&
+                                    !stripped.startsWith("heritage:") &&
+                                    !stripped.startsWith("release:") &&
+                                    !stripped.startsWith("chart:")) {
+                                out.add(line);
+                            }
                         }
                         break;
                     }
