@@ -52,7 +52,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
@@ -61,6 +63,7 @@ import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedStage;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -145,6 +148,10 @@ public class KubeClient implements ConfigHolder {
     @ConfigProperty(name = "bundlebee.kube.customMetadataInjectionPoint", defaultValue = "labels")
     private String customMetadataInjectionPoint;
 
+    @Inject
+    @BundleBee
+    private ScheduledExecutorService scheduledExecutorService;
+
     private Map<String, String> resourceMapping;
     private List<String> kindsToSkipUpdateIfPossible;
     private List<JsonPatch> implicitlyDrops;
@@ -205,11 +212,14 @@ public class KubeClient implements ConfigHolder {
 
     public CompletionStage<Boolean> exists(final String descriptorContent, final String ext) {
         final var result = new AtomicBoolean(true);
-        return forDescriptor(null, descriptorContent, ext, desc -> {
-            final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
-            return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
-                    .thenCompose(ignored -> doExists(result, desc, kindLowerCased));
-        }).thenApply(ignored -> result.get());
+        return forDescriptor(null, descriptorContent, ext, desc -> doExists(result, desc))
+                .thenApply(ignored -> result.get());
+    }
+
+    private CompletionStage<?> doExists(final AtomicBoolean result, final JsonObject desc) {
+        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+        return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
+                .thenCompose(ignored -> doExists(result, desc, kindLowerCased));
     }
 
     public CompletionStage<List<HttpResponse<JsonObject>>> getResources(final String descriptorContent, final String ext) {
@@ -549,6 +559,12 @@ public class KubeClient implements ConfigHolder {
         }
         if (force || isForce(desc)) {
             return doDelete(desc, -1)
+                    .thenCompose(it -> {
+                        if (api.isDryRun()) {
+                            return completedStage(null);
+                        }
+                        return awaitDeletion(desc);
+                    })
                     .thenCompose(d -> api.execute(
                             HttpRequest.newBuilder()
                                     .PUT(HttpRequest.BodyPublishers.ofString(desc.toString()))
@@ -564,6 +580,30 @@ public class KubeClient implements ConfigHolder {
                                 .header("Accept", "application/json"),
                         baseUri + "/" + name + fieldManager)
                 .toCompletableFuture();
+    }
+
+    private CompletionStage<?> awaitDeletion(final JsonObject desc) {
+        final var promise = new CompletableFuture<Void>();
+        final var result = new AtomicBoolean();
+        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+        final var delay = 500;
+        final var remainingRetries = new AtomicInteger(30000 / delay);
+        scheduledExecutorService.scheduleWithFixedDelay(() -> doExists(result, desc, kindLowerCased)
+                .thenApply(updated -> {
+                    if (!result.get()) {
+                        promise.complete(null);
+                    }
+                    return null;
+                })
+                .whenComplete((ok, ko) -> {
+                    if (promise.isDone() || promise.isCompletedExceptionally()) {
+                        return;
+                    }
+                    if (remainingRetries.decrementAndGet() == 0) {
+                        promise.completeExceptionally(new IllegalArgumentException("Resource was not deleted in 30s: " + desc.get("metadata")));
+                    }
+                }), 0, delay, MILLISECONDS);
+        return promise;
     }
 
     // if all user entries are the same in existing one we consider we don't need an update
