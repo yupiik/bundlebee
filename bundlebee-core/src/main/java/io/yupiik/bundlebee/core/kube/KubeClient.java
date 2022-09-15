@@ -331,7 +331,8 @@ public class KubeClient implements ConfigHolder {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
-        log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ") for namespace '" + namespace + "'");
+        log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ")" +
+                (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
 
         final var uri = toBaseUri(desc, kindLowerCased, namespace) + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
         return api.execute(
@@ -387,7 +388,7 @@ public class KubeClient implements ConfigHolder {
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ")" +
-                (!"namespace".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
+                (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
 
         final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!api.isDryRun() ? "" : ("&dryRun=All"));
         final var baseUri = toBaseUri(preparedDesc, kindLowerCased, namespace);
