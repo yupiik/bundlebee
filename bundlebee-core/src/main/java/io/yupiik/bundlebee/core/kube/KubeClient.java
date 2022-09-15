@@ -126,6 +126,15 @@ public class KubeClient implements ConfigHolder {
     private boolean putOnUpdate;
 
     @Inject
+    @Description("" +
+            "By default a descriptor update is done using `PATCH` with strategic merge patch logic, if set to `true` it will use a plain `PUT`. " +
+            "Note that `io.yupiik.bundlebee/putOnUpdate` annotations can be set to `true` to force that in the descriptor itself and for cases it is not enough, " +
+            "you can set `force` to `true` to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). " +
+            "Note that you can set it to `true` in a descriptor annotation `io.yupiik.bundlebee/force` too to not be global.")
+    @ConfigProperty(name = "bundlebee.kube.force", defaultValue = "false")
+    private boolean force;
+
+    @Inject
     @Description("Default value for deletions of `propagationPolicy`. Values can be `Orphan`, `Foreground` and `Background`.")
     @ConfigProperty(name = "bundlebee.kube.defaultPropagationPolicy", defaultValue = "Foreground")
     private String defaultPropagationPolicy;
@@ -427,7 +436,7 @@ public class KubeClient implements ConfigHolder {
                                                             }));
                                         }
 
-                                        if (response.statusCode() != 200) {
+                                        if (response.statusCode() != 200 && response.statusCode() != 201 /* force */) {
                                             throw new IllegalStateException(errorMessage);
                                         }
                                         return completedStage(response);
@@ -538,6 +547,16 @@ public class KubeClient implements ConfigHolder {
                             baseUri + "/" + name + fieldManager)
                     .toCompletableFuture();
         }
+        if (force || isForce(desc)) {
+            return doDelete(desc, -1)
+                    .thenCompose(d -> api.execute(
+                            HttpRequest.newBuilder()
+                                    .PUT(HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                    .header("Content-Type", "application/json")
+                                    .header("Accept", "application/json"),
+                            baseUri + "/" + name + fieldManager))
+                    .toCompletableFuture();
+        }
         return api.execute(
                         HttpRequest.newBuilder()
                                 .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
@@ -579,6 +598,18 @@ public class KubeClient implements ConfigHolder {
             return ofNullable(desc.getJsonObject("metadata"))
                     .map(it -> it.getJsonObject("annotations"))
                     .map(it -> it.getString("io.yupiik.bundlebee/putOnUpdate"))
+                    .map(Boolean::parseBoolean)
+                    .orElse(false);
+        } catch (final RuntimeException re) {
+            return false;
+        }
+    }
+
+    private boolean isForce(final JsonObject desc) {
+        try {
+            return ofNullable(desc.getJsonObject("metadata"))
+                    .map(it -> it.getJsonObject("annotations"))
+                    .map(it -> it.getString("io.yupiik.bundlebee/force"))
                     .map(Boolean::parseBoolean)
                     .orElse(false);
         } catch (final RuntimeException re) {
