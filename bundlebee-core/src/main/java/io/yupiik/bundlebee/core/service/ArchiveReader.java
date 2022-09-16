@@ -64,13 +64,22 @@ public class ArchiveReader {
             final var manifest = zipLocation.resolve("bundlebee/manifest.json");
             if (Files.exists(manifest)) {
                 final var manifestJson = manifestReader.readManifest(
-                        zipLocation.toAbsolutePath().normalize().toString(), () -> {
-                    try {
-                        return Files.newInputStream(manifest);
-                    } catch (final IOException e) {
-                        throw new IllegalStateException(e);
-                    }
-                });
+                        zipLocation.toAbsolutePath().normalize().toString(),
+                        () -> {
+                            try {
+                                return Files.newInputStream(manifest);
+                            } catch (final IOException e) {
+                                throw new IllegalStateException(e);
+                            }
+                        },
+                        name -> {
+                            try {
+                                final var abs = Path.of(name);
+                                return Files.newInputStream(Files.exists(abs) ? abs : manifest.getParent().resolve(name));
+                            } catch (final IOException e) {
+                                throw new IllegalArgumentException(e);
+                            }
+                        });
                 final var descriptors = new HashMap<String, String>();
                 try {
                     Files.walkFileTree(zipLocation, new SimpleFileVisitor<>() {
@@ -100,13 +109,26 @@ public class ArchiveReader {
             if (manifestEntry == null) {
                 throw new IllegalStateException("No manifest.json in " + zipLocation);
             }
-            final var manifest = manifestReader.readManifest(coords, () -> {
-                try {
-                    return zip.getInputStream(manifestEntry);
-                } catch (final IOException e) {
-                    throw new IllegalStateException(e);
-                }
-            });
+            final var manifest = manifestReader.readManifest(
+                    coords,
+                    () -> {
+                        try {
+                            return zip.getInputStream(manifestEntry);
+                        } catch (final IOException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    }, name -> {
+                        final var ref = name.startsWith("/") ? name : "bundlebee/" + name;
+                        final var entry = zip.getEntry(ref);
+                        if (entry == null) {
+                            throw new IllegalStateException("No '" + ref + "' in " + zipLocation);
+                        }
+                        try {
+                            return zip.getInputStream(entry);
+                        } catch (final IOException e) {
+                            throw new IllegalStateException(e);
+                        }
+                    });
             return new Archive(
                     zipLocation,
                     manifest,
