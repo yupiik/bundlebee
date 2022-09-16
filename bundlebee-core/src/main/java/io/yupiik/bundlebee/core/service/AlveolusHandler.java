@@ -34,9 +34,11 @@ import javax.json.spi.JsonProvider;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -202,7 +204,12 @@ public class AlveolusHandler {
 
     private Manifest readManifest(final String manifest) {
         if (manifest.startsWith("{")) {
-            return manifestReader.readManifest(null, () -> new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8)));
+            return manifestReader.readManifest(
+                    null,
+                    () -> new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8)),
+                    s -> {
+                        throw new IllegalArgumentException("Relative references foriddden for in memory manifest.json: '" + s + "'");
+                    });
         }
         final var path = Paths.get(manifest);
         return manifestReader.readManifest(path.toAbsolutePath().getParent().getParent().normalize().toString(), () -> {
@@ -211,7 +218,16 @@ public class AlveolusHandler {
             } catch (final IOException e) {
                 throw new IllegalArgumentException(e);
             }
-        });
+        }, s -> resolveManifestReference(path, s));
+    }
+
+    private InputStream resolveManifestReference(final Path path, final String name) {
+        try {
+            final var abs = Path.of(name);
+            return Files.newInputStream(Files.exists(abs) ? abs : path.getParent().resolve(name));
+        } catch (final IOException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     private ManifestAndAlveolus findAlveolusInClasspath(final String alveolus) {
@@ -225,9 +241,9 @@ public class AlveolusHandler {
     }
 
     private Stream<Manifest> manifests() {
+        final var classLoader = Thread.currentThread().getContextClassLoader();
         try {
-            return list(Thread.currentThread()
-                    .getContextClassLoader()
+            return list(classLoader
                     .getResources("bundlebee/manifest.json"))
                     .stream()
                     .map(manifest -> manifestReader.readManifest(null, () -> {
@@ -236,7 +252,7 @@ public class AlveolusHandler {
                         } catch (final IOException e) {
                             throw new IllegalStateException(e);
                         }
-                    }))
+                    }, s -> s.startsWith("/") ? classLoader.getResourceAsStream(s) : classLoader.getResourceAsStream("bundlebee/" + s)))
                     .distinct()
                     .collect(toList()) // materialize it to not leak manifest I/O outside of the method
                     .stream();

@@ -29,6 +29,14 @@ import java.util.Map;
  */
 @Data
 public class Manifest {
+    @Description("" +
+            "List of files referenced as other manifests. " +
+            "They are merged with this (main) manifest by *appending* _requirements_ and _alveoli_. " +
+            "It is relative to this manifest location. " +
+            "Important: it is only about the same module references, external references are dependencies in an alveoli. " +
+            "It enables to split a huge `manifest.json` for an easier maintenance.")
+    private List<ManifestReference> references;
+
     @Description("Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.")
     private List<Requirement> requirements;
 
@@ -299,5 +307,14 @@ public class Manifest {
                 "JSON-Patch to apply on the JSON representation of the descriptor. " +
                 "It enables to inject configuration in descriptors for example, or changing some name/application.")
         private JsonArray patch;
+    }
+
+    @Data
+    public static class ManifestReference {
+        @Description("" +
+                "Relative or absolute - starting by a `/` - location (referenced to the base directory of `manifest.json`). " +
+                "For example `my-manifest.json` will resolve to `/path/to/bundlebee/my-manifest.json` in a folder and `/bundlebee/my-manifest.json` in a jar. " +
+                "Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :`/bundlebee/my-module.sub-manifest.json` or use a dedicated subfolder (`/bundlebee/my-module/sub.json`).")
+        private String path;
     }
 }

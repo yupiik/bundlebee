@@ -34,9 +34,13 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 @ApplicationScoped
 public class ManifestReader {
@@ -53,7 +57,8 @@ public class ManifestReader {
     @Inject
     private Event<OnManifestRead> onManifestReadEvent;
 
-    public Manifest readManifest(final String location, final Supplier<InputStream> manifest) {
+    public Manifest readManifest(final String location, final Supplier<InputStream> manifest,
+                                 final Function<String, InputStream> relativeResolver) {
         try (final BufferedReader reader = new BufferedReader(
                 new InputStreamReader(manifest.get(), StandardCharsets.UTF_8))) {
             final var content = substitutor.replace(reader.lines().collect(joining("\n")));
@@ -73,10 +78,32 @@ public class ManifestReader {
                         .filter(it -> it.getLocation() == null)
                         .forEach(desc -> desc.setLocation(location));
             }
+            resolveReferences(location, mf, relativeResolver);
             onManifestReadEvent.fire(new OnManifestRead(mf));
             return mf;
         } catch (final IOException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    private void resolveReferences(final String location, final Manifest main,
+                                   final Function<String, InputStream> relativeResolver) {
+        if (main.getReferences() == null || main.getReferences().isEmpty()) {
+            return;
+        }
+
+        for (final var ref : main.getReferences()) {
+            final var loaded = readManifest(location, () -> relativeResolver.apply(ref.getPath()), relativeResolver);
+            ofNullable(loaded.getAlveoli())
+                    .ifPresent(it -> main.setAlveoli(Stream.concat(
+                                    ofNullable(main.getAlveoli()).stream().flatMap(Collection::stream),
+                                    it.stream())
+                            .collect(toList())));
+            ofNullable(loaded.getReferences())
+                    .ifPresent(it -> main.setReferences(Stream.concat(
+                                    ofNullable(main.getReferences()).stream().flatMap(Collection::stream),
+                                    it.stream())
+                            .collect(toList())));
         }
     }
 }

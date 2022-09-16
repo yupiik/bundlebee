@@ -18,17 +18,80 @@ package io.yupiik.bundlebee.core.service;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import org.apache.openwebbeans.junit5.Cdi;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.inject.Inject;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Cdi
 class ManifestReaderTest {
     @Inject
     private ManifestReader reader;
+
+    @Inject
+    private ArchiveReader archiveReader;
+
+    @Test
+    void referencesFolder(@TempDir final Path work) throws IOException {
+        final var bundlebee = Files.createDirectories(work.resolve("bundlebee"));
+        final var main = Files.writeString(bundlebee.resolve("manifest.json"), "{" +
+                "\"references\":[{\"path\":\"ref1.json\"}]," +
+                "\"alveoli\":[{\"name\":\"main\"}]" +
+                "}");
+        Files.writeString(bundlebee.resolve("ref1.json"), "{" +
+                "\"alveoli\":[{\"name\":\"ref1-alveolus\"}]" +
+                "}");
+        final var manifest = reader.readManifest(null, () -> {
+            try {
+                return Files.newInputStream(main);
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }, n -> {
+            try {
+                return Files.newInputStream(bundlebee.resolve(n));
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            }
+        });
+        assertEquals(List.of("main", "ref1-alveolus"), manifest.getAlveoli().stream().map(Manifest.Alveolus::getName).collect(toList()));
+    }
+
+
+    @Test
+    void referencesJar(@TempDir final Path work) throws IOException {
+        final var jar = work.resolve("module.jar");
+        try (final var out = new ZipOutputStream(Files.newOutputStream(jar))) {
+            out.putNextEntry(new ZipEntry("bundlebee/"));
+            out.closeEntry();
+            out.putNextEntry(new ZipEntry("bundlebee/manifest.json"));
+            out.write(("" +
+                    "{" +
+                    "\"references\":[{\"path\":\"ref1.json\"}]," +
+                    "\"alveoli\":[{\"name\":\"main\"}]" +
+                    "}").getBytes(StandardCharsets.UTF_8));
+            out.closeEntry();
+            out.putNextEntry(new ZipEntry("bundlebee/ref1.json"));
+            out.write(("" +
+                    "{" +
+                    "\"alveoli\":[{\"name\":\"ref1-alveolus\"}]" +
+                    "}").getBytes(StandardCharsets.UTF_8));
+            out.closeEntry();
+        }
+        final var archive = archiveReader.read("whatever", jar); // we cheat a bit to reuse the logic behind the loading
+        final var manifest = archive.getManifest();
+        assertEquals(List.of("main", "ref1-alveolus"), manifest.getAlveoli().stream().map(Manifest.Alveolus::getName).collect(toList()));
+    }
 
     @Test
     void read() {
@@ -44,7 +107,7 @@ class ManifestReaderTest {
                 "      ]" +
                 "    }" +
                 "  ]" +
-                "}").getBytes(StandardCharsets.UTF_8)));
+                "}").getBytes(StandardCharsets.UTF_8)), null);
         assertManifest(manifest);
     }
 
@@ -62,7 +125,7 @@ class ManifestReaderTest {
                 "      ]" +
                 "    }" +
                 "  ]" +
-                "}}").getBytes(StandardCharsets.UTF_8)));
+                "}}").getBytes(StandardCharsets.UTF_8)), null);
         assertManifest(manifest);
     }
 
