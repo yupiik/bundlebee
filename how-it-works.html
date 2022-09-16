@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.16-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.16">
     
 </head>
 
@@ -175,6 +175,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">chainDependencies</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>chainDependencies</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Should dependencies be installed one after the other or in parallel (default). It is useful when you install a namespace for example which must be awaited before next dependencies are installed.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -289,6 +295,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>await</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">If set to <code>true</code>, apply/delete commands will await the actual creation of the resource (<code>GET /x</code> returns a HTTP 200) before continuing to process next resources. It is useful for namespaces for example to ensure applications can be created in the newly created namespace. It avoids to run and rerun apply command in practise. For more advanced tests, use <code>awaitConditions</code>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">awaitOnDelete</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>awaitOnDelete</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">On delete we rarely want to check the resource exists before but in these rare case you can set this toggle to <code>true</code>.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">interpolate</p></td>
@@ -728,6 +740,11 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
         "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus",
         "type":"object",
         "properties":{
+          "chainDependencies":{
+            "type":"boolean",
+            "title":"Alveolus.chainDependencies",
+            "description":"Should dependencies be installed one after the other or in parallel (default). It is useful when you install a namespace for example which must be awaited before next dependencies are installed."
+          },
           "dependencies":{
             "type":"array",
             "title":"Alveolus.dependencies",
@@ -847,6 +864,11 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
                       }
                     }
                   }
+                },
+                "awaitOnDelete":{
+                  "type":"boolean",
+                  "title":"Descriptor.awaitOnDelete",
+                  "description":"On delete we rarely want to check the resource exists before but in these rare case you can set this toggle to `true`."
                 },
                 "includeIf":{
                   "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
@@ -1448,7 +1470,7 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.initHighlightingOnLoad(); }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.16-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.16"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

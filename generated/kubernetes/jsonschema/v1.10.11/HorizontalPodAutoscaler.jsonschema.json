@@ -1,5 +1,5 @@
 {
-  "description":"HorizontalPodAutoscaler is the configuration for a horizontal pod autoscaler, which automatically manages the replica count of any resource implementing the scale subresource based on the metrics specified.",
+  "description":"configuration of a horizontal pod autoscaler.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -248,172 +248,19 @@
       }
     },
     "spec":{
-      "description":"HorizontalPodAutoscalerSpec describes the desired functionality of the HorizontalPodAutoscaler.",
+      "description":"specification of a horizontal pod autoscaler.",
       "required":[
         "scaleTargetRef",
         "maxReplicas"
       ],
       "properties":{
         "maxReplicas":{
-          "description":"maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.",
+          "description":"upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.",
           "type":"integer",
           "format":"int32"
         },
-        "metrics":{
-          "description":"metrics contains the specifications for which to use to calculate the desired replica count (the maximum replica count across all metrics will be used).  The desired replica count is calculated multiplying the ratio between the target value and the current value by the current number of pods.  Ergo, metrics used must decrease as the pod count is increased, and vice-versa.  See the individual metric source types for more information about how each type of metric must respond.",
-          "type":"array",
-          "items":{
-            "description":"MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).",
-            "required":[
-              "type"
-            ],
-            "properties":{
-              "external":{
-                "description":"ExternalMetricSource indicates how to scale on a metric not associated with any Kubernetes object (for example length of queue in cloud messaging service, or QPS from loadbalancer running outside of cluster). Exactly one \"target\" type should be set.",
-                "required":[
-                  "metricName"
-                ],
-                "properties":{
-                  "metricName":{
-                    "description":"metricName is the name of the metric in question.",
-                    "type":"string"
-                  },
-                  "metricSelector":{
-                    "description":"A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-                    "properties":{
-                      "matchExpressions":{
-                        "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                        "type":"array",
-                        "items":{
-                          "description":"A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                          "required":[
-                            "key",
-                            "operator"
-                          ],
-                          "properties":{
-                            "key":{
-                              "description":"key is the label key that the selector applies to.",
-                              "type":"string"
-                            },
-                            "operator":{
-                              "description":"operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                              "type":"string"
-                            },
-                            "values":{
-                              "description":"values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                              "type":"array",
-                              "items":{
-                                "type":"string"
-                              }
-                            }
-                          }
-                        }
-                      },
-                      "matchLabels":{
-                        "description":"matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                        "type":"object",
-                        "additionalProperties":{
-                          "type":"string"
-                        }
-                      }
-                    }
-                  },
-                  "targetAverageValue":{
-                    "description":"targetAverageValue is the target per-pod value of global metric (as a quantity). Mutually exclusive with TargetValue.",
-                    "type":"string"
-                  },
-                  "targetValue":{
-                    "description":"targetValue is the target value of the metric (as a quantity). Mutually exclusive with TargetAverageValue.",
-                    "type":"string"
-                  }
-                }
-              },
-              "object":{
-                "description":"ObjectMetricSource indicates how to scale on a metric describing a kubernetes object (for example, hits-per-second on an Ingress object).",
-                "required":[
-                  "target",
-                  "metricName",
-                  "targetValue"
-                ],
-                "properties":{
-                  "metricName":{
-                    "description":"metricName is the name of the metric in question.",
-                    "type":"string"
-                  },
-                  "target":{
-                    "description":"CrossVersionObjectReference contains enough information to let you identify the referred resource.",
-                    "required":[
-                      "kind",
-                      "name"
-                    ],
-                    "properties":{
-                      "apiVersion":{
-                        "description":"API version of the referent",
-                        "type":"string"
-                      },
-                      "kind":{
-                        "description":"Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\"",
-                        "type":"string"
-                      },
-                      "name":{
-                        "description":"Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names",
-                        "type":"string"
-                      }
-                    }
-                  },
-                  "targetValue":{
-                    "description":"targetValue is the target value of the metric (as a quantity).",
-                    "type":"string"
-                  }
-                }
-              },
-              "pods":{
-                "description":"PodsMetricSource indicates how to scale on a metric describing each pod in the current scale target (for example, transactions-processed-per-second). The values will be averaged together before being compared to the target value.",
-                "required":[
-                  "metricName",
-                  "targetAverageValue"
-                ],
-                "properties":{
-                  "metricName":{
-                    "description":"metricName is the name of the metric in question",
-                    "type":"string"
-                  },
-                  "targetAverageValue":{
-                    "description":"targetAverageValue is the target value of the average of the metric across all relevant pods (as a quantity)",
-                    "type":"string"
-                  }
-                }
-              },
-              "resource":{
-                "description":"ResourceMetricSource indicates how to scale on a resource metric known to Kubernetes, as specified in requests and limits, describing each pod in the current scale target (e.g. CPU or memory).  The values will be averaged together before being compared to the target.  Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the \"pods\" source.  Only one \"target\" type should be set.",
-                "required":[
-                  "name"
-                ],
-                "properties":{
-                  "name":{
-                    "description":"name is the name of the resource in question.",
-                    "type":"string"
-                  },
-                  "targetAverageUtilization":{
-                    "description":"targetAverageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.",
-                    "type":"integer",
-                    "format":"int32"
-                  },
-                  "targetAverageValue":{
-                    "description":"targetAverageValue is the target value of the average of the resource metric across all relevant pods, as a raw value (instead of as a percentage of the request), similar to the \"pods\" metric source type.",
-                    "type":"string"
-                  }
-                }
-              },
-              "type":{
-                "description":"type is the type of metric source.  It should be one of \"Object\", \"Pods\" or \"Resource\", each mapping to a matching field in the object.",
-                "type":"string"
-              }
-            }
-          }
-        },
         "minReplicas":{
-          "description":"minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down. It defaults to 1 pod.",
+          "description":"lower limit for the number of pods that can be set by the autoscaler, default 1.",
           "type":"integer",
           "format":"int32"
         },
@@ -437,224 +284,43 @@
               "type":"string"
             }
           }
+        },
+        "targetCPUUtilizationPercentage":{
+          "description":"target average CPU utilization (represented as a percentage of requested CPU) over all the pods; if not specified the default autoscaling policy will be used.",
+          "type":"integer",
+          "format":"int32"
         }
       }
     },
     "status":{
-      "description":"HorizontalPodAutoscalerStatus describes the current status of a horizontal pod autoscaler.",
+      "description":"current status of a horizontal pod autoscaler",
       "required":[
         "currentReplicas",
-        "desiredReplicas",
-        "currentMetrics",
-        "conditions"
+        "desiredReplicas"
       ],
       "properties":{
-        "conditions":{
-          "description":"conditions is the set of conditions required for this autoscaler to scale its target, and indicates whether or not those conditions are met.",
-          "type":"array",
-          "items":{
-            "description":"HorizontalPodAutoscalerCondition describes the state of a HorizontalPodAutoscaler at a certain point.",
-            "required":[
-              "type",
-              "status"
-            ],
-            "properties":{
-              "lastTransitionTime":{
-                "description":"lastTransitionTime is the last time the condition transitioned from one status to another",
-                "type":"string",
-                "format":"date-time"
-              },
-              "message":{
-                "description":"message is a human-readable explanation containing details about the transition",
-                "type":"string"
-              },
-              "reason":{
-                "description":"reason is the reason for the condition's last transition.",
-                "type":"string"
-              },
-              "status":{
-                "description":"status is the status of the condition (True, False, Unknown)",
-                "type":"string"
-              },
-              "type":{
-                "description":"type describes the current condition",
-                "type":"string"
-              }
-            }
-          }
-        },
-        "currentMetrics":{
-          "description":"currentMetrics is the last read state of the metrics used by this autoscaler.",
-          "type":"array",
-          "items":{
-            "description":"MetricStatus describes the last-read state of a single metric.",
-            "required":[
-              "type"
-            ],
-            "properties":{
-              "external":{
-                "description":"ExternalMetricStatus indicates the current value of a global metric not associated with any Kubernetes object.",
-                "required":[
-                  "metricName",
-                  "currentValue"
-                ],
-                "properties":{
-                  "currentAverageValue":{
-                    "description":"currentAverageValue is the current value of metric averaged over autoscaled pods.",
-                    "type":"string"
-                  },
-                  "currentValue":{
-                    "description":"currentValue is the current value of the metric (as a quantity)",
-                    "type":"string"
-                  },
-                  "metricName":{
-                    "description":"metricName is the name of a metric used for autoscaling in metric system.",
-                    "type":"string"
-                  },
-                  "metricSelector":{
-                    "description":"A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-                    "properties":{
-                      "matchExpressions":{
-                        "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-                        "type":"array",
-                        "items":{
-                          "description":"A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-                          "required":[
-                            "key",
-                            "operator"
-                          ],
-                          "properties":{
-                            "key":{
-                              "description":"key is the label key that the selector applies to.",
-                              "type":"string"
-                            },
-                            "operator":{
-                              "description":"operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                              "type":"string"
-                            },
-                            "values":{
-                              "description":"values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                              "type":"array",
-                              "items":{
-                                "type":"string"
-                              }
-                            }
-                          }
-                        }
-                      },
-                      "matchLabels":{
-                        "description":"matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-                        "type":"object",
-                        "additionalProperties":{
-                          "type":"string"
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "object":{
-                "description":"ObjectMetricStatus indicates the current value of a metric describing a kubernetes object (for example, hits-per-second on an Ingress object).",
-                "required":[
-                  "target",
-                  "metricName",
-                  "currentValue"
-                ],
-                "properties":{
-                  "currentValue":{
-                    "description":"currentValue is the current value of the metric (as a quantity).",
-                    "type":"string"
-                  },
-                  "metricName":{
-                    "description":"metricName is the name of the metric in question.",
-                    "type":"string"
-                  },
-                  "target":{
-                    "description":"CrossVersionObjectReference contains enough information to let you identify the referred resource.",
-                    "required":[
-                      "kind",
-                      "name"
-                    ],
-                    "properties":{
-                      "apiVersion":{
-                        "description":"API version of the referent",
-                        "type":"string"
-                      },
-                      "kind":{
-                        "description":"Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\"",
-                        "type":"string"
-                      },
-                      "name":{
-                        "description":"Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names",
-                        "type":"string"
-                      }
-                    }
-                  }
-                }
-              },
-              "pods":{
-                "description":"PodsMetricStatus indicates the current value of a metric describing each pod in the current scale target (for example, transactions-processed-per-second).",
-                "required":[
-                  "metricName",
-                  "currentAverageValue"
-                ],
-                "properties":{
-                  "currentAverageValue":{
-                    "description":"currentAverageValue is the current value of the average of the metric across all relevant pods (as a quantity)",
-                    "type":"string"
-                  },
-                  "metricName":{
-                    "description":"metricName is the name of the metric in question",
-                    "type":"string"
-                  }
-                }
-              },
-              "resource":{
-                "description":"ResourceMetricStatus indicates the current value of a resource metric known to Kubernetes, as specified in requests and limits, describing each pod in the current scale target (e.g. CPU or memory).  Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the \"pods\" source.",
-                "required":[
-                  "name",
-                  "currentAverageValue"
-                ],
-                "properties":{
-                  "currentAverageUtilization":{
-                    "description":"currentAverageUtilization is the current value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.  It will only be present if `targetAverageValue` was set in the corresponding metric specification.",
-                    "type":"integer",
-                    "format":"int32"
-                  },
-                  "currentAverageValue":{
-                    "description":"currentAverageValue is the current value of the average of the resource metric across all relevant pods, as a raw value (instead of as a percentage of the request), similar to the \"pods\" metric source type. It will always be set, regardless of the corresponding metric specification.",
-                    "type":"string"
-                  },
-                  "name":{
-                    "description":"name is the name of the resource in question.",
-                    "type":"string"
-                  }
-                }
-              },
-              "type":{
-                "description":"type is the type of metric source.  It will be one of \"Object\", \"Pods\" or \"Resource\", each corresponds to a matching field in the object.",
-                "type":"string"
-              }
-            }
-          }
+        "currentCPUUtilizationPercentage":{
+          "description":"current average CPU utilization over all pods, represented as a percentage of requested CPU, e.g. 70 means that an average pod is using now 70% of its requested CPU.",
+          "type":"integer",
+          "format":"int32"
         },
         "currentReplicas":{
-          "description":"currentReplicas is current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler.",
+          "description":"current number of replicas of pods managed by this autoscaler.",
           "type":"integer",
           "format":"int32"
         },
         "desiredReplicas":{
-          "description":"desiredReplicas is the desired number of replicas of pods managed by this autoscaler, as last calculated by the autoscaler.",
+          "description":"desired number of replicas of pods managed by this autoscaler.",
           "type":"integer",
           "format":"int32"
         },
         "lastScaleTime":{
-          "description":"lastScaleTime is the last time the HorizontalPodAutoscaler scaled the number of pods, used by the autoscaler to control how often the number of pods is changed.",
+          "description":"last time the HorizontalPodAutoscaler scaled the number of pods; used by the autoscaler to control how often the number of pods is changed.",
           "type":"string",
           "format":"date-time"
         },
         "observedGeneration":{
-          "description":"observedGeneration is the most recent generation observed by this autoscaler.",
+          "description":"most recent generation observed by this autoscaler.",
           "type":"integer",
           "format":"int64"
         }
@@ -665,7 +331,7 @@
     {
       "group":"autoscaling",
       "kind":"HorizontalPodAutoscaler",
-      "version":"v2beta1"
+      "version":"v1"
     }
   ]
 }

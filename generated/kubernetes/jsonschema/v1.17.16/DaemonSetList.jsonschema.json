@@ -8,7 +8,7 @@
     "items":{
       "description":"A list of daemon sets.",
       "items":{
-        "description":"DEPRECATED - This group version of DaemonSet is deprecated by apps/v1beta2/DaemonSet. See the release notes for more information. DaemonSet represents the configuration of a daemon set.",
+        "description":"DEPRECATED - This group version of DaemonSet is deprecated by apps/v1/DaemonSet. See the release notes for more information. DaemonSet represents the configuration of a daemon set.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -182,7 +182,7 @@
                 "type":"integer"
               },
               "selector":{
-                "description":"A label query over pods that are managed by the daemon set. Must match in order to be controlled. If empty, defaulted to labels on Pod template. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors",
+                "description":"A label query over pods that are managed by the daemon set. Must match in order to be controlled. It must match the pod template's labels. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors",
                 "properties":{
                   "matchExpressions":{
                     "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -5151,12 +5151,8 @@
                 },
                 "type":"object"
               },
-              "templateGeneration":{
-                "description":"DEPRECATED. A sequence number representing a specific generation of the template. Populated by the system. It can be set only during the creation.",
-                "format":"int64",
-                "type":"integer"
-              },
               "updateStrategy":{
+                "description":"An update strategy to replace existing DaemonSet pods with new pods.",
                 "properties":{
                   "rollingUpdate":{
                     "description":"Rolling update config params. Present only if type = \"RollingUpdate\".",
@@ -5170,15 +5166,15 @@
                     "type":"object"
                   },
                   "type":{
-                    "description":"Type of daemon set update. Can be \"RollingUpdate\" or \"OnDelete\". Default is OnDelete.",
+                    "description":"Type of daemon set update. Can be \"RollingUpdate\" or \"OnDelete\". Default is RollingUpdate.",
                     "type":"string"
                   }
                 },
-                "type":"object",
-                "description":"An update strategy to replace existing DaemonSet pods with new pods."
+                "type":"object"
               }
             },
             "required":[
+              "selector",
               "template"
             ],
             "type":"object"
@@ -5279,9 +5275,9 @@
         "type":"object",
         "x-kubernetes-group-version-kind":[
           {
-            "group":"extensions",
+            "group":"apps",
             "kind":"DaemonSet",
-            "version":"v1beta1"
+            "version":"v1beta2"
           }
         ]
       },
@@ -5321,9 +5317,9 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
+      "group":"apps",
       "kind":"DaemonSetList",
-      "version":"v1beta1"
+      "version":"v1beta2"
     }
   ]
 }

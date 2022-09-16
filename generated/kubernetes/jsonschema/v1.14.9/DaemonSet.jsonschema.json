@@ -1,5 +1,5 @@
 {
-  "description":"DEPRECATED - This group version of DaemonSet is deprecated by apps/v1/DaemonSet. See the release notes for more information. DaemonSet represents the configuration of a daemon set.",
+  "description":"DaemonSet represents the configuration of a daemon set.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -10,7 +10,7 @@
       "type":"string"
     },
     "metadata":{
-      "description":"Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+      "description":"Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata",
       "properties":{
         "annotations":{
           "additionalProperties":{
@@ -287,7 +287,7 @@
       "type":"object"
     },
     "spec":{
-      "description":"The desired behavior of this daemon set. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
+      "description":"The desired behavior of this daemon set. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status",
       "properties":{
         "minReadySeconds":{
           "description":"The minimum number of seconds for which a newly created DaemonSet pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready).",
@@ -4130,7 +4130,7 @@
       "type":"object"
     },
     "status":{
-      "description":"The current status of this daemon set. This data may be out of date by some window of time. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
+      "description":"The current status of this daemon set. This data may be out of date by some window of time. Populated by the system. Read-only. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status",
       "properties":{
         "collisionCount":{
           "description":"Count of hash collisions for the DaemonSet. The DaemonSet controller uses this field as a collision avoidance mechanism when it needs to create the name for the newest ControllerRevision.",
@@ -4227,7 +4227,7 @@
     {
       "group":"apps",
       "kind":"DaemonSet",
-      "version":"v1beta2"
+      "version":"v1"
     }
   ]
 }

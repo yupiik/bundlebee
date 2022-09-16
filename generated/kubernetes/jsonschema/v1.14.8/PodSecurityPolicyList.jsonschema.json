@@ -1,5 +1,5 @@
 {
-  "description":"PodSecurityPolicyList is a list of PodSecurityPolicy objects. Deprecated: use PodSecurityPolicyList from policy API Group instead.",
+  "description":"PodSecurityPolicyList is a list of PodSecurityPolicy objects.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -8,7 +8,7 @@
     "items":{
       "description":"items is a list of schema objects.",
       "items":{
-        "description":"PodSecurityPolicy governs the ability to make requests that affect the Security Context that will be applied to a pod and container. Deprecated: use PodSecurityPolicy from policy API Group instead.",
+        "description":"PodSecurityPolicy governs the ability to make requests that affect the Security Context that will be applied to a pod and container.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -19,7 +19,7 @@
             "type":"string"
           },
           "metadata":{
-            "description":"Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+            "description":"Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata",
             "properties":{
               "annotations":{
                 "additionalProperties":{
@@ -329,7 +329,7 @@
               "allowedFlexVolumes":{
                 "description":"allowedFlexVolumes is a whitelist of allowed Flexvolumes.  Empty or nil indicates that all Flexvolumes may be used.  This parameter is effective only when the usage of the Flexvolumes is allowed in the \"volumes\" field.",
                 "items":{
-                  "description":"AllowedFlexVolume represents a single Flexvolume that is allowed to be used. Deprecated: use AllowedFlexVolume from policy API Group instead.",
+                  "description":"AllowedFlexVolume represents a single Flexvolume that is allowed to be used.",
                   "properties":{
                     "driver":{
                       "description":"driver is the name of the Flexvolume driver.",
@@ -346,7 +346,7 @@
               "allowedHostPaths":{
                 "description":"allowedHostPaths is a white list of allowed host paths. Empty indicates that all host paths may be used.",
                 "items":{
-                  "description":"AllowedHostPath defines the host volume conditions that will be enabled by a policy for pods to use. It requires the path prefix to be defined. Deprecated: use AllowedHostPath from policy API Group instead.",
+                  "description":"AllowedHostPath defines the host volume conditions that will be enabled by a policy for pods to use. It requires the path prefix to be defined.",
                   "properties":{
                     "pathPrefix":{
                       "description":"pathPrefix is the path prefix that the host volume must match. It does not support `*`. Trailing slashes are trimmed when validating the path prefix with a host path.\n\nExamples: `/foo` would allow `/foo`, `/foo/` and `/foo/bar` `/foo` would not allow `/food` or `/etc/foo`",
@@ -399,7 +399,7 @@
                   "ranges":{
                     "description":"ranges are the allowed ranges of fs groups.  If you would like to force a single fs group then supply a single range with the same start and end. Required for MustRunAs.",
                     "items":{
-                      "description":"IDRange provides a min/max of an allowed range of IDs. Deprecated: use IDRange from policy API Group instead.",
+                      "description":"IDRange provides a min/max of an allowed range of IDs.",
                       "properties":{
                         "max":{
                           "description":"max is the end of the range, inclusive.",
@@ -442,7 +442,7 @@
               "hostPorts":{
                 "description":"hostPorts determines which host port ranges are allowed to be exposed.",
                 "items":{
-                  "description":"HostPortRange defines a range of host ports that will be enabled by a policy for pods to use.  It requires both the start and end to be defined. Deprecated: use HostPortRange from policy API Group instead.",
+                  "description":"HostPortRange defines a range of host ports that will be enabled by a policy for pods to use.  It requires both the start and end to be defined.",
                   "properties":{
                     "max":{
                       "description":"max is the end of the range, inclusive.",
@@ -484,7 +484,7 @@
                   "ranges":{
                     "description":"ranges are the allowed ranges of gids that may be used. If you would like to force a single gid then supply a single range with the same start and end. Required for MustRunAs.",
                     "items":{
-                      "description":"IDRange provides a min/max of an allowed range of IDs. Deprecated: use IDRange from policy API Group instead.",
+                      "description":"IDRange provides a min/max of an allowed range of IDs.",
                       "properties":{
                         "max":{
                           "description":"max is the end of the range, inclusive.",
@@ -521,7 +521,7 @@
                   "ranges":{
                     "description":"ranges are the allowed ranges of uids that may be used. If you would like to force a single uid then supply a single range with the same start and end. Required for MustRunAs.",
                     "items":{
-                      "description":"IDRange provides a min/max of an allowed range of IDs. Deprecated: use IDRange from policy API Group instead.",
+                      "description":"IDRange provides a min/max of an allowed range of IDs.",
                       "properties":{
                         "max":{
                           "description":"max is the end of the range, inclusive.",
@@ -593,7 +593,7 @@
                   "ranges":{
                     "description":"ranges are the allowed ranges of supplemental groups.  If you would like to force a single supplemental group then supply a single range with the same start and end. Required for MustRunAs.",
                     "items":{
-                      "description":"IDRange provides a min/max of an allowed range of IDs. Deprecated: use IDRange from policy API Group instead.",
+                      "description":"IDRange provides a min/max of an allowed range of IDs.",
                       "properties":{
                         "max":{
                           "description":"max is the end of the range, inclusive.",
@@ -641,7 +641,7 @@
         "type":"object",
         "x-kubernetes-group-version-kind":[
           {
-            "group":"extensions",
+            "group":"policy",
             "kind":"PodSecurityPolicy",
             "version":"v1beta1"
           }
@@ -654,7 +654,7 @@
       "type":"string"
     },
     "metadata":{
-      "description":"Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+      "description":"Standard list metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata",
       "properties":{
         "continue":{
           "description":"continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message.",
@@ -678,7 +678,7 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
+      "group":"policy",
       "kind":"PodSecurityPolicyList",
       "version":"v1beta1"
     }

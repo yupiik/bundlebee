@@ -70,6 +70,11 @@
         "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus",
         "type":"object",
         "properties":{
+          "chainDependencies":{
+            "type":"boolean",
+            "title":"Alveolus.chainDependencies",
+            "description":"Should dependencies be installed one after the other or in parallel (default). It is useful when you install a namespace for example which must be awaited before next dependencies are installed."
+          },
           "dependencies":{
             "type":"array",
             "title":"Alveolus.dependencies",
@@ -189,6 +194,11 @@
                       }
                     }
                   }
+                },
+                "awaitOnDelete":{
+                  "type":"boolean",
+                  "title":"Descriptor.awaitOnDelete",
+                  "description":"On delete we rarely want to check the resource exists before but in these rare case you can set this toggle to `true`."
                 },
                 "includeIf":{
                   "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",

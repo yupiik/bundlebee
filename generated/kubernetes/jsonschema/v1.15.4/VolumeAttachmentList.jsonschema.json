@@ -1336,7 +1336,7 @@
           {
             "group":"storage.k8s.io",
             "kind":"VolumeAttachment",
-            "version":"v1beta1"
+            "version":"v1"
           }
         ]
       },
@@ -1378,7 +1378,7 @@
     {
       "group":"storage.k8s.io",
       "kind":"VolumeAttachmentList",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }

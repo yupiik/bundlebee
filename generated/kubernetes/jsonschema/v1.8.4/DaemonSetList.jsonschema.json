@@ -12,7 +12,7 @@
       "description":"A list of daemon sets.",
       "type":"array",
       "items":{
-        "description":"DEPRECATED - This group version of DaemonSet is deprecated by apps/v1beta2/DaemonSet. See the release notes for more information. DaemonSet represents the configuration of a daemon set.",
+        "description":"DaemonSet represents the configuration of a daemon set.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -3571,13 +3571,8 @@
                   }
                 }
               },
-              "templateGeneration":{
-                "description":"DEPRECATED. A sequence number representing a specific generation of the template. Populated by the system. It can be set only during the creation.",
-                "type":"integer",
-                "format":"int64"
-              },
               "updateStrategy":{
-                "description":"An update strategy to replace existing DaemonSet pods with new pods.",
+                "description":"DaemonSetUpdateStrategy is a struct used to control the update strategy for a DaemonSet.",
                 "properties":{
                   "rollingUpdate":{
                     "description":"Spec to control the desired behavior of daemon set rolling update.",
@@ -3590,7 +3585,7 @@
                     }
                   },
                   "type":{
-                    "description":"Type of daemon set update. Can be \"RollingUpdate\" or \"OnDelete\". Default is OnDelete.",
+                    "description":"Type of daemon set update. Can be \"RollingUpdate\" or \"OnDelete\". Default is RollingUpdate.",
                     "type":"string"
                   }
                 }
@@ -3656,9 +3651,9 @@
         },
         "x-kubernetes-group-version-kind":[
           {
-            "group":"extensions",
+            "group":"apps",
             "kind":"DaemonSet",
-            "version":"v1beta1"
+            "version":"v1beta2"
           }
         ]
       }
@@ -3687,9 +3682,9 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
+      "group":"apps",
       "kind":"DaemonSetList",
-      "version":"v1beta1"
+      "version":"v1beta2"
     }
   ]
 }

@@ -328,8 +328,8 @@
             "items":{
               "description":"Subject contains a reference to the object or user identities a role binding applies to.  This can either hold a direct API object reference, or a value for non-objects such as user and group names.",
               "properties":{
-                "apiGroup":{
-                  "description":"APIGroup holds the API group of the referenced subject. Defaults to \"\" for ServiceAccount subjects. Defaults to \"rbac.authorization.k8s.io\" for User and Group subjects.",
+                "apiVersion":{
+                  "description":"APIVersion holds the API group and version of the referenced subject. Defaults to \"v1\" for ServiceAccount subjects. Defaults to \"rbac.authorization.k8s.io/v1alpha1\" for User and Group subjects.",
                   "type":"string"
                 },
                 "kind":{
@@ -362,7 +362,7 @@
           {
             "group":"rbac.authorization.k8s.io",
             "kind":"RoleBinding",
-            "version":"v1"
+            "version":"v1alpha1"
           }
         ]
       },
@@ -404,7 +404,7 @@
     {
       "group":"rbac.authorization.k8s.io",
       "kind":"RoleBindingList",
-      "version":"v1"
+      "version":"v1alpha1"
     }
   ]
 }

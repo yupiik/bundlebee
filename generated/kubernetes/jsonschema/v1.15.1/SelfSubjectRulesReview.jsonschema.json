@@ -397,7 +397,7 @@
     {
       "group":"authorization.k8s.io",
       "kind":"SelfSubjectRulesReview",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }
