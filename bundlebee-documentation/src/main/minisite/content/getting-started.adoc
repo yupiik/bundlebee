@@ -24,7 +24,7 @@ IMPORTANT: this only works for linux amd64 computers.
 
 [source,sh]
 ----
-curl https://yupiik.github.io/bundlebee/install/install.sh | bash
+curl -L https://yupiik.github.io/bundlebee/install/install.sh | bash
 ----
 
 TIP: since 1.0.3, once installed this way (and your `PATH` variable updated to include bundlebee) you can use `check-update` command to check if a new version is available:
