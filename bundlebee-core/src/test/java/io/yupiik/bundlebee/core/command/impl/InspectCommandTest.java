@@ -41,7 +41,7 @@ class InspectCommandTest {
                 "* Alveolus 'ApplyCommandTest.withdep'\n" +
                 "  > Descriptor 'ApplyCommandTest.d2'\n" +
                 "  - Dependency 'ApplyCommandTest.apply'\n" +
-                "", logs);
+                "\n", logs);
     }
 
     @Test
@@ -84,7 +84,7 @@ class InspectCommandTest {
                 "      selector:\n" +
                 "        app: s-test\n" +
                 "  - Dependency 'ApplyCommandTest.apply'\n" +
-                "", logs);
+                "\n", logs);
     }
 
     @Test
@@ -111,7 +111,7 @@ class InspectCommandTest {
                 "      selector:\n" +
                 "        app: s-test\n" +
                 "  - Dependency 'ApplyCommandTest.apply'\n" +
-                "", logs);
+                "\n", logs);
     }
 
     @Test
@@ -155,7 +155,7 @@ class InspectCommandTest {
                 "      selector:\n" +
                 "        app: s-test\n" +
                 "  - Dependency 'ApplyCommandTest.apply'\n" +
-                "", logs);
+                "\n", logs);
     }
 
     @Test
