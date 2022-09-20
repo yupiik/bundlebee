@@ -501,7 +501,7 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"policy",
+      "group":"extensions",
       "kind":"PodSecurityPolicy",
       "version":"v1beta1"
     }

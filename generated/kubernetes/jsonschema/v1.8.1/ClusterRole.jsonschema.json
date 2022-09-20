@@ -302,7 +302,7 @@
     {
       "group":"rbac.authorization.k8s.io",
       "kind":"ClusterRole",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }

@@ -281,7 +281,7 @@
             }
           },
           "resources":{
-            "description":"Resources is a list of resources this rule applies to.  '*' represents all resources in the specified apiGroups. '*/foo' represents the subresource 'foo' for all resources in the specified apiGroups.",
+            "description":"Resources is a list of resources this rule applies to.  ResourceAll represents all resources.",
             "type":"array",
             "items":{
               "type":"string"
@@ -302,7 +302,7 @@
     {
       "group":"rbac.authorization.k8s.io",
       "kind":"Role",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }

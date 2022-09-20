@@ -299,7 +299,7 @@
           "description":"Extra corresponds to the user.Info.GetExtra() method from the authenticator.  Since that is input to the authorizer it needs a reflection here.",
           "type":"object"
         },
-        "group":{
+        "groups":{
           "description":"Groups is the groups you're testing for.",
           "items":{
             "type":"string"
@@ -359,7 +359,7 @@
           "type":"string"
         },
         "user":{
-          "description":"User is the user you're testing for. If you specify \"User\" but not \"Group\", then is it interpreted as \"What if User were not a member of any groups",
+          "description":"User is the user you're testing for. If you specify \"User\" but not \"Groups\", then is it interpreted as \"What if User were not a member of any groups",
           "type":"string"
         }
       },
@@ -399,7 +399,7 @@
     {
       "group":"authorization.k8s.io",
       "kind":"LocalSubjectAccessReview",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }

@@ -353,6 +353,22 @@
         }
       }
     },
+    "references":{
+      "type":"array",
+      "title":"Manifest.references",
+      "description":"List of files referenced as other manifests. They are merged with this (main) manifest by *appending* _requirements_ and _alveoli_. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge `manifest.json` for an easier maintenance.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference",
+        "type":"object",
+        "properties":{
+          "path":{
+            "type":"string",
+            "title":"ManifestReference.path",
+            "description":"Relative or absolute - starting by a `/` - location (referenced to the base directory of `manifest.json`). For example `my-manifest.json` will resolve to `/path/to/bundlebee/my-manifest.json` in a folder and `/bundlebee/my-manifest.json` in a jar. Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :`/bundlebee/my-module.sub-manifest.json` or use a dedicated subfolder (`/bundlebee/my-module/sub.json`)."
+          }
+        }
+      }
+    },
     "requirements":{
       "type":"array",
       "title":"Manifest.requirements",

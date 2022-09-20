@@ -19,7 +19,7 @@
     },
     "rollbackTo":{
       "description":"The config of this deployment rollback.",
-      "$ref":"#/definitions/io.k8s.kubernetes.pkg.apis.apps.v1beta1.RollbackConfig"
+      "$ref":"#/definitions/io.k8s.kubernetes.pkg.apis.extensions.v1beta1.RollbackConfig"
     },
     "updatedAnnotations":{
       "description":"The annotations to be updated to a deployment",
@@ -31,7 +31,7 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"apps",
+      "group":"extensions",
       "version":"v1beta1",
       "kind":"DeploymentRollback"
     }

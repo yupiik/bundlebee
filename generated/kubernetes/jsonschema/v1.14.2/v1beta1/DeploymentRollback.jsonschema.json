@@ -39,7 +39,7 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
+      "group":"apps",
       "kind":"DeploymentRollback",
       "version":"v1beta1"
     }

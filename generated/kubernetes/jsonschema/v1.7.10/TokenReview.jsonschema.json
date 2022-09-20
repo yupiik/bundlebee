@@ -302,7 +302,7 @@
   "x-kubernetes-group-version-kind":[
     {
       "group":"authentication.k8s.io",
-      "version":"v1beta1",
+      "version":"v1",
       "kind":"TokenReview"
     }
   ]

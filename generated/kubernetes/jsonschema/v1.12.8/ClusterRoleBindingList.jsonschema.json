@@ -319,7 +319,7 @@
           {
             "group":"rbac.authorization.k8s.io",
             "kind":"ClusterRoleBinding",
-            "version":"v1beta1"
+            "version":"v1"
           }
         ]
       }
@@ -350,7 +350,7 @@
     {
       "group":"rbac.authorization.k8s.io",
       "kind":"ClusterRoleBindingList",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }

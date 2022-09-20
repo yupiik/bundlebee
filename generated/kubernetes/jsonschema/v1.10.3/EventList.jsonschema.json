@@ -1,5 +1,5 @@
 {
-  "description":"EventList is a list of events.",
+  "description":"EventList is a list of Event objects.",
   "required":[
     "items"
   ],
@@ -9,82 +9,57 @@
       "type":"string"
     },
     "items":{
-      "description":"List of events",
+      "description":"Items is a list of schema objects.",
       "type":"array",
       "items":{
-        "description":"Event is a report of an event somewhere in the cluster.",
+        "description":"Event is a report of an event somewhere in the cluster. It generally denotes some state change in the system.",
         "required":[
-          "metadata",
-          "involvedObject"
+          "eventTime"
         ],
         "properties":{
           "action":{
-            "description":"What action was taken/failed regarding to the Regarding object.",
+            "description":"What action was taken/failed regarding to the regarding object.",
             "type":"string"
           },
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
             "type":"string"
           },
-          "count":{
-            "description":"The number of times this event has occurred.",
+          "deprecatedCount":{
+            "description":"Deprecated field assuring backward compatibility with core.v1 Event type",
             "type":"integer",
             "format":"int32"
           },
-          "eventTime":{
-            "description":"Time when this Event was first observed.",
+          "deprecatedFirstTimestamp":{
+            "description":"Deprecated field assuring backward compatibility with core.v1 Event type",
             "type":"string",
             "format":"date-time"
           },
-          "firstTimestamp":{
-            "description":"The time at which the event was first recorded. (Time of server receipt is in TypeMeta.)",
+          "deprecatedLastTimestamp":{
+            "description":"Deprecated field assuring backward compatibility with core.v1 Event type",
             "type":"string",
             "format":"date-time"
           },
-          "involvedObject":{
-            "description":"ObjectReference contains enough information to let you inspect or modify the referred object.",
+          "deprecatedSource":{
+            "description":"EventSource contains information for an event.",
             "properties":{
-              "apiVersion":{
-                "description":"API version of the referent.",
+              "component":{
+                "description":"Component from which the event is generated.",
                 "type":"string"
               },
-              "fieldPath":{
-                "description":"If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
-                "type":"string"
-              },
-              "kind":{
-                "description":"Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
-                "type":"string"
-              },
-              "name":{
-                "description":"Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                "type":"string"
-              },
-              "namespace":{
-                "description":"Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
-                "type":"string"
-              },
-              "resourceVersion":{
-                "description":"Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency",
-                "type":"string"
-              },
-              "uid":{
-                "description":"UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
+              "host":{
+                "description":"Node name on which the event is generated.",
                 "type":"string"
               }
             }
           },
-          "kind":{
-            "description":"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
-            "type":"string"
-          },
-          "lastTimestamp":{
-            "description":"The time at which the most recent occurrence of this event was recorded.",
+          "eventTime":{
+            "description":"Required. Time when this Event was first observed.",
             "type":"string",
             "format":"date-time"
           },
-          "message":{
-            "description":"A human-readable description of the status of this operation.",
+          "kind":{
+            "description":"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
             "type":"string"
           },
           "metadata":{
@@ -325,9 +300,46 @@
               }
             }
           },
-          "reason":{
-            "description":"This should be a short, machine understandable string that gives the reason for the transition into the object's current status.",
+          "note":{
+            "description":"Optional. A human-readable description of the status of this operation. Maximal length of the note is 1kB, but libraries should be prepared to handle values up to 64kB.",
             "type":"string"
+          },
+          "reason":{
+            "description":"Why the action was taken.",
+            "type":"string"
+          },
+          "regarding":{
+            "description":"ObjectReference contains enough information to let you inspect or modify the referred object.",
+            "properties":{
+              "apiVersion":{
+                "description":"API version of the referent.",
+                "type":"string"
+              },
+              "fieldPath":{
+                "description":"If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
+                "type":"string"
+              },
+              "kind":{
+                "description":"Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+                "type":"string"
+              },
+              "name":{
+                "description":"Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                "type":"string"
+              },
+              "namespace":{
+                "description":"Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
+                "type":"string"
+              },
+              "resourceVersion":{
+                "description":"Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#concurrency-control-and-consistency",
+                "type":"string"
+              },
+              "uid":{
+                "description":"UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
+                "type":"string"
+              }
+            }
           },
           "related":{
             "description":"ObjectReference contains enough information to let you inspect or modify the referred object.",
@@ -362,7 +374,7 @@
               }
             }
           },
-          "reportingComponent":{
+          "reportingController":{
             "description":"Name of the controller that emitted this Event, e.g. `kubernetes.io/kubelet`.",
             "type":"string"
           },
@@ -372,6 +384,11 @@
           },
           "series":{
             "description":"EventSeries contain information on series of events, i.e. thing that was/is happening continuously for some time.",
+            "required":[
+              "count",
+              "lastObservedTime",
+              "state"
+            ],
             "properties":{
               "count":{
                 "description":"Number of occurrences in this series up to the last heartbeat time",
@@ -379,39 +396,26 @@
                 "format":"int32"
               },
               "lastObservedTime":{
-                "description":"Time of the last occurrence observed",
+                "description":"Time when last Event from the series was seen before last heartbeat.",
                 "type":"string",
                 "format":"date-time"
               },
               "state":{
-                "description":"State of this Series: Ongoing or Finished",
-                "type":"string"
-              }
-            }
-          },
-          "source":{
-            "description":"EventSource contains information for an event.",
-            "properties":{
-              "component":{
-                "description":"Component from which the event is generated.",
-                "type":"string"
-              },
-              "host":{
-                "description":"Node name on which the event is generated.",
+                "description":"Information whether this series is ongoing or finished.",
                 "type":"string"
               }
             }
           },
           "type":{
-            "description":"Type of this event (Normal, Warning), new types could be added in the future",
+            "description":"Type of this event (Normal, Warning), new types could be added in the future.",
             "type":"string"
           }
         },
         "x-kubernetes-group-version-kind":[
           {
-            "group":"",
+            "group":"events.k8s.io",
             "kind":"Event",
-            "version":"v1"
+            "version":"v1beta1"
           }
         ]
       }
@@ -440,9 +444,9 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"",
+      "group":"events.k8s.io",
       "kind":"EventList",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }

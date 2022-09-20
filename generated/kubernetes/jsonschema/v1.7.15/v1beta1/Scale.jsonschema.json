@@ -1,5 +1,5 @@
 {
-  "description":"Scale represents a scaling request for a resource.",
+  "description":"represents a scaling request for a resource.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -244,7 +244,7 @@
       }
     },
     "spec":{
-      "description":"ScaleSpec describes the attributes of a scale subresource",
+      "description":"describes the attributes of a scale subresource",
       "properties":{
         "replicas":{
           "description":"desired number of instances for the scaled object.",
@@ -254,7 +254,7 @@
       }
     },
     "status":{
-      "description":"ScaleStatus represents the current status of a scale subresource.",
+      "description":"represents the current status of a scale subresource.",
       "required":[
         "replicas"
       ],
@@ -280,7 +280,7 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"apps",
+      "group":"extensions",
       "version":"v1beta1",
       "kind":"Scale"
     }

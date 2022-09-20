@@ -12,7 +12,7 @@
       "description":"Items is a list of schema objects.",
       "type":"array",
       "items":{
-        "$ref":"#/definitions/io.k8s.api.policy.v1beta1.PodSecurityPolicy"
+        "$ref":"#/definitions/io.k8s.api.extensions.v1beta1.PodSecurityPolicy"
       }
     },
     "kind":{
@@ -26,7 +26,7 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"policy",
+      "group":"extensions",
       "kind":"PodSecurityPolicyList",
       "version":"v1beta1"
     }

@@ -1,5 +1,5 @@
 {
-  "description":"Deployment enables declarative updates for Pods and ReplicaSets.",
+  "description":"DEPRECATED - This group version of Deployment is deprecated by apps/v1beta2/Deployment. See the release notes for more information. Deployment enables declarative updates for Pods and ReplicaSets.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -273,9 +273,19 @@
           "format":"int32"
         },
         "revisionHistoryLimit":{
-          "description":"The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
+          "description":"The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 2.",
           "type":"integer",
           "format":"int32"
+        },
+        "rollbackTo":{
+          "description":"DEPRECATED.",
+          "properties":{
+            "revision":{
+              "description":"The revision to rollback to. If set to 0, rollback to the last revision.",
+              "type":"integer",
+              "format":"int64"
+            }
+          }
         },
         "selector":{
           "description":"A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
@@ -3682,7 +3692,7 @@
     {
       "group":"apps",
       "kind":"Deployment",
-      "version":"v1beta2"
+      "version":"v1beta1"
     }
   ]
 }

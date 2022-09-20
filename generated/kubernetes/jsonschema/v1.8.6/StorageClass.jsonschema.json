@@ -281,7 +281,7 @@
     {
       "group":"storage.k8s.io",
       "kind":"StorageClass",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }

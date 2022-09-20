@@ -237,21 +237,22 @@
       }
     },
     "spec":{
-      "description":"Specification of the desired behavior for this NetworkPolicy.",
+      "description":"NetworkPolicySpec provides the specification of a NetworkPolicy",
       "required":[
         "podSelector"
       ],
       "properties":{
         "ingress":{
-          "description":"List of ingress rules to be applied to the selected pods. Traffic is allowed to a pod if there are no NetworkPolicies selecting the pod OR if the traffic source is the pod's local node, OR if the traffic matches at least one ingress rule across all of the NetworkPolicy objects whose podSelector matches the pod. If this field is empty then this NetworkPolicy does not allow any traffic (and serves solely to ensure that the pods it selects are isolated by default).",
+          "description":"List of ingress rules to be applied to the selected pods. Traffic is allowed to a pod if there are no NetworkPolicies selecting the pod (and cluster policy otherwise allows the traffic), OR if the traffic source is the pod's local node, OR if the traffic matches at least one ingress rule across all of the NetworkPolicy objects whose podSelector matches the pod. If this field is empty then this NetworkPolicy does not allow any traffic (and serves solely to ensure that the pods it selects are isolated by default)",
           "type":"array",
           "items":{
-            "description":"This NetworkPolicyIngressRule matches traffic if and only if the traffic matches both ports AND from.",
+            "description":"NetworkPolicyIngressRule describes a particular set of traffic that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The traffic must match both ports and from.",
             "properties":{
               "from":{
                 "description":"List of sources which should be able to access the pods selected for this rule. Items in this list are combined using a logical OR operation. If this field is empty or missing, this rule matches all sources (traffic not restricted by source). If this field is present and contains at least on item, this rule allows traffic only if the traffic matches at least one item in the from list.",
                 "type":"array",
                 "items":{
+                  "description":"NetworkPolicyPeer describes a peer to allow traffic from. Exactly one of its fields must be specified.",
                   "properties":{
                     "namespaceSelector":{
                       "description":"A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
@@ -340,14 +341,15 @@
                 "description":"List of ports which should be made accessible on the pods selected for this rule. Each item in this list is combined using a logical OR. If this field is empty or missing, this rule matches all ports (traffic not restricted by port). If this field is present and contains at least one item, then this rule allows traffic only if the traffic matches at least one port in the list.",
                 "type":"array",
                 "items":{
+                  "description":"NetworkPolicyPort describes a port to allow traffic on",
                   "properties":{
                     "port":{
-                      "description":"If specified, the port on the given protocol.  This can either be a numerical or named port on a pod.  If this field is not provided, this matches all port names and numbers. If present, only traffic on the specified protocol AND port will be matched.",
+                      "description":"The port on the given protocol. This can either be a numerical or named port on a pod. If this field is not provided, this matches all port names and numbers.",
                       "type":"string",
                       "format":"int-or-string"
                     },
                     "protocol":{
-                      "description":"Optional.  The protocol (TCP or UDP) which traffic must match. If not specified, this field defaults to TCP.",
+                      "description":"The protocol (TCP or UDP) which traffic must match. If not specified, this field defaults to TCP.",
                       "type":"string"
                     }
                   }
@@ -401,8 +403,8 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
-      "version":"v1beta1",
+      "group":"networking.k8s.io",
+      "version":"v1",
       "kind":"NetworkPolicy"
     }
   ]

@@ -1,5 +1,5 @@
 {
-  "description":"DEPRECATED - This group version of ReplicaSet is deprecated by apps/v1beta2/ReplicaSet. See the release notes for more information. ReplicaSet ensures that a specified number of pod replicas are running at any given time.",
+  "description":"DEPRECATED - This group version of ReplicaSet is deprecated by apps/v1/ReplicaSet. See the release notes for more information. ReplicaSet ensures that a specified number of pod replicas are running at any given time.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -249,6 +249,9 @@
     },
     "spec":{
       "description":"ReplicaSetSpec is the specification of a ReplicaSet.",
+      "required":[
+        "selector"
+      ],
       "properties":{
         "minReadySeconds":{
           "description":"Minimum number of seconds for which a newly created pod should be ready without any of its container crashing, for it to be considered available. Defaults to 0 (pod will be considered available as soon as it is ready)",
@@ -3880,9 +3883,9 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
+      "group":"apps",
       "kind":"ReplicaSet",
-      "version":"v1beta1"
+      "version":"v1beta2"
     }
   ]
 }

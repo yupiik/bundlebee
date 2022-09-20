@@ -8,7 +8,7 @@
     "items":{
       "description":"List of ReplicaSets. More info: https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller",
       "items":{
-        "description":"DEPRECATED - This group version of ReplicaSet is deprecated by apps/v1/ReplicaSet. See the release notes for more information. ReplicaSet ensures that a specified number of pod replicas are running at any given time.",
+        "description":"ReplicaSet ensures that a specified number of pod replicas are running at any given time.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -5232,7 +5232,7 @@
           {
             "group":"apps",
             "kind":"ReplicaSet",
-            "version":"v1beta2"
+            "version":"v1"
           }
         ]
       },
@@ -5274,7 +5274,7 @@
     {
       "group":"apps",
       "kind":"ReplicaSetList",
-      "version":"v1beta2"
+      "version":"v1"
     }
   ]
 }

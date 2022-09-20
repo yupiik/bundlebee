@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.16">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.17-SNAPSHOT">
     
 </head>
 
@@ -143,6 +143,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>alveoli</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of described applications/libraries.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference">Manifest.references</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>references</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of files referenced as other manifests. They are merged with this (main) manifest by <strong>appending</strong> <em>requirements</em> and <em>alveoli</em>. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge <code>manifest.json</code> for an easier maintenance.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Requirement">Manifest.requirements</a></p></td>
@@ -606,12 +612,43 @@ It provides the unique identifier of your recipe (application/library) and what 
 </table>
 </div>
 <div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference">Manifest.references</h4>
+<div class="paragraph">
+<p>List of files referenced as other manifests. They are merged with this (main) manifest by <strong>appending</strong> <em>requirements</em> and <em>alveoli</em>. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge <code>manifest.json</code> for an easier maintenance.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 11. Manifest.references</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>path</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Relative or absolute - starting by a <code>/</code> - location (referenced to the base directory of <code>manifest.json</code>). For example <code>my-manifest.json</code> will resolve to <code>/path/to/bundlebee/my-manifest.json</code> in a folder and <code>/bundlebee/my-manifest.json</code> in a jar. Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :`/bundlebee/my-module.sub-manifest.json` or use a dedicated subfolder (<code>/bundlebee/my-module/sub.json</code>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
 <h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_Requirement">Manifest.requirements</h4>
 <div class="paragraph">
 <p>Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 11. Manifest.requirements</caption>
+<caption class="title">Table 12. Manifest.requirements</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -1023,6 +1060,22 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
         }
       }
     },
+    "references":{
+      "type":"array",
+      "title":"Manifest.references",
+      "description":"List of files referenced as other manifests. They are merged with this (main) manifest by *appending* _requirements_ and _alveoli_. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge `manifest.json` for an easier maintenance.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference",
+        "type":"object",
+        "properties":{
+          "path":{
+            "type":"string",
+            "title":"ManifestReference.path",
+            "description":"Relative or absolute - starting by a `/` - location (referenced to the base directory of `manifest.json`). For example `my-manifest.json` will resolve to `/path/to/bundlebee/my-manifest.json` in a folder and `/bundlebee/my-manifest.json` in a jar. Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :`/bundlebee/my-module.sub-manifest.json` or use a dedicated subfolder (`/bundlebee/my-module/sub.json`)."
+          }
+        }
+      }
+    },
     "requirements":{
       "type":"array",
       "title":"Manifest.requirements",
@@ -1282,7 +1335,10 @@ Even if not recommended it can be done using <code>{{xxx}}</code> placeholders -
 <p><code>bundlebee-base64-file:&lt;file path&gt;</code>: converts the file in base64 (useful to write <code>data:xxxx,&lt;base64&gt;</code> values for ex keeping the raw file in the filesystem, very helpful for images),</p>
 </li>
 <li>
-<p><code>bundlebee-base64::&lt;text&gt;</code>: encodes in base64 the text,</p>
+<p><code>bundlebee-base64:&lt;text&gt;</code>: encodes in base64 the text,</p>
+</li>
+<li>
+<p><code>bundlebee-digest:BASE64|HEX,&lt;algorithm&gt;,&lt;text&gt;</code>: computes the digest of the text encoded in base64 or hexa format (useful to read files like <code>ConfigMap</code> or <code>Secret</code> and inject their digest value in a <code>Deployment</code> annotations to force its reload for example),</p>
 </li>
 <li>
 <p><code>bundlebee-quote-escaped-inline-file:&lt;file path&gt;</code>: load the file content as a quoted value,</p>
@@ -1470,7 +1526,7 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.initHighlightingOnLoad(); }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.16"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.17-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

@@ -11,7 +11,7 @@
     "items":{
       "type":"array",
       "items":{
-        "description":"DEPRECATED - This group version of StatefulSet is deprecated by apps/v1beta2/StatefulSet. See the release notes for more information. StatefulSet represents a set of pods with consistent identities. Identities are defined as:\n - Network: A single stable DNS and hostname.\n - Storage: As many VolumeClaims as requested.\nThe StatefulSet guarantees that a given network identity will always map to the same storage identity.",
+        "description":"StatefulSet represents a set of pods with consistent identities. Identities are defined as:\n - Network: A single stable DNS and hostname.\n - Storage: As many VolumeClaims as requested.\nThe StatefulSet guarantees that a given network identity will always map to the same storage identity.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -262,6 +262,7 @@
           "spec":{
             "description":"A StatefulSetSpec is the specification of a StatefulSet.",
             "required":[
+              "selector",
               "template",
               "serviceName"
             ],
@@ -3839,14 +3840,14 @@
                     "description":"RollingUpdateStatefulSetStrategy is used to communicate parameter for RollingUpdateStatefulSetStrategyType.",
                     "properties":{
                       "partition":{
-                        "description":"Partition indicates the ordinal at which the StatefulSet should be partitioned.",
+                        "description":"Partition indicates the ordinal at which the StatefulSet should be partitioned. Default value is 0.",
                         "type":"integer",
                         "format":"int32"
                       }
                     }
                   },
                   "type":{
-                    "description":"Type indicates the type of the StatefulSetUpdateStrategy.",
+                    "description":"Type indicates the type of the StatefulSetUpdateStrategy. Default is RollingUpdate.",
                     "type":"string"
                   }
                 }
@@ -4367,7 +4368,7 @@
           {
             "group":"apps",
             "kind":"StatefulSet",
-            "version":"v1beta1"
+            "version":"v1"
           }
         ]
       }
@@ -4398,7 +4399,7 @@
     {
       "group":"apps",
       "kind":"StatefulSetList",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }
