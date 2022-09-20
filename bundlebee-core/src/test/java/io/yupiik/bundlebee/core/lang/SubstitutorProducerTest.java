@@ -53,6 +53,13 @@ class SubstitutorProducerTest {
     }
 
     @Test
+    void digest() {
+        assertEquals(
+                "vo6GaAnToZqq622SpCHmng==",
+                substitutor.getOrDefault("bundlebee-digest:base64,md5,was executed properly", "failed"));
+    }
+
+    @Test
     void jsr223() {
         assertEquals(
                 "was executed properly",

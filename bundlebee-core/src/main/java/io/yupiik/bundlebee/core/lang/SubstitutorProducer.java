@@ -35,6 +35,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -48,6 +50,7 @@ import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.logging.Level.SEVERE;
@@ -125,6 +128,24 @@ public class SubstitutorProducer {
             }
             if (it.startsWith("bundlebee-strip:")) {
                 return it.substring("bundlebee-strip:".length()).strip();
+            }
+            if (it.startsWith("bundlebee-digest:")) {
+                try {
+                    final var text = it.substring("bundlebee-digest:".length());
+                    final int sep1 = text.indexOf(',');
+                    final int sep2 = text.indexOf(',', sep1 + 1);
+                    final var digest = MessageDigest.getInstance(text.substring(sep1 + 1, sep2).strip())
+                            .digest(text.substring(sep2 + 1).strip().getBytes(StandardCharsets.UTF_8));
+                    final var encoding = text.substring(0, sep1).strip();
+                    switch (encoding.toLowerCase(ROOT)) {
+                        case "base64":
+                            return Base64.getEncoder().encodeToString(digest);
+                        default:
+                            throw new IllegalArgumentException("Unknown encoding: '" + encoding + "'");
+                    }
+                } catch (final NoSuchAlgorithmException e) {
+                    throw new IllegalStateException(e);
+                }
             }
             if (it.startsWith("bundlebee-strip-leading:")) {
                 return it.substring("bundlebee-strip-leading:".length()).stripLeading();
