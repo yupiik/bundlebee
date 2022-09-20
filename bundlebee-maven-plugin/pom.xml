@@ -123,6 +123,7 @@
             <configuration>
               <sources>
                 <source>${project.build.directory}/generated-sources/mojo</source>
+                <source>${project.build.directory}/generated-sources/plugin</source>
               </sources>
             </configuration>
           </execution>
@@ -141,6 +142,7 @@
             <configuration>
               <compileSourceRoots>
                 <compileSourceRoot>${project.build.directory}/generated-sources/mojo</compileSourceRoot>
+                <compileSourceRoot>${project.build.directory}/generated-sources/plugin</compileSourceRoot>
               </compileSourceRoots>
             </configuration>
           </execution>
@@ -152,11 +154,17 @@
         <version>${mvn-plugin.version}</version>
         <executions>
           <execution>
+            <id>helpmojo</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>helpmojo</goal>
+            </goals>
+          </execution>
+          <execution>
             <id>default-descriptor</id>
             <phase>prepare-package</phase>
             <goals>
               <goal>descriptor</goal>
-              <goal>helpmojo</goal>
             </goals>
           </execution>
         </executions>
