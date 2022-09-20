@@ -180,7 +180,7 @@ public class AlveolusHandler {
                                                     final String alreadyHandledMarker) {
         final var alreadyDone = new HashSet<String>();
         return executeOnAlveolus(prefixOnVisitLog, manifest, alveolus, onAlveolusUser, (ctx, desc) -> {
-            if (!alreadyDone.add(desc.getContent())) {
+            if (!alreadyDone.add(desc.getConfiguration().getName() + '|' + desc.getContent())) {
                 log.info(() -> desc.getConfiguration().getName() + " already " + alreadyHandledMarker + ", skipping");
                 return completedFuture(false);
             }
@@ -317,7 +317,7 @@ public class AlveolusHandler {
                                     .collect(toList()), toList(), true)
                             .thenCompose(descriptors -> afterDependencies(
                                     manifest, from, patches, excludes, cache, onDescriptor,
-                                    awaiter, placeholders, currentPatches, descriptors)));
+                                    awaiter, currentPlaceholders, currentPatches, descriptors)));
         }
         return all(
                 dependenciesTasks
@@ -331,7 +331,7 @@ public class AlveolusHandler {
                                 .collect(toList()), toList(), true)
                         .thenCompose(descriptors -> afterDependencies(
                                 manifest, from, patches, excludes, cache, onDescriptor,
-                                awaiter, placeholders, currentPatches, descriptors)));
+                                awaiter, currentPlaceholders, currentPatches, descriptors)));
     }
 
     private CompletionStage<?> afterDependencies(final Manifest manifest, final Manifest.Alveolus from,
