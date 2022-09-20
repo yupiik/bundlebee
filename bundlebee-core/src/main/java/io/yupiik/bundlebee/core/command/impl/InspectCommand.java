@@ -137,17 +137,8 @@ public class InspectCommand implements CompletingExecutable {
                             .flatMap(it -> Stream.concat(
                                     toLogs(alveolusPerName.get(it.getKey()), it.getValue()),
                                     Stream.of("") /*empty line between alveolus*/))
-                            .forEach(line -> {
-                                if (line.isBlank()) {
-                                    buffer.add(line);
-                                } else {
-                                    if (!buffer.isEmpty()) {
-                                        buffer.forEach(log::info);
-                                        buffer.clear();
-                                    }
-                                    log.info(line);
-                                }
-                            });
+                            .flatMap(it -> Stream.of(it.split("\n")))
+                            .forEach(log::info);
                 });
     }
 
@@ -212,8 +203,7 @@ public class InspectCommand implements CompletingExecutable {
         }
         final var all = alveolus.getPlaceholders().entrySet().stream()
                 .map(it -> "    . Placeholder " + it.getKey() + ": '" + it.getValue() + "'")
-                .collect(joining("\n", "", ""))
-                .strip();
+                .collect(joining("\n", "", ""));
         return all.isBlank() ? "" : ("\n" + all + "\n");
     }
 }
