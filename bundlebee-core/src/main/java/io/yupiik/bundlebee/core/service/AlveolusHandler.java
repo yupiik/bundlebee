@@ -28,6 +28,7 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.JsonArray;
+import javax.json.JsonException;
 import javax.json.JsonStructure;
 import javax.json.bind.Jsonb;
 import javax.json.spi.JsonProvider;
@@ -510,6 +511,7 @@ public class AlveolusHandler {
                         e.getKey().test(desc.configuration.getName() + "." + desc.extension))
                 .map(Map.Entry::getValue)
                 .collect(toList());
+        boolean alreadyInterpolated = false;
         if (!descPatches.isEmpty()) {
             for (final Manifest.Patch patch : descPatches) {
                 if (patch.isInterpolate()) {
@@ -523,17 +525,33 @@ public class AlveolusHandler {
                         array = patch.getPatch();
                     }
                     final var jsonPatch = jsonProvider.createPatch(array);
-                    final var structure = "json".equals(desc.getExtension()) ?
-                            jsonb.fromJson(content.trim(), JsonStructure.class) :
-                            yaml2json.convert(JsonStructure.class, content.trim());
-                    content = jsonPatch.apply(structure).toString();
+                    try {
+                        final var structure = loadJsonStructure(desc, content);
+                        content = jsonPatch.apply(structure).toString();
+                    } catch (final JsonException je) {
+                        if (!desc.getConfiguration().isInterpolate()) {
+                            throw new IllegalStateException("Can't patch '" + desc.getConfiguration().getName() + "'", je);
+                        }
+                        log.finest(() -> "" +
+                                "Trying to interpolate the descriptor before patching it since it failed without: '" +
+                                desc.getConfiguration().getName() + "'");
+                        content = substitutor.replace(content);
+                        alreadyInterpolated = true;
+                        content = jsonPatch.apply(loadJsonStructure(desc, content)).toString();
+                    }
                 }
             }
         }
-        if (desc.getConfiguration().isInterpolate()) {
+        if (!alreadyInterpolated && desc.getConfiguration().isInterpolate()) {
             content = substitutor.replace(content);
         }
         return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension());
+    }
+
+    private JsonStructure loadJsonStructure(final LoadedDescriptor desc, final String content) {
+        return "json".equals(desc.getExtension()) ?
+                jsonb.fromJson(content.trim(), JsonStructure.class) :
+                yaml2json.convert(JsonStructure.class, content.trim());
     }
 
     private String extractExtension(final String resource) {
