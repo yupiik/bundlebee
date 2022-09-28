@@ -82,6 +82,12 @@ public class SubstitutorProducer {
                     final var bytes = readResource(it, "bundlebee-inline-file:");
                     return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
                 }
+                if (it.startsWith("bundlebee-inlined-file:")) {
+                    final var bytes = readResource(it, "bundlebee-inlined-file:");
+                    return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8)
+                            // for json not using a space will cause }\n}\n... to be }} and break nested interpolation
+                            .replace("\n", " ");
+                }
                 if (it.startsWith("bundlebee-base64-file:")) {
                     final var src = readResource(it, "bundlebee-base64-file:");
                     return src == null ? null : Base64.getEncoder().encodeToString(src);

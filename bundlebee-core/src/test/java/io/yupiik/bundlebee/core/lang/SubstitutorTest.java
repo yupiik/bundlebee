@@ -15,11 +15,65 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Optional;
+
+import static java.util.Optional.ofNullable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SubstitutorTest {
+    @Test
+    void digest() {
+        assertEquals(
+                Base64.getEncoder().encodeToString(("" +
+                        "{" +
+                        "   \"auths\": {" +
+                        "     \"localhost:5000\": {" +
+                        "       \"username\": \"test\"," +
+                        "       \"password\": \"secret\"," +
+                        "       \"email\": \"test@test.com\"," +
+                        "       \"auth\": \"dGVzdDpzZWNyZXQ=\"" +
+                        "     }" +
+                        "   }" +
+                        " } " +
+                        "").getBytes(StandardCharsets.UTF_8)),
+                new SubstitutorProducer().substitutor(new Config() {
+                    @Override
+                    public <T> T getValue(final String s, final Class<T> aClass) {
+                        switch (s) {
+                            case "domain":
+                                return aClass.cast("localhost:5000");
+                            case "username":
+                                return aClass.cast("test");
+                            case "password":
+                                return aClass.cast("secret");
+                            default:
+                                return null;
+                        }
+                    }
+
+                    @Override
+                    public <T> Optional<T> getOptionalValue(final String s, final Class<T> aClass) {
+                        return ofNullable(getValue(s, aClass));
+                    }
+
+                    @Override
+                    public Iterable<String> getPropertyNames() {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public Iterable<ConfigSource> getConfigSources() {
+                        throw new UnsupportedOperationException();
+                    }
+                }).replace("{{bundlebee-base64:{{bundlebee-inlined-file:src/test/resources/dockerconfig.json}}}}"));
+    }
+
     @Test
     void replace() {
         assertEquals("foo replaced dummy", new Substitutor(k -> "key".equals(k) ? "replaced" : null).replace("foo {{key}} dummy"));
