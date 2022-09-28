@@ -153,6 +153,12 @@ public class SubstitutorProducer {
                     throw new IllegalStateException(e);
                 }
             }
+            if (it.startsWith("bundlebee-uppercase:")) {
+                return it.substring("bundlebee-uppercase:".length()).toLowerCase(ROOT);
+            }
+            if (it.startsWith("bundlebee-lowercase:")) {
+                return it.substring("bundlebee-lowercase:".length()).toLowerCase(ROOT);
+            }
             if (it.startsWith("bundlebee-strip-leading:")) {
                 return it.substring("bundlebee-strip-leading:".length()).stripLeading();
             }
