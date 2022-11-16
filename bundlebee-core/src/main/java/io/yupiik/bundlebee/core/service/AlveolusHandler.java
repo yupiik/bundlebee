@@ -530,7 +530,7 @@ public class AlveolusHandler {
                         content = jsonPatch.apply(structure).toString();
                     } catch (final JsonException je) {
                         if (!desc.getConfiguration().isInterpolate()) {
-                            throw new IllegalStateException("Can't patch '" + desc.getConfiguration().getName() + "'", je);
+                            throw new IllegalStateException("Can't patch '" + desc.getConfiguration().getName() + "': " + je.getMessage(), je);
                         }
                         log.finest(() -> "" +
                                 "Trying to interpolate the descriptor before patching it since it failed without: '" +
