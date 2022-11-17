@@ -29,6 +29,8 @@ public class Substitutor {
     private static final String SUFFIX = "}}";
     private static final String VALUE_DELIMITER = ":-";
 
+    private final int maxIterations = Integer.getInteger("bundlebee.substitutor.max-iterations", 100);
+
     private final BiFunction<String, String, String> lookup;
 
     public Substitutor(final BiFunction<String, String, String> lookup) {
@@ -44,19 +46,21 @@ public class Substitutor {
             return null;
         }
         String current = source;
-        do {
+        for (int i = 0; i < maxIterations; i++) {
             final var previous = current;
             current = substitute(current, 0);
             if (previous.equals(current)) {
                 return previous;
             }
-        } while (true);
+        }
+        return current;
     }
 
     private String substitute(final String input, int iteration) {
-        if (iteration > 25) {
+        if (iteration > maxIterations) {
             return input;
         }
+
         int from = 0;
         int start = -1;
         while (start < 0 && from < input.length()) {
@@ -76,7 +80,7 @@ public class Substitutor {
         }
         final var key = input.substring(start + PREFIX.length(), end);
         final var nested = key.indexOf(PREFIX);
-        if (nested > 0) {
+        if (nested >= 0) {
             final var nestedPlaceholder = key + SUFFIX;
             final var newKey = substitute(nestedPlaceholder, iteration + 1);
             return input.replace(nestedPlaceholder, newKey);

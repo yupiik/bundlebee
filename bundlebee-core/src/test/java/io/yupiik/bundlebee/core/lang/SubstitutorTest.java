@@ -88,4 +88,20 @@ class SubstitutorTest {
     void nested() {
         assertEquals("foo replaced dummy", new Substitutor(k -> "key".equals(k) ? "replaced" : null).replace("foo {{k{{missing:-e}}y}} dummy"));
     }
+
+    @Test
+    void complex() {
+        assertEquals("1", new Substitutor(k -> "name".equals(k) ? "foo" : null)
+                .replace("{{{{name}}.resources.limits.cpu:-{{resources.limits.cpu:-1}}}}"));
+        assertEquals("2", new Substitutor(k -> {
+            switch (k) {
+                case "name":
+                    return "foo";
+                case "foo.resources.limits.cpu":
+                    return "2";
+                default:
+                    return null;
+            }
+        }).replace("{{{{name}}.resources.limits.cpu:-{{resources.limits.cpu:-1}}}}"));
+    }
 }
