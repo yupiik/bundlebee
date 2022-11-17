@@ -46,14 +46,13 @@ public class Substitutor {
             return null;
         }
         String current = source;
-        for (int i = 0; i < maxIterations; i++) {
+        do {
             final var previous = current;
             current = substitute(current, 0);
             if (previous.equals(current)) {
                 return previous;
             }
-        }
-        return current;
+        } while (true);
     }
 
     private String substitute(final String input, int iteration) {
