@@ -30,4 +30,4 @@ spec:
       # cause we want to access on the host the service (for convenience: http://$(minikube ip):32100)
       nodePort: 32100
   selector:
-    app: loki-simple
+    app.loki: loki
