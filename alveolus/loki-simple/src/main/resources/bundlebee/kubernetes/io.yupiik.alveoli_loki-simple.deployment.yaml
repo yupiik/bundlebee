@@ -20,15 +20,17 @@ metadata:
   name: promtail-server-deployment
   labels:
     app: loki-simple
+    app.loki: promtail
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: loki-simple
+      app.loki: promtail
   template:
     metadata:
       labels:
         app: loki-simple
+        app.loki: promtail
     spec:
       serviceAccountName: promtail-serviceaccount
       volumes:
