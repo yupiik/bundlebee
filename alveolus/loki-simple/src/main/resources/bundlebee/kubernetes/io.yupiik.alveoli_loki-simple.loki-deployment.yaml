@@ -20,15 +20,17 @@ metadata:
   name: loki-server-deployment
   labels:
     app: loki-simple
+    app.loki: loki
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: loki-simple
+      app.loki: loki
   template:
     metadata:
       labels:
         app: loki-simple
+        app.loki: loki
     spec:
       volumes:
         - name: config
