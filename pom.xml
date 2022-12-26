@@ -363,8 +363,11 @@ under the License.
         </executions>
         <configuration>
           <scope>compile,runtime</scope>
-          <excludeVulnerabilityIds> <!-- snakeyaml: CWE-121: Stack-based Buffer Overflow -->
+          <excludeVulnerabilityIds>
+            <!-- snakeyaml: CWE-121: Stack-based Buffer Overflow -->
             <excludeVulnerabilityId>CVE-2022-38752</excludeVulnerabilityId>
+            <!-- Deserialization of Untrusted Data: here data are considered safe -->
+            <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
           </excludeVulnerabilityIds>
         </configuration>
       </plugin>
