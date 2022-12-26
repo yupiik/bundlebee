@@ -76,163 +76,7 @@ public class SubstitutorProducer {
     @Produces
     public Substitutor substitutor(final Config config) {
         final var self = new AtomicReference<Substitutor>();
-        final var ref = new Substitutor(it -> {
-            try {
-                if (it.startsWith("bundlebee-inline-file:")) {
-                    final var bytes = readResource(it, "bundlebee-inline-file:");
-                    return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
-                }
-                if (it.startsWith("bundlebee-inlined-file:")) {
-                    final var bytes = readResource(it, "bundlebee-inlined-file:");
-                    return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8)
-                            // for json not using a space will cause }\n}\n... to be }} and break nested interpolation
-                            .replace("\n", " ");
-                }
-                if (it.startsWith("bundlebee-base64-file:")) {
-                    final var src = readResource(it, "bundlebee-base64-file:");
-                    return src == null ? null : Base64.getEncoder().encodeToString(src);
-                }
-                if (it.startsWith("bundlebee-base64:")) {
-                    return Base64.getEncoder().encodeToString(it.substring("bundlebee-base64:".length()).getBytes(StandardCharsets.UTF_8));
-                }
-                if (it.startsWith("bundlebee-quote-escaped-inline-file:")) {
-                    final var resource = readResource(it, "bundlebee-quote-escaped-inline-file:");
-                    return resource == null ? null : new String(resource, StandardCharsets.UTF_8)
-                            .replace("'", "\\'")
-                            .replace("\"", "\\\"")
-                            .replace("\n", "\\\\n");
-                }
-                if (it.startsWith("bundlebee-json-inline-file:")) {
-                    final var resource = readResource(it, "bundlebee-json-inline-file:");
-                    if (resource == null) {
-                        return null;
-                    }
-                    // ensure nested interpolation is done before otherwise double escaping is way harder to handle
-                    final var content = self.get().replace(new String(resource, StandardCharsets.UTF_8));
-                    final var value = json.createValue(content).toString();
-                    return value.substring(1, value.length() - 1);
-                }
-                if (it.startsWith("bundlebee-json-string:")) {
-                    final var value = json.createValue(it.substring("bundlebee-json-string:".length())).toString();
-                    return value.substring(1, value.length() - 1);
-                }
-            } catch (final IOException ioe) {
-                throw new IllegalStateException(ioe);
-            }
-            if (it.startsWith("bundlebee-indent:")) {
-                final var sub = it.substring("bundlebee-indent:".length());
-                final var sep = sub.indexOf(':');
-                if (sep < 0) {
-                    return it;
-                }
-                return indent(
-                        sub.substring(sep + 1),
-                        IntStream.range(0, Integer.parseInt(sub.substring(0, sep)))
-                                .mapToObj(i -> " ")
-                                .collect(joining()),
-                        true);
-            }
-            if (it.startsWith("bundlebee-strip:")) {
-                return it.substring("bundlebee-strip:".length()).strip();
-            }
-            if (it.startsWith("bundlebee-digest:")) {
-                try {
-                    final var text = it.substring("bundlebee-digest:".length());
-                    final int sep1 = text.indexOf(',');
-                    final int sep2 = text.indexOf(',', sep1 + 1);
-                    final var digest = MessageDigest.getInstance(text.substring(sep1 + 1, sep2).strip())
-                            .digest(text.substring(sep2 + 1).strip().getBytes(StandardCharsets.UTF_8));
-                    final var encoding = text.substring(0, sep1).strip();
-                    switch (encoding.toLowerCase(ROOT)) {
-                        case "base64":
-                            return Base64.getEncoder().encodeToString(digest);
-                        default:
-                            throw new IllegalArgumentException("Unknown encoding: '" + encoding + "'");
-                    }
-                } catch (final NoSuchAlgorithmException e) {
-                    throw new IllegalStateException(e);
-                }
-            }
-            if (it.startsWith("bundlebee-uppercase:")) {
-                return it.substring("bundlebee-uppercase:".length()).toLowerCase(ROOT);
-            }
-            if (it.startsWith("bundlebee-lowercase:")) {
-                return it.substring("bundlebee-lowercase:".length()).toLowerCase(ROOT);
-            }
-            if (it.startsWith("bundlebee-strip-leading:")) {
-                return it.substring("bundlebee-strip-leading:".length()).stripLeading();
-            }
-            if (it.startsWith("bundlebee-strip-trailing:")) {
-                return it.substring("bundlebee-strip-trailing:".length()).stripTrailing();
-            }
-            if (it.startsWith("bundlebee-maven-server-username:")) {
-                return maven.findServerPassword(it.substring("bundlebee-maven-server-username:".length()))
-                        .map(Maven.Server::getUsername)
-                        .orElse(null);
-            }
-            if (it.startsWith("bundlebee-maven-server-password:")) {
-                return maven.findServerPassword(it.substring("bundlebee-maven-server-password:".length()))
-                        .map(Maven.Server::getPassword)
-                        .orElse(null);
-            }
-            if (it.startsWith("kubeconfig.cluster.") && it.endsWith(".ip")) {
-                final var name = it.substring("kubeconfig.cluster.".length(), it.length() - ".ip".length());
-                return URI.create(
-                                kubeClient.getLoadedKubeConfig()
-                                        .getClusters().stream()
-                                        .filter(c -> Objects.equals(c.getName(), name))
-                                        .findFirst()
-                                        .orElseThrow(() -> new IllegalArgumentException("No cluster named '" + name + "' found"))
-                                        .getCluster()
-                                        .getServer())
-                        .getHost();
-            }
-            if ("timestamp".equals(it)) {
-                return Long.toString(Instant.now().toEpochMilli());
-            }
-            if ("timestampSec".equals(it)) {
-                return Long.toString(Instant.now().getEpochSecond());
-            }
-            if ("now".equals(it)) {
-                return OffsetDateTime.now().toString();
-            }
-            if ("nowUTC".equals(it)) {
-                return OffsetDateTime.now().atZoneSameInstant(ZoneId.of("UTC")).toString();
-            }
-            if (it.startsWith("date:")) {
-                final var pattern = it.substring("date:".length());
-                return OffsetDateTime.now().format(DateTimeFormatter.ofPattern(pattern));
-            }
-            if (it.startsWith("jsr223:")) {
-                try {
-                    final var resourceContent = readResource(it, "jsr223:");
-                    final var script = ofNullable(resourceContent)
-                            .map(c -> new String(c, StandardCharsets.UTF_8))
-                            .orElseGet(() -> it.substring("jsr223:".length()));
-                    return Scripts.execute(
-                            script,
-                            resourceContent == null ? null : it.substring(it.lastIndexOf('.') + 1),
-                            beanManager);
-                } catch (final IOException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-            // depending data key entry name we can switch the separator depending first one
-            if (it.startsWith("kubernetes.")) {
-                final var value = findKubernetesValue(it, "\\.");
-                if (value != null) {
-                    return value;
-                }
-            } else if (it.startsWith("kubernetes/")) {
-                final var value = findKubernetesValue(it, "/");
-                if (value != null) {
-                    return value;
-                }
-            }
-
-            return config.getOptionalValue(it, String.class).orElse(null);
-        }) {
+        final var ref = new Substitutor(it -> doSubstitute(self, config, it)) {
             @Override
             protected String getOrDefault(final String varName, final String varDefaultValue) {
                 final var value = super.getOrDefault(varName, varDefaultValue);
@@ -242,6 +86,164 @@ public class SubstitutorProducer {
         };
         self.set(ref);
         return ref;
+    }
+
+    protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder) {
+        try {
+            if (placeholder.startsWith("bundlebee-inline-file:")) {
+                final var bytes = readResource(placeholder, "bundlebee-inline-file:");
+                return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
+            }
+            if (placeholder.startsWith("bundlebee-inlined-file:")) {
+                final var bytes = readResource(placeholder, "bundlebee-inlined-file:");
+                return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8)
+                        // for json not using a space will cause }\n}\n... to be }} and break nested interpolation
+                        .replace("\n", " ");
+            }
+            if (placeholder.startsWith("bundlebee-base64-file:")) {
+                final var src = readResource(placeholder, "bundlebee-base64-file:");
+                return src == null ? null : Base64.getEncoder().encodeToString(src);
+            }
+            if (placeholder.startsWith("bundlebee-base64:")) {
+                return Base64.getEncoder().encodeToString(placeholder.substring("bundlebee-base64:".length()).getBytes(StandardCharsets.UTF_8));
+            }
+            if (placeholder.startsWith("bundlebee-quote-escaped-inline-file:")) {
+                final var resource = readResource(placeholder, "bundlebee-quote-escaped-inline-file:");
+                return resource == null ? null : new String(resource, StandardCharsets.UTF_8)
+                        .replace("'", "\\'")
+                        .replace("\"", "\\\"")
+                        .replace("\n", "\\\\n");
+            }
+            if (placeholder.startsWith("bundlebee-json-inline-file:")) {
+                final var resource = readResource(placeholder, "bundlebee-json-inline-file:");
+                if (resource == null) {
+                    return null;
+                }
+                // ensure nested interpolation is done before otherwise double escaping is way harder to handle
+                final var content = self.get().replace(new String(resource, StandardCharsets.UTF_8));
+                final var value = json.createValue(content).toString();
+                return value.substring(1, value.length() - 1);
+            }
+            if (placeholder.startsWith("bundlebee-json-string:")) {
+                final var value = json.createValue(placeholder.substring("bundlebee-json-string:".length())).toString();
+                return value.substring(1, value.length() - 1);
+            }
+        } catch (final IOException ioe) {
+            throw new IllegalStateException(ioe);
+        }
+        if (placeholder.startsWith("bundlebee-indent:")) {
+            final var sub = placeholder.substring("bundlebee-indent:".length());
+            final var sep = sub.indexOf(':');
+            if (sep < 0) {
+                return placeholder;
+            }
+            return indent(
+                    sub.substring(sep + 1),
+                    IntStream.range(0, Integer.parseInt(sub.substring(0, sep)))
+                            .mapToObj(i -> " ")
+                            .collect(joining()),
+                    true);
+        }
+        if (placeholder.startsWith("bundlebee-strip:")) {
+            return placeholder.substring("bundlebee-strip:".length()).strip();
+        }
+        if (placeholder.startsWith("bundlebee-digest:")) {
+            try {
+                final var text = placeholder.substring("bundlebee-digest:".length());
+                final int sep1 = text.indexOf(',');
+                final int sep2 = text.indexOf(',', sep1 + 1);
+                final var digest = MessageDigest.getInstance(text.substring(sep1 + 1, sep2).strip())
+                        .digest(text.substring(sep2 + 1).strip().getBytes(StandardCharsets.UTF_8));
+                final var encoding = text.substring(0, sep1).strip();
+                switch (encoding.toLowerCase(ROOT)) {
+                    case "base64":
+                        return Base64.getEncoder().encodeToString(digest);
+                    default:
+                        throw new IllegalArgumentException("Unknown encoding: '" + encoding + "'");
+                }
+            } catch (final NoSuchAlgorithmException e) {
+                throw new IllegalStateException(e);
+            }
+        }
+        if (placeholder.startsWith("bundlebee-uppercase:")) {
+            return placeholder.substring("bundlebee-uppercase:".length()).toLowerCase(ROOT);
+        }
+        if (placeholder.startsWith("bundlebee-lowercase:")) {
+            return placeholder.substring("bundlebee-lowercase:".length()).toLowerCase(ROOT);
+        }
+        if (placeholder.startsWith("bundlebee-strip-leading:")) {
+            return placeholder.substring("bundlebee-strip-leading:".length()).stripLeading();
+        }
+        if (placeholder.startsWith("bundlebee-strip-trailing:")) {
+            return placeholder.substring("bundlebee-strip-trailing:".length()).stripTrailing();
+        }
+        if (placeholder.startsWith("bundlebee-maven-server-username:")) {
+            return maven.findServerPassword(placeholder.substring("bundlebee-maven-server-username:".length()))
+                    .map(Maven.Server::getUsername)
+                    .orElse(null);
+        }
+        if (placeholder.startsWith("bundlebee-maven-server-password:")) {
+            return maven.findServerPassword(placeholder.substring("bundlebee-maven-server-password:".length()))
+                    .map(Maven.Server::getPassword)
+                    .orElse(null);
+        }
+        if (placeholder.startsWith("kubeconfig.cluster.") && placeholder.endsWith(".ip")) {
+            final var name = placeholder.substring("kubeconfig.cluster.".length(), placeholder.length() - ".ip".length());
+            return URI.create(
+                            kubeClient.getLoadedKubeConfig()
+                                    .getClusters().stream()
+                                    .filter(c -> Objects.equals(c.getName(), name))
+                                    .findFirst()
+                                    .orElseThrow(() -> new IllegalArgumentException("No cluster named '" + name + "' found"))
+                                    .getCluster()
+                                    .getServer())
+                    .getHost();
+        }
+        if ("timestamp".equals(placeholder)) {
+            return Long.toString(Instant.now().toEpochMilli());
+        }
+        if ("timestampSec".equals(placeholder)) {
+            return Long.toString(Instant.now().getEpochSecond());
+        }
+        if ("now".equals(placeholder)) {
+            return OffsetDateTime.now().toString();
+        }
+        if ("nowUTC".equals(placeholder)) {
+            return OffsetDateTime.now().atZoneSameInstant(ZoneId.of("UTC")).toString();
+        }
+        if (placeholder.startsWith("date:")) {
+            final var pattern = placeholder.substring("date:".length());
+            return OffsetDateTime.now().format(DateTimeFormatter.ofPattern(pattern));
+        }
+        if (placeholder.startsWith("jsr223:")) {
+            try {
+                final var resourceContent = readResource(placeholder, "jsr223:");
+                final var script = ofNullable(resourceContent)
+                        .map(c -> new String(c, StandardCharsets.UTF_8))
+                        .orElseGet(() -> placeholder.substring("jsr223:".length()));
+                return Scripts.execute(
+                        script,
+                        resourceContent == null ? null : placeholder.substring(placeholder.lastIndexOf('.') + 1),
+                        beanManager);
+            } catch (final IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        // depending data key entry name we can switch the separator depending first one
+        if (placeholder.startsWith("kubernetes.")) {
+            final var value = findKubernetesValue(placeholder, "\\.");
+            if (value != null) {
+                return value;
+            }
+        } else if (placeholder.startsWith("kubernetes/")) {
+            final var value = findKubernetesValue(placeholder, "/");
+            if (value != null) {
+                return value;
+            }
+        }
+
+        return config.getOptionalValue(placeholder, String.class).orElse(null);
     }
 
     private byte[] readResource(final String text, final String prefix) throws IOException {
