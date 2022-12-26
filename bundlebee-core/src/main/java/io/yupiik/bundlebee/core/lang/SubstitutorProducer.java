@@ -80,12 +80,16 @@ public class SubstitutorProducer {
             @Override
             protected String getOrDefault(final String varName, final String varDefaultValue) {
                 final var value = super.getOrDefault(varName, varDefaultValue);
-                log.finest(() -> "Resolved '" + varName + "' to '" + value + "'");
+                onPlaceholder(varName, varDefaultValue, value);
                 return value;
             }
         };
         self.set(ref);
         return ref;
+    }
+
+    protected void onPlaceholder(final String varName, final String varDefaultValue, final String value) {
+        log.finest(() -> "Resolved '" + varName + "' to '" + value + "'");
     }
 
     protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder) {
