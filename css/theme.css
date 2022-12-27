@@ -71,6 +71,21 @@ code {
 .theme-icon-holder .svg-inline---fa {
     color: #007bff
 }
+span.theme-icon-holder > i.fa,
+span.theme-icon-holder > i.fab,
+span.theme-icon-holder > i.fas {
+    padding-top: 0.4rem;
+}
+
+/*asciidoctor vs fontawesome 5 compat*/
+.fa.fab {
+    font-family: "Font Awesome 5 Free" !important;
+}
+.fa.fa-fab {
+    font-weight: 400;
+    font-family: "Font Awesome 5 Brands";
+}
+
 
 .border-radius-0 {
     border-radius: 0
@@ -297,6 +312,11 @@ div.colist.arabic > ol > li > p {
     display: inline;
 }
 
+#preamble>.sectionbody>.paragraph:first-of-type p,
+.paragraph.lead>p {
+    color: unset;
+}
+
 #searchModal .modal-dialog {
     margin: auto;
     min-width: 80%;
@@ -363,4 +383,22 @@ div.colist.arabic > ol > li > p {
 
 .ulist.blog-links-page {
     padding-top: 1rem;
+}
+
+.page-content-body .metadata {
+    font-size: smaller;
+    font-style: italic;
+}
+
+.has-previous-link-false,
+.has-next-link-false {
+    visibility: hidden;
+}
+.blog-links {
+    visibility: hidden;
+    max-width: 0;
+}
+.is-blog .blog-links {
+    visibility: inherit !important;
+    max-width: inherit;
 }
