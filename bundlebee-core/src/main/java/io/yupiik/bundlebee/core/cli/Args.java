@@ -57,7 +57,8 @@ public final class Args {
                     final var value = args[1 + idx * 2];
                     return value.startsWith("--") ? value.substring("--".length()) : value;
                 },
-                idx -> args[(1 + idx) * 2]));
+                idx -> args[(1 + idx) * 2],
+                (a, b) -> b /* prefer last one (override logic) */));
 
         // the configuration convention for commands is "bundlebee.<command name>.<property>" so we enable
         // to only use "--property" on the CLI by prefixing the properties not starting with "bundlebee"
