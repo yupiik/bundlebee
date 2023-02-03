@@ -44,6 +44,7 @@ class ConditionJsonEvaluatorTest {
 
     @ParameterizedTest
     @CsvSource({
+            "'{\"type\":\"JSON_POINTER\",\"pointer\":\"/v\",\"value\":1}','{\"v\":1}',true",
             "'{\"type\":\"JSON_POINTER\",\"pointer\":\"/v\",\"value\":\"foo\"}','{\"v\":\"foo\"}',true",
             "'{\"type\":\"JSON_POINTER\",\"pointer\":\"/v\",\"value\":\"foo\"}','{\"v\":\"bar\"}',false",
             "'{\"type\":\"JSON_POINTER\",\"pointer\":\"/v\",\"value\":\"foo\"}','{}',false",

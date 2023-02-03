@@ -25,26 +25,34 @@ import javax.json.JsonString;
 import javax.json.JsonValue;
 import javax.json.spi.JsonProvider;
 import java.util.Objects;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class ConditionJsonEvaluator {
+    private final Logger logger = Logger.getLogger(getClass().getName());
+
     @Inject
     @BundleBee
     private JsonProvider jsonProvider;
 
     public boolean evaluate(final Manifest.AwaitCondition condition, final JsonObject body) {
         switch (condition.getType()) {
-            case JSON_POINTER: // todo: extend JSON Pointer spec to enable to traverse arrays (any item)?
+            case JSON_POINTER: { // todo: extend JSON Pointer spec to enable to traverse arrays (any item)?
                 final var conditionPointer = condition.getPointer();
                 final var pointer = jsonProvider.createPointer(conditionPointer);
                 final var json = pointer.getValue(body);
                 final var evaluated = stringify(json);
-                return evaluate(condition.getOperatorType(), condition.getValue(), evaluated);
+                final var result = evaluate(condition.getOperatorType(), condition.getValue(), evaluated);
+                logger.finest(() -> condition + "=" + result + " from JSON=" + body + " and evaluation=" + json);
+                return result;
+            }
             case STATUS_CONDITION:
-                return jsonProvider.createPointer("/status/conditions").getValue(body).asJsonArray().stream()
+                final var result = jsonProvider.createPointer("/status/conditions").getValue(body).asJsonArray().stream()
                         .map(JsonValue::asJsonObject)
                         .anyMatch(it -> Objects.equals(it.getString("type"), condition.getConditionType()) &&
                                 Objects.equals(stringify(it.get("status")), condition.getValue()));
+                logger.finest(() -> condition + "=" + result + " from JSON=" + body);
+                return result;
             default:
                 throw new IllegalArgumentException("Unsupported type: " + condition);
         }
