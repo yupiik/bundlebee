@@ -15,6 +15,7 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
+import io.yupiik.bundlebee.core.event.OnPlaceholder;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.Maven;
@@ -22,6 +23,7 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
@@ -73,6 +75,9 @@ public class SubstitutorProducer {
     @Inject
     private BeanManager beanManager;
 
+    @Inject
+    private Event<OnPlaceholder> onPlaceholderEvent;
+
     @Produces
     public Substitutor substitutor(final Config config) {
         final var self = new AtomicReference<Substitutor>();
@@ -90,6 +95,9 @@ public class SubstitutorProducer {
 
     protected void onPlaceholder(final String varName, final String varDefaultValue, final String value) {
         log.finest(() -> "Resolved '" + varName + "' to '" + value + "'");
+        if (onPlaceholderEvent != null) {
+            onPlaceholderEvent.fire(new OnPlaceholder(varName, varDefaultValue, value));
+        }
     }
 
     protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder) {

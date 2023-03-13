@@ -15,19 +15,25 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
+import io.yupiik.bundlebee.core.event.OnPlaceholder;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.io.TempDir;
 
+import javax.enterprise.event.Event;
+import javax.enterprise.event.NotificationOptions;
+import javax.enterprise.util.TypeLiteral;
 import javax.json.spi.JsonProvider;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.CompletionStage;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
@@ -46,6 +52,41 @@ class SubstitutorProducerTest {
             final var json = SubstitutorProducer.class.getDeclaredField("json");
             json.setAccessible(true);
             json.set(producer, JsonProvider.provider());
+
+            final var onPlaceholderEvent = SubstitutorProducer.class.getDeclaredField("onPlaceholderEvent");
+            onPlaceholderEvent.setAccessible(true);
+            onPlaceholderEvent.set(producer, new Event<OnPlaceholder>() {
+                @Override
+                public void fire(final OnPlaceholder event) {
+                    // no-op
+                }
+
+                @Override
+                public <U extends OnPlaceholder> CompletionStage<U> fireAsync(final U asyncEvent) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public <U extends OnPlaceholder> CompletionStage<U> fireAsync(final U asyncEvent, final NotificationOptions notificationOptions) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public Event<OnPlaceholder> select(final Annotation... qualifiers) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public <U extends OnPlaceholder> Event<U> select(final Class<U> subtype, final Annotation... qualifiers) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public <U extends OnPlaceholder> Event<U> select(final TypeLiteral<U> subtype, final Annotation... qualifiers) {
+                    throw new UnsupportedOperationException();
+                }
+            });
+
             substitutor = producer.substitutor(ConfigProvider.getConfig());
         } catch (final Exception e) {
             throw new IllegalStateException(e);

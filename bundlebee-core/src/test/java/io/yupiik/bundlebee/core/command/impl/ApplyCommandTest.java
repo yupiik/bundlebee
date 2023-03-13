@@ -30,7 +30,6 @@ import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,16 +71,9 @@ class ApplyCommandTest {
         assertEquals(4, spyingResponseLocator.getFound().size());
         assertEquals(2, spyingResponseLocator.requests.size());
         assertEquals(
-                Set.of("" +
-                        "{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
-                        "\"metadata\":{\"name\":\"bar\",\"labels\":{\"app\":\"my-app-2\"}}," +
-                        "\"spec\":{\"type\":\"NodePort2\",\"ports\":[{\"port\":7070,\"targetPort\":7070}]," +
-                        "\"selector\":{\"app\":\"my-app-2\"}}}", "" +
-                        "{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
-                        "\"metadata\":{\"name\":\"foo\",\"labels\":{\"app\":\"my-app\"}}," +
-                        "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":9090,\"targetPort\":9090}]," +
-                        "\"selector\":{\"app\":\"my-app\"}}}" +
-                        ""),
+                Set.of(
+                        "{\"apiVersion\":\"v1\",\"kind\":\"Service\",\"metadata\":{\"name\":\"bar\",\"labels\":{\"app\":\"my-app-2\",\"withdefault1\":\"with defaultvalue\",\"withdefault2\":\"with defaultvalue 2\"}},\"spec\":{\"type\":\"NodePort2\",\"ports\":[{\"port\":7070,\"targetPort\":7070}],\"selector\":{\"app\":\"my-app-2\"}}}",
+                        "{\"apiVersion\":\"v1\",\"kind\":\"Service\",\"metadata\":{\"name\":\"foo\",\"labels\":{\"app\":\"my-app\",\"withdefault1\":\"with defaultvalue\",\"withdefault2\":\"with defaultvalue 2\"}},\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":9090,\"targetPort\":9090}],\"selector\":{\"app\":\"my-app\"}}}"),
                 spyingResponseLocator.requests.stream().map(Request::payload).collect(toSet()));
     }
 
