@@ -20,6 +20,8 @@ metadata:
   name: {{service.name}}
   labels:
     app: {{service.app}}
+    withdefault1: {{some.placeholder1:-with defaultvalue}}
+    withdefault2: {{some.placeholder2:-with defaultvalue 2}}
 spec:
   type: {{service.type}}
   ports:

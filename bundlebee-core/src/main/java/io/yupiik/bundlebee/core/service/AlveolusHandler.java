@@ -17,6 +17,7 @@ package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.configuration.ThreadLocalConfigSource;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.bundlebee.core.event.OnPrepareDescriptor;
 import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
@@ -26,6 +27,7 @@ import org.eclipse.microprofile.config.Config;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.json.JsonArray;
 import javax.json.JsonException;
@@ -105,6 +107,9 @@ public class AlveolusHandler {
 
     @Inject
     private RequirementService requirementService;
+
+    @Inject
+    private Event<OnPrepareDescriptor> onPrepareDescriptorEvent;
 
     private ThreadLocalConfigSource threadLocalConfigSource;
 
@@ -403,6 +408,7 @@ public class AlveolusHandler {
                                                      final Collection<LoadedDescriptor> descs) {
         return all(
                 descs.stream()
+                        .peek(it -> onPrepareDescriptorEvent.fire(new OnPrepareDescriptor(from.getName(), it.getConfiguration().getName(), it.getContent(), placeholders)))
                         .map(it -> prepare(it, currentPatches, placeholders))
                         .map(it -> onDescriptor.apply(new AlveolusContext(manifest, from, patches, placeholders, excludes, cache), it))
                         .collect(toList()), counting(), true);
