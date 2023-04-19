@@ -178,7 +178,7 @@ public class SubstitutorProducer {
             }
         }
         if (placeholder.startsWith("bundlebee-uppercase:")) {
-            return placeholder.substring("bundlebee-uppercase:".length()).toLowerCase(ROOT);
+            return placeholder.substring("bundlebee-uppercase:".length()).toUpperCase(ROOT);
         }
         if (placeholder.startsWith("bundlebee-lowercase:")) {
             return placeholder.substring("bundlebee-lowercase:".length()).toLowerCase(ROOT);
