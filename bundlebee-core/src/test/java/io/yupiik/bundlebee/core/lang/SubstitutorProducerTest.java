@@ -94,6 +94,13 @@ class SubstitutorProducerTest {
     }
 
     @Test
+    void uppercase() {
+        assertEquals(
+                "UP",
+                substitutor.getOrDefault("bundlebee-uppercase:up", "failed"));
+    }
+
+    @Test
     void digest() {
         assertEquals(
                 "vo6GaAnToZqq622SpCHmng==",
