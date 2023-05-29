@@ -1,7 +1,7 @@
 {
   "alveoli": [
     {
-      "//": "Loki setup to aggregate service logs using promtail, the prometheus for logs.",
+      "//": "Loki setup to aggregate service logs using promtail, the prometheus for logs.\n\nWARNING: Starting from 1.0.20, the Promtail descriptor moved from Deployment to DaemonSet",
       "name": "${project.groupId}:${project.artifactId}:${project.version}",
       "descriptors": [
         {
@@ -48,6 +48,10 @@
         {
           "name": "loki-simple.loki.image",
           "description": "The image to use for loki."
+        },
+        {
+          "name": "loki-simple.loki.client_url",
+          "description": "URL of the Loki API used to push data."
         },
         {
           "name": "loki-simple.loki.pipeline_stage",
