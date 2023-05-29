@@ -15,14 +15,13 @@
 #
 
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: promtail-server-deployment
+  name: promtail-server-daemonset
   labels:
     app: loki-simple
     app.loki: promtail
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app.loki: promtail
@@ -48,10 +47,9 @@ spec:
           name: pods
       containers:
         - name: promtail-container
-          image: {{loki-simple.promtail.image:-grafana/promtail:2.6.1}}
+          image: {{loki-simple.promtail.image:-grafana/promtail:2.8.2}}
           args:
             - -config.file=/etc/promtail/promtail.yaml
-            - -client.url=http://$(LOKI_SERVICE_HOST):$(LOKI_SERVICE_PORT)/loki/api/v1/push
           ports:
             - containerPort: 3101
           volumeMounts:
@@ -59,11 +57,11 @@ spec:
               mountPath: /etc/promtail
             - name: run
               mountPath: /run/promtail
-            - mountPath: /var/lib/docker/containers
-              name: containers
+            - name: containers
+              mountPath: /var/lib/docker/containers
               readOnly: true
-            - mountPath: /var/log/pods
-              name: pods
+            - name: pods
+              mountPath: /var/log/pods
               readOnly: true
           env:
             - name: HOSTNAME

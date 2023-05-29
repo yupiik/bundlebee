@@ -23,7 +23,7 @@
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.deployment",
+          "name": "${project.groupId}_${project.artifactId}.daemonset",
           "interpolate": true
         },
         {
