@@ -13,7 +13,8 @@
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.service"
+          "name": "${project.groupId}_${project.artifactId}.service",
+          "interpolate": true
         }
       ],
       "placeholdersDoc": [
@@ -24,6 +25,10 @@
         {
           "name": "zipkin-simple.image",
           "description": "The image to use."
+        },
+        {
+          "name": "zipkin-simple.namespace",
+          "description": "The Kubernetes namespace to use for the installation."
         }
       ]
     }

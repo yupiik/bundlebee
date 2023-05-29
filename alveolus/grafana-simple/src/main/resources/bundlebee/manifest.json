@@ -9,20 +9,26 @@
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.dashboard-configmap"
+          "name": "${project.groupId}_${project.artifactId}.dashboard-configmap",
+          "interpolate": true
         },
         {
           "name": "${project.groupId}_${project.artifactId}.deployment",
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.service"
+          "name": "${project.groupId}_${project.artifactId}.service",
+          "interpolate": true
         }
       ],
       "placeholdersDoc": [
         {
           "name": "grafana-simple.image",
           "description": "The image to use."
+        },
+        {
+          "name": "grafana-simple.namespace",
+          "description": "The Kubernetes namespace to use for the installation."
         }
       ]
     }

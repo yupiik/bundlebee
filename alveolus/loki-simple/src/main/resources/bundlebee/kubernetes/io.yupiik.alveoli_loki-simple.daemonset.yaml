@@ -21,6 +21,7 @@ metadata:
   labels:
     app: loki-simple
     app.loki: promtail
+  namespace: "{{loki-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
 spec:
   selector:
     matchLabels:
