@@ -13,14 +13,16 @@
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.configmap"
+          "name": "${project.groupId}_${project.artifactId}.configmap",
+          "interpolate": true
         },
         {
           "name": "${project.groupId}_${project.artifactId}.deployment",
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.service"
+          "name": "${project.groupId}_${project.artifactId}.service",
+          "interpolate": true
         }
       ],
       "placeholdersDoc": [
@@ -31,6 +33,10 @@
         {
           "name": "{{prometheus-simple.rbac.apiVersion}}",
           "description": "API version for RBAC API, enables to get back on `rbac.authorization.k8s.io/v1` for old clusters."
+        },
+        {
+          "name": "prometheus-simple.namespace",
+          "description": "The Kubernetes namespace to use for the installation."
         }
       ]
     }

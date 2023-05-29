@@ -20,6 +20,7 @@ metadata:
   name: loki-config
   labels:
     app: loki-simple
+  namespace: "{{loki-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
 data:
   loki.yaml: |
     # this is the default local configuration for loki

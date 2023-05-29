@@ -5,10 +5,13 @@
       "name": "${project.groupId}:${project.artifactId}:${project.version}",
       "descriptors": [
         {
-          "name": "${project.groupId}_${project.artifactId}.serviceaccount"
+          "name": "${project.groupId}_${project.artifactId}.serviceaccount",
+          "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.token"
+          "name": "${project.groupId}_${project.artifactId}.token",
+          "interpolate": true
+
         },
         {
           "name": "${project.groupId}_${project.artifactId}.clusterrole",
@@ -27,17 +30,20 @@
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.service"
+          "name": "${project.groupId}_${project.artifactId}.service",
+          "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.loki-configmap"
+          "name": "${project.groupId}_${project.artifactId}.loki-configmap",
+          "interpolate": true
         },
         {
           "name": "${project.groupId}_${project.artifactId}.loki-deployment",
           "interpolate": true
         },
         {
-          "name": "${project.groupId}_${project.artifactId}.loki-service"
+          "name": "${project.groupId}_${project.artifactId}.loki-service",
+          "interpolate": true
         }
       ],
       "placeholdersDoc": [
@@ -60,6 +66,10 @@
         {
           "name": "{{loki-simple.rbac.apiVersion}}",
           "description": "API version for RBAC API, enables to get back on `rbac.authorization.k8s.io/v1` for old clusters."
+        },
+        {
+          "name": "loki-simple.namespace",
+          "description": "The Kubernetes namespace to use for the installation."
         }
       ]
     }

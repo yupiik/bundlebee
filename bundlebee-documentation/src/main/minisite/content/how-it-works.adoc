@@ -199,6 +199,7 @@ Placeholders can use some keywords to get some particular values:
 - `bundlebee-json-string:content`: escapes a string to be a JSON string (useful when you inject with `bundlebee-json-inline-file` a string in another string like in JSON `ConfigMap` in a JSON configuration),
 - `bundlebee-maven-server-username:<server id>`: extract from your maven `settings.xml` a server username (see configuration for a custom settings.xml location),
 - `bundlebee-maven-server-password:<server id>`: extract from your maven `settings.xml` a server password (potentially deciphered),
+- `bundlebee-kubernetes-namespace`: the Kubernetes namespace defined in the HttpKubeClient,
 - `kubeconfig.cluster.<cluster name>.ip`: extract cluster IP from your kubeconfig,
 - `timestamp`: current time in milliseconds (since epoch),
 - `timestampSec`: current time in seconds (since epoch),

@@ -352,6 +352,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                         // capture placeholders
                         final var placeholders = new HashSet<Placeholder>();
                         new Substitutor((key, defVal) -> {
+                            if (key.startsWith("bundlebee-")) return "";
                             placeholders.add(new Placeholder(
                                     key,
                                     ofNullable(defVal).orElse(ConfigProperty.UNCONFIGURED_VALUE),

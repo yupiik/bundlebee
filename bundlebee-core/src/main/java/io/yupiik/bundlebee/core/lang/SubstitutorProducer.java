@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.lang;
 
 import io.yupiik.bundlebee.core.event.OnPlaceholder;
+import io.yupiik.bundlebee.core.kube.HttpKubeClient;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.Maven;
@@ -78,6 +79,9 @@ public class SubstitutorProducer {
     @Inject
     private Event<OnPlaceholder> onPlaceholderEvent;
 
+    @Inject
+    private HttpKubeClient httpKubeClient;
+
     @Produces
     public Substitutor substitutor(final Config config) {
         final var self = new AtomicReference<Substitutor>();
@@ -102,6 +106,9 @@ public class SubstitutorProducer {
 
     protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder) {
         try {
+            if (placeholder.equals("bundlebee-kubernetes-namespace")) {
+                return httpKubeClient.getNamespace();
+            }
             if (placeholder.startsWith("bundlebee-inline-file:")) {
                 final var bytes = readResource(placeholder, "bundlebee-inline-file:");
                 return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8);
