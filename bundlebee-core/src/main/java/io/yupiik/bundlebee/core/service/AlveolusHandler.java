@@ -535,7 +535,7 @@ public class AlveolusHandler {
                         final var structure = loadJsonStructure(desc, content);
                         content = jsonPatch.apply(structure).toString();
                     } catch (final JsonException je) {
-                        if (!desc.getConfiguration().isInterpolate()) {
+                        if (!desc.getConfiguration().getInterpolate()) {
                             throw new IllegalStateException("Can't patch '" + desc.getConfiguration().getName() + "': " + je.getMessage(), je);
                         }
                         log.finest(() -> "" +
@@ -548,7 +548,7 @@ public class AlveolusHandler {
                 }
             }
         }
-        if (!alreadyInterpolated && desc.getConfiguration().isInterpolate()) {
+        if (!alreadyInterpolated && desc.getConfiguration().getInterpolate()) {
             content = substitutor.replace(content);
         }
         return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension());

@@ -79,11 +79,28 @@ public class ManifestReader {
                         .forEach(desc -> desc.setLocation(location));
             }
             resolveReferences(location, mf, relativeResolver);
+            initInterpolateFlags(mf);
             onManifestReadEvent.fire(new OnManifestRead(mf));
             return mf;
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    private void initInterpolateFlags(final Manifest manifest) {
+        if (manifest.getAlveoli() == null) {
+            return;
+        }
+        manifest.getAlveoli().forEach(alveolus -> {
+            final boolean parentValue = alveolus.getInterpolateDescriptors() != null ?
+                    alveolus.getInterpolateDescriptors() :
+                    (manifest.getInterpolateAlveoli() != null && manifest.getInterpolateAlveoli());
+            if (alveolus.getDescriptors() != null) {
+                alveolus.getDescriptors().stream()
+                        .filter(d -> !d.hasInterpolateValue())
+                        .forEach(d -> d.initInterpolate(parentValue));
+            }
+        });
     }
 
     private void resolveReferences(final String location, final Manifest main,

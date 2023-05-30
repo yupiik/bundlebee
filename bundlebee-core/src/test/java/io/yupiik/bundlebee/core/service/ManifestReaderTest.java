@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -40,6 +41,66 @@ class ManifestReaderTest {
 
     @Inject
     private ArchiveReader archiveReader;
+
+    @Test
+    void interpolateInitFromManifest(@TempDir final Path work) throws IOException {
+        assertEquals(
+                List.of(true),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"interpolateAlveoli\":true," +
+                        "\"alveoli\":[{\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+        assertEquals(
+                List.of(false),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"interpolateAlveoli\":false," +
+                        "\"alveoli\":[{\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+    }
+
+
+    @Test
+    void interpolateInitFromAlveolus(@TempDir final Path work) throws IOException {
+        assertEquals(
+                List.of(true),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"alveoli\":[{\"interpolateDescriptors\":true,\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+        assertEquals(
+                List.of(false),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"alveoli\":[{\"interpolateDescriptors\":false,\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+    }
+
+
+    @Test
+    void interpolateInitFromAlveolusOverridingManifest(@TempDir final Path work) throws IOException {
+        assertEquals(
+                List.of(true),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"interpolateAlveoli\":true," +
+                        "\"alveoli\":[{\"interpolateDescriptors\":true,\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+        assertEquals(
+                List.of(true),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"interpolateAlveoli\":false," +
+                        "\"alveoli\":[{\"interpolateDescriptors\":true,\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+        assertEquals(
+                List.of(false),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"interpolateAlveoli\":false," +
+                        "\"alveoli\":[{\"interpolateDescriptors\":false,\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+        assertEquals(
+                List.of(false),
+                writeAndLoadInterpolateFlags(work, "{" +
+                        "\"interpolateAlveoli\":true," +
+                        "\"alveoli\":[{\"interpolateDescriptors\":false,\"name\":\"main\",\"descriptors\":[{\"name\":\"test\"}]}]" +
+                        "}"));
+    }
 
     @Test
     void referencesFolder(@TempDir final Path work) throws IOException {
@@ -140,5 +201,25 @@ class ManifestReaderTest {
         assertEquals("kubernetes", descriptor.getType());
         assertEquals("foo", descriptor.getName());
         assertEquals("com.company:alv:1.0.0", descriptor.getLocation());
+    }
+
+    private List<Boolean> writeAndLoadInterpolateFlags(final Path work, final String content) throws IOException {
+        return doRead(Files.writeString(
+                Files.createDirectories(work.resolve("bundlebee")).resolve("manifest.json"), content))
+                .getAlveoli().stream()
+                .map(Manifest.Alveolus::getDescriptors)
+                .flatMap(Collection::stream)
+                .map(Manifest.Descriptor::getInterpolate)
+                .collect(toList());
+    }
+
+    private Manifest doRead(final Path main) {
+        return reader.readManifest(null, () -> {
+            try {
+                return Files.newInputStream(main);
+            } catch (final IOException e) {
+                throw new IllegalStateException(e);
+            }
+        }, null);
     }
 }
