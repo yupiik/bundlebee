@@ -20,6 +20,7 @@ metadata:
   name: grafana-simple-dashboard-config
   labels:
     app: grafana-simple
+  namespace: "{{grafana-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
 data:
   loki.yml: |
     apiVersion: 1

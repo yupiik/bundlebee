@@ -1,7 +1,7 @@
 {
   "alveoli": [
     {
-      "//": "Includes loki+prometheus+zipkin+grafana at once.",
+      "//": "Includes loki+prometheus+zipkin+grafana at once.\n\nTIP: You can set --monitoring.namespace to deploy the full stack in a dedicated namespace",
       "name": "${project.groupId}:${project.artifactId}:${project.version}",
       "descriptors": [
       ],
@@ -22,7 +22,13 @@
           "name": "${project.groupId}:grafana-simple:${project.version}",
           "location": "${project.groupId}:grafana-simple:${project.version}"
         }
-      ]
+      ],
+      "placeholders": {
+        "grafana-simple.namespace": "{{monitoring.namespace}}",
+        "loki-simple.namespace": "{{monitoring.namespace}}",
+        "prometheus-simple.namespace": "{{monitoring.namespace}}",
+        "zipkin-simple.namespace": "{{monitoring.namespace}}"
+      }
     }
   ]
 }

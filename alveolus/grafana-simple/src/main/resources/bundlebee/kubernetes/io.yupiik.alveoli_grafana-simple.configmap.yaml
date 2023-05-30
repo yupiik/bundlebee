@@ -20,6 +20,7 @@ metadata:
   name: grafana-simple-config
   labels:
     app: grafana-simple
+  namespace: "{{grafana-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
 data:
   grafana.ini: |
     [analytics]
@@ -33,5 +34,3 @@ data:
     logs = /var/log/grafana
     plugins = /var/lib/grafana/plugins
     provisioning = /etc/grafana/provisioning
-
-

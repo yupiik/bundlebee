@@ -20,6 +20,7 @@ metadata:
   name: promtail-config
   labels:
     app: loki-simple
+  namespace: "{{loki-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
 data:
   promtail.yaml: |
     # See also https://clymene-project.github.io/docs/service-discovery/promtail-config/

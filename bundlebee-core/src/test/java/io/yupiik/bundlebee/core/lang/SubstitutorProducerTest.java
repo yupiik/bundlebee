@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.lang;
 
 import io.yupiik.bundlebee.core.event.OnPlaceholder;
+import io.yupiik.bundlebee.core.kube.HttpKubeClient;
 import org.eclipse.microprofile.config.ConfigProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -47,11 +48,24 @@ class SubstitutorProducerTest {
     private final Substitutor substitutor;
 
     public SubstitutorProducerTest() {
+        final var client = new HttpKubeClient();
+        try {
+            final var namespace = HttpKubeClient.class.getDeclaredField("namespace");
+            namespace.setAccessible(true);
+            namespace.set(client, "default");
+        } catch (final Exception e) {
+            throw new IllegalStateException(e);
+        }
+
         final var producer = new SubstitutorProducer();
         try {
             final var json = SubstitutorProducer.class.getDeclaredField("json");
             json.setAccessible(true);
             json.set(producer, JsonProvider.provider());
+
+            final var httpKubeClient = SubstitutorProducer.class.getDeclaredField("httpKubeClient");
+            httpKubeClient.setAccessible(true);
+            httpKubeClient.set(producer, client);
 
             final var onPlaceholderEvent = SubstitutorProducer.class.getDeclaredField("onPlaceholderEvent");
             onPlaceholderEvent.setAccessible(true);
@@ -222,5 +236,10 @@ class SubstitutorProducerTest {
         assertEquals(
                 "from \\\"resource\\\"",
                 substitutor.getOrDefault("bundlebee-json-inline-file:substitutor/file", "failed"));
+    }
+
+    @Test
+    void namespace() {
+        assertEquals("default", substitutor.getOrDefault("bundlebee-kubernetes-namespace", "failed"));
     }
 }

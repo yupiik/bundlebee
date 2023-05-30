@@ -20,6 +20,7 @@ metadata:
   name: zipkin
   labels:
     app: zipkin-simple
+  namespace: "{{zipkin-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
 spec:
   type: NodePort
   ports:
