@@ -84,7 +84,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                             docs.stream()
                                     .sorted()
                                     .map(it -> "- " + it)
-                                    .collect(joining("\n")) +
+                                    .collect(joining("\n\n")) +
                             "\n",
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             log.info("Created " + commandsAdoc);

@@ -65,3 +65,10 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 10
+          resources:
+            limits:
+              cpu: {{grafana-simple.resources.limits.cpu:-0.1}}
+              memory: {{grafana-simple.resources.limits.memory:-128Mi}}
+            requests:
+              cpu: {{grafana-simple.resources.requests.cpu:-0.1}}
+              memory: {{grafana-simple.resources.requests.memory:-128Mi}}
