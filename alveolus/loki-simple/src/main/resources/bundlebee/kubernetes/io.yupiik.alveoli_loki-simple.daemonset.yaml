@@ -69,3 +69,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+          resources:
+            limits:
+              cpu: {{loki-simple.resources.limits.cpu:-0.2}}
+              memory: {{loki-simple.resources.limits.memory:-128Mi}}
+            requests:
+              cpu: {{loki-simple.resources.requests.cpu:-0.1}}
+              memory: {{loki-simple.resources.requests.memory:-64Mi}}

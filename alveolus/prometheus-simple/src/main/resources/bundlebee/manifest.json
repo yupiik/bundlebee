@@ -37,6 +37,22 @@
         {
           "name": "prometheus-simple.namespace",
           "description": "The Kubernetes namespace to use for the installation."
+        },
+        {
+          "name": "prometheus-simple.resources.limits.cpu",
+          "description": "The resource limits cpu for Prometheus."
+        },
+        {
+          "name": "prometheus-simple.resources.limits.memory",
+          "description": "The resource limits memory for Prometheus."
+        },
+        {
+          "name": "prometheus-simple.resources.requests.cpu",
+          "description": "The resource requests cpu for Prometheus."
+        },
+        {
+          "name": "prometheus-simple.resources.requests.memory",
+          "description": "The resource requests memory for Prometheus."
         }
       ]
     }

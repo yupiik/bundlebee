@@ -1,7 +1,7 @@
 {
   "alveoli": [
     {
-      "//": "Simple Grafana instance, note we preconfigure it with Loki, Prometheus and Zipkin alveoli, ensure to override the configuration if you don't use them.",
+      "//": "Simple Grafana instance, note we preconfigure it with Loki, Prometheus and grafana alveoli, ensure to override the configuration if you don't use them.",
       "name": "${project.groupId}:${project.artifactId}:${project.version}",
       "descriptors": [
         {
@@ -29,6 +29,22 @@
         {
           "name": "grafana-simple.namespace",
           "description": "The Kubernetes namespace to use for the installation."
+        },
+        {
+          "name": "grafana-simple.resources.limits.cpu",
+          "description": "The resource limits cpu for grafana."
+        },
+        {
+          "name": "grafana-simple.resources.limits.memory",
+          "description": "The resource limits memory for Grafana."
+        },
+        {
+          "name": "grafana-simple.resources.requests.cpu",
+          "description": "The resource requests cpu for Grafana."
+        },
+        {
+          "name": "grafana-simple.resources.requests.memory",
+          "description": "The resource requests memory for Grafana."
         }
       ]
     }

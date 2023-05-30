@@ -47,3 +47,10 @@ spec:
               mountPath: /etc/loki
           ports:
             - containerPort: 3100
+          resources:
+            limits:
+              cpu: {{loki-simple.loki.resources.limits.cpu:-0.2}}
+              memory: {{loki-simple.loki.resources.limits.memory:-128Mi}}
+            requests:
+              cpu: {{loki-simple.loki.resources.requests.cpu:-0.1}}
+              memory: {{loki-simple.loki.resources.requests.memory:-64Mi}}
