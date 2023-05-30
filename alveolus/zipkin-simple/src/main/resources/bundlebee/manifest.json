@@ -29,6 +29,22 @@
         {
           "name": "zipkin-simple.namespace",
           "description": "The Kubernetes namespace to use for the installation."
+        },
+        {
+          "name": "zipkin-simple.resources.limits.cpu",
+          "description": "The resource limits cpu for Zipkin."
+        },
+        {
+          "name": "zipkin-simple.resources.limits.memory",
+          "description": "The resource limits memory for Zipkin."
+        },
+        {
+          "name": "zipkin-simple.resources.requests.cpu",
+          "description": "The resource requests cpu for Zipkin."
+        },
+        {
+          "name": "zipkin-simple.resources.requests.memory",
+          "description": "The resource requests memory for Zipkin."
         }
       ]
     }

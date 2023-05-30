@@ -70,6 +70,38 @@
         {
           "name": "loki-simple.namespace",
           "description": "The Kubernetes namespace to use for the installation."
+        },
+        {
+          "name": "loki-simple.resources.limits.cpu",
+          "description": "The resource limits cpu for Promtail."
+        },
+        {
+          "name": "loki-simple.resources.limits.memory",
+          "description": "The resource limits memory for Promtail."
+        },
+        {
+          "name": "loki-simple.resources.requests.cpu",
+          "description": "The resource requests cpu for Promtail."
+        },
+        {
+          "name": "loki-simple.resources.requests.memory",
+          "description": "The resource requests memory for Promtail."
+        },
+        {
+          "name": "loki-simple.loki.resources.limits.cpu",
+          "description": "The resource limits cpu for Loki API."
+        },
+        {
+          "name": "loki-simple.loki.resources.limits.memory",
+          "description": "The resource limits memory for Loki API."
+        },
+        {
+          "name": "loki-simple.loki.resources.requests.cpu",
+          "description": "The resource requests cpu for Loki API."
+        },
+        {
+          "name": "loki-simple.loki.resources.requests.memory",
+          "description": "The resource requests memory for Loki API."
         }
       ]
     }

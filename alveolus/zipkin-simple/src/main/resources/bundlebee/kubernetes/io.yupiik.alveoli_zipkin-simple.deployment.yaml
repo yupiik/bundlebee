@@ -51,3 +51,10 @@ spec:
               port: 9411
             initialDelaySeconds: 5
             periodSeconds: 10
+          resources:
+            limits:
+              cpu: {{zipkin-simple.resources.limits.cpu:-0.5}}
+              memory: {{zipkin-simple.resources.limits.memory:-256Mi}}
+            requests:
+              cpu: {{zipkin-simple.resources.requests.cpu:-0.3}}
+              memory: {{zipkin-simple.resources.requests.memory:-128Mi}}

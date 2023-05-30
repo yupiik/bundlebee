@@ -44,6 +44,13 @@ spec:
           volumeMounts:
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
+          resources:
+            limits:
+              cpu: {{prometheus-simple.resources.limits.cpu:-0.2}}
+              memory: {{prometheus-simple.resources.limits.memory:-128Mi}}
+            requests:
+              cpu: {{prometheus-simple.resources.requests.cpu:-0.1}}
+              memory: {{prometheus-simple.resources.requests.memory:-64Mi}}
       volumes:
         - name: prometheus-config-volume
           configMap:
