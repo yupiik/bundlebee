@@ -29,6 +29,9 @@ import java.util.Map;
  */
 @Data
 public class Manifest {
+    @Description("Enables to consider all alveoli have their `interpolateDescriptors` descriptor set to `true`, you can still set it to `false` if you want to disable it for one.")
+    private Boolean interpolateAlveoli;
+
     @Description("" +
             "List of files referenced as other manifests. " +
             "They are merged with this (main) manifest by *appending* _requirements_ and _alveoli_. " +
@@ -171,6 +174,11 @@ public class Manifest {
     @Data
     public static class Alveolus {
         @Description("" +
+                "Enables to consider all descriptors have their `interpolate` descriptor set to `true`, you can still set it to `false` if you want to disable it for one. " +
+                "If not set, `interpolateAlveoli` flag from the manifest.")
+        private Boolean interpolateDescriptors;
+
+        @Description("" +
                 "Name of the alveolus (recipe). It must be unique accross the whole classpath. " +
                 "Using maven style identifier, it is recommended to name it " +
                 "`<groupId>:<artifactId>:<version>` using maven filtering but it is not enforced.")
@@ -279,11 +287,20 @@ public class Manifest {
 
         @Description("" +
                 "If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. " +
-                "You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`.")
-        private boolean interpolate;
+                "You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`. " +
+                "If not set, `interpolateDescriptors` flag from the alveolus will be used.")
+        private Boolean interpolate;
 
         @Description("Conditions to include this descriptor.")
         private Conditions includeIf;
+
+        public void initInterpolate(final boolean interpolate) {
+            this.interpolate = interpolate;
+        }
+
+        public boolean hasInterpolateValue() {
+            return interpolate != null;
+        }
     }
 
     @Data
