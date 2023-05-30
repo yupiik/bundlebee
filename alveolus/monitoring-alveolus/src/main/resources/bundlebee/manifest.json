@@ -1,7 +1,7 @@
 {
   "alveoli": [
     {
-      "//": "Includes loki+prometheus+zipkin+grafana at once.\n\nTIP: You can set --monitoring.namespace to deploy the full stack in a dedicated namespace",
+      "//": "Includes loki+prometheus+zipkin+grafana at once.\n\nTIP: You can set --monitoring.namespace to deploy the full stack in a dedicated namespace.\n\nStarting from 1.0.20, we added the resource request/limit placeHolder with default in all the dependencies. You can remove them by patching the descriptor like:\n\n[source, json]\n----\n{\n  \"op\": \"remove\",\n  \"path\": \"/spec/template/spec/containers/0/resources\"\n}\n----\n\nYou need to add this in all the descriptor dependencies.",
       "name": "${project.groupId}:${project.artifactId}:${project.version}",
       "descriptors": [
       ],
