@@ -191,10 +191,41 @@ public class InspectCommand implements CompletingExecutable {
         }
         final var patches = alveolus.getPatches().stream()
                 .filter(p -> Objects.equals(p.getDescriptorName(), desc.getConfiguration().getName()))
-                .map(it -> "    . Patch " + it.getPatch())
+                .map(it -> "    . Patch " + (it.getIncludeIf() != null ? conditions(it.getIncludeIf()) : "") + it.getPatch())
                 .collect(joining("\n", "", ""))
                 .trim();
         return patches.isBlank() ? "" : ("\n" + patches + "\n");
+    }
+
+    private String conditions(final Manifest.Conditions includeIf) {
+        final var conditions = includeIf.getConditions();
+        if (conditions == null || conditions.isEmpty()) {
+            return "";
+        }
+        if (conditions.size() == 1) {
+            final var cond = conditions.get(0);
+            return '(' + condition(cond) + ')';
+        }
+        return conditions.stream()
+                .map(this::condition)
+                .collect(joining(
+                        " " + (includeIf.getOperator() == Manifest.ConditionOperator.ANY ? "OR" : "AND") + " ",
+                        " (", ")"));
+    }
+
+    private String condition(final Manifest.Condition cond) {
+        final String type;
+        switch (cond.getType()) {
+            case ENV:
+                type = "env. var.";
+                break;
+            case SYSTEM_PROPERTY:
+                type = "system prop.";
+                break;
+            default:
+                type = "";
+        }
+        return type + " '" + cond.getKey() + "' has " + (cond.isNegate() ? "not " : "") + "value '" + cond.getValue() + "'";
     }
 
     private String toPlacheolders(final Manifest.Alveolus alveolus) {

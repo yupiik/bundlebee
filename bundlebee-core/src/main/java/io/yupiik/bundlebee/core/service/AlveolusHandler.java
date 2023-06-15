@@ -523,28 +523,36 @@ public class AlveolusHandler {
                 if (patch.isInterpolate()) {
                     content = substitutor.replace(content);
                 }
-                if (patch.getPatch() != null) {
-                    final JsonArray array;
-                    if (patch.isInterpolate()) { // interpolate patch too, if not desired the patch can be split in 2
-                        array = jsonb.fromJson(substitutor.replace(patch.getPatch().toString()), JsonArray.class);
-                    } else {
-                        array = patch.getPatch();
+                if (patch.getPatch() == null) {
+                    continue;
+                }
+                if (patch.getIncludeIf() != null &&
+                        patch.getIncludeIf().getConditions() != null &&
+                        !patch.getIncludeIf().getConditions().isEmpty() &&
+                        !conditionEvaluator.test(patch.getIncludeIf())) {
+                    continue;
+                }
+
+                final JsonArray array;
+                if (patch.isInterpolate()) { // interpolate patch too, if not desired the patch can be split in 2
+                    array = jsonb.fromJson(substitutor.replace(patch.getPatch().toString()), JsonArray.class);
+                } else {
+                    array = patch.getPatch();
+                }
+                final var jsonPatch = jsonProvider.createPatch(array);
+                try {
+                    final var structure = loadJsonStructure(desc, content);
+                    content = jsonPatch.apply(structure).toString();
+                } catch (final JsonException je) {
+                    if (!desc.getConfiguration().getInterpolate()) {
+                        throw new IllegalStateException("Can't patch '" + desc.getConfiguration().getName() + "': " + je.getMessage(), je);
                     }
-                    final var jsonPatch = jsonProvider.createPatch(array);
-                    try {
-                        final var structure = loadJsonStructure(desc, content);
-                        content = jsonPatch.apply(structure).toString();
-                    } catch (final JsonException je) {
-                        if (!desc.getConfiguration().getInterpolate()) {
-                            throw new IllegalStateException("Can't patch '" + desc.getConfiguration().getName() + "': " + je.getMessage(), je);
-                        }
-                        log.finest(() -> "" +
-                                "Trying to interpolate the descriptor before patching it since it failed without: '" +
-                                desc.getConfiguration().getName() + "'");
-                        content = substitutor.replace(content);
-                        alreadyInterpolated = true;
-                        content = jsonPatch.apply(loadJsonStructure(desc, content)).toString();
-                    }
+                    log.finest(() -> "" +
+                            "Trying to interpolate the descriptor before patching it since it failed without: '" +
+                            desc.getConfiguration().getName() + "'");
+                    content = substitutor.replace(content);
+                    alreadyInterpolated = true;
+                    content = jsonPatch.apply(loadJsonStructure(desc, content)).toString();
                 }
             }
         }

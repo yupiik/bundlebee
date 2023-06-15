@@ -1,6 +1,35 @@
 {
   "alveoli": [
     {
+      "name": "ApplyCommandTest.includeIfPatch",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d1"
+        }
+      ],
+      "patches": [
+        {
+          "descriptorName": "ApplyCommandTest.d1",
+          "includeIf": {
+            "conditions": [
+              {
+                "type": "SYSTEM_PROPERTY",
+                "key": "ApplyCommandTest.includeIfPatch",
+                "value": "true"
+              }
+            ]
+          },
+          "patch": [
+            {
+              "op": "add",
+              "path": "/metadata/labels/patched",
+              "value": "true"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "ApplyCommandTest.template",
       "descriptors": [
         {
