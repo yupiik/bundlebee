@@ -305,6 +305,10 @@ public class Manifest {
 
     @Data
     public static class Patch {
+        @Description("Conditions to include this patch. " +
+                "Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)")
+        private Conditions includeIf;
+
         @Description("The descriptor to patch. It can be any descriptor, including transitive ones. " +
                 "It can be `*` to patch all descriptors (`/metadata/label/app` for example) or " +
                 "`regex:<java pattern>` to match descriptor names with a regex.")

@@ -52,6 +52,43 @@ class ApplyCommandTest {
     private HttpApiHandler<?> handler;
 
     @Test
+    void includeIfPatch(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        // apply it
+        System.setProperty("ApplyCommandTest.includeIfPatch", "true");
+        try {
+            {
+                executor.wrap(handler, INFO, () -> new BundleBee().launch(
+                        "apply", "--alveolus", "ApplyCommandTest.includeIfPatch",
+                        "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
+                assertEquals(
+                        Set.of("{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
+                                "\"metadata\":{\"name\":\"s\",\"labels\":{\"app\":\"s-test\",\"patched\":\"true\"}}," +
+                                "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1234,\"targetPort\":1234}],\"selector\":{\"app\":\"s-test\"}}}"),
+                        spyingResponseLocator.requests.stream().map(Request::payload).collect(toSet()));
+            }
+
+            // skip it
+            spyingResponseLocator.requests.clear();
+            System.setProperty("ApplyCommandTest.includeIfPatch", "false");
+            {
+                executor.wrap(handler, INFO, () -> new BundleBee().launch(
+                        "apply", "--alveolus", "ApplyCommandTest.includeIfPatch",
+                        "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
+                assertEquals(
+                        Set.of("{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
+                                "\"metadata\":{\"name\":\"s\",\"labels\":{\"app\":\"s-test\"}}," +
+                                "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1234,\"targetPort\":1234}],\"selector\":{\"app\":\"s-test\"}}}"),
+                        spyingResponseLocator.requests.stream().map(Request::payload).collect(toSet()));
+            }
+        } finally {
+            System.clearProperty("ApplyCommandTest.includeIfPatch");
+        }
+    }
+
+    @Test
     void fromTemplate(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
