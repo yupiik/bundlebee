@@ -40,7 +40,10 @@
     <arthur.version>1.0.5</arthur.version>
     <yupiik-logging.version>1.0.6</yupiik-logging.version>
 
+    <!-- deprecated in recent maven releases, we workaround the warnings using the new way (but dont support split repo)
     <m2.location>${settings.localRepository}</m2.location>
+    -->
+    <m2.location>${session.repositorySession.localRepository.basedir.absolutePath}</m2.location>
   </properties>
 
   <modules>

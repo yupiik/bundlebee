@@ -30,7 +30,7 @@
 
   <properties>
     <mvn.version>3.8.3</mvn.version>
-    <mvn-plugin.version>3.6.1</mvn-plugin.version>
+    <mvn-plugin.version>3.9.0</mvn-plugin.version>
   </properties>
 
   <dependencies>
