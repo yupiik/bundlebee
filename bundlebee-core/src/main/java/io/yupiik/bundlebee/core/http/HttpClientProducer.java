@@ -25,7 +25,7 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.net.http.HttpClient;
-import java.util.concurrent.Executor;
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -39,6 +39,21 @@ public class HttpClientProducer implements ConfigHolder {
     @Description("How many threads are allocated to async HTTP client, negative or zero value means to use common pool.")
     @ConfigProperty(name = "bundlebee.httpclient.threads", defaultValue = "-1")
     private int threads;
+
+    @Inject
+    @Description("The HTTP client version, `none` mean the JVM default (v2), `HTTP_1_1` v1.1 and `HTTP_2` v2.0.")
+    @ConfigProperty(name = "bundlebee.httpclient.forcedHttpVersion", defaultValue = "none")
+    private String forcedHttpVersion;
+
+    @Inject
+    @Description("The HTTP client connect timeout (in java Duration format), `none` can be used to ignore this setting.")
+    @ConfigProperty(name = "bundlebee.httpclient.connectTimeout", defaultValue = "none")
+    private String connectTimeout;
+
+    @Inject
+    @Description("The HTTP client redirect policy. Default to `NORMAL`, can be set to `ALWAYS` or `NEVER`.")
+    @ConfigProperty(name = "bundlebee.httpclient.followRedirects", defaultValue = "NORMAL")
+    private String followRedirects;
 
     @Produces
     @BundleBee
@@ -56,9 +71,17 @@ public class HttpClientProducer implements ConfigHolder {
                         return thread;
                     }
                 });
-        return HttpClient.newBuilder()
-                .executor(executor)
-                .build();
+        final var builder = HttpClient.newBuilder().executor(executor);
+        if (forcedHttpVersion != null && !forcedHttpVersion.isBlank() && !"none".equals(forcedHttpVersion)) {
+            builder.version(HttpClient.Version.valueOf(forcedHttpVersion));
+        }
+        if (connectTimeout != null && !connectTimeout.isBlank() && !"none".equals(connectTimeout)) {
+            builder.connectTimeout(Duration.parse(connectTimeout));
+        }
+        if (followRedirects != null && !followRedirects.isBlank()) {
+            builder.followRedirects(HttpClient.Redirect.valueOf(followRedirects));
+        }
+        return builder.build();
     }
 
     private boolean isMaven() {

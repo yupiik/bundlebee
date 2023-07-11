@@ -170,9 +170,13 @@ public class HttpKubeClient implements ConfigHolder {
 
     @PostConstruct
     private void init() {
-        client = new DelegatingClient(doConfigure(HttpClient.newBuilder()
-                .executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool)))
-                .build()) {
+        final var builder = HttpClient.newBuilder();
+        dontUseAtRuntime.connectTimeout().ifPresent(builder::connectTimeout);
+        builder.followRedirects(dontUseAtRuntime.followRedirects());
+        builder.version(dontUseAtRuntime.version());
+        builder.executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool));
+
+        client = new DelegatingClient(doConfigure(builder).build()) {
             @Override
             public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
                                                                     final HttpResponse.BodyHandler<T> responseBodyHandler) {
@@ -388,7 +392,8 @@ public class HttpKubeClient implements ConfigHolder {
                     keyManagerFactory.init(keyStore, new char[0]);
 
                     keyManagers = keyManagerFactory.getKeyManagers();
-                } catch (final NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException | KeyStoreException | IOException e) {
+                } catch (final NoSuchAlgorithmException | CertificateException | UnrecoverableKeyException |
+                               KeyStoreException | IOException e) {
                     throw new IllegalStateException(e);
                 }
             } catch (final RuntimeException re) {
