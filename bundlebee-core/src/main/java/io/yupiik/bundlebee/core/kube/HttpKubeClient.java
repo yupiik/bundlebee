@@ -69,6 +69,7 @@ import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -105,6 +106,11 @@ public class HttpKubeClient implements ConfigHolder {
             "to create the client. The content can also be set inline!")
     @ConfigProperty(name = "kubeconfig" /* to match KUBECONFIG env var */, defaultValue = "auto")
     private String kubeConfig;
+
+    @Inject
+    @Description("HTTP timeout in ms, ignored if <= 0.")
+    @ConfigProperty(name = "bundlebee.kube.http.timeout", defaultValue = "60000")
+    private long timeout;
 
     @Inject
     @Getter
@@ -167,11 +173,15 @@ public class HttpKubeClient implements ConfigHolder {
 
     private Map<String, String> resourceMapping;
     private List<String> kindsToSkipUpdateIfPossible;
+    private Duration timeoutDuration;
 
     @PostConstruct
     private void init() {
+        timeoutDuration = timeout <= 0 ? null : Duration.ofMillis(timeout);
         final var builder = HttpClient.newBuilder();
-        dontUseAtRuntime.connectTimeout().ifPresent(builder::connectTimeout);
+        dontUseAtRuntime.connectTimeout()
+                .or(() -> ofNullable(timeoutDuration))
+                .ifPresent(builder::connectTimeout);
         builder.followRedirects(dontUseAtRuntime.followRedirects());
         builder.version(dontUseAtRuntime.version());
         builder.executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool));
@@ -224,12 +234,15 @@ public class HttpKubeClient implements ConfigHolder {
     }
 
     public HttpRequest prepareRequest(final HttpRequest.Builder builder, final String urlOrPath) {
-        return setAuth.apply(builder)
-                .uri(URI.create(
-                        urlOrPath.startsWith("http:") || urlOrPath.startsWith("https:") ?
-                                urlOrPath :
-                                (baseApi + urlOrPath)))
-                .build();
+        final var uri = URI.create(
+                urlOrPath.startsWith("http:") || urlOrPath.startsWith("https:") ?
+                        urlOrPath :
+                        (baseApi + urlOrPath));
+        final var base = setAuth.apply(builder).uri(uri);
+        if (timeoutDuration != null) {
+            base.timeout(timeoutDuration);
+        }
+        return base.build();
     }
 
     private HttpClient.Builder doConfigure(final HttpClient.Builder builder) {
