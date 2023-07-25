@@ -56,6 +56,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
@@ -380,10 +381,11 @@ public class KubeClient implements ConfigHolder {
         final var desc = customLabels.isEmpty() ? rawDesc : injectMetadata(rawDesc, customLabels);
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
         return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
-                .thenCompose(ignored -> doApply(rawDesc, desc, kindLowerCased));
+                .thenCompose(ignored -> doApply(rawDesc, desc, kindLowerCased, 1));
     }
 
-    private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc, final String kindLowerCased) {
+    private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc,
+                                                          final String kindLowerCased, final int retry) {
         final var metadata = preparedDesc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
@@ -405,6 +407,7 @@ public class KubeClient implements ConfigHolder {
                     if (api.isVerbose()) {
                         log.info(findResponse::toString);
                     }
+
                     if (findResponse.statusCode() > 404) {
                         throw new IllegalStateException("Invalid HTTP response: " + findResponse);
                     }
@@ -454,27 +457,43 @@ public class KubeClient implements ConfigHolder {
                                     });
                         }
                         return completedStage(findResponse);
-                    } else {
-                        log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
-                        return api.execute(HttpRequest.newBuilder()
-                                                .POST(HttpRequest.BodyPublishers.ofString(preparedDesc.toString()))
-                                                .header("Content-Type", "application/json")
-                                                .header("Accept", "application/json"),
-                                        baseUri + fieldManager)
-                                .thenApply(response -> {
-                                    if (api.isVerbose()) {
-                                        log.info(response::toString);
-                                    }
-                                    if (response.statusCode() != 201) {
-                                        throw new IllegalStateException(
-                                                "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                                        response.body());
-                                    } else {
-                                        log.info(() -> "Created " + name + " (" + kindLowerCased + ") successfully");
-                                    }
-                                    return response;
-                                });
                     }
+
+                    log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
+                    return api.execute(HttpRequest.newBuilder()
+                                            .POST(HttpRequest.BodyPublishers.ofString(preparedDesc.toString()))
+                                            .header("Content-Type", "application/json")
+                                            .header("Accept", "application/json"),
+                                    baseUri + fieldManager)
+                            .thenCompose(response -> {
+                                if (api.isVerbose()) {
+                                    log.info(response::toString);
+                                }
+
+                                // can we retry, happens for service accounts for ex when implicitly created
+                                if (response.statusCode() == 409 && retry > 0) {
+                                    try {
+                                        final var payload = jsonb.fromJson(response.body(), JsonObject.class);
+                                        if ("AlreadyExists".equals(payload.getString("reason", "")) &&
+                                                ofNullable(payload.getJsonObject("details"))
+                                                        .map(o -> "serviceaccounts".equals(o.getString("kind", "")))
+                                                        .orElse(false)) {
+                                            return doApply(rawDesc, preparedDesc, kindLowerCased, retry - 1);
+                                        }
+                                    } catch (final RuntimeException re) {
+                                        // let it fail
+                                        log.log(Level.FINEST, re, re::getMessage);
+                                    }
+                                }
+
+                                if (response.statusCode() != 201) {
+                                    throw new IllegalStateException(
+                                            "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +
+                                                    response.body());
+                                }
+                                log.info(() -> "Created " + name + " (" + kindLowerCased + ") successfully");
+                                return completedStage(response);
+                            });
                 });
     }
 
