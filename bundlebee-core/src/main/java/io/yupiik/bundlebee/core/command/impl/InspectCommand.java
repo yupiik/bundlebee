@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -131,7 +130,6 @@ public class InspectCommand implements CompletingExecutable {
                 .thenRun(() -> {
                     log.info("Inspection Report for alveolus=" + alveolus);
                     log.info("");
-                    final Collection<String> buffer = new ArrayList<>();
                     descPerAlveolus.entrySet().stream()
                             // keep addition order since it is the most likely right one
                             .flatMap(it -> Stream.concat(
@@ -162,7 +160,7 @@ public class InspectCommand implements CompletingExecutable {
                                         toFrom(desc.getConfiguration().getLocation()) +
                                         (verbose ? '\n' + formatDescriptorContent(desc.getContent()) : "") +
                                         toPatches(alveolus, desc) +
-                                        toPlacheolders(alveolus)),
+                                        toPlaceholders(alveolus)),
                         alveolus.getDependencies() != null && !alveolus.getDependencies().isEmpty() ?
                                 alveolus.getDependencies().stream()
                                         .map(it -> "  - Dependency '" + it.getName() + "'" + toFrom(it.getLocation())) :
@@ -228,7 +226,7 @@ public class InspectCommand implements CompletingExecutable {
         return type + " '" + cond.getKey() + "' has " + (cond.isNegate() ? "not " : "") + "value '" + cond.getValue() + "'";
     }
 
-    private String toPlacheolders(final Manifest.Alveolus alveolus) {
+    private String toPlaceholders(final Manifest.Alveolus alveolus) {
         if (alveolus.getPlaceholders() == null || alveolus.getPlaceholders().isEmpty()) {
             return "";
         }

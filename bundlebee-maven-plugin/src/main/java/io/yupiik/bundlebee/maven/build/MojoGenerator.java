@@ -76,7 +76,7 @@ public final class MojoGenerator {
                                     "    @Parameter(property = \"" + key + "\"" +
                                     ", defaultValue = \"" + defaultValue.replaceAll("\n", "\\n") + "\")\n" +
                                     "    private " +
-                                    ("java.util.Set".equals(type) ? "Set<String>" : type.replace("java.lang.", "")) + " " +
+                                    ("java.util.Set".equals(type) ? "Set<String>" : type.replace("java.lang.", "").replace("$", ".")) + " " +
                                     paramName + ";";
                         }));
 
@@ -112,7 +112,7 @@ public final class MojoGenerator {
                                                     "     */\n" +
                                                     "    @Parameter(property = \"" + key + "\"" +
                                                     ", defaultValue = \"" + findDefault(key, defaultValue.replaceAll("\n", "\\n")) + "\")\n" +
-                                                    "    private " + it.getType().getName().replace("java.lang.", "") + " " + paramName + ";";
+                                                    "    private " + it.getType().getName().replace("java.lang.", "").replace("$", ".") + " " + paramName + ";";
                                         },
                                         (a, b) -> a,
                                         () -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER)));
