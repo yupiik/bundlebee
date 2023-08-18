@@ -85,6 +85,11 @@ public class LintCommand implements CompletingExecutable {
     private List<String> ignoredRules;
 
     @Inject
+    @Description("Should remediation be shown (it is verbose so skipped by default).")
+    @ConfigProperty(name = "bundlebee.lint.showRemediation", defaultValue = "false")
+    private boolean showRemediation;
+
+    @Inject
     private AlveolusHandler visitor;
 
     @Inject
@@ -97,6 +102,8 @@ public class LintCommand implements CompletingExecutable {
     @Any
     private Instance<LintingCheck> checks;
 
+    private List<String> ruleNames;
+
     @Override
     public Stream<String> complete(final Map<String, String> options, final String optionName) {
         switch (optionName) {
@@ -104,6 +111,13 @@ public class LintCommand implements CompletingExecutable {
                 return Stream.of(LintError.LintLevel.values()).map(LintError.LintLevel::name);
             case "alveolus":
                 return visitor.findCompletionAlveoli(options);
+            case "ignoredRules":
+                if (ruleNames == null) {
+                    ruleNames = this.checks.stream()
+                            .map(LintingCheck::name)
+                            .collect(toList());
+                }
+                return ruleNames.stream();
             default:
                 return Stream.empty();
         }
@@ -139,8 +153,8 @@ public class LintCommand implements CompletingExecutable {
         final var ld = new LintingCheck.LintableDescriptor(descriptor, desc);
         result.errors.addAll(checks.stream()
                 .filter(c -> c.accept(ld))
-                .flatMap(c -> c.validate(ld))
-                .map(it -> new DecoratedLintError(it, ctx.getAlveolus().getName(), descriptor))
+                .flatMap(c -> c.validate(ld)
+                        .map(it -> new DecoratedLintError(it, ctx.getAlveolus().getName(), descriptor, c.remediation())))
                 .collect(toList()));
     }
 
@@ -165,7 +179,13 @@ public class LintCommand implements CompletingExecutable {
                 })
                 .forEach(i -> {
                     final var level = i.getError().getLevel();
-                    log.log(level == LintError.LintLevel.ERROR ? Level.SEVERE : Level.parse(level.name()), i.format());
+                    final var logLevel = level == LintError.LintLevel.ERROR ? Level.SEVERE : Level.parse(level.name());
+                    final var message = i.format();
+                    if (!showRemediation) {
+                        log.log(logLevel, message);
+                    } else {
+                        log.log(logLevel, message + (i.getRemediation() != null && !i.getRemediation().isBlank() ? "\n -> " + i.getRemediation() : ""));
+                    }
                 });
     }
 
@@ -215,6 +235,7 @@ public class LintCommand implements CompletingExecutable {
         private final LintError error;
         private final String aveolus;
         private final String descriptor;
+        private final String remediation;
 
         public String format() {
             return "[" + getAveolus() + "][" + getDescriptor() + "] " + getError().getMessage();

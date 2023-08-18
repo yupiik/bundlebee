@@ -19,23 +19,13 @@ import io.yupiik.bundlebee.core.command.impl.lint.LintError;
 
 import javax.json.JsonNumber;
 import javax.json.JsonObject;
-import javax.json.JsonValue;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 
-public abstract class CheckResources extends CheckValue {
+public abstract class CheckResources extends ContainerValueValidator {
     private final String resource;
     private final String type;
 
     public CheckResources(final String type, final String resource) {
-        super(
-                Set.of("Deployment", "CronJob", "Pod", "Job"),
-                Map.of( // points to the list of containers, then nested pointer will be /$i/resources/${type}s/$resource
-                        "Deployment", "/spec/template/spec/containers",
-                        "CronJob", "/spec/jobTemplate/template/spec/containers",
-                        "Job", "/spec/template/spec/containers",
-                        "Pod", "/spec/containers"));
         this.type = type;
         this.resource = resource;
     }
@@ -56,13 +46,7 @@ public abstract class CheckResources extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue containers) {
-        return containers.asJsonArray().stream()
-                .map(JsonValue::asJsonObject)
-                .flatMap(it -> validate(it, descriptor));
-    }
-
-    private Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
+    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
         final var resources = container.getJsonObject("resources");
         if (resources == null) {
             return Stream.of(new LintError(LintError.LintLevel.ERROR, "No resources element in container"));

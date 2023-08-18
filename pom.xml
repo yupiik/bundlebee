@@ -178,6 +178,21 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.3.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.3.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>3.1.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.3.0</version>
         <configuration>
@@ -235,7 +250,12 @@
         <inherited>false</inherited>
         <configuration>
           <aggregate>true</aggregate>
-          <inlineHeader><![CDATA[Copyright (c) ${project.inceptionYear} - ${project.organization.name} - ${project.organization.url}
+          <mapping>
+            <adoc>DOUBLESLASH_STYLE</adoc>
+          </mapping>
+          <licenseSets>
+            <licenseSet>
+              <inlineHeader><![CDATA[Copyright (c) ${project.inceptionYear} - ${project.organization.name} - ${project.organization.url}
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance
 with the License.  You may obtain a copy of the License at
@@ -249,25 +269,24 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 ]]></inlineHeader>
-          <mapping>
-            <adoc>DOUBLESLASH_STYLE</adoc>
-          </mapping>
-          <includes>
-            <include>**/*.properties</include>
-            <include>**/*.java</include>
-            <include>**/*.xml</include>
-            <include>**/*.yaml</include>
-          </includes>
-          <excludes>
-            <exclude>LICENSE</exclude>
-            <exclude>**/*.adoc</exclude>
-            <exclude>**/*.idea</exclude>
-            <exclude>**/target/**</exclude>
-            <exclude>**/generated/**</exclude>
-            <exclude>**/minisite/**</exclude>
-            <exclude>**/file</exclude>
-            <exclude>**/.m2/**</exclude>
-          </excludes>
+              <includes>
+                <include>**/*.properties</include>
+                <include>**/*.java</include>
+                <include>**/*.xml</include>
+                <include>**/*.yaml</include>
+              </includes>
+              <excludes>
+                <exclude>LICENSE</exclude>
+                <exclude>**/*.adoc</exclude>
+                <exclude>**/*.idea</exclude>
+                <exclude>**/target/**</exclude>
+                <exclude>**/generated/**</exclude>
+                <exclude>**/minisite/**</exclude>
+                <exclude>**/file</exclude>
+                <exclude>**/.m2/**</exclude>
+              </excludes>
+            </licenseSet>
+          </licenseSets>
         </configuration>
       </plugin>
       <plugin>
