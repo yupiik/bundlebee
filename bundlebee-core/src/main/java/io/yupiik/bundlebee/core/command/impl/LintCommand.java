@@ -130,7 +130,9 @@ public class LintCommand implements CompletingExecutable {
 
     @Override
     public String description() {
-        return "Do common validations on descriptors. As of today mainly cpu/memory resources definition.";
+        return "Do common validations on descriptors. As of today mainly cpu/memory resources definition.\n" +
+                "// end of short description\n\n" +
+                "include::content/_partials/generated/documentation/lint.checks.adoc[leveloffset=+1]\n";
     }
 
     @Override
