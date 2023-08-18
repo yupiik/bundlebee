@@ -300,6 +300,7 @@ public final class MojoGenerator {
                 "build".equals(name) ||
                 "cipher-password".equals(name) ||
                 "create-master-password".equals(name) ||
+                "list-lint-rules".equals(name) ||
                 "new".equals(name) ||
                 "version".equals(name);
     }
