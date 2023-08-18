@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>How it works</title>
     <meta charset="utf-8">
@@ -7,33 +8,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="A light Java Kubernetes package manager.">
     <meta name="author" content="Yupiik Minisite Generator">
+    <meta name="generator" content="Yupiik Minisite Generator">
+    
     <link rel="shortcut icon" href="//www.yupiik.com/img/favicon.png">
 
     <link href="//fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i|Montserrat:300,400,500,700" rel="stylesheet">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.20-SNAPSHOT">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.21-SNAPSHOT">
     
 </head>
-
 <body>
     <header class="header fixed-top">
         <div class="branding docs-branding">
             <div class="container-fluid position-relative py-2">
                 <div class="docs-logo-wrapper">
-	                <div class="site-logo"><a class="navbar-brand" href="//www.yupiik.io/bundlebee/index.html">
+	                <div class="site-logo"><a title="Home" class="navbar-brand" href="//www.yupiik.io/bundlebee/index.html">
 	                <img class="logo-icon mr-2" src="//www.yupiik.com/img/favicon.png" alt="logo">
 	                <span class="logo-text">Yupiik BundleBee <span class="text-alt">Docs</span></span></a></div>
                 </div>
 	            <div class="docs-top-utilities d-flex justify-content-end align-items-center">
 					
-					<li class="list-inline-item"><a id="search-button" href="#" data-toggle="modal" data-target="#searchModal"><i data-toggle="tooltip" data-placement="top" title="Search" class="fas fa-search"></i></a></li>
+					<li class="list-inline-item"><a title="Search" id="search-button" href="#" data-toggle="modal" data-target="#searchModal"><i data-toggle="tooltip" data-placement="top" title="Search" class="fas fa-search"></i></a></li>
 
 					<ul class="social-list list-inline mx-md-3 mx-lg-5 mb-0 d-none d-lg-flex">
 						
-						<li class="list-inline-item"><a href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+						<li class="list-inline-item"><a href="https://www.github.com/yupiik/"><i class="fab fa-github fa-fw"></i></a></li><li class="list-inline-item"><a href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
 		            </ul>
 	            </div>
             </div>
@@ -43,20 +45,36 @@
         <div class="page-navigation-left">
             <h3>Menu</h3>
             <ul>
-                <li><a href="//www.yupiik.io/bundlebee/getting-started.html"><i class="fas fa-play"></i> Getting Started</a></li>
-                <li><a href="//www.yupiik.io/bundlebee/how-it-works.html"><i class="fas fa-car-battery"></i> How it works</a></li>
-                <li><a href="//www.yupiik.io/bundlebee/commands.html"><i class="fas fa-terminal"></i> Commands</a></li>
-                <li><a href="//www.yupiik.io/bundlebee/alveoli.html"><i class="fas fa-puzzle-piece"></i> Alveoli</a></li>
-                <li><a href="//www.yupiik.io/bundlebee/maven-plugin.html"><i class="fas fa-building"></i> Maven Plugin</a></li>
+                <li>
+                    <a title="Getting Started" href="//www.yupiik.io/bundlebee/getting-started.html">
+                        <i class="fas fa-play"></i>Getting Started
+                    </a>
+                </li>                <li>
+                    <a title="How it works" href="//www.yupiik.io/bundlebee/how-it-works.html">
+                        <i class="fas fa-car-battery"></i>How it works
+                    </a>
+                </li>                <li>
+                    <a title="Available commands" href="//www.yupiik.io/bundlebee/commands.html">
+                        <i class="fas fa-terminal"></i>Commands
+                    </a>
+                </li>                <li>
+                    <a title="Available Alveoli" href="//www.yupiik.io/bundlebee/alveoli.html">
+                        <i class="fas fa-puzzle-piece"></i>Alveoli
+                    </a>
+                </li>                <li>
+                    <a title="BundleBee Maven Plugin" href="//www.yupiik.io/bundlebee/maven-plugin.html">
+                        <i class="fas fa-building"></i>Maven Plugin
+                    </a>
+                </li>
             </ul>
         </div>
 
-        <div class="container page-content">
-            <div class="page-header">
+        <div id="how-it-works-html-container" class="container page-content how-it-works-html">
+                        <div class="page-header">
                 <h1>How it works</h1>
             </div>
             <div class="page-content-body">
-<div id="preamble">
+                <div id="preamble">
 <div class="sectionbody">
 <div class="quoteblock abstract">
 <blockquote>
@@ -139,6 +157,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">interpolateAlveoli</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>interpolateAlveoli</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables to consider all alveoli have their <code>interpolateDescriptors</code> descriptor set to <code>true</code>, you can still set it to <code>false</code> if you want to disable it for one.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus">Manifest.alveoli</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>alveoli</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
@@ -185,6 +209,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>chainDependencies</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Should dependencies be installed one after the other or in parallel (default). It is useful when you install a namespace for example which must be awaited before next dependencies are installed.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">interpolateDescriptors</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>interpolateDescriptors</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Enables to consider all descriptors have their <code>interpolate</code> descriptor set to <code>true</code>, you can still set it to <code>false</code> if you want to disable it for one. If not set, <code>interpolateAlveoli</code> flag from the manifest.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
@@ -312,7 +342,7 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">interpolate</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>interpolate</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">bool</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If set to <code>true</code>, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use <code>--&lt;config-key&gt; &lt;value&gt;</code> to inject bindings set as <code>{{config-key:-default value}}</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">If set to <code>true</code>, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use <code>--&lt;config-key&gt; &lt;value&gt;</code> to inject bindings set as <code>{{config-key:-default value}}</code>. If not set, <code>interpolateDescriptors</code> flag from the alveolus will be used.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">location</p></td>
@@ -608,6 +638,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">JSON-Patch to apply on the JSON representation of the descriptor. It enables to inject configuration in descriptors for example, or changing some name/application.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">Descriptor.includeIf</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>includeIf</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Conditions to include this patch. Enables for example to have an environment variable enabling part of the stack (ex: <code>MONITORING=true</code>)</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -705,7 +741,7 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
   "$id":"io_yupiik_bundlebee_core_descriptor_Manifest",
   "type":"object",
   "title":"Manifest Descriptor",
@@ -966,7 +1002,8 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
                 "interpolate":{
                   "type":"boolean",
                   "title":"Descriptor.interpolate",
-                  "description":"If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use `--&lt;config-key&gt; &lt;value&gt;` to inject bindings set as `{{config-key:-default value}}`."
+                  "description":"If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use `--&lt;config-key&gt; &lt;value&gt;` to inject bindings set as `{{config-key:-default value}}`. If not set, `interpolateDescriptors` flag from the alveolus will be used.",
+                  "nullable":true
                 },
                 "location":{
                   "type":"string",
@@ -1007,6 +1044,12 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
               }
             }
           },
+          "interpolateDescriptors":{
+            "type":"boolean",
+            "title":"Alveolus.interpolateDescriptors",
+            "description":"Enables to consider all descriptors have their `interpolate` descriptor set to `true`, you can still set it to `false` if you want to disable it for one. If not set, `interpolateAlveoli` flag from the manifest.",
+            "nullable":true
+          },
           "name":{
             "type":"string",
             "title":"Alveolus.name",
@@ -1024,6 +1067,12 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
                   "type":"string",
                   "title":"Patch.descriptorName",
                   "description":"The descriptor to patch. It can be any descriptor, including transitive ones. It can be `*` to patch all descriptors (`/metadata/label/app` for example) or `regex:&lt;java pattern&gt;` to match descriptor names with a regex."
+                },
+                "includeIf":{
+                  "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"Patch.includeIf",
+                  "description":"Conditions to include this patch. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
                 },
                 "interpolate":{
                   "type":"boolean",
@@ -1059,6 +1108,12 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
           }
         }
       }
+    },
+    "interpolateAlveoli":{
+      "type":"boolean",
+      "title":"Manifest.interpolateAlveoli",
+      "description":"Enables to consider all alveoli have their `interpolateDescriptors` descriptor set to `true`, you can still set it to `false` if you want to disable it for one.",
+      "nullable":true
     },
     "references":{
       "type":"array",
@@ -1166,7 +1221,7 @@ For that you can use <code>descriptor.patches</code> in the manifest which will 
 <div class="listingblock">
 <div class="title">Patch using CLI option</div>
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
   "alveoli": [
     {
       "name": "com.company.alveoli:my-app:${project.version}",
@@ -1238,7 +1293,7 @@ In such a case you can condition dependencies and descriptor deployment:</p>
 <div class="listingblock">
 <div class="title">Deploy monitoring alveolus only if MONITORING option is set</div>
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
   "alveoli": [
     {
       "name": "com.company.alveoli:my-app:${project.version}",
@@ -1283,7 +1338,7 @@ Even if not recommended it can be done using <code>{{xxx}}</code> placeholders -
 <div class="listingblock">
 <div class="title">Filter manifest.json at command time</div>
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="json" class="language-json hljs">{
+<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
   "alveoli": [
     {
       "name": "com.company.alveoli:my-app:{{project.version}}",
@@ -1303,7 +1358,7 @@ Even if not recommended it can be done using <code>{{xxx}}</code> placeholders -
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="bash" class="language-bash hljs">bundlebee \
+<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">bundlebee \
     [your command and options] \
     --project.version 1.2.1 \
     --bundlebee.version 1.0.1</code></pre>
@@ -1354,6 +1409,9 @@ Even if not recommended it can be done using <code>{{xxx}}</code> placeholders -
 </li>
 <li>
 <p><code>bundlebee-maven-server-password:&lt;server id&gt;</code>: extract from your maven <code>settings.xml</code> a server password (potentially deciphered),</p>
+</li>
+<li>
+<p><code>bundlebee-kubernetes-namespace</code>: the Kubernetes namespace defined in the HttpKubeClient,</p>
 </li>
 <li>
 <p><code>kubeconfig.cluster.&lt;cluster name&gt;.ip</code>: extract cluster IP from your kubeconfig,</p>
@@ -1432,7 +1490,7 @@ ensure to test this solution <strong>on your machine</strong>, on our test machi
 <p>Create this <code>Dockerfile</code> file next to the binary you just downloaded and renamed <code>bundlebee</code>:</p>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code data-lang="dockerfile" class="language-dockerfile hljs">FROM ubuntu:20.10 as builder
+<pre class="highlightjs highlight"><code class="language-dockerfile hljs" data-lang="dockerfile">FROM ubuntu:20.10 as builder
 
 RUN apt-get update &amp;&amp; apt-get install -y zlib1g libgcc-s1 libstdc++6
 
@@ -1474,9 +1532,9 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
 </div>
 </div>
 </div>
+                
             </div>
         </div>
-
     <div class="page-navigation-right">
         <h3>Navigation</h3>
         <nav class="generated-nav-menu"></nav>
@@ -1486,9 +1544,9 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
     <footer class="footer pb-5">
 	    <div class="footer-bottom text-center">
 		    <ul class="social-list list-unstyled">
-			    <li class="list-inline-item"><a href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+                <li class="list-inline-item"><a href="https://www.github.com/yupiik/"><i class="fab fa-github fa-fw"></i></a></li><li class="list-inline-item"><a href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
 	        </ul>
-            <small class="copyright">Yupiik &copy;</small>
+            <small class="copyright">Yupiik &copy;</small> | <a href="https://www.yupiik.com/terms-of-service/">Terms of service</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
 	    </div>
     </footer>
 
@@ -1520,13 +1578,13 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
     <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" ></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/js/bootstrap.min.js" integrity="sha512-8qmis31OQi6hIRgvkht0s6mCOittjMa9GMqtK9hes5iEQBQE/Ca6yGE5FsW36vyipGoWQswBj/QBm2JR086Rkw==" crossorigin="anonymous"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/highlight.min.js" integrity="sha512-DrpaExP2d7RJqNhXB41Q/zzzQrtb6J0zfnXD5XeVEWE8d9Hj54irCLj6dRS3eNepPja7DvKcV+9PnHC7A/g83A==" crossorigin="anonymous"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/java.min.js" integrity="sha512-ku64EPM6PjpseXTZbyRs0ZfXSbVsmLe+XcXxO3tZf1zW2GxZ+aKH9LZWgl/CRI9AFkU3IL7Pc1mzcZiUuvk7FQ==" crossorigin="anonymous"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/bash.min.js" integrity="sha512-Hg0ufGEvn0AuzKMU0psJ1iH238iUN6THh7EI0CfA0n1sd3yu6PYet4SaDMpgzN9L1yQHxfB3yc5ezw3PwolIfA==" crossorigin="anonymous"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/10.4.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
-    <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.initHighlightingOnLoad(); }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.20-SNAPSHOT"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/highlight.min.js" integrity="sha512-d00ajEME7cZhepRqSIVsQVGDJBdZlfHyQLNC6tZXYKTG7iwcF8nhlFuppanz8hYgXr8VvlfKh4gLC25ud3c90A==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/bash.min.js" integrity="sha512-Hg0ufGEvn0AuzKMU0psJ1iH238iUN6THh7EI0CfA0n1sd3yu6PYet4SaDMpgzN9L1yQHxfB3yc5ezw3PwolIfA==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/bash.min.js" integrity="sha512-Hg0ufGEvn0AuzKMU0psJ1iH238iUN6THh7EI0CfA0n1sd3yu6PYet4SaDMpgzN9L1yQHxfB3yc5ezw3PwolIfA==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
+    <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.highlightAll(); }</script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.21-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

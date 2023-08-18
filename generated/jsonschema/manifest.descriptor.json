@@ -259,7 +259,8 @@
                 "interpolate":{
                   "type":"boolean",
                   "title":"Descriptor.interpolate",
-                  "description":"If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`."
+                  "description":"If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`. If not set, `interpolateDescriptors` flag from the alveolus will be used.",
+                  "nullable":true
                 },
                 "location":{
                   "type":"string",
@@ -300,6 +301,12 @@
               }
             }
           },
+          "interpolateDescriptors":{
+            "type":"boolean",
+            "title":"Alveolus.interpolateDescriptors",
+            "description":"Enables to consider all descriptors have their `interpolate` descriptor set to `true`, you can still set it to `false` if you want to disable it for one. If not set, `interpolateAlveoli` flag from the manifest.",
+            "nullable":true
+          },
           "name":{
             "type":"string",
             "title":"Alveolus.name",
@@ -317,6 +324,12 @@
                   "type":"string",
                   "title":"Patch.descriptorName",
                   "description":"The descriptor to patch. It can be any descriptor, including transitive ones. It can be `*` to patch all descriptors (`/metadata/label/app` for example) or `regex:<java pattern>` to match descriptor names with a regex."
+                },
+                "includeIf":{
+                  "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"Patch.includeIf",
+                  "description":"Conditions to include this patch. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
                 },
                 "interpolate":{
                   "type":"boolean",
@@ -352,6 +365,12 @@
           }
         }
       }
+    },
+    "interpolateAlveoli":{
+      "type":"boolean",
+      "title":"Manifest.interpolateAlveoli",
+      "description":"Enables to consider all alveoli have their `interpolateDescriptors` descriptor set to `true`, you can still set it to `false` if you want to disable it for one.",
+      "nullable":true
     },
     "references":{
       "type":"array",
