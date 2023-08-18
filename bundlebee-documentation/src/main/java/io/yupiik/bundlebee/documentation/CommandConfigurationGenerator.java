@@ -119,9 +119,9 @@ public class CommandConfigurationGenerator implements Runnable {
                                 conf,
                                 "= " + Character.toUpperCase(name.charAt(0)) + name.substring(1) + "\n" +
                                         "\n" +
-                                        description + "\n" +
-                                        "\n" +
                                         "Name: `" + name + "`.\n" +
+                                        "\n" +
+                                        description + "\n" +
                                         "\n" +
                                         "== Configuration\n" +
                                         "\n" +

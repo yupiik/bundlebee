@@ -139,6 +139,9 @@
               </configuration>
             </action>
             <action>
+              <type>io.yupiik.bundlebee.documentation.ListChecks</type>
+            </action>
+            <action>
               <type>io.yupiik.bundlebee.documentation.ConfigurationGenerator</type>
               <configuration>
                 <module>bundlebee-core.*</module>
