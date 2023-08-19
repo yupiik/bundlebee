@@ -19,7 +19,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import javax.json.JsonObject;
+import javax.json.JsonValue;
 import java.util.stream.Stream;
+
+import static java.util.Optional.ofNullable;
 
 public interface LintingCheck {
     String name();
@@ -32,18 +35,46 @@ public interface LintingCheck {
 
     Stream<LintError> validate(LintableDescriptor descriptor);
 
+    /**
+     * Enables to create validations with dependencies between descriptors, use {@link #accept(LintableDescriptor)} as a visitor.
+     *
+     * @return validation errors after all descriptors got visited.
+     */
+    default Stream<ContextualLintError> afterAll() {
+        return Stream.empty();
+    }
+
     @Getter
     @RequiredArgsConstructor
     class LintableDescriptor {
+        private final String alveolus;
         private final String name;
         private final JsonObject descriptor;
 
         public boolean isKind(final String kind) {
             try {
-                return descriptor.getString("kind", "").equals(kind);
+                return kind().equals(kind);
             } catch (final RuntimeException re) {
                 return false;
             }
+        }
+
+        public String kind() {
+            return descriptor.getString("kind", "");
+        }
+
+        public String name() {
+            return ofNullable(descriptor.getJsonObject("metadata"))
+                    .map(JsonValue::asJsonObject)
+                    .map(o -> o.getString("name", ""))
+                    .orElse("");
+        }
+
+        public String namespace() {
+            return ofNullable(descriptor.getJsonObject("metadata"))
+                    .map(JsonValue::asJsonObject)
+                    .map(o -> o.getString("namespace", ""))
+                    .orElse("");
         }
     }
 }

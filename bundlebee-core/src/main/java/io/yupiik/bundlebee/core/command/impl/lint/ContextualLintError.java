@@ -13,25 +13,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.yupiik.bundlebee.core.command.impl.lint.builtin;
+package io.yupiik.bundlebee.core.command.impl.lint;
 
-import io.yupiik.bundlebee.core.command.impl.lint.LintingCheck;
-import lombok.RequiredArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 
-import java.util.Set;
+@Getter
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+public class ContextualLintError extends LintError {
+    private final String alveolus;
+    private final String descriptor;
 
-import static lombok.AccessLevel.PROTECTED;
-
-@RequiredArgsConstructor(access = PROTECTED)
-public abstract class CheckByKind implements LintingCheck {
-    private final Set<String> supportedKinds;
-
-    @Override
-    public boolean accept(final LintableDescriptor descriptor) {
-        try {
-            return supportedKinds.contains(descriptor.kind());
-        } catch (final RuntimeException re) {
-            return false;
-        }
+    public ContextualLintError(final LintLevel level, final String message, final String alveolus, final String descriptor) {
+        super(level, message);
+        this.alveolus = alveolus;
+        this.descriptor = descriptor;
     }
 }

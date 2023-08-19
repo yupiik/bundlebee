@@ -17,10 +17,16 @@ package io.yupiik.bundlebee.core.yaml;
 
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.composer.ComposerException;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.json.JsonArray;
+import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
+import java.util.stream.StreamSupport;
+
+import static java.util.stream.Collectors.joining;
 
 @ApplicationScoped
 public class Yaml2JsonConverter {
@@ -33,7 +39,19 @@ public class Yaml2JsonConverter {
     private Jsonb jsonb;
 
     public <T> T convert(final Class<T> expected, final String content) {
-        final var loaded = yaml.load(content);
-        return jsonb.fromJson(jsonb.toJson(loaded), expected);
+        try {
+            final var loaded = yaml.load(content);
+            return jsonb.fromJson(jsonb.toJson(loaded), expected);
+        } catch (final ComposerException ce) {
+            if (expected == JsonValue.class || expected == JsonArray.class) {
+                final var loaded = yaml.loadAll(content);
+                return jsonb.fromJson(
+                        StreamSupport.stream(loaded.spliterator(), false)
+                                .map(it -> jsonb.toJson(it))
+                                .collect(joining(",", "[", "]")),
+                        expected);
+            }
+            throw ce;
+        }
     }
 }
