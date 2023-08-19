@@ -29,6 +29,9 @@ import java.util.Map;
  */
 @Data
 public class Manifest {
+    @Description("Ignored linting rule names when using `lint` command.")
+    private List<IgnoredLintingRule> ignoredLintingRules;
+
     @Description("Enables to consider all alveoli have their `interpolateDescriptors` descriptor set to `true`, you can still set it to `false` if you want to disable it for one.")
     private Boolean interpolateAlveoli;
 
@@ -337,5 +340,11 @@ public class Manifest {
                 "For example `my-manifest.json` will resolve to `/path/to/bundlebee/my-manifest.json` in a folder and `/bundlebee/my-manifest.json` in a jar. " +
                 "Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :`/bundlebee/my-module.sub-manifest.json` or use a dedicated subfolder (`/bundlebee/my-module/sub.json`).")
         private String path;
+    }
+
+    @Data
+    public static class IgnoredLintingRule {
+        @Description("Name of the rule to ignore.")
+        private String name;
     }
 }

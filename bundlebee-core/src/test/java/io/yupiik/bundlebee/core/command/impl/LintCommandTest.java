@@ -328,6 +328,67 @@ class LintCommandTest {
                 "[test][desc.yaml] No liveness probe\n");
     }
 
+    @Test
+    void roleAndRoleBindingToCreatePodKo(@TempDir final Path work, final CommandExecutor executor) throws IOException {
+        final var lintCommand = writeAlveolus(work, "" +
+                "---\n" +
+                "apiVersion: rbac.authorization.k8s.io/v1\n" +
+                "kind: Role\n" +
+                "metadata:\n" +
+                "  name: role1\n" +
+                "  namespace: namespace-dev\n" +
+                "rules:\n" +
+                "  - apiGroups: [\"\"]\n" +
+                "    resources: [\"pods\"]\n" +
+                "    verbs: [\"create\"]\n" +
+                "---\n" +
+                "apiVersion: rbac.authorization.k8s.io/v1\n" +
+                "kind: RoleBinding\n" +
+                "metadata:\n" +
+                "  name: role-binding1\n" +
+                "  namespace: namespace-dev\n" +
+                "subjects:\n" +
+                "  - kind: ServiceAccount\n" +
+                "    name: account1\n" +
+                "    namespace: namespace-dev\n" +
+                "roleRef:\n" +
+                "  apiGroup: rbac.authorization.k8s.io\n" +
+                "  kind: Role\n" +
+                "  name: role1\n");
+        assertOutput(executor, lintCommand, "There are linting errors:\n" +
+                "[test][desc.yaml] RoleBinding 'role-binding1' enables to create pods\n");
+    }
+
+    @Test
+    void roleAndRoleBindingToCreatePodOk(@TempDir final Path work, final CommandExecutor executor) throws IOException {
+        final var lintCommand = writeAlveolus(work, "" +
+                "---\n" +
+                "apiVersion: rbac.authorization.k8s.io/v1\n" +
+                "kind: Role\n" +
+                "metadata:\n" +
+                "  name: role1\n" +
+                "  namespace: namespace-dev\n" +
+                "rules:\n" +
+                "  - apiGroups: [\"\"]\n" +
+                "    resources: [\"pods\"]\n" +
+                "    verbs: [\"get\"]\n" +
+                "---\n" +
+                "apiVersion: rbac.authorization.k8s.io/v1\n" +
+                "kind: RoleBinding\n" +
+                "metadata:\n" +
+                "  name: role-binding1\n" +
+                "  namespace: namespace-dev\n" +
+                "subjects:\n" +
+                "  - kind: ServiceAccount\n" +
+                "    name: account1\n" +
+                "    namespace: namespace-dev\n" +
+                "roleRef:\n" +
+                "  apiGroup: rbac.authorization.k8s.io\n" +
+                "  kind: Role\n" +
+                "  name: role1\n");
+        assertOutput(executor, lintCommand, "No linting error.\n");
+    }
+
     private void assertOutput(final CommandExecutor executor, final String[] lintCommand, final String expected) {
         final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(lintCommand));
         assertEquals(expected, logs);

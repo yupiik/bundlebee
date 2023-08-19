@@ -19,6 +19,7 @@ import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
 import io.yupiik.bundlebee.core.command.impl.lint.LintingCheck;
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
@@ -31,17 +32,22 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.Instance;
 import javax.inject.Inject;
 import javax.json.JsonObject;
+import javax.json.JsonString;
+import javax.json.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static javax.json.JsonValue.EMPTY_JSON_ARRAY;
 
 @Log
 @Dependent
@@ -145,15 +151,25 @@ public class LintCommand implements CompletingExecutable {
                         final String descriptor,
                         final JsonObject desc,
                         final LintErrors result,
-                        final List<LintingCheck> checks) {
+                        final List<LintingCheck> checks, final Manifest manifest) {
         if (ignoredAlveoli.contains(ctx.getAlveolus().getName()) || ignoredDescriptors.contains(descriptor)) {
             log.finest(() -> "Ignoring '" + descriptor + "' from alveolus '" + ctx.getAlveolus().getName() + "'");
             return;
         }
 
+        final var ignored = ofNullable(desc.getJsonArray("$bundlebeeIgnoredLintingRules")).orElse(EMPTY_JSON_ARRAY);
+
         log.finest(() -> "Linting " + ctx.getAlveolus().getName() + ": " + desc);
-        final var ld = new LintingCheck.LintableDescriptor(descriptor, desc);
+        final var ld = new LintingCheck.LintableDescriptor(ctx.getAlveolus().getName(), descriptor, desc);
         result.errors.addAll(checks.stream()
+                // excluded validations from the manifest
+                .filter(c -> manifest.getIgnoredLintingRules() == null || manifest.getIgnoredLintingRules().stream()
+                        .noneMatch(r -> Objects.equals(r.getName(), c.name())))
+                // excluded validations from the descriptor itself in $bundlebeeIgnoredLintingRules attribute
+                .filter(c -> ignored.isEmpty() || ignored.stream()
+                        .filter(it -> it.getValueType() == JsonValue.ValueType.STRING)
+                        .map(it -> ((JsonString) it).getString())
+                        .noneMatch(excluded -> Objects.equals(excluded, c.name())))
                 .filter(c -> c.accept(ld))
                 .flatMap(c -> c.validate(ld)
                         .map(it -> new DecoratedLintError(it, ctx.getAlveolus().getName(), descriptor, c.remediation())))
@@ -191,7 +207,7 @@ public class LintCommand implements CompletingExecutable {
                 });
     }
 
-    private CompletionStage<? extends List<?>> visit(final LintErrors result) {
+    private CompletionStage<Void> visit(final LintErrors result) {
         final var cache = archives.newCache();
         final var checks = this.checks.stream()
                 .filter(it -> {
@@ -208,27 +224,30 @@ public class LintCommand implements CompletingExecutable {
                                 .map(it -> visitor.executeOnceOnAlveolus(
                                         null, it.getManifest(), it.getAlveolus(), null,
                                         (ctx, desc) -> k8s.forDescriptor("Linting", desc.getContent(), desc.getExtension(), json -> {
-                                            doLint(ctx, desc.getConfiguration().getName(), json, result, checks);
+                                            doLint(ctx, desc.getConfiguration().getName(), json, result, checks, it.getManifest());
                                             return completedFuture(true);
                                         }),
                                         cache, null, "inspected"))
                                 .collect(toList()), toList(),
-                        true));
+                        true))
+                .thenRun(() -> result.errors.addAll(checks.stream()
+                        .flatMap(c -> c.afterAll().map(e -> new DecoratedLintError(e, e.getAlveolus(), e.getDescriptor(), c.remediation())))
+                        .collect(toList())));
     }
 
     private static class LintErrors extends RuntimeException {
         private final List<DecoratedLintError> errors = new ArrayList<>();
 
         public LintErrors() {
-            super("There are linting errors");
+            super("Linting errors");
         }
 
         @Override
         public String getMessage() {
-            return super.getMessage() + ": " + (errors.isEmpty() ? "no." : errors.stream()
+            return super.getMessage() + (errors.isEmpty() ? ": no." : (":" + errors.stream()
                     .map(e -> "- [" + e.getError().getLevel().name() + "]" + e.format())
                     .sorted()
-                    .collect(joining("\n", "\n", "\n")));
+                    .collect(joining("\n", "\n", "\n"))));
         }
     }
 

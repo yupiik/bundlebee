@@ -119,7 +119,7 @@ public class KubeClient implements ConfigHolder {
             "Enables to tolerate custom attributes in the descriptors. " +
             "Typically used to drop `/$schema` attribute which enables a nice completion in editors. " +
             "Values are `|` delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch.")
-    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema")
+    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema|/$bundlebeeIgnoredLintingRules")
     private String implicitlyDroppedAttributes;
 
     @Inject

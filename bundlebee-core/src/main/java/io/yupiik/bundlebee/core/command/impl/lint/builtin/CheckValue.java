@@ -48,7 +48,7 @@ public abstract class CheckValue extends CheckByKind {
 
     @Override
     public Stream<LintError> validate(final LintableDescriptor descriptor) {
-        final var kind = descriptor.getDescriptor().getString("kind", "");
+        final var kind = descriptor.kind();
         final var ptr = pointers.get(kind);
         try {
             final var value = ptr.pointer.getValue(descriptor.getDescriptor());
