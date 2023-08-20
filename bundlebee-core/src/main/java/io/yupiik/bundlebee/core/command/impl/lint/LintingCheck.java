@@ -20,9 +20,11 @@ import lombok.RequiredArgsConstructor;
 
 import javax.json.JsonObject;
 import javax.json.JsonValue;
+import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
 import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedStage;
 
 public interface LintingCheck {
     String name();
@@ -33,15 +35,15 @@ public interface LintingCheck {
 
     boolean accept(LintableDescriptor descriptor);
 
-    Stream<LintError> validate(LintableDescriptor descriptor);
+    CompletionStage<Stream<LintError>> validate(LintableDescriptor descriptor);
 
     /**
      * Enables to create validations with dependencies between descriptors, use {@link #accept(LintableDescriptor)} as a visitor.
      *
      * @return validation errors after all descriptors got visited.
      */
-    default Stream<ContextualLintError> afterAll() {
-        return Stream.empty();
+    default CompletionStage<Stream<ContextualLintError>> afterAll() {
+        return completedStage(Stream.empty());
     }
 
     @Getter

@@ -15,15 +15,16 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import io.yupiik.bundlebee.core.command.impl.lint.LintingCheck;
+import io.yupiik.bundlebee.core.command.impl.lint.SynchronousLintingCheck;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Set;
+import java.util.logging.Logger;
 
 import static lombok.AccessLevel.PROTECTED;
 
 @RequiredArgsConstructor(access = PROTECTED)
-public abstract class CheckByKind implements LintingCheck {
+public abstract class CheckByKind implements SynchronousLintingCheck {
     private final Set<String> supportedKinds;
 
     @Override
@@ -33,5 +34,9 @@ public abstract class CheckByKind implements LintingCheck {
         } catch (final RuntimeException re) {
             return false;
         }
+    }
+
+    protected Logger lazyLogger() {
+        return Logger.getLogger(getClass().getName());
     }
 }

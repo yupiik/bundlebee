@@ -253,3 +253,7 @@ CMD ["/lib/ld-linux", "/bin/bundlebee-core"]
 . Run `docker build -t bundlebee .` in the folder you put `bundlebee` binary and previous `Dockerfile`
 
 IMPORTANT: this dockerfile works as of today because binaries are build on Ubuntu 20.10, you can need to adjust a bit libraries if this changes - this is why Java mode is simpler.
+
+== Linting
+
+Linting is quite specific so it has its own xref:linting.adoc[documentation].

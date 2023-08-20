@@ -32,13 +32,26 @@ import static java.util.stream.Collectors.toMap;
 public abstract class CheckValue extends CheckByKind {
     private static final JsonProvider PROVIDER = JsonProvider.provider();
 
-    private final Map<String, Ptr> pointers;
-    private final Map<String, Condition> conditions;
+    protected final Map<String, Ptr> pointers;
+    protected final Map<String, Condition> conditions;
+    protected final boolean ignoreIfMissing;
 
-    protected CheckValue(final Set<String> supportedKinds, final Map<String, String> jsonPointers, final Map<String, Condition> conditions) {
+    protected CheckValue(final Set<String> supportedKinds, final Map<String, String> jsonPointers,
+                         final boolean ignoreIfMissing) {
+        this(supportedKinds, jsonPointers, null, ignoreIfMissing);
+    }
+
+    protected CheckValue(final Set<String> supportedKinds, final Map<String, String> jsonPointers,
+                         final Map<String, Condition> conditions) {
+        this(supportedKinds, jsonPointers, conditions, false);
+    }
+
+    protected CheckValue(final Set<String> supportedKinds, final Map<String, String> jsonPointers,
+                         final Map<String, Condition> conditions, final boolean ignoreIfMissing) {
         super(supportedKinds);
         this.pointers = jsonPointers.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> new Ptr(e.getValue(), PROVIDER.createPointer(e.getValue()))));
         this.conditions = conditions;
+        this.ignoreIfMissing = ignoreIfMissing;
         if (this.conditions != null) {
             this.conditions.values().stream()
                     .filter(it -> it.pointer != null)
@@ -47,11 +60,15 @@ public abstract class CheckValue extends CheckByKind {
     }
 
     @Override
-    public Stream<LintError> validate(final LintableDescriptor descriptor) {
+    public Stream<LintError> validateSync(final LintableDescriptor descriptor) {
         final var kind = descriptor.kind();
         final var ptr = pointers.get(kind);
         try {
-            final var value = ptr.pointer.getValue(descriptor.getDescriptor());
+            final var value = getValue(descriptor, ptr);
+            if (value == null) { // ignore if missing
+                return Stream.empty();
+            }
+
             if (conditions == null) {
                 return doValidate(descriptor, value);
             }
@@ -74,8 +91,19 @@ public abstract class CheckValue extends CheckByKind {
         }
     }
 
+    private JsonValue getValue(final LintableDescriptor descriptor, final Ptr ptr) {
+        try {
+            return ptr.pointer.getValue(descriptor.getDescriptor());
+        } catch (final RuntimeException re) {
+            if (ignoreIfMissing) {
+                return null;
+            }
+            throw re;
+        }
+    }
+
     private boolean shouldSkip(final String kind, final LintableDescriptor descriptor) {
-        final var condition = conditions.get(kind);
+        final var condition = conditions == null ? null : conditions.get(kind);
         try {
             return condition != null && !condition.tester.test(
                     condition.jsonPointer == null ? null : condition.jsonPointer.getValue(descriptor.getDescriptor()));
@@ -91,14 +119,20 @@ public abstract class CheckValue extends CheckByKind {
     protected abstract Stream<LintError> doValidate(LintableDescriptor descriptor, JsonValue value);
 
     @RequiredArgsConstructor
-    private static class Ptr {
+    protected static class Ptr {
         private final String ptr;
         private final JsonPointer pointer;
     }
 
     @RequiredArgsConstructor
     protected static class Condition {
+        public static final Condition IGNORE_IF_MISSING = new Condition(
+                "/", v -> v != null && v.getValueType() != JsonValue.ValueType.NULL);
+
+        // value to test and pass to tester, if null, tester will get null as input
         private final String pointer;
+
+        // returns true if should fail on missing pointer value
         private final Predicate<JsonValue> tester;
 
         // internal
