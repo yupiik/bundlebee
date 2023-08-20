@@ -39,7 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
@@ -89,6 +91,11 @@ public class LintCommand implements CompletingExecutable {
     @Description("Comma separated list of rules to ignore (simple class name for built-in ones and check name for the others).")
     @ConfigProperty(name = "bundlebee.lint.ignoredRules", defaultValue = "-")
     private List<String> ignoredRules;
+
+    @Inject
+    @Description("Comma separated list of rules to use (others being ignored). `all` means use all discovered rules.")
+    @ConfigProperty(name = "bundlebee.lint.forcedRules", defaultValue = "all")
+    private List<String> forcedRules;
 
     @Inject
     @Description("Should remediation be shown (it is verbose so skipped by default).")
@@ -147,33 +154,50 @@ public class LintCommand implements CompletingExecutable {
         return visit(result).thenRun(() -> postProcess(result));
     }
 
-    private void doLint(final AlveolusHandler.AlveolusContext ctx,
-                        final String descriptor,
-                        final JsonObject desc,
-                        final LintErrors result,
-                        final List<LintingCheck> checks, final Manifest manifest) {
+    private CompletionStage<List<DecoratedLintError>> doLint(final AlveolusHandler.AlveolusContext ctx,
+                                                             final String descriptor,
+                                                             final JsonObject desc,
+                                                             final List<LintingCheck> checks,
+                                                             final Manifest manifest) {
         if (ignoredAlveoli.contains(ctx.getAlveolus().getName()) || ignoredDescriptors.contains(descriptor)) {
             log.finest(() -> "Ignoring '" + descriptor + "' from alveolus '" + ctx.getAlveolus().getName() + "'");
-            return;
+            return completedFuture(List.of());
         }
 
         final var ignored = ofNullable(desc.getJsonArray("$bundlebeeIgnoredLintingRules")).orElse(EMPTY_JSON_ARRAY);
 
         log.finest(() -> "Linting " + ctx.getAlveolus().getName() + ": " + desc);
         final var ld = new LintingCheck.LintableDescriptor(ctx.getAlveolus().getName(), descriptor, desc);
-        result.errors.addAll(checks.stream()
-                // excluded validations from the manifest
-                .filter(c -> manifest.getIgnoredLintingRules() == null || manifest.getIgnoredLintingRules().stream()
-                        .noneMatch(r -> Objects.equals(r.getName(), c.name())))
-                // excluded validations from the descriptor itself in $bundlebeeIgnoredLintingRules attribute
-                .filter(c -> ignored.isEmpty() || ignored.stream()
-                        .filter(it -> it.getValueType() == JsonValue.ValueType.STRING)
-                        .map(it -> ((JsonString) it).getString())
-                        .noneMatch(excluded -> Objects.equals(excluded, c.name())))
-                .filter(c -> c.accept(ld))
-                .flatMap(c -> c.validate(ld)
-                        .map(it -> new DecoratedLintError(it, ctx.getAlveolus().getName(), descriptor, c.remediation())))
-                .collect(toList()));
+        return all(checks.stream()
+                        // excluded validations from the manifest
+                        .filter(c -> manifest.getIgnoredLintingRules() == null || manifest.getIgnoredLintingRules().stream()
+                                .noneMatch(r -> Objects.equals(r.getName(), c.name())))
+                        // excluded validations from the descriptor itself in $bundlebeeIgnoredLintingRules attribute
+                        .filter(c -> ignored.isEmpty() || ignored.stream()
+                                .filter(it -> it.getValueType() == JsonValue.ValueType.STRING)
+                                .map(it -> ((JsonString) it).getString())
+                                .noneMatch(excluded -> Objects.equals(excluded, c.name())))
+                        .filter(c -> c.accept(ld))
+                        .map(c -> c.validate(ld)
+                                .thenApply(errors -> errors
+                                        .map(it -> new DecoratedLintError(it, ctx.getAlveolus().getName(), descriptor, c.remediation()))
+                                        .collect(toList())))
+                        .collect(toList()),
+                mergeLists(),
+                true);
+    }
+
+    private Collector<List<DecoratedLintError>, List<DecoratedLintError>, List<DecoratedLintError>> mergeLists() {
+        return Collector.of(
+                ArrayList::new,
+                (a, it) -> {
+                    synchronized (a) {
+                        a.addAll(it);
+                    }
+                }, (a, b) -> {
+                    a.addAll(b);
+                    return a;
+                });
     }
 
     private void postProcess(final LintErrors result) {
@@ -207,7 +231,7 @@ public class LintCommand implements CompletingExecutable {
                 });
     }
 
-    private CompletionStage<Void> visit(final LintErrors result) {
+    private CompletionStage<List<DecoratedLintError>> visit(final LintErrors result) {
         final var cache = archives.newCache();
         final var checks = this.checks.stream()
                 .filter(it -> {
@@ -216,23 +240,49 @@ public class LintCommand implements CompletingExecutable {
                             (ignoredRules.contains(clazz.getSimpleName()) || ignoredRules.contains(it.name())) :
                             ignoredRules.contains(it.name()));
                 })
+                .filter(it -> (forcedRules.size() == 1 && "all".equals(forcedRules.get(0))) || forcedRules.contains(it.name()))
                 .collect(toList());
+        if (!(forcedRules.size() == 1 && "all".equals(forcedRules.get(0))) && forcedRules.size() != checks.size()) {
+            throw new IllegalArgumentException("Didn't find all requested rules: " + forcedRules.stream()
+                    .filter(it -> checks.stream().noneMatch(c -> Objects.equals(c.name(), it)))
+                    .collect(joining(", ", "", " missing.")));
+        }
         return visitor
                 .findRootAlveoli(from, manifest, alveolus)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
-                                .map(it -> visitor.executeOnceOnAlveolus(
-                                        null, it.getManifest(), it.getAlveolus(), null,
-                                        (ctx, desc) -> k8s.forDescriptor("Linting", desc.getContent(), desc.getExtension(), json -> {
-                                            doLint(ctx, desc.getConfiguration().getName(), json, result, checks, it.getManifest());
-                                            return completedFuture(true);
-                                        }),
-                                        cache, null, "inspected"))
-                                .collect(toList()), toList(),
+                                .map(it -> {
+                                    final var allLints = new CopyOnWriteArrayList<CompletionStage<List<DecoratedLintError>>>();
+                                    visitor.executeOnceOnAlveolus(
+                                            null, it.getManifest(), it.getAlveolus(), null,
+                                            (ctx, desc) -> k8s.forDescriptor(
+                                                    "Linting", desc.getContent(), desc.getExtension(),
+                                                    json -> {
+                                                        final var promise = doLint(ctx, desc.getConfiguration().getName(), json, checks, it.getManifest());
+                                                        allLints.add(promise);
+                                                        return promise;
+                                                    }),
+                                            cache, null, "inspected");
+                                    return all(allLints, mergeLists(), true);
+                                })
+                                .collect(toList()),
+                        mergeLists(),
                         true))
-                .thenRun(() -> result.errors.addAll(checks.stream()
-                        .flatMap(c -> c.afterAll().map(e -> new DecoratedLintError(e, e.getAlveolus(), e.getDescriptor(), c.remediation())))
-                        .collect(toList())));
+                .thenCompose(errors -> {
+                    result.errors.addAll(errors);
+                    return all(
+                            checks.stream()
+                                    .map(c -> c.afterAll().thenApply(afterAllErrors -> afterAllErrors
+                                            .map(e -> new DecoratedLintError(e, e.getAlveolus(), e.getDescriptor(), c.remediation()))
+                                            .collect(toList())))
+                                    .collect(toList()),
+                            mergeLists(),
+                            true);
+                })
+                .thenApply(errors -> {
+                    result.errors.addAll(errors);
+                    return result.errors;
+                });
     }
 
     private static class LintErrors extends RuntimeException {

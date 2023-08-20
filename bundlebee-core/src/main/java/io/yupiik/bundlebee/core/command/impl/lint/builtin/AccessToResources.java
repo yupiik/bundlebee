@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
@@ -80,12 +79,12 @@ public abstract class AccessToResources extends CheckByKind {
     }
 
     @Override
-    public Stream<LintError> validate(final LintableDescriptor descriptor) {
+    public Stream<LintError> validateSync(final LintableDescriptor descriptor) {
         return Stream.empty(); // validation done in after all to ensure we have roles
     }
 
     @Override // todo: handle aggregated roles by using kube client *if needed*
-    public Stream<ContextualLintError> afterAll() {
+    public Stream<ContextualLintError> afterAllSync() {
         return Stream.concat(clusterRoleBindings.stream(), roleBindings.stream())
                 .flatMap(this::validateBinding);
     }
@@ -166,9 +165,5 @@ public abstract class AccessToResources extends CheckByKind {
                                         "enables to " + String.join(",", it.getFirst()) + " " + String.join(", ", it.getSecond()),
                                 binding.getAlveolus(), binding.getName())))
                 .orElseGet(Stream::empty);
-    }
-
-    private Logger lazyLogger() {
-        return Logger.getLogger(getClass().getName());
     }
 }
