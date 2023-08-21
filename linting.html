@@ -85,6 +85,33 @@
 </div>
 </div>
 <div class="sect1">
+<h2 id="_configure">Configure</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The main configuration of the linter are the inclusions or exclusions (see <code>lint</code> command details).</p>
+</div>
+<div class="paragraph">
+<p>You can also exclude rules in <code>ignoredLintingRules</code> of the <code>manifest.json</code> (per manifest not global) or in the descriptors directly using virtual <code>$bundlebeeIgnoredLintingRules</code> attribute which is equivalent.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+while in the manifest the list is a list of object with a <code>name</code> attribute, manifest and descriptor lists are list of rule names to keep it simple.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Indeed the <code>lint</code> command enables to exclude alveoli and descriptors but it is generally more convenient to create a <code>my-project:lint</code> alveolus which will disable (using placeholders or <code>includeIf</code> conditions) undesired external dependencies and descriptors during the linting process.
+This makes it quite easy and efficient to control what you deploy and avoid to trigger rules you don&#8217;t want.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_rules">Rules</h2>
 <div class="sectionbody">
 <div class="paragraph">
