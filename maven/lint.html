@@ -77,7 +77,7 @@
                 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>Do common validations on descriptors. As of today mainly cpu/memory resources definition.</p>
+<p>Do common validations on descriptors. As of today mainly cpu/memory resources definition. include::content/_partials/generated/documentation/lint.checks.adoc[leveloffset=+1]</p>
 </div>
 </div>
 </div>
@@ -149,6 +149,10 @@
 <dd>
 <p>If <code>true</code>, an exception is throw if there is at least one error. Default value: <code>ERROR</code>. Property: <code>${bundlebee.lint.failLevel}</code>.</p>
 </dd>
+<dt class="hdlist1">forcedRules (<code>List</code>)</dt>
+<dd>
+<p>Comma separated list of rules to use (others being ignored). <code>all</code> means use all discovered rules. Default value: <code>all</code>. Property: <code>${bundlebee.lint.forcedRules}</code>.</p>
+</dd>
 <dt class="hdlist1">from (<code>String</code>)</dt>
 <dd>
 <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code>. Property: <code>${bundlebee.lint.from}</code>.</p>
@@ -215,7 +219,7 @@
 </dd>
 <dt class="hdlist1">kubeImplicitlyDroppedAttributes (<code>String</code>)</dt>
 <dd>
-<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Default value: <code>/$schema</code>. Property: <code>${bundlebee.kube.implicitlyDroppedAttributes}</code>.</p>
+<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code>. Property: <code>${bundlebee.kube.implicitlyDroppedAttributes}</code>.</p>
 </dd>
 <dt class="hdlist1">kubeLogDescriptorOnParsingError (<code>boolean</code>)</dt>
 <dd>

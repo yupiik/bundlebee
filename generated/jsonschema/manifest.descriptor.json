@@ -366,6 +366,22 @@
         }
       }
     },
+    "ignoredLintingRules":{
+      "type":"array",
+      "title":"Manifest.ignoredLintingRules",
+      "description":"Ignored linting rule names when using `lint` command.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule",
+        "type":"object",
+        "properties":{
+          "name":{
+            "type":"string",
+            "title":"IgnoredLintingRule.name",
+            "description":"Name of the rule to ignore."
+          }
+        }
+      }
+    },
     "interpolateAlveoli":{
       "type":"boolean",
       "title":"Manifest.interpolateAlveoli",

@@ -169,6 +169,12 @@ It provides the unique identifier of your recipe (application/library) and what 
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of described applications/libraries.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule">Manifest.ignoredLintingRules</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ignoredLintingRules</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Ignored linting rule names when using <code>lint</code> command.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference">Manifest.references</a></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>references</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">array of object</p></td>
@@ -648,12 +654,43 @@ It provides the unique identifier of your recipe (application/library) and what 
 </table>
 </div>
 <div class="sect3">
+<h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule">Manifest.ignoredLintingRules</h4>
+<div class="paragraph">
+<p>Ignored linting rule names when using <code>lint</code> command.</p>
+</div>
+<table class="tableblock frame-all grid-all stretch">
+<caption class="title">Table 11. Manifest.ignoredLintingRules</caption>
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 20%;">
+<col style="width: 10%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-left valign-top">JSON Name</th>
+<th class="tableblock halign-left valign-top">Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>name</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Name of the rule to ignore.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
 <h4 id="io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference">Manifest.references</h4>
 <div class="paragraph">
 <p>List of files referenced as other manifests. They are merged with this (main) manifest by <strong>appending</strong> <em>requirements</em> and <em>alveoli</em>. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge <code>manifest.json</code> for an easier maintenance.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 11. Manifest.references</caption>
+<caption class="title">Table 12. Manifest.references</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -684,7 +721,7 @@ It provides the unique identifier of your recipe (application/library) and what 
 <p>Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.</p>
 </div>
 <table class="tableblock frame-all grid-all stretch">
-<caption class="title">Table 12. Manifest.requirements</caption>
+<caption class="title">Table 13. Manifest.requirements</caption>
 <colgroup>
 <col style="width: 20%;">
 <col style="width: 20%;">
@@ -1109,6 +1146,22 @@ manifest content can be wrapped in a <code>bundlebee</code> key (you wrap the wh
         }
       }
     },
+    "ignoredLintingRules":{
+      "type":"array",
+      "title":"Manifest.ignoredLintingRules",
+      "description":"Ignored linting rule names when using `lint` command.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule",
+        "type":"object",
+        "properties":{
+          "name":{
+            "type":"string",
+            "title":"IgnoredLintingRule.name",
+            "description":"Name of the rule to ignore."
+          }
+        }
+      }
+    },
     "interpolateAlveoli":{
       "type":"boolean",
       "title":"Manifest.interpolateAlveoli",
@@ -1529,6 +1582,14 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
 </td>
 </tr>
 </table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_linting">Linting</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Linting is quite specific so it has its own <a href="linting.html">documentation</a>.</p>
 </div>
 </div>
 </div>

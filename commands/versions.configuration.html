@@ -169,7 +169,7 @@ for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code
 </dd>
 <dt class="hdlist1">--bundlebee.kube.implicitlyDroppedAttributes (<code>BUNDLEBEE_KUBE_IMPLICITLYDROPPEDATTRIBUTES</code>)</dt>
 <dd>
-<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Default value: <code>/$schema</code></p>
+<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code></p>
 </dd>
 <dt class="hdlist1">--bundlebee.kube.logDescriptorOnParsingError (<code>BUNDLEBEE_KUBE_LOGDESCRIPTORONPARSINGERROR</code>)</dt>
 <dd>
