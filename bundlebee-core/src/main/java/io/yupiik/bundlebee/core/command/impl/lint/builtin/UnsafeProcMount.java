@@ -41,6 +41,11 @@ public class UnsafeProcMount extends ContainerValueValidator {
     }
 
     @Override
+    protected boolean supportsInitContainers() {
+        return true;
+    }
+
+    @Override
     protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
         return Stream.ofNullable(container.getJsonObject("securityContext"))
                 .filter(it -> "Unmasked".equals(it.getString("procMount", "")))

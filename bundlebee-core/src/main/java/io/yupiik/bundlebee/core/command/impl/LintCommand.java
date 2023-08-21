@@ -18,9 +18,19 @@ package io.yupiik.bundlebee.core.command.impl;
 import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
 import io.yupiik.bundlebee.core.command.impl.lint.LintingCheck;
+import io.yupiik.bundlebee.core.command.model.sarif.Artifact;
+import io.yupiik.bundlebee.core.command.model.sarif.CompleteLocation;
+import io.yupiik.bundlebee.core.command.model.sarif.Location;
+import io.yupiik.bundlebee.core.command.model.sarif.Result;
+import io.yupiik.bundlebee.core.command.model.sarif.Rule;
+import io.yupiik.bundlebee.core.command.model.sarif.Run;
+import io.yupiik.bundlebee.core.command.model.sarif.Sarif;
+import io.yupiik.bundlebee.core.command.model.sarif.Text;
+import io.yupiik.bundlebee.core.command.model.sarif.Tool;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.kube.KubeClient;
+import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
 import lombok.Data;
@@ -34,21 +44,30 @@ import javax.inject.Inject;
 import javax.json.JsonObject;
 import javax.json.JsonString;
 import javax.json.JsonValue;
+import javax.json.bind.Jsonb;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.stream.Collector;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static java.util.Comparator.comparing;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static javax.json.JsonValue.EMPTY_JSON_ARRAY;
 
 @Log
@@ -93,7 +112,7 @@ public class LintCommand implements CompletingExecutable {
     private List<String> ignoredRules;
 
     @Inject
-    @Description("Comma separated list of rules to use (others being ignored). `all` means use all discovered rules.")
+    @Description("Comma separated list of rules to use (others being ignored). `all` means use all discovered rules and `none` skip them all (useful as a toggle/bypass mode).")
     @ConfigProperty(name = "bundlebee.lint.forcedRules", defaultValue = "all")
     private List<String> forcedRules;
 
@@ -101,6 +120,11 @@ public class LintCommand implements CompletingExecutable {
     @Description("Should remediation be shown (it is verbose so skipped by default).")
     @ConfigProperty(name = "bundlebee.lint.showRemediation", defaultValue = "false")
     private boolean showRemediation;
+
+    @Inject
+    @Description("If not `false`, the path of the output in link:https://github.com/microsoft/sarif-tutorials[SARIF] format (JSON).")
+    @ConfigProperty(name = "bundlebee.lint.output", defaultValue = "false")
+    private String output;
 
     @Inject
     private AlveolusHandler visitor;
@@ -114,6 +138,10 @@ public class LintCommand implements CompletingExecutable {
     @Inject
     @Any
     private Instance<LintingCheck> checks;
+
+    @Inject
+    @BundleBee
+    private Jsonb jsonb;
 
     private List<String> ruleNames;
 
@@ -151,7 +179,82 @@ public class LintCommand implements CompletingExecutable {
     @Override
     public CompletionStage<?> execute() {
         final var result = new LintErrors();
-        return visit(result).thenRun(() -> postProcess(result));
+        final var checks = this.checks.stream()
+                .filter(it -> {
+                    final var clazz = it.getClass();
+                    return !(clazz.getPackageName().endsWith(".builtin") ?
+                            (ignoredRules.contains(clazz.getSimpleName()) || ignoredRules.contains(it.name())) :
+                            ignoredRules.contains(it.name()));
+                })
+                .filter(it -> (forcedRules.size() == 1 && "all".equals(forcedRules.get(0))) || forcedRules.contains(it.name()))
+                .collect(toList());
+        final var artifacts = new ConcurrentHashMap<String, Artifact>();
+        return visit(result, checks, artifacts)
+                .thenRun(() -> handleOutput(result, checks, artifacts))
+                .thenRun(() -> postProcess(result));
+    }
+
+    private void handleOutput(final LintErrors result, final List<LintingCheck> checks, final ConcurrentHashMap<String, Artifact> artifacts) {
+        if ("false".equals(output)) {
+            return;
+        }
+
+        final var out = Path.of(output);
+        try {
+            if (out.getParent() != null) {
+                Files.createDirectories(out.getParent());
+            }
+
+            final var sortedArtifacts = artifacts.values().stream()
+                    .sorted(comparing(a -> a.getLocation().getUri()))
+                    .collect(toList());
+
+            final var rules = checks.stream()
+                    .sorted(comparing(LintingCheck::name))
+                    .map(c -> new Rule(
+                            c.name(),
+                            new Text(c.description()),
+                            "https://www.yupiik.io/bundlebee/commands/lint.configuration.html#_" + c.name().replace('-', '_'),
+                            Map.of()))
+                    .collect(toList());
+            final var indexedRules = rules.isEmpty() ?
+                    Map.<String, Integer>of() :
+                    IntStream.range(0, rules.size())
+                            .boxed()
+                            .collect(toMap(id -> rules.get(id).getId(), identity()));
+            final var indexedArtifacts = sortedArtifacts.isEmpty() ?
+                    Map.<String, Integer>of() :
+                    IntStream.range(0, sortedArtifacts.size())
+                            .boxed()
+                            .collect(toMap(id -> sortedArtifacts.get(id).getLocation().getUri(), identity()));
+            final var sarif = new Sarif(
+                    "2.1.0", "http://json.schemastore.org/sarif-2.1.0-rtm.4",
+                    List.of(new Run(
+                            new Tool(new Tool.Driver(
+                                    "Yupiik Bundlebee",
+                                    "https://yupiik.io/bundlebee/",
+                                    rules)),
+                            sortedArtifacts,
+                            result.errors.stream()
+                                    .map(e -> {
+                                        final var uri = artifacts.get(e.getDescriptor()).getLocation().getUri();
+                                        return new Result(
+                                                e.getError().getLevel().getSarifLevel(),
+                                                new Text(e.getError().getMessage()),
+                                                e.getRuleName(),
+                                                indexedRules.getOrDefault(e.getRuleName(), null),
+                                                List.of(new CompleteLocation(new CompleteLocation.PhysicalLocation(
+                                                        uri,
+                                                        indexedArtifacts.getOrDefault(uri, null)))));
+                                    })
+                                    .collect(toList()))));
+
+            try (final var os = Files.newOutputStream(out)) {
+                jsonb.toJson(sarif, os);
+            }
+        } catch (final IOException ioe) {
+            throw new IllegalStateException(ioe);
+        }
     }
 
     private CompletionStage<List<DecoratedLintError>> doLint(final AlveolusHandler.AlveolusContext ctx,
@@ -180,7 +283,7 @@ public class LintCommand implements CompletingExecutable {
                         .filter(c -> c.accept(ld))
                         .map(c -> c.validate(ld)
                                 .thenApply(errors -> errors
-                                        .map(it -> new DecoratedLintError(it, ctx.getAlveolus().getName(), descriptor, c.remediation()))
+                                        .map(it -> new DecoratedLintError(it, ctx.getAlveolus().getName(), descriptor, c.remediation(), c.name()))
                                         .collect(toList())))
                         .collect(toList()),
                 mergeLists(),
@@ -231,17 +334,13 @@ public class LintCommand implements CompletingExecutable {
                 });
     }
 
-    private CompletionStage<List<DecoratedLintError>> visit(final LintErrors result) {
+    private CompletionStage<List<DecoratedLintError>> visit(final LintErrors result, final List<LintingCheck> checks,
+                                                            final Map<String, Artifact> artifacts) {
+        if (forcedRules.contains("none")) {
+            return completedFuture(List.of());
+        }
+
         final var cache = archives.newCache();
-        final var checks = this.checks.stream()
-                .filter(it -> {
-                    final var clazz = it.getClass();
-                    return !(clazz.getPackageName().endsWith(".builtin") ?
-                            (ignoredRules.contains(clazz.getSimpleName()) || ignoredRules.contains(it.name())) :
-                            ignoredRules.contains(it.name()));
-                })
-                .filter(it -> (forcedRules.size() == 1 && "all".equals(forcedRules.get(0))) || forcedRules.contains(it.name()))
-                .collect(toList());
         if (!(forcedRules.size() == 1 && "all".equals(forcedRules.get(0))) && forcedRules.size() != checks.size()) {
             throw new IllegalArgumentException("Didn't find all requested rules: " + forcedRules.stream()
                     .filter(it -> checks.stream().noneMatch(c -> Objects.equals(c.name(), it)))
@@ -255,13 +354,17 @@ public class LintCommand implements CompletingExecutable {
                                     final var allLints = new CopyOnWriteArrayList<CompletionStage<List<DecoratedLintError>>>();
                                     visitor.executeOnceOnAlveolus(
                                             null, it.getManifest(), it.getAlveolus(), null,
-                                            (ctx, desc) -> k8s.forDescriptor(
-                                                    "Linting", desc.getContent(), desc.getExtension(),
-                                                    json -> {
-                                                        final var promise = doLint(ctx, desc.getConfiguration().getName(), json, checks, it.getManifest());
-                                                        allLints.add(promise);
-                                                        return promise;
-                                                    }),
+                                            (ctx, desc) -> {
+                                                artifacts.put(desc.getConfiguration().getName(), new Artifact(new Location(desc.getUri())));
+                                                return k8s.forDescriptor(
+                                                        "Linting", desc.getContent(), desc.getExtension(),
+                                                        json -> {
+                                                            final var promise = doLint(
+                                                                    ctx, desc.getConfiguration().getName(), json, checks, it.getManifest());
+                                                            allLints.add(promise);
+                                                            return promise;
+                                                        });
+                                            },
                                             cache, null, "inspected");
                                     return all(allLints, mergeLists(), true);
                                 })
@@ -273,7 +376,7 @@ public class LintCommand implements CompletingExecutable {
                     return all(
                             checks.stream()
                                     .map(c -> c.afterAll().thenApply(afterAllErrors -> afterAllErrors
-                                            .map(e -> new DecoratedLintError(e, e.getAlveolus(), e.getDescriptor(), c.remediation()))
+                                            .map(e -> new DecoratedLintError(e, e.getAlveolus(), e.getDescriptor(), c.remediation(), c.name()))
                                             .collect(toList())))
                                     .collect(toList()),
                             mergeLists(),
@@ -307,6 +410,7 @@ public class LintCommand implements CompletingExecutable {
         private final String aveolus;
         private final String descriptor;
         private final String remediation;
+        private final String ruleName;
 
         public String format() {
             return "[" + getAveolus() + "][" + getDescriptor() + "] " + getError().getMessage();

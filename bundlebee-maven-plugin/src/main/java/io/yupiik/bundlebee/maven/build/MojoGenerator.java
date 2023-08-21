@@ -30,12 +30,15 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.command.Executable.UNSET;
+import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
@@ -96,15 +99,19 @@ public final class MojoGenerator {
                     try {
                         final var name = instance.name();
                         final var prefix = Pattern.compile("^bundlebee\\." + name + "\\."); // see io.yupiik.bundlebee.core.BundleBee.toProperties
-                        final var parameterDeclarationPerName = new ClassFinder(instance.getClass())
+                        final var parameters = new ClassFinder(instance.getClass())
                                 .findAnnotatedFields(ConfigProperty.class).stream()
                                 .collect(toMap(
                                         it -> it.getAnnotation(ConfigProperty.class).name(),
+                                        identity()));
+                        final var parameterDeclarationPerName = parameters.entrySet().stream()
+                                .collect(toMap(
+                                        Map.Entry::getKey,
                                         it -> {
-                                            final var configProperty = it.getAnnotation(ConfigProperty.class);
+                                            final var configProperty = it.getValue().getAnnotation(ConfigProperty.class);
                                             final var key = configProperty.name();
                                             final var defaultValue = configProperty.defaultValue();
-                                            final var desc = it.getAnnotation(Description.class).value();
+                                            final var desc = it.getValue().getAnnotation(Description.class).value();
                                             final var paramName = fromParameterToFieldName(prefix.matcher(key).replaceAll(""));
                                             return "" +
                                                     "    /**\n" +
@@ -112,7 +119,7 @@ public final class MojoGenerator {
                                                     "     */\n" +
                                                     "    @Parameter(property = \"" + key + "\"" +
                                                     ", defaultValue = \"" + findDefault(key, defaultValue.replaceAll("\n", "\\n")) + "\")\n" +
-                                                    "    private " + it.getType().getName().replace("java.lang.", "").replace("$", ".") + " " + paramName + ";";
+                                                    "    private " + it.getValue().getType().getName().replace("java.lang.", "").replace("$", ".") + " " + paramName + ";";
                                         },
                                         (a, b) -> a,
                                         () -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER)));
@@ -143,7 +150,9 @@ public final class MojoGenerator {
                                             "\"--" + simpleName + "\"",
                                             "manifest".equals(simpleName) ?
                                                     "String.valueOf(\"skip\".equals(" + fieldName + ") ? defaultManifest : " + fieldName + ")" :
-                                                    "String.valueOf(" + fieldName + ")");
+                                                    (parameters.get(k).getType() == List.class ?
+                                                            "String.join(\",\", " + fieldName + ")" :
+                                                            "String.valueOf(" + fieldName + ")"));
                                 })
                                 .collect(joining(",\n                                ", "                                ", ""));
 

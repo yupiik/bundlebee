@@ -49,7 +49,7 @@ public abstract class CheckResources extends ContainerValueValidator {
     protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
         final var resources = container.getJsonObject("resources");
         if (resources == null) {
-            return Stream.of(new LintError(LintError.LintLevel.ERROR, "No resources element in container"));
+            return Stream.of(new LintError(LintError.LintLevel.ERROR, "No resources element in container so no " + resource + " " + type + "."));
         }
         final var type = resources.getJsonObject(this.type);
         if (type == null) {

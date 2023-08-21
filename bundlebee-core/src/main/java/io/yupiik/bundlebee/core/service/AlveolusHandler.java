@@ -453,7 +453,9 @@ public class AlveolusHandler {
         return handled(() -> ofNullable(Thread.currentThread().getContextClassLoader().getResource(resource))
                 .map(url -> {
                     try (final BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
-                        return new LoadedDescriptor(desc, reader.lines().collect(joining("\n")), extractExtension(resource));
+                        return new LoadedDescriptor(
+                                desc, reader.lines().collect(joining("\n")), extractExtension(resource),
+                                url.toExternalForm());
                     } catch (final IOException e) {
                         throw new IllegalStateException(e);
                     }
@@ -469,7 +471,11 @@ public class AlveolusHandler {
                                 if (content == null) {
                                     throw new IllegalStateException("No descriptor '" + resource + "' found in '" + desc.getLocation() + "'");
                                 }
-                                return new LoadedDescriptor(desc, content, extractExtension(resource));
+                                return new LoadedDescriptor(
+                                        desc, content, extractExtension(resource),
+                                        Files.isDirectory(archive.getLocation()) ?
+                                                archive.getLocation().resolve(resource).toUri().toASCIIString() :
+                                                archive.getLocation().toUri().toASCIIString() + "!" + resource);
                             });
                 }));
     }
@@ -559,7 +565,7 @@ public class AlveolusHandler {
         if (!alreadyInterpolated && desc.getConfiguration().getInterpolate()) {
             content = substitutor.replace(content);
         }
-        return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension());
+        return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension(), desc.getUri());
     }
 
     private JsonStructure loadJsonStructure(final LoadedDescriptor desc, final String content) {
@@ -617,6 +623,7 @@ public class AlveolusHandler {
         private final Manifest.Descriptor configuration;
         private final String content;
         private final String extension;
+        private final String uri;
     }
 
     @Data

@@ -1480,6 +1480,78 @@ class LintCommandTest {
                 "--forcedRules", "writable-host-mount");
     }
 
+    @Test
+    void none(@TempDir final Path work, final CommandExecutor executor) throws IOException {
+        final var lintCommand = writeAlveolus(work, "" +
+                "apiVersion: apps/v1\n" +
+                "kind: Deployment\n" +
+                "metadata:\n" +
+                "  name: app1\n" +
+                "spec:\n" +
+                "  selector:\n" +
+                "    matchLabels:\n" +
+                "      app.kubernetes.io/name: app1\n" +
+                "  template:\n" +
+                "    spec:\n" +
+                "      containers:\n" +
+                "      - name: app\n" +
+                "        volumeMounts:\n" +
+                "        - name: config\n" +
+                "          mountPath: /config\n" +
+                "      volumes:\n" +
+                "      - name: config\n" +
+                "        hostPath:\n" +
+                "          path: /config");
+        assertOutput(
+                executor, lintCommand,
+                "No linting error.\n",
+                "--forcedRules", "none");
+    }
+
+
+    @Test
+    void sarifReport(@TempDir final Path work, final CommandExecutor executor) throws IOException {
+        final var lintCommand = writeAlveolus(work, "" +
+                "apiVersion: apps/v1\n" +
+                "kind: Deployment\n" +
+                "metadata:\n" +
+                "  name: dont-fire\n" +
+                "spec:\n" +
+                "  selector:\n" +
+                "    matchLabels:\n" +
+                "      app.kubernetes.io/name: app1\n" +
+                "  template:\n" +
+                "    spec:\n" +
+                "      containers:\n" +
+                "        - name: app\n" +
+                "          securityContext:\n" +
+                "            runAsUser: 0\n" +
+                "            runAsNonRoot: false");
+        final var report = work.resolve("sarif.json");
+        assertOutput(
+                executor, lintCommand,
+                "There are linting errors:\n" +
+                        "[test][desc.yaml] 'runAsNonRoot' is false\n" +
+                        "[test][desc.yaml] 'runAsUser' is 0\n",
+                "--forcedRules", "run-as-non-root", "--output", report.toString());
+        assertEquals(
+                "{" +
+                        "\"version\":\"2.1.0\",\"$schema\":\"http://json.schemastore.org/sarif-2.1.0-rtm.4\",\"runs\":[" +
+                        "{" +
+                        "\"tool\":{\"driver\":{\"name\":\"Yupiik Bundlebee\",\"informationUri\":\"https://yupiik.io/bundlebee/\"," +
+                        "\"rules\":[" +
+                        "{" +
+                        "\"id\":\"run-as-non-root\",\"shortDescription\":{\"text\":\"Indicates when containers are not set to runAsNonRoot.\"}," +
+                        "\"helpUri\":\"https://www.yupiik.io/bundlebee/commands/lint.configuration.html#_run_as_non_root\",\"properties\":{}}]}" +
+                        "}," +
+                        "\"artifacts\":[{\"location\":{\"uri\":\"file://" + work + "/bundlebee/kubernetes/desc.yaml\"}}]," +
+                        "\"results\":[" +
+                        "{\"level\":\"error\",\"text\":{\"text\":\"'runAsNonRoot' is false\"},\"ruleId\":\"run-as-non-root\",\"ruleIndex\":0,\"locations\":[{\"physicalLocation\":{\"artifactLocation\":\"file://" + work + "/bundlebee/kubernetes/desc.yaml\",\"index\":0}}]}," +
+                        "{\"level\":\"error\",\"text\":{\"text\":\"'runAsUser' is 0\"},\"ruleId\":\"run-as-non-root\",\"ruleIndex\":0,\"locations\":[{\"physicalLocation\":{\"artifactLocation\":\"file://" + work + "/bundlebee/kubernetes/desc.yaml\",\"index\":0}}]}]}" +
+                        "]}",
+                Files.readString(report));
+    }
+
     private void assertOutput(final CommandExecutor executor, final String[] lintCommand, final String expected,
                               final String... customArgs) {
         final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
