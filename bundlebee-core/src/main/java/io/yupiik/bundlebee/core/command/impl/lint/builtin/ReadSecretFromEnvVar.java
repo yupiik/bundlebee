@@ -44,6 +44,11 @@ public class ReadSecretFromEnvVar extends ContainerValueValidator {
     }
 
     @Override
+    protected boolean supportsInitContainers() {
+        return true;
+    }
+
+    @Override
     protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
         final var env = container.getJsonArray("env");
         if (env == null) {

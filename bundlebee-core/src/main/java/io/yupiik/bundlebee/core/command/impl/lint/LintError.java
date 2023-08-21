@@ -27,8 +27,33 @@ public class LintError {
     @Getter
     @RequiredArgsConstructor
     public enum LintLevel {
-        INFO(10), WARNING(20), ERROR(30), OFF(100);
+        INFO(10) {
+            @Override
+            public String getSarifLevel() {
+                return "note";
+            }
+        },
+        WARNING(20) {
+            @Override
+            public String getSarifLevel() {
+                return "warning";
+            }
+        },
+        ERROR(30) {
+            @Override
+            public String getSarifLevel() {
+                return "error";
+            }
+        },
+        OFF(100) {
+            @Override
+            public String getSarifLevel() {
+                return "note";
+            }
+        };
 
         private final int level;
+
+        public abstract String getSarifLevel();
     }
 }

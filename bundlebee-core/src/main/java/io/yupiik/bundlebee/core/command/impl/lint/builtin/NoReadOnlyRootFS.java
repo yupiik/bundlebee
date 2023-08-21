@@ -39,6 +39,11 @@ public class NoReadOnlyRootFS extends ContainerValueValidator {
     }
 
     @Override
+    protected boolean supportsInitContainers() {
+        return true;
+    }
+
+    @Override
     protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
         final var securityContext = container.getJsonObject("securityContext");
         if (securityContext == null) {

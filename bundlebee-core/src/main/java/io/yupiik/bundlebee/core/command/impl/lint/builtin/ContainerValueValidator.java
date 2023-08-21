@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import io.yupiik.bundlebee.core.lang.Tuple2;
 
 import javax.json.JsonObject;
 import javax.json.JsonValue;
@@ -23,17 +24,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toMap;
+import static javax.json.JsonValue.EMPTY_JSON_ARRAY;
 
 public abstract class ContainerValueValidator extends CheckValue {
     private static final Set<String> RUNNABLE_TYPES = Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job");
     private static final Map<String, String> RUNNABLE_CONTAINERS_POINTERS = Map.of(
-            "DeploymentConfig", "/spec/template/spec/containers", // openshift
-            "Deployment", "/spec/template/spec/containers",
-            "CronJob", "/spec/jobTemplate/template/spec/containers",
-            "Job", "/spec/template/spec/containers",
-            "Pod", "/spec/containers");
+            "DeploymentConfig", "/spec/template/spec", // openshift
+            "Deployment", "/spec/template/spec",
+            "CronJob", "/spec/jobTemplate/template/spec",
+            "Job", "/spec/template/spec",
+            "Pod", "/spec");
 
     protected ContainerValueValidator() {
         super(RUNNABLE_TYPES, RUNNABLE_CONTAINERS_POINTERS, null);
@@ -44,15 +47,30 @@ public abstract class ContainerValueValidator extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue containers) {
-        return containers.asJsonArray().stream()
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue rawSpec) {
+        final var spec = rawSpec.asJsonObject();
+        final var containers = ofNullable(spec.getJsonArray("containers")).orElse(EMPTY_JSON_ARRAY);
+        final var initContainers = ofNullable(spec.getJsonArray("initContainers")).orElse(EMPTY_JSON_ARRAY);
+        return Stream.concat(containers.stream(), supportsInitContainers() ? initContainers.stream() : Stream.empty())
                 .map(JsonValue::asJsonObject)
-                .flatMap(it -> validate(it, descriptor));
+                .map(it -> new Tuple2<>(
+                        it,
+                        initContainers.size() > 1 ?
+                                new Tuple2<>(true, it.getString("name", "-")) :
+                                null))
+                .flatMap(it -> validate(it.getFirst(), descriptor)
+                        .map(e -> new LintError(e.getLevel(), e.getMessage() +
+                                (it.getSecond() != null ?
+                                        " (" + (it.getSecond().getFirst() ? "init-" : "") + "container=" + it.getSecond().getSecond() + ")" : ""))));
     }
 
     @Override
     protected boolean ignoreError(final LintableDescriptor descriptor) {
         return true; // if pointer is missing
+    }
+
+    protected boolean supportsInitContainers() {
+        return false;
     }
 
     protected abstract Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor);

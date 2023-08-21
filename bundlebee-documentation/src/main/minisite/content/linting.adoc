@@ -4,6 +4,17 @@ Linting is the process of running validations on descriptors.
 
 Bundlebee is able to read common "pre-rendered" descriptors (from Helm for example) as long as a `manifest.json` is properly formatted so you can run the linter on any descriptor even if it is working out of the box for Bundlebee alveoli (where you just run `bundlebee lint ...` command without pre-processing).
 
+== Configure
+
+The main configuration of the linter are the inclusions or exclusions (see `lint` command details).
+
+You can also exclude rules in `ignoredLintingRules` of the `manifest.json` (per manifest not global) or in the descriptors directly using virtual `$bundlebeeIgnoredLintingRules` attribute which is equivalent.
+
+TIP: while in the manifest the list is a list of object with a `name` attribute, manifest and descriptor lists are list of rule names to keep it simple.
+
+Indeed the `lint` command enables to exclude alveoli and descriptors but it is generally more convenient to create a `my-project:lint` alveolus which will disable (using placeholders or `includeIf` conditions) undesired external dependencies and descriptors during the linting process.
+This makes it quite easy and efficient to control what you deploy and avoid to trigger rules you don't want.
+
 == Rules
 
 Here is the available rules (built-in).
@@ -30,7 +41,6 @@ A check is composed of:
 * A `decription` explaining the validation,
 * A `validate` (or sync flavor) method doing validation when a descriptor is visited,
 * Sometimes an `afterAll` method doing validations after all descriptors were seen (for joins accross desriptors for example).
-
 
 === JSON, JSON, JSON
 

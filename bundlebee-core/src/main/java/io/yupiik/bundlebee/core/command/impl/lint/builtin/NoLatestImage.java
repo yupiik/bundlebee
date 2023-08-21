@@ -39,6 +39,11 @@ public class NoLatestImage extends ContainerValueValidator {
     }
 
     @Override
+    protected boolean supportsInitContainers() {
+        return true;
+    }
+
+    @Override
     protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
         final var image = container.getString("image", "");
         final var tagStart = image.lastIndexOf(':');
