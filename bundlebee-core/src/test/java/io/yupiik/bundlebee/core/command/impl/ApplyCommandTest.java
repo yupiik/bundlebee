@@ -52,6 +52,19 @@ class ApplyCommandTest {
     private HttpApiHandler<?> handler;
 
     @Test
+    void patchCustomContentType(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
+                "apply", "--alveolus", "customContentType", "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
+        assertEquals("Deploying 'customContentType'\nApplying 's0' (kind=services) for namespace 'default'\n", logs);
+
+        assertEquals(1, spyingResponseLocator.requests.size());
+        assertEquals("custom/json", spyingResponseLocator.requests.get(0).headers().get("Content-Type"));
+    }
+
+    @Test
     void includeIfPatch(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);

@@ -20,6 +20,7 @@ import io.yupiik.bundlebee.core.http.JsonHttpResponse;
 import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
+import lombok.Data;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -118,8 +119,9 @@ public class KubeClient implements ConfigHolder {
     @Description("" +
             "Enables to tolerate custom attributes in the descriptors. " +
             "Typically used to drop `/$schema` attribute which enables a nice completion in editors. " +
-            "Values are `|` delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch.")
-    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema|/$bundlebeeIgnoredLintingRules")
+            "Values are `|` delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. " +
+            "Using `none` ignores this processing.")
+    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema|/$bundlebeeIgnoredLintingRules|/$bundlebeePatchContentType")
     private String implicitlyDroppedAttributes;
 
     @Inject
@@ -150,6 +152,12 @@ public class KubeClient implements ConfigHolder {
     private String customMetadataInjectionPoint;
 
     @Inject
+    @Description("Default header value for `PATCH` requests. It uses strategic merge patch algorithm but in some cases you just want to use `application/json` or (better) `application/merge-patch+json`. " +
+            "Note that this value can be overriden per descriptor using `$bundlebee_patch_content_type` root attribute.")
+    @ConfigProperty(name = "bundlebee.kube.patchContentType", defaultValue = "application/strategic-merge-patch+json")
+    private String patchContentType;
+
+    @Inject
     @BundleBee
     private ScheduledExecutorService scheduledExecutorService;
 
@@ -174,16 +182,18 @@ public class KubeClient implements ConfigHolder {
             resourceMapping = Map.of();
         }
 
-        this.implicitlyDrops = Stream.of(implicitlyDroppedAttributes.split("\\|"))
-                .map(it -> jsonProvider.createPatch(
-                        it.startsWith("[") ?
-                                jsonb.fromJson(it, JsonArray.class) :
-                                jsonBuilderFactory.createArrayBuilder()
-                                        .add(jsonBuilderFactory.createObjectBuilder()
-                                                .add("op", JsonPatch.Operation.REMOVE.operationName())
-                                                .add("path", it))
-                                        .build()))
-                .collect(toList());
+        this.implicitlyDrops = "implicitlyDroppedAttributes".equals("none") ?
+                List.of() :
+                Stream.of(implicitlyDroppedAttributes.split("\\|"))
+                        .map(it -> jsonProvider.createPatch(
+                                it.startsWith("[") ?
+                                        jsonb.fromJson(it, JsonArray.class) :
+                                        jsonBuilderFactory.createArrayBuilder()
+                                                .add(jsonBuilderFactory.createObjectBuilder()
+                                                        .add("op", JsonPatch.Operation.REMOVE.operationName())
+                                                        .add("path", it))
+                                                .build()))
+                        .collect(toList());
     }
 
     // for backward compatibility
@@ -259,7 +269,7 @@ public class KubeClient implements ConfigHolder {
 
     public CompletionStage<?> apply(final String descriptorContent, final String ext,
                                     final Map<String, String> customLabels) {
-        return forDescriptor("Applying", descriptorContent, ext, json -> doApply(json, customLabels));
+        return forDescriptorWithOriginal("Applying", descriptorContent, ext, item -> doApply(item.getRaw(), item.getPrepared(), customLabels));
     }
 
     public CompletionStage<?> delete(final String descriptorContent, final String ext, final int gracePeriod) {
@@ -268,6 +278,11 @@ public class KubeClient implements ConfigHolder {
 
     public <T> CompletionStage<List<T>> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
                                                       final Function<JsonObject, CompletionStage<T>> descHandler) {
+        return forDescriptorWithOriginal(prefixLog, descriptorContent, ext, item -> descHandler.apply(item.getPrepared()));
+    }
+
+    public <T> CompletionStage<List<T>> forDescriptorWithOriginal(final String prefixLog, final String descriptorContent, final String ext,
+                                                                  final Function<DescriptorItem, CompletionStage<T>> descHandler) {
         if (api.isVerbose()) {
             log.info(() -> prefixLog + " descriptor\n" + descriptorContent);
         }
@@ -280,14 +295,15 @@ public class KubeClient implements ConfigHolder {
                 return all(
                         json.asJsonArray().stream()
                                 .map(JsonValue::asJsonObject)
-                                .map(this::sanitizeJson)
+                                .map(it -> new DescriptorItem(it, sanitizeJson(it)))
                                 .map(descHandler)
                                 .collect(toList()),
                         toList(),
                         true);
             case OBJECT:
+                final var jsonObject = json.asJsonObject();
                 return descHandler
-                        .apply(sanitizeJson(json.asJsonObject()))
+                        .apply(new DescriptorItem(jsonObject, sanitizeJson(jsonObject)))
                         .thenApply(List::of);
             default:
                 throw new IllegalArgumentException("Unsupported json type for apply: " + json);
@@ -359,7 +375,7 @@ public class KubeClient implements ConfigHolder {
                 });
     }
 
-    private CompletionStage<?> doApply(final JsonObject rawDesc, final Map<String, String> customLabels) {
+    private CompletionStage<?> doApply(final JsonObject originalDontUseDesc, final JsonObject rawDesc, final Map<String, String> customLabels) {
         // apply logic is a "create or replace" one
         // so first thing we have to do is to test if the resource exists, and if not create it
         // for that we will need to extract the resource "kind" and "name" (id):
@@ -381,7 +397,7 @@ public class KubeClient implements ConfigHolder {
         final var desc = customLabels.isEmpty() ? rawDesc : injectMetadata(rawDesc, customLabels);
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
         return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
-                .thenCompose(ignored -> doApply(rawDesc, desc, kindLowerCased, 1));
+                .thenCompose(ignored -> doApply(originalDontUseDesc, desc, kindLowerCased, 1));
     }
 
     private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc,
@@ -396,7 +412,7 @@ public class KubeClient implements ConfigHolder {
         final var baseUri = toBaseUri(preparedDesc, kindLowerCased, namespace);
 
         if (api.isVerbose()) {
-            log.info(() -> "Will apply descriptor " + rawDesc + " on " + baseUri);
+            log.info(() -> "Will apply descriptor " + preparedDesc + " on " + baseUri);
         }
 
         return api.execute(HttpRequest.newBuilder()
@@ -427,7 +443,7 @@ public class KubeClient implements ConfigHolder {
 
                         final var desc = filterForApply("@" + kindLowerCased + "/" + namespace + '/' + name, preparedDesc, kindLowerCased);
                         if (obj == null || !kindsToSkipUpdateIfPossible.contains(kind) || needsUpdate(obj, desc)) {
-                            return doUpdate(desc, name, fieldManager, baseUri)
+                            return doUpdate(rawDesc, desc, name, fieldManager, baseUri)
                                     .thenCompose(response -> {
                                         if (api.isVerbose()) {
                                             log.info(response::toString);
@@ -438,7 +454,7 @@ public class KubeClient implements ConfigHolder {
                                                 response.body();
                                         if (response.statusCode() == 422) { // try to get then update to forward the existing id
                                             return injectResourceVersionInDescriptor(desc, name, baseUri, errorMessage)
-                                                    .thenCompose(descWithResourceVersion -> doUpdate(descWithResourceVersion, name, fieldManager, baseUri)
+                                                    .thenCompose(descWithResourceVersion -> doUpdate(rawDesc, descWithResourceVersion, name, fieldManager, baseUri)
                                                             .thenApply(recoverResponse -> {
                                                                 if (api.isVerbose()) {
                                                                     log.info(recoverResponse::toString);
@@ -564,7 +580,8 @@ public class KubeClient implements ConfigHolder {
                 });
     }
 
-    private CompletableFuture<HttpResponse<String>> doUpdate(final JsonObject desc,
+    private CompletableFuture<HttpResponse<String>> doUpdate(final JsonObject raw,
+                                                             final JsonObject desc,
                                                              final String name,
                                                              final String fieldManager,
                                                              final String baseUri) {
@@ -593,10 +610,11 @@ public class KubeClient implements ConfigHolder {
                             baseUri + "/" + name + fieldManager))
                     .toCompletableFuture();
         }
+
         return api.execute(
                         HttpRequest.newBuilder()
                                 .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
-                                .header("Content-Type", "application/strategic-merge-patch+json")
+                                .header("Content-Type", raw.getString("$bundlebeePatchContentType", patchContentType))
                                 .header("Accept", "application/json"),
                         baseUri + "/" + name + fieldManager)
                 .toCompletableFuture();
@@ -790,5 +808,11 @@ public class KubeClient implements ConfigHolder {
                                 (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
                                 JsonObjectBuilder::addAll,
                                 JsonObjectBuilder::build))));
+    }
+
+    @Data
+    public static class DescriptorItem {
+        private final JsonObject raw;
+        private final JsonObject prepared;
     }
 }

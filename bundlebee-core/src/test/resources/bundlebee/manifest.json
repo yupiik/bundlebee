@@ -1,6 +1,14 @@
 {
   "alveoli": [
     {
+      "name": "customContentType",
+      "descriptors": [
+        {
+          "name": "customContentType"
+        }
+      ]
+    },
+    {
       "name": "ApplyCommandTest.includeIfPatch",
       "descriptors": [
         {
