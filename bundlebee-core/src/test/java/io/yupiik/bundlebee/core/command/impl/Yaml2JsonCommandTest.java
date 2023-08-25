@@ -41,7 +41,7 @@ class Yaml2JsonCommandTest {
                 "--bundlebee.yaml2json.input", "src/test/resources/bundlebee",
                 "--bundlebee.yaml2json.output", work.toAbsolutePath().toString()));
         assertAll(
-                () -> assertTrue(logs.contains("Found 5 files to convert")),
+                () -> assertTrue(logs.contains("Found 6 files to convert")),
                 () -> assertTrue(Files.exists(work.resolve("kubernetes/ApplyCommandTest.d0.json"))),
                 () -> assertTrue(Files.exists(work.resolve("kubernetes/ApplyCommandTest.d1.json"))),
                 () -> assertTrue(Files.exists(work.resolve("kubernetes/ApplyCommandTest.d2.json"))),
