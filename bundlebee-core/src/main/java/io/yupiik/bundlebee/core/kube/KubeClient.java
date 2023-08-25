@@ -49,6 +49,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -63,6 +64,7 @@ import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
 import static java.util.Locale.ROOT;
+import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedStage;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -121,7 +123,7 @@ public class KubeClient implements ConfigHolder {
             "Typically used to drop `/$schema` attribute which enables a nice completion in editors. " +
             "Values are `|` delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. " +
             "Using `none` ignores this processing.")
-    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema|/$bundlebeeIgnoredLintingRules|/$bundlebeePatchContentType")
+    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema|/$bundlebeeIgnoredLintingRules")
     private String implicitlyDroppedAttributes;
 
     @Inject
@@ -152,8 +154,10 @@ public class KubeClient implements ConfigHolder {
     private String customMetadataInjectionPoint;
 
     @Inject
-    @Description("Default header value for `PATCH` requests. It uses strategic merge patch algorithm but in some cases you just want to use `application/json` or (better) `application/merge-patch+json`. " +
-            "Note that this value can be overriden per descriptor using `$bundlebee_patch_content_type` root attribute.")
+    @Description("" +
+            "Default header value for `PATCH` `content-type` requests header. " +
+            "It uses strategic merge patch algorithm but in some cases you just want to use `application/json` or (better) `application/merge-patch+json`. " +
+            "Annotation `io.yupiik.bundlebee/patchContentType` is also supported.")
     @ConfigProperty(name = "bundlebee.kube.patchContentType", defaultValue = "application/strategic-merge-patch+json")
     private String patchContentType;
 
@@ -614,7 +618,7 @@ public class KubeClient implements ConfigHolder {
         return api.execute(
                         HttpRequest.newBuilder()
                                 .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
-                                .header("Content-Type", raw.getString("$bundlebeePatchContentType", patchContentType))
+                                .header("Content-Type", customPatchContentType(raw).orElse(patchContentType))
                                 .header("Accept", "application/json"),
                         baseUri + "/" + name + fieldManager)
                 .toCompletableFuture();
@@ -692,6 +696,16 @@ public class KubeClient implements ConfigHolder {
                     .orElse(false);
         } catch (final RuntimeException re) {
             return false;
+        }
+    }
+
+    private Optional<String> customPatchContentType(final JsonObject desc) {
+        try {
+            return ofNullable(desc.getJsonObject("metadata"))
+                    .map(it -> it.getJsonObject("annotations"))
+                    .map(it -> it.getString("io.yupiik.bundlebee/patchContentType"));
+        } catch (final RuntimeException re) {
+            return empty();
         }
     }
 

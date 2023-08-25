@@ -14,13 +14,14 @@
 # under the License.
 #
 
-$bundlebeePatchContentType: "custom/json"
 apiVersion: v1
 kind: Service
 metadata:
   name: s0
   labels:
     app: s-test
+  annotations:
+    io.yupiik.bundlebee/patchContentType: custom/json
 spec:
   type: NodePort
   ports:
