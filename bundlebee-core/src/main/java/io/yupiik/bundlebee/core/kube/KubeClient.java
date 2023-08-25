@@ -98,6 +98,11 @@ public class KubeClient implements ConfigHolder {
     private JsonBuilderFactory jsonBuilderFactory;
 
     @Inject
+    @Description("`fieldValidation` - server side validation - value when applying a descriptor, values can be `Strict`, `Warn` pr `Ignore`. Note that using `skip` will ignore the query parameter.")
+    @ConfigProperty(name = "bundlebee.kube.fieldValidation", defaultValue = "Strict")
+    private String fieldValidation;
+
+    @Inject
     @Description("Enables to define resource mapping, syntax uses propeties one: `<lowercased resource kind>s = /apis/....`.")
     @ConfigProperty(name = "bundlebee.kube.resourceMapping", defaultValue = "")
     private String rawResourceMapping;
@@ -412,7 +417,7 @@ public class KubeClient implements ConfigHolder {
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ")" +
                 (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
 
-        final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!api.isDryRun() ? "" : ("&dryRun=All"));
+        final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!api.isDryRun() ? "" : ("&dryRun=All")) + ("skip".equals(fieldValidation) ? "" : ("&fieldValidation=" + fieldValidation));
         final var baseUri = toBaseUri(preparedDesc, kindLowerCased, namespace);
 
         if (api.isVerbose()) {

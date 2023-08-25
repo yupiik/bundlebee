@@ -12,7 +12,7 @@
   {
     "request": {
       "method": "POST",
-      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmaps?fieldManager=kubectl-client-side-apply"
+      "uri": "https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/configmaps?fieldManager=kubectl-client-side-apply&fieldValidation=Strict"
     },
     "response": {
       "status": 201,
