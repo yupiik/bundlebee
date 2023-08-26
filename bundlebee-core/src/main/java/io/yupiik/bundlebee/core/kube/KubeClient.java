@@ -594,13 +594,14 @@ public class KubeClient implements ConfigHolder {
                                                              final String name,
                                                              final String fieldManager,
                                                              final String baseUri) {
+        final var urlOrPath = baseUri + "/" + name + fieldManager;
         if (putOnUpdate || isUsePutOnUpdateForced(desc)) {
             return api.execute(
                             HttpRequest.newBuilder()
                                     .PUT(HttpRequest.BodyPublishers.ofString(desc.toString()))
                                     .header("Content-Type", "application/json")
                                     .header("Accept", "application/json"),
-                            baseUri + "/" + name + fieldManager)
+                            urlOrPath)
                     .toCompletableFuture();
         }
         if (force || isForce(desc)) {
@@ -616,16 +617,28 @@ public class KubeClient implements ConfigHolder {
                                     .PUT(HttpRequest.BodyPublishers.ofString(desc.toString()))
                                     .header("Content-Type", "application/json")
                                     .header("Accept", "application/json"),
-                            baseUri + "/" + name + fieldManager))
+                            urlOrPath))
                     .toCompletableFuture();
         }
 
+        final var type = customPatchContentType(raw).orElse(patchContentType);
         return api.execute(
                         HttpRequest.newBuilder()
                                 .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
-                                .header("Content-Type", customPatchContentType(raw).orElse(patchContentType))
+                                .header("Content-Type", type)
                                 .header("Accept", "application/json"),
-                        baseUri + "/" + name + fieldManager)
+                        urlOrPath)
+                .thenCompose(res -> {
+                    if (res.statusCode() == 415 && !"application/merge-patch+json".equals(type)) { // try application/merge-patch+json (CRD typically)
+                        return api.execute(
+                                HttpRequest.newBuilder()
+                                        .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                        .header("Content-Type", "application/merge-patch+json")
+                                        .header("Accept", "application/json"),
+                                urlOrPath);
+                    }
+                    return completedStage(res);
+                })
                 .toCompletableFuture();
     }
 
