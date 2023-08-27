@@ -29,6 +29,7 @@ import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class RateLimitedClient extends DelegatingClient {
@@ -83,7 +84,15 @@ public class RateLimitedClient extends DelegatingClient {
     private <T> CompletableFuture<HttpResponse<T>> wrap(final long pause, final HttpRequest request,
                                                         final Supplier<CompletableFuture<HttpResponse<T>>> promise) {
         if (pause == 0) {
-            return promise.get().whenComplete((ok, ko) -> clientRateLimiter.after());
+            return promise.get()
+                    .whenComplete((ok, ko) -> clientRateLimiter.after())
+                    .thenCompose(ok -> {
+                        if (isRateLimited(ok)) {
+                            final long newPause = findPause(ok);
+                            return wrap(newPause, request, promise);
+                        }
+                        return completedFuture(ok);
+                    });
         }
 
         log(request, pause);
