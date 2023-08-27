@@ -57,7 +57,7 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
     private String from;
 
     @Inject
-    @Description("If `true`, a `bundlebee.timestamp` label will be injected into the descritors with current date before applying the descriptor.")
+    @Description("If `true`, a `bundlebee.timestamp` label will be injected into the descriptors with current date before applying the descriptor.")
     @ConfigProperty(name = "bundlebee.apply.injectTimestamp", defaultValue = "true")
     private boolean injectTimestamp;
 
