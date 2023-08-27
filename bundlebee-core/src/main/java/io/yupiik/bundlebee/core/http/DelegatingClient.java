@@ -21,7 +21,14 @@ import lombok.experimental.Delegate;
 import java.net.http.HttpClient;
 
 @RequiredArgsConstructor
-public class DelegatingClient extends HttpClient {
+public class DelegatingClient extends HttpClient implements AutoCloseable {
     @Delegate
     protected final HttpClient delegate;
+
+    @Override
+    public void close() throws Exception {
+        if (delegate instanceof AutoCloseable) {
+            ((AutoCloseable) delegate).close();
+        }
+    }
 }

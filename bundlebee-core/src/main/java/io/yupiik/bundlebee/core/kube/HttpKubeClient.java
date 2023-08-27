@@ -20,6 +20,8 @@ import io.yupiik.bundlebee.core.event.OnKubeRequest;
 import io.yupiik.bundlebee.core.http.DelegatingClient;
 import io.yupiik.bundlebee.core.http.DryRunClient;
 import io.yupiik.bundlebee.core.http.LoggingClient;
+import io.yupiik.bundlebee.core.http.RateLimitedClient;
+import io.yupiik.bundlebee.core.http.RateLimiter;
 import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
@@ -83,6 +85,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.command.Executable.UNSET;
+import static java.time.Clock.systemUTC;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -161,6 +164,23 @@ public class HttpKubeClient implements ConfigHolder {
     private boolean skipDryRunForGet;
 
     @Inject
+    @Description("Should HTTP client requests be limited and HTTP 427 responses be handled.")
+    @ConfigProperty(name = "bundlebee.kube.rateLimiter.enabled", defaultValue = "false")
+    private boolean rateLimiterEnabled;
+
+    @Inject
+    @Description("" +
+            "How many calls can be done if rate limiting is enabled. " +
+            "Note that setting it to `Integer.MAX_VALUE` will disable the client rate limiting and only enable server one.")
+    @ConfigProperty(name = "bundlebee.kube.rateLimiter.permits", defaultValue = "100")
+    private int rateLimiterPermits;
+
+    @Inject
+    @Description("Rate limiting window duration in milliseconds (default being 1 second).")
+    @ConfigProperty(name = "bundlebee.kube.rateLimiter.window", defaultValue = "1000")
+    private int rateLimiterWindow;
+
+    @Inject
     private Event<OnKubeRequest> onKubeRequestEvent;
 
     private Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
@@ -209,11 +229,17 @@ public class HttpKubeClient implements ConfigHolder {
                         }, client.executor().orElseGet(ForkJoinPool::commonPool));
             }
         };
+
         if (dryRun) {
             client = new LoggingClient(log, new DryRunClient(client, skipDryRunForGet));
         } else if (verbose) {
             client = new LoggingClient(log, client);
         }
+
+        if (rateLimiterEnabled) {
+            client = new RateLimitedClient(client, new RateLimiter(rateLimiterPermits, rateLimiterWindow, systemUTC()));
+        }
+
         if (loadedKubeConfig == null || loadedKubeConfig.getClusters() == null || loadedKubeConfig.getClusters().isEmpty()) {
             final var c = new KubeConfig.Cluster();
             c.setServer(baseApi);
