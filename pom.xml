@@ -21,7 +21,7 @@
 
   <groupId>io.yupiik</groupId>
   <artifactId>bundlebee</artifactId>
-  <version>1.0.21</version>
+  <version>1.0.22-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>BundleBee</name>
   <description>A light Kubernetes package manager inheriting from Apache Maven infrastructure.</description>
@@ -454,7 +454,7 @@ under the License.
     <connection>scm:git:https://github.com/yupiik/bundlebee.git</connection>
     <developerConnection>scm:git:https://github.com/yupiik/bundlebee.git</developerConnection>
     <url>https://github.com/yupiik/bundlebee.git</url>
-    <tag>bundlebee-1.0.21</tag>
+    <tag>bundlebee-1.0.20</tag>
   </scm>
 
   <distributionManagement>
