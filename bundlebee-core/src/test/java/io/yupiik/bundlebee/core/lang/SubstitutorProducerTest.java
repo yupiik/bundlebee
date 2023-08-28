@@ -34,6 +34,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -58,10 +59,15 @@ class SubstitutorProducerTest {
         }
 
         final var producer = new SubstitutorProducer();
+        final var provider = JsonProvider.provider();
         try {
             final var json = SubstitutorProducer.class.getDeclaredField("json");
             json.setAccessible(true);
-            json.set(producer, JsonProvider.provider());
+            json.set(producer, provider);
+
+            final var jsonBuilderFactory = SubstitutorProducer.class.getDeclaredField("jsonBuilderFactory");
+            jsonBuilderFactory.setAccessible(true);
+            jsonBuilderFactory.set(producer, provider.createBuilderFactory(Map.of()));
 
             final var httpKubeClient = SubstitutorProducer.class.getDeclaredField("httpKubeClient");
             httpKubeClient.setAccessible(true);
@@ -105,6 +111,14 @@ class SubstitutorProducerTest {
         } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Test
+    void directoryJsonKeyValuePairsContent() {
+        assertEquals(
+                "\"another/2.txt\":\"this\\nanother\\nfile = 2\\n\"," +
+                        "\"file/1.txt\":\"this\\nis the file\\nnumber 1\\n\"",
+                substitutor.getOrDefault("bundlebee-directory-json-key-value-pairs-content:src/test/resources/substitutor/json/content/*.txt", "failed"));
     }
 
     @Test

@@ -29,6 +29,8 @@ import javax.enterprise.inject.Produces;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.inject.Inject;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonObjectBuilder;
 import javax.json.JsonValue;
 import javax.json.spi.JsonProvider;
 import java.io.BufferedReader;
@@ -46,19 +48,24 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.Objects;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collector;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static java.util.Comparator.comparing;
 import static java.util.Locale.ROOT;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.logging.Level.SEVERE;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
 
 @Log
 @ApplicationScoped
@@ -69,6 +76,10 @@ public class SubstitutorProducer {
     @Inject
     @BundleBee
     private JsonProvider json;
+
+    @Inject
+    @BundleBee
+    private JsonBuilderFactory jsonBuilderFactory;
 
     @Inject
     private Maven maven;
@@ -108,6 +119,45 @@ public class SubstitutorProducer {
         try {
             if (placeholder.equals("bundlebee-kubernetes-namespace")) {
                 return httpKubeClient.getNamespace();
+            }
+            if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs-content:")) {
+                final var delegate = doSubstitute(
+                        self, config,
+                        "bundlebee-directory-json-key-value-pairs:" + placeholder.substring("bundlebee-directory-json-key-value-pairs-content:".length())).strip();
+                return delegate.substring(1, delegate.length() - 1); // drop brackets
+            }
+            if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs:")) { // enable easy injection of labels or more likely annotations
+                final var directory = placeholder.substring("bundlebee-directory-json-key-value-pairs:".length());
+                // we support the pattern "/my/dir" and will take all subfiles or "/my/dir/*.ext" and will filter files by a glob pattern
+                final int lastSep = directory.lastIndexOf("/*");
+                try (final var dir = lastSep < 0 ?
+                        Files.newDirectoryStream(Path.of(directory)) :
+                        Files.newDirectoryStream(Path.of(directory.substring(0, lastSep)), directory.substring(lastSep + 1));
+                     final var stream = stream(Spliterators.spliteratorUnknownSize(dir.iterator(), Spliterator.DISTINCT), false)
+                             .onClose(() -> {
+                                 try {
+                                     dir.close();
+                                 } catch (final IOException ioe) {
+                                     throw new IllegalStateException(ioe);
+                                 }
+                             })) {
+                    return stream
+                            .sorted(comparing(Path::getFileName))
+                            .collect(Collector.of(
+                                    jsonBuilderFactory::createObjectBuilder,
+                                    (builder, path) -> {
+                                        try {
+                                            builder.add(
+                                                    path.getFileName().toString().replace("____", "/"),
+                                                    Files.readString(path));
+                                        } catch (final IOException e) {
+                                            throw new IllegalStateException(e);
+                                        }
+                                    },
+                                    JsonObjectBuilder::addAll,
+                                    JsonObjectBuilder::build))
+                            .toString();
+                }
             }
             if (placeholder.startsWith("bundlebee-inline-file:")) {
                 final var bytes = readResource(placeholder, "bundlebee-inline-file:");
