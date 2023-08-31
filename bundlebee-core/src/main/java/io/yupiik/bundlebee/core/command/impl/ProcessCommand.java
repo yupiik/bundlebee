@@ -149,6 +149,9 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
                     final var target = out.resolve(name);
                     log.info(() -> "Dumping '" + target + "'");
                     try {
+                        if (target.getParent() != null) {
+                            Files.createDirectories(target.getParent());
+                        }
                         Files.writeString(target, format(content, jsonReaderFactory, jsonWriterFactory));
                     } catch (final IOException e) {
                         throw new IllegalStateException(e);

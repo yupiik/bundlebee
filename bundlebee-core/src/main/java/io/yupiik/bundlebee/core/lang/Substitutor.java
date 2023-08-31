@@ -50,25 +50,9 @@ public class Substitutor {
             final var previous = current;
             current = substitute(current, 0);
             if (previous.equals(current)) {
-                return unescape(previous);
+                return previous.replace(ESCAPE + PREFIX, PREFIX);
             }
         } while (true);
-    }
-
-    protected String unescape(final String previous) {
-        final var copy = new StringBuilder(previous.length());
-        boolean forceAppend = false;
-        for (int i = 0; i < previous.length(); i++) {
-            final var c = previous.charAt(i);
-            if (!forceAppend && c == ESCAPE) {
-                forceAppend = true;
-                continue;
-            } else if (forceAppend) {
-                forceAppend = false;
-            }
-            copy.append(c);
-        }
-        return copy.toString();
     }
 
     private String substitute(final String input, int iteration) {
@@ -96,7 +80,7 @@ public class Substitutor {
         }
         final var key = input.substring(start + PREFIX.length(), end);
         final var nested = key.indexOf(PREFIX);
-        if (nested >= 0) {
+        if (nested >= 0 && !(nested > 0 && key.charAt(nested - 1) == ESCAPE)) {
             final var nestedPlaceholder = key + SUFFIX;
             final var newKey = substitute(nestedPlaceholder, iteration + 1);
             return input.replace(nestedPlaceholder, newKey);

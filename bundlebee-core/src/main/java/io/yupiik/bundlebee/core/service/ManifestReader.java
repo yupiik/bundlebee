@@ -25,8 +25,10 @@ import org.eclipse.microprofile.config.Config;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import javax.json.JsonException;
 import javax.json.JsonObject;
 import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -82,8 +84,8 @@ public class ManifestReader {
             initInterpolateFlags(mf);
             onManifestReadEvent.fire(new OnManifestRead(mf));
             return mf;
-        } catch (final IOException e) {
-            throw new IllegalStateException(e);
+        } catch (final IOException | JsonException | JsonbException e) {
+            throw new IllegalStateException("Can't read manifest.json: (location=" + location + ")", e);
         }
     }
 
