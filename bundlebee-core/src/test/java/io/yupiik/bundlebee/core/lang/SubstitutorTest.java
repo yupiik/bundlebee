@@ -17,6 +17,7 @@ package io.yupiik.bundlebee.core.lang;
 
 import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.spi.ConfigSource;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -86,6 +87,9 @@ class SubstitutorTest {
 
     @Test
     void escaped() {
+        // we want to enable this escaping to propagate when not escaping {{}},
+        // case where a bash script is injected in a deployment for ex (init container)
+
         assertEquals("foo {{key:-or}} dummy", new Substitutor(k -> null).replace("foo \\{{key:-or}} dummy"));
         assertEquals("foo before {{key:-or}} / {{key:-or2}} after dummy", new Substitutor(k -> {
             switch (k) {
@@ -96,7 +100,7 @@ class SubstitutorTest {
                 default:
                     return null;
             }
-        }).replace("foo {{prefix}} \\{{key:-or}\\} / {{test:-\\{\\{key:-or2\\}\\}}} {{suffix}} dummy"));
+        }).replace("foo {{prefix}} \\{{key:-or}} / {{test:-\\{{key:-or2}}}} {{suffix}} dummy"));
     }
 
     @Test
