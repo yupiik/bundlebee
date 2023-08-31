@@ -36,6 +36,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
@@ -111,6 +112,11 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
     private String output;
 
     @Inject
+    @Description("Should all descriptors be concatenated in a single file - output.")
+    @ConfigProperty(name = "bundlebee.process.concat", defaultValue = UNSET)
+    private boolean concat;
+
+    @Inject
     private KubeClient kube;
 
     @Inject
@@ -143,16 +149,25 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
         final var out = output == null || UNSET.equals(output) ? null : Path.of(output);
         final var jsonReaderFactory = provider.createReaderFactory(Map.of());
         final var jsonWriterFactory = provider.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
+        final var collector = new ArrayList<String>();
         final BiConsumer<String, JsonObject> onDescriptor = out == null ?
                 (name, content) -> log.info(() -> name + ":\n" + format(content, jsonReaderFactory, jsonWriterFactory)) :
                 (name, content) -> {
+                    final var formatted = format(content, jsonReaderFactory, jsonWriterFactory);
+                    if (concat) {
+                        synchronized (collector) {
+                            collector.add(formatted);
+                        }
+                        return;
+                    }
+
                     final var target = out.resolve(name);
                     log.info(() -> "Dumping '" + target + "'");
                     try {
                         if (target.getParent() != null) {
                             Files.createDirectories(target.getParent());
                         }
-                        Files.writeString(target, format(content, jsonReaderFactory, jsonWriterFactory));
+                        Files.writeString(target, formatted);
                     } catch (final IOException e) {
                         throw new IllegalStateException(e);
                     }
@@ -169,7 +184,20 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
                                         .map(it -> doExecute(injectTimestamp, injectBundleBeeMetadata, cache, it, onDescriptor))
                                         .collect(toList()), toList(),
                                 true)
-                                .thenApply(ignored -> null));
+                                .thenApply(ignored -> null))
+                .thenApply(it -> {
+                    if (out != null && concat) {
+                        try {
+                            if (out.getParent() != null) {
+                                Files.createDirectories(out.getParent());
+                            }
+                            Files.writeString(out, String .join("\n---\n", collector));
+                        } catch (final IOException ioe) {
+                            throw new IllegalStateException(ioe);
+                        }
+                    }
+                    return it;
+                });
     }
 
     public CompletionStage<?> doExecute(final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
