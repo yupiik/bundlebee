@@ -38,7 +38,7 @@
     <xbean.version>4.23</xbean.version>
     <junit5.version>5.9.0</junit5.version>
     <arthur.version>1.0.5</arthur.version>
-    <yupiik-logging.version>1.0.6</yupiik-logging.version>
+    <yupiik-logging.version>1.0.7</yupiik-logging.version>
     <johnzon.version>1.2.21</johnzon.version>
 
     <!-- deprecated in recent maven releases, we workaround the warnings using the new way (but dont support split repo)
