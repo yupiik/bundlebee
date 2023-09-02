@@ -39,6 +39,7 @@
     <junit5.version>5.9.0</junit5.version>
     <arthur.version>1.0.5</arthur.version>
     <yupiik-logging.version>1.0.6</yupiik-logging.version>
+    <johnzon.version>1.2.21</johnzon.version>
 
     <!-- deprecated in recent maven releases, we workaround the warnings using the new way (but dont support split repo)
     <m2.location>${settings.localRepository}</m2.location>
@@ -91,7 +92,7 @@
       <dependency>
         <groupId>org.apache.johnzon</groupId>
         <artifactId>johnzon-jsonb</artifactId>
-        <version>1.2.18</version>
+        <version>${johnzon.version}</version>
       </dependency>
       <dependency>
         <groupId>org.talend.sdk.component</groupId>
