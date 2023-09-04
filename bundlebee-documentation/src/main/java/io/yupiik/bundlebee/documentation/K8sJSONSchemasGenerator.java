@@ -51,6 +51,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
@@ -72,8 +73,10 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final boolean force;
     private final int maxThreads;
     private final Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
+    private final boolean skip;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
+        this.skip = !Boolean.parseBoolean(configuration.getOrDefault("minisite.actions.k8s.jsonschema", "false"));
         this.sourceBase = sourceBase;
         this.tagsUrl = requireNonNull(configuration.get("tagsUrl"), () -> "No tagsUrl in " + configuration);
         this.urlTemplate = requireNonNull(configuration.get("specUrlTemplate"), () -> "No specUrlTemplate in " + configuration);
@@ -90,6 +93,10 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
     @Override
     public void run() {
+        if (skip) {
+            Logger.getLogger(getClass().getName()).info(() -> "Skipping " + getClass().getSimpleName());
+            return;
+        }
         final var httpClient = HttpClient.newBuilder().version(HTTP_1_1).build();
         final var jsonReaderFactory = Json.createReaderFactory(Map.of());
         final var jsonBuilderFactory = Json.createBuilderFactory(Map.of());

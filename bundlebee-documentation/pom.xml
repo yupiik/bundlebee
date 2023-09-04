@@ -34,6 +34,8 @@
     <minisite.kubernetes.jsonschema.force>false</minisite.kubernetes.jsonschema.force>
     <!-- can be needed to reduce it to avoid to have too much latency -->
     <minisite.kubernetes.jsonschema.maxThreads>16</minisite.kubernetes.jsonschema.maxThreads>
+    <!-- skip descriptor synchronization by default -->
+    <minisite.actions.k8s.jsonschema>false</minisite.actions.k8s.jsonschema>
   </properties>
 
   <dependencies>
@@ -207,6 +209,7 @@
             <action>
               <type>io.yupiik.bundlebee.documentation.K8sJSONSchemasGenerator</type>
               <configuration>
+                <minisite.actions.k8s.jsonschema>${minisite.actions.k8s.jsonschema}</minisite.actions.k8s.jsonschema>
                 <specUrlTemplate>https://raw.githubusercontent.com/kubernetes/kubernetes/{{version}}/api/openapi-spec/swagger.json</specUrlTemplate>
                 <tagsUrl>https://api.github.com/repos/kubernetes/kubernetes/tags</tagsUrl>
                 <skip>${minisite.kubernetes.jsonschema.skip}</skip>
@@ -252,10 +255,11 @@
         </plugins>
       </build>
     </profile>
-    <profile> <!--  mvn clean package -Pgh-pages  -->
+    <profile> <!--  mvn clean package -Pgh-pages -->
       <id>gh-pages</id>
       <properties>
         <minisite.serverId>github.com</minisite.serverId>
+        <minisite.actions.k8s.jsonschema>true</minisite.actions.k8s.jsonschema>
       </properties>
       <build>
         <plugins>
