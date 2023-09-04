@@ -39,8 +39,11 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -52,11 +55,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 import static java.net.http.HttpClient.Version.HTTP_1_1;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.function.Function.identity;
@@ -67,6 +72,7 @@ import static java.util.stream.Collectors.toMap;
 
 @Log
 public class K8sJSONSchemasGenerator implements Runnable {
+    private final Pattern versionSplitter = Pattern.compile("\\.");
     private final Path sourceBase;
     private final String tagsUrl;
     private final String urlTemplate;
@@ -74,6 +80,8 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final int maxThreads;
     private final Function<HttpRequest.Builder, HttpRequest.Builder> setAuth;
     private final boolean skip;
+    private final int[] minVersion;
+    private final Path cache;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
         this.skip = !Boolean.parseBoolean(configuration.getOrDefault("minisite.actions.k8s.jsonschema", "false"));
@@ -82,6 +90,12 @@ public class K8sJSONSchemasGenerator implements Runnable {
         this.urlTemplate = requireNonNull(configuration.get("specUrlTemplate"), () -> "No specUrlTemplate in " + configuration);
         this.force = Boolean.parseBoolean(configuration.get("force"));
         this.maxThreads = Integer.parseInt(configuration.get("maxThreads"));
+        this.minVersion = parseVersion(configuration.get("minVersion"));
+        try {
+            this.cache = Files.createDirectories(sourceBase.resolve("content/_partials/generated/jsonschema/generated/cache"));
+        } catch (final IOException e) {
+            throw new IllegalStateException(e);
+        }
 
         final var token = configuration.get("githubToken");
         if (token != null && !token.isBlank()) {
@@ -125,6 +139,22 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     continue;
                 }
 
+                final var pVersion = parseVersion(version);
+                boolean skipVersion = false;
+                for (int i = 0; i < pVersion.length; i++) {
+                    if (i >= minVersion.length) {
+                        break;
+                    }
+                    if (pVersion[i] < minVersion[i]) {
+                        skipVersion = true;
+                        break;
+                    }
+                }
+                if (skipVersion) {
+                    log.fine(() -> "Skipping version (<minVersion): " + version);
+                    continue;
+                }
+
                 final var url = urlTemplate.replace("{{version}}", version);
                 awaited.add(tasks.submit(() -> {
                     synchronized (errorCapture) {
@@ -136,7 +166,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     try {
                         generate(
                                 Files.createDirectories(root.resolve(version)), url, httpClient,
-                                jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory);
+                                jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory, version);
                     } catch (final IOException | RuntimeException ioe) {
                         log.log(SEVERE, ioe, ioe::getMessage);
                         synchronized (errorCapture) {
@@ -190,6 +220,17 @@ public class K8sJSONSchemasGenerator implements Runnable {
         }
     }
 
+    private int[] parseVersion(final String version) {
+        final int sep = version.indexOf('-');
+        if (sep > 0) {
+            return parseVersion(version.substring(0, sep));
+        }
+        if (version.startsWith("v")) {
+            return parseVersion(version.substring(1));
+        }
+        return Stream.of(versionSplitter.split(version)).mapToInt(Integer::parseInt).toArray();
+    }
+
     private Iterable<String> fetchTags(final HttpClient httpClient, final String uri, final JsonReaderFactory jsonReaderFactory) throws IOException, InterruptedException {
         return () -> new Iterator<>() {
             private URI next = URI.create(uri + "?per_page=100");
@@ -203,6 +244,10 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 if (next == null) {
                     return false;
                 }
+                return doHasNext(3);
+            }
+
+            private boolean doHasNext(final int retries) {
                 try {
                     log.info(() -> "Fetching " + next);
                     final var response = httpClient.send(
@@ -219,22 +264,27 @@ public class K8sJSONSchemasGenerator implements Runnable {
                         case 200:
                             // all good
                             break;
+                        case 503:
+                            if (retries > 0) {
+                                Thread.sleep(5_000);
+                                return doHasNext(retries - 1);
+                            }
+                            throw new IllegalStateException("Invalid response: " + response + ": " + response.body());
                         case 403:
+                            final var reset = rateLimitReset(response);
+                            if (reset != null) {
+                                Thread.sleep(Math.max(1, Duration.between(OffsetDateTime.now(), reset).toMillis()));
+                            }
                             log.warning(() -> "Rate limit hit, skipping for this run: " + response + "\n" +
                                     "X-RateLimit-Limit=" +
                                     response.headers()
                                             .firstValue("X-RateLimit-Limit")
                                             .orElse("?") + "\n" +
                                     "X-RateLimit-Reset=" +
-                                    response.headers()
-                                            .firstValue("X-RateLimit-Reset")
-                                            .map(Long::parseLong)
-                                            .map(Instant::ofEpochSecond)
-                                            .map(i -> i.atZone(ZoneOffset.systemDefault()))
-                                            .orElse(null));
+                                    reset);
                             return false;
                         default:
-                            throw new IllegalStateException("Invalid response: " + response);
+                            throw new IllegalStateException("Invalid response: " + response + ": " + response.body());
                     }
 
                     final JsonArray array;
@@ -256,7 +306,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                             .filter(it -> !it.contains("-alpha.") && !it.contains("-beta.") && !it.contains("-rc."))
                             .iterator();
                     if (!delegate.hasNext()) {
-                        return hasNext(); // check next if exists (unlikely)
+                        return hasNext();
                     }
                     return true;
                 } catch (final IOException e) {
@@ -274,52 +324,85 @@ public class K8sJSONSchemasGenerator implements Runnable {
         };
     }
 
+    private ZonedDateTime rateLimitReset(final HttpResponse<?> response) {
+        return response.headers()
+                .firstValue("X-RateLimit-Reset")
+                .map(Long::parseLong)
+                .map(Instant::ofEpochSecond)
+                .map(i -> i.atZone(ZoneOffset.systemDefault()))
+                .map(i -> {
+                    log.info(() -> "Rate limit reset: " + i);
+                    return i;
+                })
+                .orElse(null);
+    }
+
     private void generate(final Path root, final String url, final HttpClient httpClient,
                           final JsonBuilderFactory jsonBuilderFactory, final JsonReaderFactory jsonReaderFactory,
-                          final JsonWriterFactory jsonWriterFactory) throws IOException, InterruptedException {
+                          final JsonWriterFactory jsonWriterFactory, final String versionName) throws IOException, InterruptedException {
         log.info(() -> "Fetching '" + url + "'");
-        final var response = retry(3, () -> {
-            final var thread = Thread.currentThread();
-            final var oldName = thread.getName();
-            thread.setName(oldName + "[" + url + "]");
-            try {
-                return httpClient.send(
-                        setAuth.apply(HttpRequest.newBuilder()
-                                        .GET()
-                                        .uri(URI.create(url))
-                                        .header("accept-encoding", "gzip")
-                                        .version(HTTP_1_1))
-                                .build(),
-                        HttpResponse.BodyHandlers.ofInputStream());
-            } catch (final IOException e) {
-                throw new IllegalStateException(e);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            } finally {
-                thread.setName(oldName);
-            }
-        });
-
-        switch (response.statusCode()) {
-            case 200:
-                // all good
-                break;
-            case 404:
-                log.info(() -> "No spec for '" + url + "'");
-                return;
-            default:
-                throw new IllegalStateException("Invalid response: " + response);
-        }
+        final var cached = cache.resolve(versionName.replace('/', '_') + ".json");
 
         final JsonObject spec;
-        try (final var reader = jsonReaderFactory.createReader(
-                response.headers().firstValue("content-encoding")
-                        .map(it -> it.contains("gzip"))
-                        .orElse(false) ?
-                        new GZIPInputStream(response.body()) :
-                        response.body())) {
-            spec = reader.readObject();
+        if (Files.notExists(cached)) {
+            final var response = retry(5, () -> {
+                final var thread = Thread.currentThread();
+                final var oldName = thread.getName();
+                thread.setName(oldName + "[" + url + "]");
+                try {
+                    return httpClient.send(
+                            setAuth.apply(HttpRequest.newBuilder()
+                                            .GET()
+                                            .uri(URI.create(url))
+                                            .header("accept-encoding", "gzip")
+                                            .version(HTTP_1_1))
+                                    .build(),
+                            HttpResponse.BodyHandlers.ofInputStream());
+                } catch (final IOException e) {
+                    throw new IllegalStateException(e);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                } finally {
+                    thread.setName(oldName);
+                }
+            });
+
+            switch (response.statusCode()) {
+                case 200:
+                    // all good
+                    break;
+                case 404:
+                    log.info(() -> "No spec for '" + url + "'");
+                    return;
+                case 403:
+                    final var reset = rateLimitReset(response);
+                    if (reset != null) {
+                        Thread.sleep(Math.max(1, Duration.between(OffsetDateTime.now(), reset).toMillis()));
+                    }
+                    throw new IllegalStateException("Rate limited response: " + response);
+                default:
+                    try (final var r = response.body()) {
+                        throw new IllegalStateException("Invalid response: " + response + ": " + new String(r.readAllBytes(), UTF_8) + "\n" + response.headers().map());
+                    }
+            }
+
+            try (final var reader = jsonReaderFactory.createReader(
+                    response.headers().firstValue("content-encoding")
+                            .map(it -> it.contains("gzip"))
+                            .orElse(false) ?
+                            new GZIPInputStream(response.body()) :
+                            response.body())) {
+                spec = reader.readObject();
+            }
+            Files.writeString(cached, spec.toString());
+        } else {
+            try (final var reader = jsonReaderFactory.createReader(Files.newBufferedReader(cached))) {
+                spec = reader.readObject();
+            } catch (final RuntimeException e) {
+                Files.deleteIfExists(cached); // was corrupted, cleanup
+                throw e;
+            }
         }
 
         final var definitions = spec.getJsonObject("definitions").entrySet().stream()
@@ -373,14 +456,15 @@ public class K8sJSONSchemasGenerator implements Runnable {
             try {
                 return supplier.get();
             } catch (final RuntimeException ie) {
+                if (i == max - 1) {
+                    throw ie;
+                }
+                log.warning("An error occurred, step will be retried (" + ie.getMessage() + ")");
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1_000);
                 } catch (final InterruptedException e) {
                     Thread.currentThread().interrupt();
                     throw new IllegalStateException(e);
-                }
-                if (i == max - 1) {
-                    throw ie;
                 }
             }
         }
