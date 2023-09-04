@@ -33,9 +33,11 @@
     <!-- if set to true all descriptors are regenerated else only the ones not locally present -->
     <minisite.kubernetes.jsonschema.force>false</minisite.kubernetes.jsonschema.force>
     <!-- can be needed to reduce it to avoid to have too much latency -->
-    <minisite.kubernetes.jsonschema.maxThreads>16</minisite.kubernetes.jsonschema.maxThreads>
+    <minisite.kubernetes.jsonschema.maxThreads>8</minisite.kubernetes.jsonschema.maxThreads>
     <!-- skip descriptor synchronization by default -->
-    <minisite.actions.k8s.jsonschema>false</minisite.actions.k8s.jsonschema>
+    <minisite.kubernetes.jsonschema.enabled>false</minisite.kubernetes.jsonschema.enabled>
+    <!-- skip versions before this one -->
+    <minisite.kubernetes.jsonschema.minVersion>1.5.0</minisite.kubernetes.jsonschema.minVersion>
   </properties>
 
   <dependencies>
@@ -209,12 +211,13 @@
             <action>
               <type>io.yupiik.bundlebee.documentation.K8sJSONSchemasGenerator</type>
               <configuration>
-                <minisite.actions.k8s.jsonschema>${minisite.actions.k8s.jsonschema}</minisite.actions.k8s.jsonschema>
+                <minisite.actions.k8s.jsonschema>${minisite.kubernetes.jsonschema.enabled}</minisite.actions.k8s.jsonschema>
                 <specUrlTemplate>https://raw.githubusercontent.com/kubernetes/kubernetes/{{version}}/api/openapi-spec/swagger.json</specUrlTemplate>
                 <tagsUrl>https://api.github.com/repos/kubernetes/kubernetes/tags</tagsUrl>
                 <skip>${minisite.kubernetes.jsonschema.skip}</skip>
                 <force>${minisite.kubernetes.jsonschema.force}</force>
                 <maxThreads>${minisite.kubernetes.jsonschema.maxThreads}</maxThreads>
+                <minVersion>${minisite.kubernetes.jsonschema.minVersion}</minVersion>
                 <!-- optional but when rate limiting is hit it enables to continue to work -->
                 <githubToken>${minisite.githubToken}</githubToken>
               </configuration>
@@ -259,7 +262,7 @@
       <id>gh-pages</id>
       <properties>
         <minisite.serverId>github.com</minisite.serverId>
-        <minisite.actions.k8s.jsonschema>true</minisite.actions.k8s.jsonschema>
+        <minisite.kubernetes.jsonschema.enabled>true</minisite.kubernetes.jsonschema.enabled>
       </properties>
       <build>
         <plugins>
