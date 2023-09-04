@@ -15,6 +15,7 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint;
 
+import io.yupiik.bundlebee.core.configuration.Description;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -27,24 +28,28 @@ public class LintError {
     @Getter
     @RequiredArgsConstructor
     public enum LintLevel {
+        @Description("Info level")
         INFO(10) {
             @Override
             public String getSarifLevel() {
                 return "note";
             }
         },
+        @Description("Warning level")
         WARNING(20) {
             @Override
             public String getSarifLevel() {
                 return "warning";
             }
         },
+        @Description("Error level")
         ERROR(30) {
             @Override
             public String getSarifLevel() {
                 return "error";
             }
         },
+        @Description("Off level")
         OFF(100) {
             @Override
             public String getSarifLevel() {
