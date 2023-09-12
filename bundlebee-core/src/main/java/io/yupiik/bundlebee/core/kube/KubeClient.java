@@ -118,7 +118,7 @@ public class KubeClient implements ConfigHolder {
     private boolean logDescriptorOnParsingError;
 
     @Inject
-    @Description("Should YAML/JSON be logged when it can't be parsed.")
+    @Description("The attributes to keep from `StatefulSet` (`spec` children) descriptor on updates.")
     @ConfigProperty(name = "bundlebee.kube.filters.statefuleset.spec.allowed", defaultValue = "replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector")
     private Set<String> statefulsetSpecAllowedAttributes;
 
@@ -540,7 +540,7 @@ public class KubeClient implements ConfigHolder {
         log.info(() -> "Important: filtering descriptor spec attributes (" + ref + ") for update (" +
                 spec.keySet().stream().filter(it -> !allowed.contains(it)).collect(joining(", ")) +
                 " update is not supported)");
-        return jsonBuilderFactory.createObjectBuilder(spec.entrySet().stream()
+        return jsonBuilderFactory.createObjectBuilder(desc.entrySet().stream()
                         .filter(it -> !"spec".equals(it.getKey()))
                         .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
                 .add("spec", jsonBuilderFactory.createObjectBuilder(spec.entrySet().stream()
