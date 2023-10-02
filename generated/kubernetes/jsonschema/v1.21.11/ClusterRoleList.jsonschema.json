@@ -1,5 +1,5 @@
 {
-  "description":"ClusterRoleList is a collection of ClusterRoles. Deprecated in v1.17 in favor of rbac.authorization.k8s.io/v1 ClusterRoles, and will no longer be served in v1.22.",
+  "description":"ClusterRoleList is a collection of ClusterRoles",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -8,7 +8,7 @@
     "items":{
       "description":"Items is a list of ClusterRoles",
       "items":{
-        "description":"ClusterRole is a cluster level, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding or ClusterRoleBinding. Deprecated in v1.17 in favor of rbac.authorization.k8s.io/v1 ClusterRole, and will no longer be served in v1.22.",
+        "description":"ClusterRole is a cluster level, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding or ClusterRoleBinding.",
         "properties":{
           "aggregationRule":{
             "description":"AggregationRule is an optional field that describes how to build the Rules for this ClusterRole. If AggregationRule is set, then the Rules are controller managed and direct changes to Rules will be stomped by the controller.",
@@ -247,7 +247,7 @@
                   "type":"array"
                 },
                 "resources":{
-                  "description":"Resources is a list of resources this rule applies to.  '*' represents all resources in the specified apiGroups. '*/foo' represents the subresource 'foo' for all resources in the specified apiGroups.",
+                  "description":"Resources is a list of resources this rule applies to.  ResourceAll represents all resources.",
                   "items":{
                     "type":"string"
                   },
@@ -274,7 +274,7 @@
           {
             "group":"rbac.authorization.k8s.io",
             "kind":"ClusterRole",
-            "version":"v1beta1"
+            "version":"v1"
           }
         ]
       },
@@ -316,7 +316,7 @@
     {
       "group":"rbac.authorization.k8s.io",
       "kind":"ClusterRoleList",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }

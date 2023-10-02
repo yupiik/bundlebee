@@ -1,5 +1,5 @@
 {
-  "description":"list of horizontal pod autoscaler objects.",
+  "description":"HorizontalPodAutoscaler is a list of horizontal pod autoscaler objects.",
   "required":[
     "items"
   ],
@@ -9,10 +9,10 @@
       "type":"string"
     },
     "items":{
-      "description":"list of horizontal pod autoscaler objects.",
+      "description":"items is the list of horizontal pod autoscaler objects.",
       "type":"array",
       "items":{
-        "description":"configuration of a horizontal pod autoscaler.",
+        "description":"HorizontalPodAutoscaler is the configuration for a horizontal pod autoscaler, which automatically manages the replica count of any resource implementing the scale subresource based on the metrics specified.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -250,19 +250,112 @@
             }
           },
           "spec":{
-            "description":"specification of a horizontal pod autoscaler.",
+            "description":"HorizontalPodAutoscalerSpec describes the desired functionality of the HorizontalPodAutoscaler.",
             "required":[
               "scaleTargetRef",
               "maxReplicas"
             ],
             "properties":{
               "maxReplicas":{
-                "description":"upper limit for the number of pods that can be set by the autoscaler; cannot be smaller than MinReplicas.",
+                "description":"maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.",
                 "type":"integer",
                 "format":"int32"
               },
+              "metrics":{
+                "description":"metrics contains the specifications for which to use to calculate the desired replica count (the maximum replica count across all metrics will be used).  The desired replica count is calculated multiplying the ratio between the target value and the current value by the current number of pods.  Ergo, metrics used must decrease as the pod count is increased, and vice-versa.  See the individual metric source types for more information about how each type of metric must respond.",
+                "type":"array",
+                "items":{
+                  "description":"MetricSpec specifies how to scale based on a single metric (only `type` and one other matching field should be set at once).",
+                  "required":[
+                    "type"
+                  ],
+                  "properties":{
+                    "object":{
+                      "description":"ObjectMetricSource indicates how to scale on a metric describing a kubernetes object (for example, hits-per-second on an Ingress object).",
+                      "required":[
+                        "target",
+                        "metricName",
+                        "targetValue"
+                      ],
+                      "properties":{
+                        "metricName":{
+                          "description":"metricName is the name of the metric in question.",
+                          "type":"string"
+                        },
+                        "target":{
+                          "description":"CrossVersionObjectReference contains enough information to let you identify the referred resource.",
+                          "required":[
+                            "kind",
+                            "name"
+                          ],
+                          "properties":{
+                            "apiVersion":{
+                              "description":"API version of the referent",
+                              "type":"string"
+                            },
+                            "kind":{
+                              "description":"Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\"",
+                              "type":"string"
+                            },
+                            "name":{
+                              "description":"Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                              "type":"string"
+                            }
+                          }
+                        },
+                        "targetValue":{
+                          "description":"targetValue is the target value of the metric (as a quantity).",
+                          "type":"string"
+                        }
+                      }
+                    },
+                    "pods":{
+                      "description":"PodsMetricSource indicates how to scale on a metric describing each pod in the current scale target (for example, transactions-processed-per-second). The values will be averaged together before being compared to the target value.",
+                      "required":[
+                        "metricName",
+                        "targetAverageValue"
+                      ],
+                      "properties":{
+                        "metricName":{
+                          "description":"metricName is the name of the metric in question",
+                          "type":"string"
+                        },
+                        "targetAverageValue":{
+                          "description":"targetAverageValue is the target value of the average of the metric across all relevant pods (as a quantity)",
+                          "type":"string"
+                        }
+                      }
+                    },
+                    "resource":{
+                      "description":"ResourceMetricSource indicates how to scale on a resource metric known to Kubernetes, as specified in requests and limits, describing each pod in the current scale target (e.g. CPU or memory).  The values will be averaged together before being compared to the target.  Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the \"pods\" source.  Only one \"target\" type should be set.",
+                      "required":[
+                        "name"
+                      ],
+                      "properties":{
+                        "name":{
+                          "description":"name is the name of the resource in question.",
+                          "type":"string"
+                        },
+                        "targetAverageUtilization":{
+                          "description":"targetAverageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.",
+                          "type":"integer",
+                          "format":"int32"
+                        },
+                        "targetAverageValue":{
+                          "description":"targetAverageValue is the target value of the average of the resource metric across all relevant pods, as a raw value (instead of as a percentage of the request), similar to the \"pods\" metric source type.",
+                          "type":"string"
+                        }
+                      }
+                    },
+                    "type":{
+                      "description":"type is the type of metric source.  It should match one of the fields below.",
+                      "type":"string"
+                    }
+                  }
+                }
+              },
               "minReplicas":{
-                "description":"lower limit for the number of pods that can be set by the autoscaler, default 1.",
+                "description":"minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down. It defaults to 1 pod.",
                 "type":"integer",
                 "format":"int32"
               },
@@ -286,43 +379,163 @@
                     "type":"string"
                   }
                 }
-              },
-              "targetCPUUtilizationPercentage":{
-                "description":"target average CPU utilization (represented as a percentage of requested CPU) over all the pods; if not specified the default autoscaling policy will be used.",
-                "type":"integer",
-                "format":"int32"
               }
             }
           },
           "status":{
-            "description":"current status of a horizontal pod autoscaler",
+            "description":"HorizontalPodAutoscalerStatus describes the current status of a horizontal pod autoscaler.",
             "required":[
               "currentReplicas",
-              "desiredReplicas"
+              "desiredReplicas",
+              "currentMetrics",
+              "conditions"
             ],
             "properties":{
-              "currentCPUUtilizationPercentage":{
-                "description":"current average CPU utilization over all pods, represented as a percentage of requested CPU, e.g. 70 means that an average pod is using now 70% of its requested CPU.",
-                "type":"integer",
-                "format":"int32"
+              "conditions":{
+                "description":"conditions is the set of conditions required for this autoscaler to scale its target, and indicates whether or not those conditions are met.",
+                "type":"array",
+                "items":{
+                  "description":"HorizontalPodAutoscalerCondition describes the state of a HorizontalPodAutoscaler at a certain point.",
+                  "required":[
+                    "type",
+                    "status"
+                  ],
+                  "properties":{
+                    "lastTransitionTime":{
+                      "description":"lastTransitionTime is the last time the condition transitioned from one status to another",
+                      "type":"string",
+                      "format":"date-time"
+                    },
+                    "message":{
+                      "description":"message is a human-readable explanation containing details about the transition",
+                      "type":"string"
+                    },
+                    "reason":{
+                      "description":"reason is the reason for the condition's last transition.",
+                      "type":"string"
+                    },
+                    "status":{
+                      "description":"status is the status of the condition (True, False, Unknown)",
+                      "type":"string"
+                    },
+                    "type":{
+                      "description":"type describes the current condition",
+                      "type":"string"
+                    }
+                  }
+                }
+              },
+              "currentMetrics":{
+                "description":"currentMetrics is the last read state of the metrics used by this autoscaler.",
+                "type":"array",
+                "items":{
+                  "description":"MetricStatus describes the last-read state of a single metric.",
+                  "required":[
+                    "type"
+                  ],
+                  "properties":{
+                    "object":{
+                      "description":"ObjectMetricStatus indicates the current value of a metric describing a kubernetes object (for example, hits-per-second on an Ingress object).",
+                      "required":[
+                        "target",
+                        "metricName",
+                        "currentValue"
+                      ],
+                      "properties":{
+                        "currentValue":{
+                          "description":"currentValue is the current value of the metric (as a quantity).",
+                          "type":"string"
+                        },
+                        "metricName":{
+                          "description":"metricName is the name of the metric in question.",
+                          "type":"string"
+                        },
+                        "target":{
+                          "description":"CrossVersionObjectReference contains enough information to let you identify the referred resource.",
+                          "required":[
+                            "kind",
+                            "name"
+                          ],
+                          "properties":{
+                            "apiVersion":{
+                              "description":"API version of the referent",
+                              "type":"string"
+                            },
+                            "kind":{
+                              "description":"Kind of the referent; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds\"",
+                              "type":"string"
+                            },
+                            "name":{
+                              "description":"Name of the referent; More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                              "type":"string"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "pods":{
+                      "description":"PodsMetricStatus indicates the current value of a metric describing each pod in the current scale target (for example, transactions-processed-per-second).",
+                      "required":[
+                        "metricName",
+                        "currentAverageValue"
+                      ],
+                      "properties":{
+                        "currentAverageValue":{
+                          "description":"currentAverageValue is the current value of the average of the metric across all relevant pods (as a quantity)",
+                          "type":"string"
+                        },
+                        "metricName":{
+                          "description":"metricName is the name of the metric in question",
+                          "type":"string"
+                        }
+                      }
+                    },
+                    "resource":{
+                      "description":"ResourceMetricStatus indicates the current value of a resource metric known to Kubernetes, as specified in requests and limits, describing each pod in the current scale target (e.g. CPU or memory).  Such metrics are built in to Kubernetes, and have special scaling options on top of those available to normal per-pod metrics using the \"pods\" source.",
+                      "required":[
+                        "name",
+                        "currentAverageValue"
+                      ],
+                      "properties":{
+                        "currentAverageUtilization":{
+                          "description":"currentAverageUtilization is the current value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods.  It will only be present if `targetAverageValue` was set in the corresponding metric specification.",
+                          "type":"integer",
+                          "format":"int32"
+                        },
+                        "currentAverageValue":{
+                          "description":"currentAverageValue is the current value of the average of the resource metric across all relevant pods, as a raw value (instead of as a percentage of the request), similar to the \"pods\" metric source type. It will always be set, regardless of the corresponding metric specification.",
+                          "type":"string"
+                        },
+                        "name":{
+                          "description":"name is the name of the resource in question.",
+                          "type":"string"
+                        }
+                      }
+                    },
+                    "type":{
+                      "description":"type is the type of metric source.  It will match one of the fields below.",
+                      "type":"string"
+                    }
+                  }
+                }
               },
               "currentReplicas":{
-                "description":"current number of replicas of pods managed by this autoscaler.",
+                "description":"currentReplicas is current number of replicas of pods managed by this autoscaler, as last seen by the autoscaler.",
                 "type":"integer",
                 "format":"int32"
               },
               "desiredReplicas":{
-                "description":"desired number of replicas of pods managed by this autoscaler.",
+                "description":"desiredReplicas is the desired number of replicas of pods managed by this autoscaler, as last calculated by the autoscaler.",
                 "type":"integer",
                 "format":"int32"
               },
               "lastScaleTime":{
-                "description":"last time the HorizontalPodAutoscaler scaled the number of pods; used by the autoscaler to control how often the number of pods is changed.",
+                "description":"lastScaleTime is the last time the HorizontalPodAutoscaler scaled the number of pods, used by the autoscaler to control how often the number of pods is changed.",
                 "type":"string",
                 "format":"date-time"
               },
               "observedGeneration":{
-                "description":"most recent generation observed by this autoscaler.",
+                "description":"observedGeneration is the most recent generation observed by this autoscaler.",
                 "type":"integer",
                 "format":"int64"
               }
@@ -332,7 +545,7 @@
         "x-kubernetes-group-version-kind":[
           {
             "group":"autoscaling",
-            "version":"v1",
+            "version":"v2alpha1",
             "kind":"HorizontalPodAutoscaler"
           }
         ]
@@ -359,7 +572,7 @@
   "x-kubernetes-group-version-kind":[
     {
       "group":"autoscaling",
-      "version":"v1",
+      "version":"v2alpha1",
       "kind":"HorizontalPodAutoscalerList"
     }
   ]

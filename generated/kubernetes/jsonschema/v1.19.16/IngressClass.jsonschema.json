@@ -197,7 +197,7 @@
     {
       "group":"networking.k8s.io",
       "kind":"IngressClass",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }

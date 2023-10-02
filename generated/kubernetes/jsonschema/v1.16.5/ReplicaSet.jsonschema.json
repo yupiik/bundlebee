@@ -1,5 +1,5 @@
 {
-  "description":"DEPRECATED - This group version of ReplicaSet is deprecated by apps/v1/ReplicaSet. See the release notes for more information. ReplicaSet ensures that a specified number of pod replicas are running at any given time.",
+  "description":"DEPRECATED - This group version of ReplicaSet is deprecated by apps/v1beta2/ReplicaSet. See the release notes for more information. ReplicaSet ensures that a specified number of pod replicas are running at any given time.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -173,7 +173,7 @@
           "type":"integer"
         },
         "selector":{
-          "description":"Selector is a label query over pods that should match the replica count. Label keys and values that must match in order to be controlled by this replica set. It must match the pod template's labels. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors",
+          "description":"Selector is a label query over pods that should match the replica count. If the selector is empty, it is defaulted to the labels present on the pod template. Label keys and values that must match in order to be controlled by this replica set. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors",
           "properties":{
             "matchExpressions":{
               "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
@@ -5143,9 +5143,6 @@
           "type":"object"
         }
       },
-      "required":[
-        "selector"
-      ],
       "type":"object"
     },
     "status":{
@@ -5221,9 +5218,9 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"apps",
+      "group":"extensions",
       "kind":"ReplicaSet",
-      "version":"v1beta2"
+      "version":"v1beta1"
     }
   ]
 }

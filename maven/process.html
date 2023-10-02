@@ -10,14 +10,14 @@
     <meta name="author" content="Yupiik Minisite Generator">
     <meta name="generator" content="Yupiik Minisite Generator">
     
-    <link rel="shortcut icon" href="//www.yupiik.com/img/favicon.png">
+    <link rel="shortcut icon" href="//www.yupiik.io/images/favicon.png">
 
     <link href="//fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i|Montserrat:300,400,500,700" rel="stylesheet">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.21-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.24-SNAPSHOT">
     
 </head>
 <body>
@@ -26,7 +26,7 @@
             <div class="container-fluid position-relative py-2">
                 <div class="docs-logo-wrapper">
 	                <div class="site-logo"><a title="Home" class="navbar-brand" href="//www.yupiik.io/bundlebee/index.html">
-	                <img class="logo-icon mr-2" src="//www.yupiik.com/img/favicon.png" alt="logo">
+	                <img class="logo-icon mr-2" src="//www.yupiik.io/images/favicon.png" alt="logo">
 	                <span class="logo-text">Yupiik BundleBee <span class="text-alt">Docs</span></span></a></div>
                 </div>
 	            <div class="docs-top-utilities d-flex justify-content-end align-items-center">
@@ -89,7 +89,7 @@
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
-  &lt;version&gt;1.0.21-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.24-SNAPSHOT&lt;/version&gt;
 &lt;/plugin&gt;</code></pre>
 </div>
 </div>
@@ -104,7 +104,7 @@
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
-  &lt;version&gt;1.0.21-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.24-SNAPSHOT&lt;/version&gt;
   &lt;executions&gt;
     &lt;execution&gt;
       &lt;id&gt;my-execution&lt;/id&gt;
@@ -136,6 +136,10 @@
 <dt class="hdlist1">awaiterRetryInterval (<code>long</code>)</dt>
 <dd>
 <p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code>. Property: <code>${bundlebee.awaiter.retryInterval}</code>.</p>
+</dd>
+<dt class="hdlist1">concat (<code>boolean</code>)</dt>
+<dd>
+<p>Should all descriptors be concatenated in a single file - output. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.process.concat}</code>.</p>
 </dd>
 <dt class="hdlist1">customPlaceholders (<code>Map</code>)</dt>
 <dd>
@@ -205,9 +209,13 @@
 <dd>
 <p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code>. Property: <code>${bundlebee.kube.dryRun}</code>.</p>
 </dd>
+<dt class="hdlist1">kubeFieldValidation (<code>String</code>)</dt>
+<dd>
+<p><code>fieldValidation</code> - server side validation - value when applying a descriptor, values can be <code>Strict</code>, <code>Warn</code> pr <code>Ignore</code>. Note that using <code>skip</code> will ignore the query parameter. Default value: <code>Strict</code>. Property: <code>${bundlebee.kube.fieldValidation}</code>.</p>
+</dd>
 <dt class="hdlist1">kubeFiltersStatefulesetSpecAllowed (<code>Set</code>)</dt>
 <dd>
-<p>Should YAML/JSON be logged when it can&#8217;t be parsed. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code>. Property: <code>${bundlebee.kube.filters.statefuleset.spec.allowed}</code>.</p>
+<p>The attributes to keep from <code>StatefulSet</code> (<code>spec</code> children) descriptor on updates. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code>. Property: <code>${bundlebee.kube.filters.statefuleset.spec.allowed}</code>.</p>
 </dd>
 <dt class="hdlist1">kubeForce (<code>boolean</code>)</dt>
 <dd>
@@ -219,7 +227,7 @@
 </dd>
 <dt class="hdlist1">kubeImplicitlyDroppedAttributes (<code>String</code>)</dt>
 <dd>
-<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code>. Property: <code>${bundlebee.kube.implicitlyDroppedAttributes}</code>.</p>
+<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using <code>none</code> ignores this processing. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code>. Property: <code>${bundlebee.kube.implicitlyDroppedAttributes}</code>.</p>
 </dd>
 <dt class="hdlist1">kubeLogDescriptorOnParsingError (<code>boolean</code>)</dt>
 <dd>
@@ -229,9 +237,25 @@
 <dd>
 <p>When kubeconfig is not set the namespace to use. Default value: <code>default</code>. Property: <code>${bundlebee.kube.namespace}</code>.</p>
 </dd>
+<dt class="hdlist1">kubePatchContentType (<code>String</code>)</dt>
+<dd>
+<p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code>. Property: <code>${bundlebee.kube.patchContentType}</code>.</p>
+</dd>
 <dt class="hdlist1">kubePutOnUpdate (<code>boolean</code>)</dt>
 <dd>
 <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code>. Property: <code>${bundlebee.kube.putOnUpdate}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeRateLimiterEnabled (<code>boolean</code>)</dt>
+<dd>
+<p>Should HTTP client requests be limited and HTTP 427 responses be handled. Default value: <code>false</code>. Property: <code>${bundlebee.kube.rateLimiter.enabled}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeRateLimiterPermits (<code>int</code>)</dt>
+<dd>
+<p>How many calls can be done if rate limiting is enabled. Note that setting it to <code>Integer.MAX_VALUE</code> will disable the client rate limiting and only enable server one. Default value: <code>100</code>. Property: <code>${bundlebee.kube.rateLimiter.permits}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeRateLimiterWindow (<code>int</code>)</dt>
+<dd>
+<p>Rate limiting window duration in milliseconds (default being 1 second). Default value: <code>1000</code>. Property: <code>${bundlebee.kube.rateLimiter.window}</code>.</p>
 </dd>
 <dt class="hdlist1">kubeResourceMapping (<code>String</code>)</dt>
 <dd>
@@ -381,7 +405,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.highlightAll(); }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.21-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.24-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

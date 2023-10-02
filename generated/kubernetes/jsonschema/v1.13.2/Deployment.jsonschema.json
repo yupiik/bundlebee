@@ -1,5 +1,5 @@
 {
-  "description":"Deployment enables declarative updates for Pods and ReplicaSets.",
+  "description":"DEPRECATED - This group version of Deployment is deprecated by apps/v1/Deployment. See the release notes for more information. Deployment enables declarative updates for Pods and ReplicaSets.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -3936,7 +3936,7 @@
     {
       "group":"apps",
       "kind":"Deployment",
-      "version":"v1"
+      "version":"v1beta2"
     }
   ]
 }

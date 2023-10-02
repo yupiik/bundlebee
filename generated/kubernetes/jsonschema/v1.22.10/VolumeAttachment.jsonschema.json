@@ -178,7 +178,7 @@
           "description":"Source represents the volume that should be attached.",
           "properties":{
             "inlineVolumeSpec":{
-              "description":"inlineVolumeSpec contains all the information necessary to attach a persistent volume defined by a pod's inline VolumeSource. This field is populated only for the CSIMigration feature. It contains translated fields from a pod's inline VolumeSource to a PersistentVolumeSpec. This field is beta-level and is only honored by servers that enabled the CSIMigration feature.",
+              "description":"inlineVolumeSpec contains all the information necessary to attach a persistent volume defined by a pod's inline VolumeSource. This field is populated only for the CSIMigration feature. It contains translated fields from a pod's inline VolumeSource to a PersistentVolumeSpec. This field is alpha-level and is only honored by servers that enabled the CSIMigration feature.",
               "properties":{
                 "accessModes":{
                   "description":"AccessModes contains all ways the volume can be mounted. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes",
@@ -1147,7 +1147,7 @@
           "description":"The last error encountered during attach operation, if any. This field must only be set by the entity completing the attach operation, i.e. the external-attacher.",
           "properties":{
             "message":{
-              "description":"String detailing the error encountered during Attach or Detach operation. This string may be logged, so it should not contain sensitive information.",
+              "description":"String detailing the error encountered during Attach or Detach operation. This string maybe logged, so it should not contain sensitive information.",
               "type":"string"
             },
             "time":{
@@ -1173,7 +1173,7 @@
           "description":"The last error encountered during detach operation, if any. This field must only be set by the entity completing the detach operation, i.e. the external-attacher.",
           "properties":{
             "message":{
-              "description":"String detailing the error encountered during Attach or Detach operation. This string may be logged, so it should not contain sensitive information.",
+              "description":"String detailing the error encountered during Attach or Detach operation. This string maybe logged, so it should not contain sensitive information.",
               "type":"string"
             },
             "time":{
@@ -1199,7 +1199,7 @@
     {
       "group":"storage.k8s.io",
       "kind":"VolumeAttachment",
-      "version":"v1"
+      "version":"v1alpha1"
     }
   ]
 }

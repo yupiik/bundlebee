@@ -1,5 +1,5 @@
 {
-  "description":"NetworkPolicy describes what network traffic is allowed for a set of Pods",
+  "description":"DEPRECATED 1.9 - This group version of NetworkPolicy is deprecated by networking/v1/NetworkPolicy. NetworkPolicy describes what network traffic is allowed for a set of Pods",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -248,7 +248,7 @@
       }
     },
     "spec":{
-      "description":"NetworkPolicySpec provides the specification of a NetworkPolicy",
+      "description":"DEPRECATED 1.9 - This group version of NetworkPolicySpec is deprecated by networking/v1/NetworkPolicySpec.",
       "required":[
         "podSelector"
       ],
@@ -257,13 +257,13 @@
           "description":"List of egress rules to be applied to the selected pods. Outgoing traffic is allowed if there are no NetworkPolicies selecting the pod (and cluster policy otherwise allows the traffic), OR if the traffic matches at least one egress rule across all of the NetworkPolicy objects whose podSelector matches the pod. If this field is empty then this NetworkPolicy limits all outgoing traffic (and serves solely to ensure that the pods it selects are isolated by default). This field is beta-level in 1.8",
           "type":"array",
           "items":{
-            "description":"NetworkPolicyEgressRule describes a particular set of traffic that is allowed out of pods matched by a NetworkPolicySpec's podSelector. The traffic must match both ports and to. This type is beta-level in 1.8",
+            "description":"DEPRECATED 1.9 - This group version of NetworkPolicyEgressRule is deprecated by networking/v1/NetworkPolicyEgressRule. NetworkPolicyEgressRule describes a particular set of traffic that is allowed out of pods matched by a NetworkPolicySpec's podSelector. The traffic must match both ports and to. This type is beta-level in 1.8",
             "properties":{
               "ports":{
                 "description":"List of destination ports for outgoing traffic. Each item in this list is combined using a logical OR. If this field is empty or missing, this rule matches all ports (traffic not restricted by port). If this field is present and contains at least one item, then this rule allows traffic only if the traffic matches at least one port in the list.",
                 "type":"array",
                 "items":{
-                  "description":"NetworkPolicyPort describes a port to allow traffic on",
+                  "description":"DEPRECATED 1.9 - This group version of NetworkPolicyPort is deprecated by networking/v1/NetworkPolicyPort.",
                   "properties":{
                     "port":{
                       "description":"IntOrString is a type that can hold an int32 or a string.  When used in JSON or YAML marshalling and unmarshalling, it produces or consumes the inner type.  This allows you to have, for example, a JSON field that can accept a name or number.",
@@ -271,7 +271,7 @@
                       "format":"int-or-string"
                     },
                     "protocol":{
-                      "description":"The protocol (TCP or UDP) which traffic must match. If not specified, this field defaults to TCP.",
+                      "description":"Optional.  The protocol (TCP or UDP) which traffic must match. If not specified, this field defaults to TCP.",
                       "type":"string"
                     }
                   }
@@ -281,10 +281,10 @@
                 "description":"List of destinations for outgoing traffic of pods selected for this rule. Items in this list are combined using a logical OR operation. If this field is empty or missing, this rule matches all destinations (traffic not restricted by destination). If this field is present and contains at least one item, this rule allows traffic only if the traffic matches at least one item in the to list.",
                 "type":"array",
                 "items":{
-                  "description":"NetworkPolicyPeer describes a peer to allow traffic from. Only certain combinations of fields are allowed",
+                  "description":"DEPRECATED 1.9 - This group version of NetworkPolicyPeer is deprecated by networking/v1/NetworkPolicyPeer.",
                   "properties":{
                     "ipBlock":{
-                      "description":"IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
+                      "description":"DEPRECATED 1.9 - This group version of IPBlock is deprecated by networking/v1/IPBlock. IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
                       "required":[
                         "cidr"
                       ],
@@ -389,19 +389,19 @@
           }
         },
         "ingress":{
-          "description":"List of ingress rules to be applied to the selected pods. Traffic is allowed to a pod if there are no NetworkPolicies selecting the pod (and cluster policy otherwise allows the traffic), OR if the traffic source is the pod's local node, OR if the traffic matches at least one ingress rule across all of the NetworkPolicy objects whose podSelector matches the pod. If this field is empty then this NetworkPolicy does not allow any traffic (and serves solely to ensure that the pods it selects are isolated by default)",
+          "description":"List of ingress rules to be applied to the selected pods. Traffic is allowed to a pod if there are no NetworkPolicies selecting the pod OR if the traffic source is the pod's local node, OR if the traffic matches at least one ingress rule across all of the NetworkPolicy objects whose podSelector matches the pod. If this field is empty then this NetworkPolicy does not allow any traffic (and serves solely to ensure that the pods it selects are isolated by default).",
           "type":"array",
           "items":{
-            "description":"NetworkPolicyIngressRule describes a particular set of traffic that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The traffic must match both ports and from.",
+            "description":"DEPRECATED 1.9 - This group version of NetworkPolicyIngressRule is deprecated by networking/v1/NetworkPolicyIngressRule. This NetworkPolicyIngressRule matches traffic if and only if the traffic matches both ports AND from.",
             "properties":{
               "from":{
                 "description":"List of sources which should be able to access the pods selected for this rule. Items in this list are combined using a logical OR operation. If this field is empty or missing, this rule matches all sources (traffic not restricted by source). If this field is present and contains at least on item, this rule allows traffic only if the traffic matches at least one item in the from list.",
                 "type":"array",
                 "items":{
-                  "description":"NetworkPolicyPeer describes a peer to allow traffic from. Only certain combinations of fields are allowed",
+                  "description":"DEPRECATED 1.9 - This group version of NetworkPolicyPeer is deprecated by networking/v1/NetworkPolicyPeer.",
                   "properties":{
                     "ipBlock":{
-                      "description":"IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
+                      "description":"DEPRECATED 1.9 - This group version of IPBlock is deprecated by networking/v1/IPBlock. IPBlock describes a particular CIDR (Ex. \"192.168.1.1/24\") that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The except entry describes CIDRs that should not be included within this rule.",
                       "required":[
                         "cidr"
                       ],
@@ -506,7 +506,7 @@
                 "description":"List of ports which should be made accessible on the pods selected for this rule. Each item in this list is combined using a logical OR. If this field is empty or missing, this rule matches all ports (traffic not restricted by port). If this field is present and contains at least one item, then this rule allows traffic only if the traffic matches at least one port in the list.",
                 "type":"array",
                 "items":{
-                  "description":"NetworkPolicyPort describes a port to allow traffic on",
+                  "description":"DEPRECATED 1.9 - This group version of NetworkPolicyPort is deprecated by networking/v1/NetworkPolicyPort.",
                   "properties":{
                     "port":{
                       "description":"IntOrString is a type that can hold an int32 or a string.  When used in JSON or YAML marshalling and unmarshalling, it produces or consumes the inner type.  This allows you to have, for example, a JSON field that can accept a name or number.",
@@ -514,7 +514,7 @@
                       "format":"int-or-string"
                     },
                     "protocol":{
-                      "description":"The protocol (TCP or UDP) which traffic must match. If not specified, this field defaults to TCP.",
+                      "description":"Optional.  The protocol (TCP or UDP) which traffic must match. If not specified, this field defaults to TCP.",
                       "type":"string"
                     }
                   }
@@ -575,9 +575,9 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"networking.k8s.io",
+      "group":"extensions",
       "kind":"NetworkPolicy",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }
