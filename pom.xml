@@ -364,7 +364,7 @@ under the License.
       <plugin>
         <groupId>io.yupiik.maven</groupId>
         <artifactId>yupiik-tools-maven-plugin</artifactId>
-        <version>1.1.7</version>
+        <version>1.1.8</version>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
