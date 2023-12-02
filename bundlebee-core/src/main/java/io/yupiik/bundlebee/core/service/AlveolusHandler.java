@@ -455,7 +455,7 @@ public class AlveolusHandler {
                     try (final BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8))) {
                         return new LoadedDescriptor(
                                 desc, reader.lines().collect(joining("\n")), extractExtension(resource),
-                                url.toExternalForm());
+                                url.toExternalForm(), resource);
                     } catch (final IOException e) {
                         throw new IllegalStateException(e);
                     }
@@ -475,7 +475,7 @@ public class AlveolusHandler {
                                         desc, content, extractExtension(resource),
                                         Files.isDirectory(archive.getLocation()) ?
                                                 archive.getLocation().resolve(resource).toUri().toASCIIString() :
-                                                archive.getLocation().toUri().toASCIIString() + "!" + resource);
+                                                archive.getLocation().toUri().toASCIIString() + "!" + resource, resource);
                             });
                 }));
     }
@@ -565,7 +565,7 @@ public class AlveolusHandler {
         if (!alreadyInterpolated && desc.getConfiguration().getInterpolate()) {
             content = substitutor.replace(content);
         }
-        return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension(), desc.getUri());
+        return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension(), desc.getUri(), desc.getResource());
     }
 
     private JsonStructure loadJsonStructure(final LoadedDescriptor desc, final String content) {
@@ -624,6 +624,7 @@ public class AlveolusHandler {
         private final String content;
         private final String extension;
         private final String uri;
+        private final String resource;
     }
 
     @Data
