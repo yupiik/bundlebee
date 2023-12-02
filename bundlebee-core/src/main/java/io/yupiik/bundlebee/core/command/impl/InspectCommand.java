@@ -15,11 +15,9 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
-import io.yupiik.bundlebee.core.service.ArchiveReader;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -28,24 +26,17 @@ import javax.inject.Inject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
-import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
 @Log
 @Dependent
-public class InspectCommand implements CompletingExecutable {
+public class InspectCommand extends VisitorCommand {
     @Inject
     @Description("Alveolus name to inspect. When set to `auto`, it will look for all manifests found in the classpath. " +
             "If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, " +
@@ -76,21 +67,13 @@ public class InspectCommand implements CompletingExecutable {
     @ConfigProperty(name = "bundlebee.inspect.verbose", defaultValue = "false")
     private boolean verbose;
 
-    @Inject
-    private AlveolusHandler visitor;
-
-    @Inject
-    private ArchiveReader archives;
-
     @Override
     public Stream<String> complete(final Map<String, String> options, final String optionName) {
         switch (optionName) {
             case "verbose":
                 return Stream.of("false", "true");
-            case "alveolus":
-                return visitor.findCompletionAlveoli(options);
             default:
-                return Stream.empty();
+                return super.complete(options, optionName);
         }
     }
 
@@ -106,48 +89,18 @@ public class InspectCommand implements CompletingExecutable {
 
     @Override
     public CompletionStage<?> execute() {
-        final var cache = archives.newCache();
-        final var descPerAlveolus = new ConcurrentHashMap<String, List<AlveolusHandler.LoadedDescriptor>>();
-        final var alveolusPerName = new ConcurrentHashMap<String, Manifest.Alveolus>();
-        final var filter = createDescriptorFilter();
-        return visitor
-                .findRootAlveoli(from, manifest, alveolus)
-                .thenCompose(alveoli -> all(
-                        alveoli.stream()
-                                .map(it -> visitor.executeOnceOnAlveolus(
-                                        null, it.getManifest(), it.getAlveolus(), null,
-                                        (ctx, desc) -> {
-                                            if (filter.test(desc.getConfiguration().getName())) {
-                                                alveolusPerName.putIfAbsent(ctx.getAlveolus().getName(), ctx.getAlveolus());
-                                                descPerAlveolus.computeIfAbsent(ctx.getAlveolus().getName(), k -> new ArrayList<>())
-                                                        .add(desc);
-                                            }
-                                            return completedFuture(true);
-                                        },
-                                        cache, null, "inspected"))
-                                .collect(toList()), toList(),
-                        true))
-                .thenRun(() -> {
+        return super.doExecute(from, manifest, alveolus, descriptor)
+                .thenAccept(collected -> {
                     log.info("Inspection Report for alveolus=" + alveolus);
                     log.info("");
-                    descPerAlveolus.entrySet().stream()
+                    collected.getDescriptors().entrySet().stream()
                             // keep addition order since it is the most likely right one
                             .flatMap(it -> Stream.concat(
-                                    toLogs(alveolusPerName.get(it.getKey()), it.getValue()),
+                                    toLogs(collected.getAlveoli().get(it.getKey()), it.getValue()),
                                     Stream.of("") /*empty line between alveolus*/))
                             .flatMap(it -> Stream.of(it.split("\n")))
                             .forEach(log::info);
                 });
-    }
-
-    private Predicate<String> createDescriptorFilter() {
-        if (UNSET.equals(descriptor) || descriptor.isBlank()) {
-            return s -> true;
-        }
-        if (descriptor.startsWith("r/")) {
-            return Pattern.compile(descriptor.substring("r/".length())).asMatchPredicate();
-        }
-        return s -> descriptor.equals(s);
     }
 
     private Stream<String> toLogs(final Manifest.Alveolus alveolus,

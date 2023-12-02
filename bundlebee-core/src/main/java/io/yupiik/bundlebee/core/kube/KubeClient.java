@@ -243,13 +243,16 @@ public class KubeClient implements ConfigHolder {
     }
 
     public CompletionStage<List<HttpResponse<JsonObject>>> getResources(final String descriptorContent, final String ext) {
-        return forDescriptor(null, descriptorContent, ext, desc -> {
-            final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
-            return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
-                    .thenCompose(ignored -> doGet(desc, kindLowerCased));
-        }).thenApply(responses -> responses.stream()
-                .map(it -> new JsonHttpResponse(jsonb, it))
-                .collect(toList()));
+        return forDescriptor(null, descriptorContent, ext, this::getResource)
+                .thenApply(responses -> responses.stream()
+                        .map(it -> new JsonHttpResponse(jsonb, it))
+                        .collect(toList()));
+    }
+
+    public CompletionStage<HttpResponse<String>> getResource(final JsonObject desc) {
+        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+        return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
+                .thenCompose(ignored -> doGet(desc, kindLowerCased));
     }
 
     private CompletionStage<HttpResponse<String>> doGet(final JsonObject desc, final String kindLowerCased) {
