@@ -74,7 +74,7 @@
         "service.app": "my-app",
         "service.name": "foo",
         "service.type": "NodePort",
-        "service.port": "9090"
+        "service.port": "{{ApplyCommandTest.fromTemplate.port:-9090}}"
       }
     },
     {
