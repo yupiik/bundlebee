@@ -173,6 +173,11 @@ public class DiffCommand extends VisitorCommand {
     private boolean ignoreNoDiffEntries;
 
     @Inject
+    @Description("If there are at least this number of differences then the build will fail, disabled if negative.")
+    @ConfigProperty(name = "bundlebee.diff.maxDifferences", defaultValue = "-1")
+    private int maxDifferences;
+
+    @Inject
     @Description("How to print the diff for each descriptor, " +
             "`AUTO` means use `JSON-Patch` when there is a diff, " +
             "`JSON` when a descriptor is missing and skip the content when it is the same. " +
@@ -245,6 +250,7 @@ public class DiffCommand extends VisitorCommand {
             final var writerFactory = formatted ?
                     json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true)) :
                     null;
+            final var diffCache = new ConcurrentHashMap<Item, JsonArray>();
             switch (diffType) {
                 case JSON:
                     doWrite(() -> {
@@ -254,7 +260,7 @@ public class DiffCommand extends VisitorCommand {
                                 .forEach((alveolusName, items) -> diff.add(
                                         alveolusName,
                                         json.createArrayBuilder(items.stream()
-                                                .map(this::doJsonDiff)
+                                                .map(it -> doJsonDiff(it, diffCache))
                                                 .filter(Objects::nonNull)
                                                 .collect(toList()))));
                         final var json = diff.build();
@@ -265,9 +271,18 @@ public class DiffCommand extends VisitorCommand {
                             .sorted(Comparator.<Map.Entry<Item, ActualState>, String>comparing(i -> i.getKey().getAlveolus().getName())
                                     .thenComparing(i -> i.getKey().getKind())
                                     .thenComparing(i -> i.getKey().getName()))
-                            .map(it -> doLogDiff(it.getKey(), it.getValue(), writerFactory))
+                            .map(it -> doLogDiff(it.getKey(), it.getValue(), writerFactory, diffCache))
                             .filter(Predicate.not(String::isBlank))
                             .collect(joining("\n")));
+            }
+
+            if (maxDifferences > 0) {
+                final long diff = data.entrySet().stream()
+                        .mapToLong(i -> doDiff(i.getKey(), i.getValue(), diffCache).size())
+                        .sum();
+                if (diff > maxDifferences) {
+                    throw new IllegalStateException("Too much differences: " + diff + " (maxDifferences=" + maxDifferences + ")");
+                }
             }
         });
     }
@@ -314,8 +329,8 @@ public class DiffCommand extends VisitorCommand {
                 });
     }
 
-    private JsonValue doJsonDiff(final Map.Entry<Item, ActualState> it) {
-        final var diff = doDiff(it.getKey(), it.getValue());
+    private JsonValue doJsonDiff(final Map.Entry<Item, ActualState> it, final Map<Item, JsonArray> cache) {
+        final var diff = doDiff(it.getKey(), it.getValue(), cache);
         if (diff.isEmpty()) {
             return null;
         }
@@ -331,8 +346,8 @@ public class DiffCommand extends VisitorCommand {
     }
 
     private String doLogDiff(final Item expected, final ActualState actual,
-                             final JsonWriterFactory writerFactory) {
-        final var diff = doDiff(expected, actual);
+                             final JsonWriterFactory writerFactory, final Map<Item, JsonArray> cache) {
+        final var diff = doDiff(expected, actual, cache);
         if (diff.isEmpty() && ignoreNoDiffEntries) {
             return "";
         }
@@ -345,14 +360,16 @@ public class DiffCommand extends VisitorCommand {
                 (diffType == AUTO && diff.isEmpty() ? "" : ((writerFactory != null ? format(data, writerFactory) : data.toString()).trim()));
     }
 
-    private JsonArray doDiff(final Item expected, final ActualState actual) {
-        final var preparedExpected = prepare(expected.getExpected());
-        final var preparedActual = prepare(actual.getActual());
-        return json.createArrayBuilder(doDiff(preparedActual, preparedExpected).stream()
-                        .map(JsonValue::asJsonObject)
-                        .filter(it -> isImportantDiff(it, p -> json.createPointer(p).getValue(actual.getActual())))
-                        .collect(toList()))
-                .build();
+    private JsonArray doDiff(final Item expected, final ActualState actual, final Map<Item, JsonArray> cache) {
+        return cache.computeIfAbsent(expected, e -> {
+            final var preparedExpected = prepare(expected.getExpected());
+            final var preparedActual = prepare(actual.getActual());
+            return json.createArrayBuilder(doDiff(preparedActual, preparedExpected).stream()
+                            .map(JsonValue::asJsonObject)
+                            .filter(it -> isImportantDiff(it, p -> json.createPointer(p).getValue(actual.getActual())))
+                            .collect(toList()))
+                    .build();
+        });
     }
 
     protected boolean isImportantDiff(final JsonObject op, final Function<String, JsonValue> accessor) {
