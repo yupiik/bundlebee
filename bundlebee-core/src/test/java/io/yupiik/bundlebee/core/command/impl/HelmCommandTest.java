@@ -31,6 +31,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static java.util.logging.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,7 +54,7 @@ class HelmCommandTest {
                         "--chart-version", "1.1.5-SNAPSHOT",
                         "--output", output.toString(),
                         "--placeholderDescriptions", desc.toString()));
-        final var outputs = new HashMap<String, String>();
+        final var outputs = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         Files.walkFileTree(output, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
@@ -89,6 +90,11 @@ class HelmCommandTest {
                                 "version: \"1.1.5\"\n" +
                                 "appVersion: \"1.2.3\"\n",
                         "values.yaml", "" +
+                                "ApplyCommandTest:\n" +
+                                "  fromTemplate:\n" +
+                                "    port: \"9090\"\n" +
+                                "\n" +
+                                "\n" +
                                 "# Some level desc.\n" +
                                 "some:\n" +
                                 "  # Some desc.\n" +
