@@ -299,6 +299,7 @@ public class DiffCommand extends VisitorCommand {
                 } catch (final IOException ioe) {
                     throw new IllegalStateException(ioe);
                 }
+                break;
             default:
                 log.info(contentProvider);
         }
