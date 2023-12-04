@@ -266,6 +266,7 @@ public class DiffCommand extends VisitorCommand {
                         final var json = diff.build();
                         return writerFactory != null ? format(json, writerFactory) : json.toString();
                     });
+                    break;
                 default:
                     doWrite(() -> "Diff:\n" + data.entrySet().stream()
                             .sorted(Comparator.<Map.Entry<Item, ActualState>, String>comparing(i -> i.getKey().getAlveolus().getName())
