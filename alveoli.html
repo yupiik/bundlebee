@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.24-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.25-SNAPSHOT">
     
 </head>
 <body>
@@ -77,13 +77,13 @@
                 <div class="ulist">
 <ul>
 <li>
-<p><strong>elasticsearch-local</strong> (<a href="alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local.html">io.yupiik.alveoli:elasticsearch-local:1.0.24-SNAPSHOT</a>): setup "elasticsearch-local" which runs an Elasticsearch instance usable by other applications.</p>
+<p><strong>elasticsearch-local</strong> (<a href="alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local.html">io.yupiik.alveoli:elasticsearch-local:1.0.25-SNAPSHOT</a>): setup "elasticsearch-local" which runs an Elasticsearch instance usable by other applications.</p>
 </li>
 <li>
-<p><strong>grafana-simple</strong> (<a href="alveoli/grafana-simple-io-yupiik-alveoli-grafana-simple.html">io.yupiik.alveoli:grafana-simple:1.0.24-SNAPSHOT</a>): simple Grafana instance, note we preconfigure it with Loki, Prometheus and grafana alveoli, ensure to override the configuration if you don&#8217;t use them.</p>
+<p><strong>grafana-simple</strong> (<a href="alveoli/grafana-simple-io-yupiik-alveoli-grafana-simple.html">io.yupiik.alveoli:grafana-simple:1.0.25-SNAPSHOT</a>): simple Grafana instance, note we preconfigure it with Loki, Prometheus and grafana alveoli, ensure to override the configuration if you don&#8217;t use them.</p>
 </li>
 <li>
-<p><strong>loki-simple</strong> (<a href="alveoli/loki-simple-io-yupiik-alveoli-loki-simple.html">io.yupiik.alveoli:loki-simple:1.0.24-SNAPSHOT</a>): loki setup to aggregate service logs using promtail, the prometheus for logs.</p>
+<p><strong>loki-simple</strong> (<a href="alveoli/loki-simple-io-yupiik-alveoli-loki-simple.html">io.yupiik.alveoli:loki-simple:1.0.25-SNAPSHOT</a>): loki setup to aggregate service logs using promtail, the prometheus for logs.</p>
 </li>
 </ul>
 </div>
@@ -102,10 +102,10 @@ Starting from 1.0.20, the Promtail descriptor moved from Deployment to DaemonSet
 <div class="ulist">
 <ul>
 <li>
-<p><strong>minio-local</strong> (<a href="alveoli/minio-local-io-yupiik-alveoli-minio-local.html">io.yupiik.alveoli:minio-local:1.0.24-SNAPSHOT</a>): setup "minio-local" which runs a MinIO instance usable by other applications.</p>
+<p><strong>minio-local</strong> (<a href="alveoli/minio-local-io-yupiik-alveoli-minio-local.html">io.yupiik.alveoli:minio-local:1.0.25-SNAPSHOT</a>): setup "minio-local" which runs a MinIO instance usable by other applications.</p>
 </li>
 <li>
-<p><strong>monitoring-alveolus</strong> (<a href="alveoli/monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus.html">io.yupiik.alveoli:monitoring-alveolus:1.0.24-SNAPSHOT</a>): includes loki+prometheus+zipkin+grafana at once.</p>
+<p><strong>monitoring-alveolus</strong> (<a href="alveoli/monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus.html">io.yupiik.alveoli:monitoring-alveolus:1.0.25-SNAPSHOT</a>): includes loki+prometheus+zipkin+grafana at once.</p>
 </li>
 </ul>
 </div>
@@ -138,13 +138,13 @@ You can set --monitoring.namespace to deploy the full stack in a dedicated names
 <div class="ulist">
 <ul>
 <li>
-<p><strong>postgres-local</strong> (<a href="alveoli/postgres-local-io-yupiik-alveoli-postgres-local.html">io.yupiik.alveoli:postgres-local:1.0.24-SNAPSHOT</a>): setup "postgres-local" which runs a PostgreSQL instance usable by other applications.</p>
+<p><strong>postgres-local</strong> (<a href="alveoli/postgres-local-io-yupiik-alveoli-postgres-local.html">io.yupiik.alveoli:postgres-local:1.0.25-SNAPSHOT</a>): setup "postgres-local" which runs a PostgreSQL instance usable by other applications.</p>
 </li>
 <li>
-<p><strong>prometheus-simple</strong> (<a href="alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple.html">io.yupiik.alveoli:prometheus-simple:1.0.24-SNAPSHOT</a>): prometheus local/dev setup. Will be available on <a href="http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT" class="bare">http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT</a>).</p>
+<p><strong>prometheus-simple</strong> (<a href="alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple.html">io.yupiik.alveoli:prometheus-simple:1.0.25-SNAPSHOT</a>): prometheus local/dev setup. Will be available on <a href="http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT" class="bare">http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT</a>).</p>
 </li>
 <li>
-<p><strong>zipkin-simple</strong> (<a href="alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple.html">io.yupiik.alveoli:zipkin-simple:1.0.24-SNAPSHOT</a>): zipkin in memory setup. Will be available on <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT</a>). For example <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans</a> to push spans through HTTP.</p>
+<p><strong>zipkin-simple</strong> (<a href="alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple.html">io.yupiik.alveoli:zipkin-simple:1.0.25-SNAPSHOT</a>): zipkin in memory setup. Will be available on <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT</a>). For example <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans</a> to push spans through HTTP.</p>
 </li>
 </ul>
 </div>
@@ -200,7 +200,7 @@ You can set --monitoring.namespace to deploy the full stack in a dedicated names
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.highlightAll(); }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.24-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.25-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

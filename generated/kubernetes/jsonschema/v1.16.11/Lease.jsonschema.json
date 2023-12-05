@@ -195,7 +195,7 @@
     {
       "group":"coordination.k8s.io",
       "kind":"Lease",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }

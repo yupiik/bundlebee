@@ -176,11 +176,11 @@
             "description":"Specification of the desired behavior of a cron job, including the schedule. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
             "properties":{
               "concurrencyPolicy":{
-                "description":"Specifies how to treat concurrent executions of a Job. Valid values are: - \"Allow\" (default): allows CronJobs to run concurrently; - \"Forbid\": forbids concurrent runs, skipping next run if previous run hasn't finished yet; - \"Replace\": cancels currently running job and replaces it with a new one\n\n",
+                "description":"Specifies how to treat concurrent executions of a Job. Valid values are: - \"Allow\" (default): allows CronJobs to run concurrently; - \"Forbid\": forbids concurrent runs, skipping next run if previous run hasn't finished yet; - \"Replace\": cancels currently running job and replaces it with a new one",
                 "type":"string"
               },
               "failedJobsHistoryLimit":{
-                "description":"The number of failed finished jobs to retain. Value must be non-negative integer. Defaults to 1.",
+                "description":"The number of failed finished jobs to retain. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
                 "format":"int32",
                 "type":"integer"
               },
@@ -6194,7 +6194,7 @@
                 "type":"integer"
               },
               "successfulJobsHistoryLimit":{
-                "description":"The number of successful finished jobs to retain. Value must be non-negative integer. Defaults to 3.",
+                "description":"The number of successful finished jobs to retain. This is a pointer to distinguish between explicit zero and not specified. Defaults to 3.",
                 "format":"int32",
                 "type":"integer"
               },
@@ -6273,7 +6273,7 @@
           {
             "group":"batch",
             "kind":"CronJob",
-            "version":"v1"
+            "version":"v1beta1"
           }
         ]
       },
@@ -6315,7 +6315,7 @@
     {
       "group":"batch",
       "kind":"CronJobList",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }

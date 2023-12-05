@@ -1,5 +1,5 @@
 {
-  "description":"Ingress is a collection of rules that allow inbound connections to reach the endpoints defined by a backend. An Ingress can be configured to give services externally-reachable urls, load balance traffic, terminate SSL, offer name based virtual hosting etc.",
+  "description":"Ingress is a collection of rules that allow inbound connections to reach the endpoints defined by a backend. An Ingress can be configured to give services externally-reachable urls, load balance traffic, terminate SSL, offer name based virtual hosting etc. DEPRECATED - This group version of Ingress is deprecated by networking.k8s.io/v1beta1 Ingress. See the release notes for more information.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -10,7 +10,7 @@
       "type":"string"
     },
     "metadata":{
-      "description":"Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata",
+      "description":"Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
       "properties":{
         "annotations":{
           "additionalProperties":{
@@ -292,7 +292,7 @@
       "type":"object"
     },
     "spec":{
-      "description":"Spec is the desired state of the Ingress. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status",
+      "description":"Spec is the desired state of the Ingress. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
       "properties":{
         "backend":{
           "description":"A default backend capable of servicing requests that don't match any rule. At least one of 'backend' or 'rules' must be specified. This field is optional to allow the loadbalancer controller or defaulting logic to specify a global default.",
@@ -397,7 +397,7 @@
       "type":"object"
     },
     "status":{
-      "description":"Status is the current state of the Ingress. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status",
+      "description":"Status is the current state of the Ingress. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
       "properties":{
         "loadBalancer":{
           "description":"LoadBalancer contains the current status of the load-balancer.",
@@ -430,7 +430,7 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"networking.k8s.io",
+      "group":"extensions",
       "kind":"Ingress",
       "version":"v1beta1"
     }

@@ -8,7 +8,7 @@
     "items":{
       "description":"Items is the list of Ingress.",
       "items":{
-        "description":"Ingress is a collection of rules that allow inbound connections to reach the endpoints defined by a backend. An Ingress can be configured to give services externally-reachable urls, load balance traffic, terminate SSL, offer name based virtual hosting etc.",
+        "description":"Ingress is a collection of rules that allow inbound connections to reach the endpoints defined by a backend. An Ingress can be configured to give services externally-reachable urls, load balance traffic, terminate SSL, offer name based virtual hosting etc. DEPRECATED - This group version of Ingress is deprecated by networking.k8s.io/v1beta1 Ingress. See the release notes for more information.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -171,11 +171,11 @@
           "spec":{
             "description":"Spec is the desired state of the Ingress. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
             "properties":{
-              "defaultBackend":{
-                "description":"DefaultBackend is the backend that should handle requests that don't match any rule. If Rules are not specified, DefaultBackend must be specified. If DefaultBackend is not set, the handling of requests that do not match any of the rules will be up to the Ingress controller.",
+              "backend":{
+                "description":"A default backend capable of servicing requests that don't match any rule. At least one of 'backend' or 'rules' must be specified. This field is optional to allow the loadbalancer controller or defaulting logic to specify a global default.",
                 "properties":{
                   "resource":{
-                    "description":"Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with \"Service\".",
+                    "description":"Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, serviceName and servicePort must not be specified.",
                     "properties":{
                       "apiGroup":{
                         "description":"APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
@@ -196,33 +196,14 @@
                     ],
                     "type":"object"
                   },
-                  "service":{
-                    "description":"Service references a Service as a Backend. This is a mutually exclusive setting with \"Resource\".",
-                    "properties":{
-                      "name":{
-                        "description":"Name is the referenced service. The service must exist in the same namespace as the Ingress object.",
-                        "type":"string"
-                      },
-                      "port":{
-                        "description":"Port of the referenced service. A port name or port number is required for a IngressServiceBackend.",
-                        "properties":{
-                          "name":{
-                            "description":"Name is the name of the port on the Service. This is a mutually exclusive setting with \"Number\".",
-                            "type":"string"
-                          },
-                          "number":{
-                            "description":"Number is the numerical port number (e.g. 80) on the Service. This is a mutually exclusive setting with \"Name\".",
-                            "format":"int32",
-                            "type":"integer"
-                          }
-                        },
-                        "type":"object"
-                      }
-                    },
-                    "required":[
-                      "name"
-                    ],
-                    "type":"object"
+                  "serviceName":{
+                    "description":"Specifies the name of the referenced service.",
+                    "type":"string"
+                  },
+                  "servicePort":{
+                    "description":"Specifies the port of the referenced service.",
+                    "format":"int-or-string",
+                    "type":"string"
                   }
                 },
                 "type":"object"
@@ -252,7 +233,7 @@
                                 "description":"Backend defines the referenced service endpoint to which the traffic will be forwarded to.",
                                 "properties":{
                                   "resource":{
-                                    "description":"Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, a service.Name and service.Port must not be specified. This is a mutually exclusive setting with \"Service\".",
+                                    "description":"Resource is an ObjectRef to another Kubernetes resource in the namespace of the Ingress object. If resource is specified, serviceName and servicePort must not be specified.",
                                     "properties":{
                                       "apiGroup":{
                                         "description":"APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
@@ -273,33 +254,14 @@
                                     ],
                                     "type":"object"
                                   },
-                                  "service":{
-                                    "description":"Service references a Service as a Backend. This is a mutually exclusive setting with \"Resource\".",
-                                    "properties":{
-                                      "name":{
-                                        "description":"Name is the referenced service. The service must exist in the same namespace as the Ingress object.",
-                                        "type":"string"
-                                      },
-                                      "port":{
-                                        "description":"Port of the referenced service. A port name or port number is required for a IngressServiceBackend.",
-                                        "properties":{
-                                          "name":{
-                                            "description":"Name is the name of the port on the Service. This is a mutually exclusive setting with \"Number\".",
-                                            "type":"string"
-                                          },
-                                          "number":{
-                                            "description":"Number is the numerical port number (e.g. 80) on the Service. This is a mutually exclusive setting with \"Name\".",
-                                            "format":"int32",
-                                            "type":"integer"
-                                          }
-                                        },
-                                        "type":"object"
-                                      }
-                                    },
-                                    "required":[
-                                      "name"
-                                    ],
-                                    "type":"object"
+                                  "serviceName":{
+                                    "description":"Specifies the name of the referenced service.",
+                                    "type":"string"
+                                  },
+                                  "servicePort":{
+                                    "description":"Specifies the port of the referenced service.",
+                                    "format":"int-or-string",
+                                    "type":"string"
                                   }
                                 },
                                 "type":"object"
@@ -309,7 +271,7 @@
                                 "type":"string"
                               },
                               "pathType":{
-                                "description":"PathType determines the interpretation of the Path matching. PathType can be one of the following values: * Exact: Matches the URL path exactly. * Prefix: Matches based on a URL path prefix split by '/'. Matching is\n  done on a path element by element basis. A path element refers is the\n  list of labels in the path split by the '/' separator. A request is a\n  match for path p if every p is an element-wise prefix of p of the\n  request path. Note that if the last element of the path is a substring\n  of the last element in request path, it is not a match (e.g. /foo/bar\n  matches /foo/bar/baz, but does not match /foo/barbaz).\n* ImplementationSpecific: Interpretation of the Path matching is up to\n  the IngressClass. Implementations can treat this as a separate PathType\n  or treat it identically to Prefix or Exact path types.\nImplementations are required to support all path types.",
+                                "description":"PathType determines the interpretation of the Path matching. PathType can be one of the following values: * Exact: Matches the URL path exactly. * Prefix: Matches based on a URL path prefix split by '/'. Matching is\n  done on a path element by element basis. A path element refers is the\n  list of labels in the path split by the '/' separator. A request is a\n  match for path p if every p is an element-wise prefix of p of the\n  request path. Note that if the last element of the path is a substring\n  of the last element in request path, it is not a match (e.g. /foo/bar\n  matches /foo/bar/baz, but does not match /foo/barbaz).\n* ImplementationSpecific: Interpretation of the Path matching is up to\n  the IngressClass. Implementations can treat this as a separate PathType\n  or treat it identically to Prefix or Exact path types.\nImplementations are required to support all path types. Defaults to ImplementationSpecific.",
                                 "type":"string"
                               }
                             },
@@ -344,7 +306,7 @@
                       "type":"array"
                     },
                     "secretName":{
-                      "description":"SecretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the Host header is used for routing.",
+                      "description":"SecretName is the name of the secret used to terminate SSL traffic on 443. Field is left optional to allow SSL routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the Host header is used for routing.",
                       "type":"string"
                     }
                   },
@@ -389,9 +351,9 @@
         "type":"object",
         "x-kubernetes-group-version-kind":[
           {
-            "group":"networking.k8s.io",
+            "group":"extensions",
             "kind":"Ingress",
-            "version":"v1"
+            "version":"v1beta1"
           }
         ]
       },
@@ -431,9 +393,9 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"networking.k8s.io",
+      "group":"extensions",
       "kind":"IngressList",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }

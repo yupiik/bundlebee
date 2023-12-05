@@ -273,7 +273,7 @@
           {
             "group":"apiregistration.k8s.io",
             "kind":"APIService",
-            "version":"v1beta1"
+            "version":"v1"
           }
         ]
       },
@@ -315,7 +315,7 @@
     {
       "group":"apiregistration.k8s.io",
       "kind":"APIServiceList",
-      "version":"v1beta1"
+      "version":"v1"
     }
   ]
 }

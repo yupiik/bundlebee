@@ -176,7 +176,7 @@
                 "type":"string"
               },
               "failedJobsHistoryLimit":{
-                "description":"The number of failed finished jobs to retain. This is a pointer to distinguish between explicit zero and not specified.",
+                "description":"The number of failed finished jobs to retain. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
                 "format":"int32",
                 "type":"integer"
               },
@@ -5354,7 +5354,7 @@
                 "type":"integer"
               },
               "successfulJobsHistoryLimit":{
-                "description":"The number of successful finished jobs to retain. This is a pointer to distinguish between explicit zero and not specified.",
+                "description":"The number of successful finished jobs to retain. This is a pointer to distinguish between explicit zero and not specified. Defaults to 3.",
                 "format":"int32",
                 "type":"integer"
               },
@@ -5424,7 +5424,7 @@
           {
             "group":"batch",
             "kind":"CronJob",
-            "version":"v2alpha1"
+            "version":"v1beta1"
           }
         ]
       },
@@ -5466,7 +5466,7 @@
     {
       "group":"batch",
       "kind":"CronJobList",
-      "version":"v2alpha1"
+      "version":"v1beta1"
     }
   ]
 }

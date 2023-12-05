@@ -8,7 +8,7 @@
     "items":{
       "description":"Items is the list of Ingress.",
       "items":{
-        "description":"Ingress is a collection of rules that allow inbound connections to reach the endpoints defined by a backend. An Ingress can be configured to give services externally-reachable urls, load balance traffic, terminate SSL, offer name based virtual hosting etc.",
+        "description":"Ingress is a collection of rules that allow inbound connections to reach the endpoints defined by a backend. An Ingress can be configured to give services externally-reachable urls, load balance traffic, terminate SSL, offer name based virtual hosting etc. DEPRECATED - This group version of Ingress is deprecated by networking.k8s.io/v1beta1 Ingress. See the release notes for more information.",
         "properties":{
           "apiVersion":{
             "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
@@ -307,7 +307,7 @@
         "type":"object",
         "x-kubernetes-group-version-kind":[
           {
-            "group":"networking.k8s.io",
+            "group":"extensions",
             "kind":"Ingress",
             "version":"v1beta1"
           }
@@ -349,7 +349,7 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"networking.k8s.io",
+      "group":"extensions",
       "kind":"IngressList",
       "version":"v1beta1"
     }

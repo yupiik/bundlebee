@@ -8,7 +8,7 @@
     "items":{
       "description":"Items is the list of Ingress.",
       "items":{
-        "$ref":"#/definitions/io.k8s.api.networking.v1beta1.Ingress"
+        "$ref":"#/definitions/io.k8s.api.extensions.v1beta1.Ingress"
       },
       "type":"array"
     },
@@ -27,7 +27,7 @@
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"networking.k8s.io",
+      "group":"extensions",
       "kind":"IngressList",
       "version":"v1beta1"
     }

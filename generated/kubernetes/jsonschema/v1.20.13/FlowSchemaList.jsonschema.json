@@ -413,7 +413,7 @@
           {
             "group":"flowcontrol.apiserver.k8s.io",
             "kind":"FlowSchema",
-            "version":"v1alpha1"
+            "version":"v1beta1"
           }
         ]
       },
@@ -455,7 +455,7 @@
     {
       "group":"flowcontrol.apiserver.k8s.io",
       "kind":"FlowSchemaList",
-      "version":"v1alpha1"
+      "version":"v1beta1"
     }
   ]
 }
