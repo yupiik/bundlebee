@@ -339,6 +339,7 @@ public class DiffCommand extends VisitorCommand {
         return json.createObjectBuilder()
                 .add("resource", it.getKey().getSource().getResource())
                 .add("uri", it.getKey().getSource().getUri())
+                .add("remote", it.getValue().getUrl())
                 .add("expected", it.getKey().getExpected())
                 .add("actual", it.getValue().getActual())
                 .add("diff", json.createObjectBuilder()
