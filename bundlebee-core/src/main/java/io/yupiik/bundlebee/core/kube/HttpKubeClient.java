@@ -50,7 +50,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.math.BigInteger;
+import java.net.Authenticator;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
+import java.net.ProxySelector;
+import java.net.SocketAddress;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -85,6 +93,8 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.command.Executable.UNSET;
+import static java.net.Authenticator.RequestorType.PROXY;
+import static java.net.Proxy.Type.HTTP;
 import static java.time.Clock.systemUTC;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.of;
@@ -130,6 +140,31 @@ public class HttpKubeClient implements ConfigHolder {
     @Description("When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.")
     @ConfigProperty(name = "bundlebee.kube.context", defaultValue = UNSET)
     private String kubeConfigContext;
+
+    @Inject
+    @Description("If a proxy is needed to contact the target cluster API, its host, ignore if not set.")
+    @ConfigProperty(name = "bundlebee.kube.proxy.host", defaultValue = UNSET)
+    private String proxyHost;
+
+    @Inject
+    @Description("If a proxy is needed to contact the target cluster API, its port.")
+    @ConfigProperty(name = "bundlebee.kube.proxy.port", defaultValue = "3128")
+    private int proxyPort;
+
+    @Inject
+    @Description("If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee `-Djdk.http.auth.tunneling.disabledSchemes=` options).")
+    @ConfigProperty(name = "bundlebee.kube.proxy.username", defaultValue = UNSET)
+    private String proxyUsername;
+
+    @Inject
+    @Description("If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee `-Djdk.http.auth.tunneling.disabledSchemes=` options).")
+    @ConfigProperty(name = "bundlebee.kube.proxy.password", defaultValue = UNSET)
+    private String proxyPassword;
+
+    @Inject
+    @Description("If a proxy is configured to use authentication, automatically set `-Djdk.http.auth.tunneling.disabledSchemes=`, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is \"leaked\", ie it is not cleaned up to limit side effect in concurrent mode.")
+    @ConfigProperty(name = "bundlebee.kube.proxy.setProxySystemProperties", defaultValue = "true")
+    private boolean setProxySystemProperties;
 
     @Inject
     @Description("Should SSL connector be validated or not.")
@@ -206,7 +241,9 @@ public class HttpKubeClient implements ConfigHolder {
         builder.version(dontUseAtRuntime.version());
         builder.executor(dontUseAtRuntime.executor().orElseGet(ForkJoinPool::commonPool));
 
-        client = new DelegatingClient(doConfigure(builder).build()) {
+        final var httpClientBuilder = doConfigure(builder);
+        configureProxy(httpClientBuilder);
+        client = new DelegatingClient(httpClientBuilder.build()) {
             @Override
             public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
                                                                     final HttpResponse.BodyHandler<T> responseBodyHandler) {
@@ -519,6 +556,45 @@ public class HttpKubeClient implements ConfigHolder {
                     }
                 }
         };
+    }
+
+    private void configureProxy(final HttpClient.Builder httpClientBuilder) {
+        if (proxyHost == null || UNSET.equals(proxyHost)) {
+            log.finest(() -> "No proxy set for kube client");
+            return;
+        }
+
+        final var proxy = List.of(new Proxy(HTTP, new InetSocketAddress(proxyHost, proxyPort)));
+        log.finest(() -> "Using proxy '" + proxyHost + ":" + proxyPort + "'");
+        httpClientBuilder
+                .proxy(new ProxySelector() {
+                    @Override
+                    public List<Proxy> select(final URI uri) {
+                        return proxy;
+                    }
+
+                    @Override
+                    public void connectFailed(final URI uri, final SocketAddress sa, final IOException ioe) {
+                        // no-op
+                    }
+                });
+        if (!UNSET.equals(proxyUsername) && !UNSET.equals(proxyPassword)) {
+            if (setProxySystemProperties) {
+                System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+            }
+
+            final var proxyAuth = new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
+            log.finest(() -> "Using proxy username '" + proxyUsername + "'");
+
+            httpClientBuilder.authenticator(new Authenticator() {
+                @Override
+                public PasswordAuthentication requestPasswordAuthenticationInstance(final String host, final InetAddress addr, final int port, final String protocol, final String prompt, final String scheme, final URL url, final RequestorType reqType) {
+                    return reqType == PROXY ? proxyAuth : null;
+                }
+            });
+        } else {
+            log.finest(() -> "No proxy authentication");
+        }
     }
 
     @NoArgsConstructor(access = PRIVATE)
