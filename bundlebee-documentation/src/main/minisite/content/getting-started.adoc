@@ -160,6 +160,7 @@ You could also have used the `bundlebee-maven-plugin`, simply add it in the plug
     </plugin>
   </plugins>
 ----
+<.> Reference to the deployment entry point of your module, it is optional if bundled in a transitive dependency.
 
 Then you can deploy this executing `mvn bundlebee:apply@hello-world`.
 
@@ -215,3 +216,8 @@ Learn more about this in <<template.adoc#,template>> documentation.
 
 Bundlebee provides a light testing framework integrated with JUnit 5 to ease the validation of alveoli.
 Learn more about this in <<junit5.adoc#,junit5>> documentation.
+
+== Integrate with ArgoCD
+
+If you are using (or will to use) link:https://argo-cd.readthedocs.io/[ArgoCD^], you can still use BundleBee if you configure it as a plugin.
+See the xref:argocd-integration.adoc[related] documentation.

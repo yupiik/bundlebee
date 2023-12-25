@@ -23,8 +23,12 @@ import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.Config;
 
 import javax.enterprise.inject.se.SeContainerInitializer;
+import javax.enterprise.util.AnnotationLiteral;
+import javax.json.JsonValue;
+import javax.json.spi.JsonProvider;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +41,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.StreamSupport;
 
 import static java.util.Locale.ROOT;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toMap;
 
 @Log
 public final class BundleBee {
@@ -52,14 +58,23 @@ public final class BundleBee {
         final var initializer = SeContainerInitializer.newInstance();
         final var cmd = args.length == 0 ? "help" : args[0];
         try (final var container = initializer.initialize()) {
-            // enrich the config with cli args
-            StreamSupport.stream(container.select(Config.class).get().getConfigSources().spliterator(), false)
+            // enrich the config with cli/specific args
+            final var properties = StreamSupport.stream(container.select(Config.class).get().getConfigSources().spliterator(), false)
                     .filter(ConfigurableConfigSource.class::isInstance)
                     .map(ConfigurableConfigSource.class::cast)
                     .findFirst()
                     .orElseThrow()
-                    .getProperties()
-                    .putAll(Args.toProperties(cmd, args));
+                    .getProperties();
+            properties.putAll(Args.toProperties(cmd, args));
+            ofNullable(System.getenv("ARGOCD_APP_PARAMETERS")).ifPresent(props -> {
+                final var jsonProvider = container.select(JsonProvider.class, new AnnotationLiteral<io.yupiik.bundlebee.core.qualifier.BundleBee>() {
+                }).get();
+                try (final var reader = jsonProvider.createReader(new StringReader(props))) {
+                    properties.putAll(reader.readArray().stream()
+                            .map(JsonValue::asJsonObject)
+                            .collect(toMap(o -> o.getString("name"), o -> o.getString("string"))));
+                }
+            });
 
             boolean foundCommand = false;
             try { // we vetoed all other executable except the one we want
