@@ -107,7 +107,7 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
     private String excludedLocations;
 
     @Inject
-    @Description("If set, represents where to dump processed descriptors.")
+    @Description("If set, represents where to dump processed descriptors. Note that `stdout` enables to log on `System.out` (java `stdout`) directly - useful for ArgoCD for example. In this case formatting and `concat` are skipped.")
     @ConfigProperty(name = "bundlebee.process.output", defaultValue = UNSET)
     private String output;
 
@@ -146,12 +146,14 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
     public CompletionStage<?> doExecute(final String from, final String manifest, final String alveolus,
                                         final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
                                         final ArchiveReader.Cache cache) {
-        final var out = output == null || UNSET.equals(output) ? null : Path.of(output);
+        final var out = output == null || UNSET.equals(output) || "stdout".equals(output) ? null : Path.of(output);
         final var jsonReaderFactory = provider.createReaderFactory(Map.of());
         final var jsonWriterFactory = provider.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
         final var collector = new ArrayList<String>();
         final BiConsumer<String, JsonObject> onDescriptor = out == null ?
-                (name, content) -> log.info(() -> name + ":\n" + format(content, jsonReaderFactory, jsonWriterFactory)) :
+                ("stdout".equals(output) ?
+                        (name, content) -> System.out.println(content) :
+                        (name, content) -> log.info(() -> name + ":\n" + format(content, jsonReaderFactory, jsonWriterFactory))) :
                 (name, content) -> {
                     final var formatted = format(content, jsonReaderFactory, jsonWriterFactory);
                     if (concat) {
@@ -191,7 +193,7 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
                             if (out.getParent() != null) {
                                 Files.createDirectories(out.getParent());
                             }
-                            Files.writeString(out, String .join("\n---\n", collector));
+                            Files.writeString(out, String.join("\n---\n", collector));
                         } catch (final IOException ioe) {
                             throw new IllegalStateException(ioe);
                         }

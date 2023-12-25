@@ -40,6 +40,7 @@
     <arthur.version>1.0.7</arthur.version>
     <yupiik-logging.version>1.0.7</yupiik-logging.version>
     <johnzon.version>1.2.21</johnzon.version>
+    <yupiik-tools.version>1.1.8</yupiik-tools.version>
 
     <!-- deprecated in recent maven releases, we workaround the warnings using the new way (but dont support split repo)
     <m2.location>${settings.localRepository}</m2.location>
@@ -364,7 +365,7 @@ under the License.
       <plugin>
         <groupId>io.yupiik.maven</groupId>
         <artifactId>yupiik-tools-maven-plugin</artifactId>
-        <version>1.1.8</version>
+        <version>${yupiik-tools.version}</version>
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>

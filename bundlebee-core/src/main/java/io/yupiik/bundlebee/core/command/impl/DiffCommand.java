@@ -513,7 +513,11 @@ public class DiffCommand extends VisitorCommand {
     }
 
     public enum ActualStatus {
-        MISSING, EXISTS
+        @Description("The resource is missing.")
+        MISSING,
+
+        @Description("Just resource exists.")
+        EXISTS
     }
 
     @Data
@@ -536,10 +540,18 @@ public class DiffCommand extends VisitorCommand {
     }
 
     public enum DiffType {
-        AUTO, JSON_PATCH, JSON
+        @Description("Use the most adapted diff type.")
+        AUTO,
+        @Description("Use JSON-Patch form.")
+        JSON_PATCH,
+        @Description("Use the JSON output directly, no diff.")
+        JSON
     }
 
     public enum OutputType {
-        LOG, FILE
+        @Description("Log the output.")
+        LOG,
+        @Description("Write the output to a file.")
+        FILE
     }
 }

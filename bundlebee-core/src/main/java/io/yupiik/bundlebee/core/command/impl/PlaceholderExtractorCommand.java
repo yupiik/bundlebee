@@ -28,6 +28,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonString;
 import javax.json.spi.JsonProvider;
 import java.io.IOException;
@@ -43,6 +44,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -140,13 +142,22 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
         Stream.of(this.descriptions.split(","))
                 .map(String::strip)
                 .filter(Predicate.not(String::isBlank))
-                .map(Path::of)
-                .filter(Files::exists)
                 .forEach(file -> {
-                    try (final var reader = Files.newBufferedReader(file)) {
-                        descriptions.load(reader);
-                    } catch (final IOException e) {
-                        throw new IllegalArgumentException("Can't read '" + file + "'", e);
+                    if (file.startsWith("env:")) {
+                        try (final var reader = new StringReader(System.getenv(file.substring("env:".length())))) {
+                            descriptions.load(reader);
+                        } catch (final IOException e) {
+                            throw new IllegalArgumentException("Can't read '" + file + "'", e);
+                        }
+                    } else {
+                        final var path = Path.of(file);
+                        if (Files.exists(path)) {
+                            try (final var reader = Files.newBufferedReader(path)) {
+                                descriptions.load(reader);
+                            } catch (final IOException e) {
+                                throw new IllegalArgumentException("Can't read '" + file + "'", e);
+                            }
+                        }
                     }
                 });
 
@@ -179,28 +190,47 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
                             })
                             .collect(toList());
 
-                    if (!"skip".equals(propertiesFilename)) {
-                        doWrite("Sample",
-                                () -> Path.of(dumpLocation).resolve(propertiesFilename), () -> placeholders.stream()
-                                        .map(p -> {
-                                            final var key = p.getName();
-                                            final var desc = descriptions.getProperty(key, key);
-                                            final var defaultValue = p.getDefaultValue();
-                                            return (desc != null && !desc.isBlank() ? "# HELP: " + desc.replace("\n", "\n# HELP: ") + "\n" : "") +
-                                                    "# " + key + " = " + (defaultValue != null ? formatSampleDefault(defaultValue) : (p.getDefaultValues() != null ? p.getDefaultValues().stream().map(this::formatSampleDefault).collect(joining(" OR ")) : "-"));
-                                        })
-                                        .collect(joining("\n\n", "", "\n")));
-                    }
+                    if (outputType == OutputType.ARGOCD) {
+                        final var argoCdDynamicConf = placeholders.stream()
+                                .collect(Collector.of(
+                                        json::createArrayBuilder,
+                                        (a, p) -> {
+                                            final var conf = json.createObjectBuilder()
+                                                    .add("name", p.getName());
+                                            if (p.getDefaultValue() != null) {
+                                                conf.add("string", p.getDefaultValue());
+                                            } else if (p.getDefaultValues() != null) {
+                                                conf.add("string", String.join(",", p.getDefaultValues()));
+                                            }
+                                            a.add(conf);
+                                        },
+                                        JsonArrayBuilder::addAll,
+                                        JsonArrayBuilder::build));
+                        System.out.println(argoCdDynamicConf);
+                    } else {
+                        if (!"skip".equals(propertiesFilename)) {
+                            doWrite("Sample",
+                                    () -> Path.of(dumpLocation).resolve(propertiesFilename), () -> placeholders.stream()
+                                            .map(p -> {
+                                                final var key = p.getName();
+                                                final var desc = descriptions.getProperty(key, key);
+                                                final var defaultValue = p.getDefaultValue();
+                                                return (desc != null && !desc.isBlank() ? "# HELP: " + desc.replace("\n", "\n# HELP: ") + "\n" : "") +
+                                                        "# " + key + " = " + (defaultValue != null ? formatSampleDefault(defaultValue) : (p.getDefaultValues() != null ? p.getDefaultValues().stream().map(this::formatSampleDefault).collect(joining(" OR ")) : "-"));
+                                            })
+                                            .collect(joining("\n\n", "", "\n")));
+                        }
 
-                    if (!"skip".equals(completionFilename)) {
-                        doWrite("Completion",
-                                () -> Path.of(dumpLocation).resolve(completionFilename), () -> placeholders.stream()
-                                        .map(p -> p.getName() + " = " + descriptions.getProperty(p.getName(), p.getName()).replace("\n", " "))
-                                        .collect(joining("\n", "", "\n")));
-                    }
+                        if (!"skip".equals(completionFilename)) {
+                            doWrite("Completion",
+                                    () -> Path.of(dumpLocation).resolve(completionFilename), () -> placeholders.stream()
+                                            .map(p -> p.getName() + " = " + descriptions.getProperty(p.getName(), p.getName()).replace("\n", " "))
+                                            .collect(joining("\n", "", "\n")));
+                        }
 
-                    if (!"skip".equals(docFilename)) {
-                        doWrite("Doc", () -> Path.of(dumpLocation).resolve(docFilename), () -> formatDoc(placeholders, descriptions));
+                        if (!"skip".equals(docFilename)) {
+                            doWrite("Doc", () -> Path.of(dumpLocation).resolve(docFilename), () -> formatDoc(placeholders, descriptions));
+                        }
                     }
                 })
                 .whenComplete((ok, ko) -> placeholderSpy.setListener(oldListener));
@@ -278,7 +308,14 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
     }
 
     public enum OutputType {
-        LOG, FILE
+        @Description("Just log the output.")
+        LOG,
+
+        @Description("Write the output to a file.")
+        FILE,
+
+        @Description("Use an output formatting ArgoCD understands.")
+        ARGOCD
     }
 
     @Data
