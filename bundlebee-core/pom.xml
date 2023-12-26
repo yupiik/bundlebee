@@ -88,6 +88,12 @@
     </dependency>
 
     <dependency>
+      <groupId>io.yupiik.maven</groupId>
+      <artifactId>codec-core</artifactId>
+      <version>${yupiik-tools.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.openwebbeans</groupId>
       <artifactId>openwebbeans-junit5</artifactId>
       <version>${owb.version}</version>
