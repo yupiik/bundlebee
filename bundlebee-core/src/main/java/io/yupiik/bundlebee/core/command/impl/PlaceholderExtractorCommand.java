@@ -196,12 +196,23 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
                                         json::createArrayBuilder,
                                         (a, p) -> {
                                             final var conf = json.createObjectBuilder()
-                                                    .add("name", p.getName());
+                                                    .add("name", p.getName())
+                                                    .add("title", p.getName());
                                             if (p.getDefaultValue() != null) {
-                                                conf.add("string", p.getDefaultValue());
+                                                conf.add("required", false)
+                                                        .add("string", p.getDefaultValue());
                                             } else if (p.getDefaultValues() != null) {
-                                                conf.add("string", String.join(",", p.getDefaultValues()));
+                                                conf.add("required", false)
+                                                        .add("string", String.join(",", p.getDefaultValues()));
+                                            } else {
+                                                conf.add("required", true);
                                             }
+
+                                            final var desc = descriptions.getProperty(p.getName());
+                                            if (desc != null) {
+                                                conf.add("tooltip", desc);
+                                            }
+
                                             a.add(conf);
                                         },
                                         JsonArrayBuilder::addAll,
