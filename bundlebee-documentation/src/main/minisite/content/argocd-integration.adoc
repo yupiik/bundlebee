@@ -96,7 +96,9 @@ Please also note that ArgoCD:
 ** has a correct monitoring to ensure you don't get into infra troubles if you host it on premise.
 * Does not come with a solution for secrets (and passwords/keys management) so you still need an option for that,
 * Does use a custom RBAC model for security which is not always trivial to set up.
-* As any software is a new thing to learn for your ops team and can compete with the idea of CI/CD (which has its own RBAC model for example).
+* As any software is a new thing to learn for your ops team and can compete with the idea of CI/CD (which has its own RBAC model for example),
+* Since it will store your clusters client configuration, the cluster ArgoCD is installed on must have very secured secrets (don't use a weaky-leaky dev environment for example),
+* Similarly to the cluster, if you use some ciphering solution, ensure its storage is very well secured (can go through Kubernetes secrets if you have a specific backend - ie not the default one).
 
 This is why at Yupiik we tend to not use ArgoCD but prefer a plain CI/CD pipeline which is offline (does not need a constant runtime resource allocation nor infra monitoring and is self-resilient since you just need `git` to restore an application).
 Most of the time we couple it with BundleBee `diff` command to ensure if the cluster is synchronized or not with the `git` state.
