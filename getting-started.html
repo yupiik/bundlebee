@@ -323,6 +323,13 @@ It will avoid conflicts when multiple alveolus are in the same classpath using n
   &lt;/plugins&gt;</code></pre>
 </div>
 </div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Reference to the deployment entry point of your module, it is optional if bundled in a transitive dependency.</p>
+</li>
+</ol>
+</div>
 <div class="paragraph">
 <p>Then you can deploy this executing <code>mvn bundlebee:apply@hello-world</code>.</p>
 </div>
@@ -421,6 +428,15 @@ Learn more about this in <a href="template.html">template</a> documentation.</p>
 <div class="paragraph">
 <p>Bundlebee provides a light testing framework integrated with JUnit 5 to ease the validation of alveoli.
 Learn more about this in <a href="junit5.html">junit5</a> documentation.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_integrate_with_argocd">Integrate with ArgoCD</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you are using (or will to use) <a href="https://argo-cd.readthedocs.io/" target="_blank" rel="noopener">ArgoCD</a>, you can still use BundleBee if you configure it as a plugin.
+See the <a href="argocd-integration.html">related</a> documentation.</p>
 </div>
 </div>
 </div>

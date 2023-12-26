@@ -209,6 +209,26 @@
 <dd>
 <p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code>. Property: <code>${bundlebee.kube.patchContentType}</code>.</p>
 </dd>
+<dt class="hdlist1">kubeProxyHost (<code>String</code>)</dt>
+<dd>
+<p>If a proxy is needed to contact the target cluster API, its host, ignore if not set. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.host}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeProxyPassword (<code>String</code>)</dt>
+<dd>
+<p>If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.password}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeProxyPort (<code>int</code>)</dt>
+<dd>
+<p>If a proxy is needed to contact the target cluster API, its port. Default value: <code>3128</code>. Property: <code>${bundlebee.kube.proxy.port}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeProxySetProxySystemProperties (<code>boolean</code>)</dt>
+<dd>
+<p>If a proxy is configured to use authentication, automatically set <code>-Djdk.http.auth.tunneling.disabledSchemes=</code>, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is "leaked", ie it is not cleaned up to limit side effect in concurrent mode. Default value: <code>true</code>. Property: <code>${bundlebee.kube.proxy.setProxySystemProperties}</code>.</p>
+</dd>
+<dt class="hdlist1">kubeProxyUsername (<code>String</code>)</dt>
+<dd>
+<p>If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.username}</code>.</p>
+</dd>
 <dt class="hdlist1">kubePutOnUpdate (<code>boolean</code>)</dt>
 <dd>
 <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code>. Property: <code>${bundlebee.kube.putOnUpdate}</code>.</p>
