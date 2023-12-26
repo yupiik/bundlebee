@@ -84,7 +84,7 @@ containers:
 == Limitations
 
 The limitations of the integration is that BundleBee does not deploy any more, it is just used as a templating engine (similarly to helm integration) so ArgoCD is the deployer.
-The drawback of that option is you loose the deployment options (like forcing `PUT` to force to override a resource, the control between the merge strategy when you install a resource or the awaiting logic which is different).
+The drawback of that option is you loose the deployment options (like forcing `PUT` to force to override a resource, the control of the merge strategy when you install a resource or the awaiting logic which is different).
 
 Please also note that ArgoCD:
 
