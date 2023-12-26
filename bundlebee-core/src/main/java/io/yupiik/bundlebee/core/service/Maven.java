@@ -18,6 +18,8 @@ package io.yupiik.bundlebee.core.service;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import io.yupiik.tools.codec.simple.SimpleCodec;
+import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,12 +30,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.annotation.PostConstruct;
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;
@@ -53,12 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -73,7 +63,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -249,11 +238,11 @@ public class Maven implements ConfigHolder {
                 repository + (repository.endsWith("/") ? "" : "/") +
                         group.replace('.', '/') + '/' + artifact + "/maven-metadata.xml");
         return client.sendAsync(
-                newHttpRequest(uri.getHost())
-                        .GET()
-                        .uri(uri)
-                        .build(),
-                HttpResponse.BodyHandlers.ofByteArray())
+                        newHttpRequest(uri.getHost())
+                                .GET()
+                                .uri(uri)
+                                .build(),
+                        HttpResponse.BodyHandlers.ofByteArray())
                 .thenApply(response -> {
                     if (response.statusCode() != 200) {
                         throw new IllegalStateException("Invalid " + uri + " response: " + response);
@@ -391,11 +380,11 @@ public class Maven implements ConfigHolder {
         if (("LATEST".equals(version) || "LATEST-SNAPSHOT".equals(version)) && base.startsWith("http")) {
             final var meta = URI.create(base + group.replace('.', '/') + "/" + artifact + "/maven-metadata.xml");
             return client.sendAsync(
-                    newHttpRequest(meta.getHost())
-                            .GET()
-                            .uri(meta)
-                            .build(),
-                    HttpResponse.BodyHandlers.ofByteArray())
+                            newHttpRequest(meta.getHost())
+                                    .GET()
+                                    .uri(meta)
+                                    .build(),
+                            HttpResponse.BodyHandlers.ofByteArray())
                     .thenApply(response -> {
                         if (response.statusCode() != 200) {
                             throw new IllegalStateException("Invalid " + meta + " response: " + response);
@@ -414,11 +403,11 @@ public class Maven implements ConfigHolder {
         if (version.endsWith("-SNAPSHOT") && base.startsWith("http")) {
             final var meta = URI.create(base + group.replace('.', '/') + "/" + artifact + "/" + version + "/maven-metadata.xml");
             return client.sendAsync(
-                    newHttpRequest(meta.getHost())
-                            .GET()
-                            .uri(meta)
-                            .build(),
-                    HttpResponse.BodyHandlers.ofByteArray())
+                            newHttpRequest(meta.getHost())
+                                    .GET()
+                                    .uri(meta)
+                                    .build(),
+                            HttpResponse.BodyHandlers.ofByteArray())
                     .thenApply(response -> {
                         if (response.statusCode() != 200) {
                             throw new IllegalStateException("Invalid " + meta + " response: " + response);
@@ -462,11 +451,11 @@ public class Maven implements ConfigHolder {
 
     public CompletionStage<Path> doDownload(final URI uri, final Path target) {
         return client.sendAsync(
-                newHttpRequest(uri.getHost())
-                        .GET()
-                        .uri(uri)
-                        .build(),
-                HttpResponse.BodyHandlers.ofFile(target))
+                        newHttpRequest(uri.getHost())
+                                .GET()
+                                .uri(uri)
+                                .build(),
+                        HttpResponse.BodyHandlers.ofFile(target))
                 .thenApply(it -> {
                     if (it.statusCode() != 200) {
                         throw new IllegalStateException("An error occured downloading " + uri);
@@ -595,149 +584,12 @@ public class Maven implements ConfigHolder {
     }
 
     public String createPassword(final String password, final String masterPassword) {
-        final byte[] clearBytes = ("auto".equals(password) ?
-                UUID.randomUUID().toString() : password).getBytes(StandardCharsets.UTF_8);
-        final var secureRandom = new SecureRandom();
-        secureRandom.setSeed(Instant.now().toEpochMilli());
-
-        final byte[] salt = secureRandom.generateSeed(8);
-        secureRandom.nextBytes(salt);
-
-        final MessageDigest digester;
-        try {
-            digester = MessageDigest.getInstance("SHA-256");
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
-
-        final var keyAndIv = new byte[32];
-        byte[] result;
-        int currentPos = 0;
-        while (currentPos < keyAndIv.length) {
-            digester.update(masterPassword.getBytes(StandardCharsets.UTF_8));
-            if (salt != null) {
-                digester.update(salt, 0, 8);
-            }
-            result = digester.digest();
-
-            final int stillNeed = keyAndIv.length - currentPos;
-            if (result.length > stillNeed) {
-                final var b = new byte[stillNeed];
-                System.arraycopy(result, 0, b, 0, b.length);
-                result = b;
-            }
-
-            System.arraycopy(result, 0, keyAndIv, currentPos, result.length);
-            currentPos += result.length;
-            if (currentPos < keyAndIv.length) {
-                digester.reset();
-                digester.update(result);
-            }
-        }
-
-        final byte[] key = new byte[16];
-        final byte[] iv = new byte[16];
-        System.arraycopy(keyAndIv, 0, key, 0, key.length);
-        System.arraycopy(keyAndIv, key.length, iv, 0, iv.length);
-
-        final byte[] encryptedBytes;
-        try {
-            final var cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
-            encryptedBytes = cipher.doFinal(clearBytes);
-        } catch (final NoSuchPaddingException | NoSuchAlgorithmException |
-                InvalidKeyException | InvalidAlgorithmParameterException |
-                IllegalBlockSizeException | BadPaddingException e) {
-            throw new IllegalStateException(e);
-        }
-
-        final int len = encryptedBytes.length;
-        final byte padLen = (byte) (16 - (8 + len + 1) % 16);
-        final int totalLen = 8 + len + padLen + 1;
-        final byte[] allEncryptedBytes = secureRandom.generateSeed(totalLen);
-        System.arraycopy(salt, 0, allEncryptedBytes, 0, 8);
-        allEncryptedBytes[8] = padLen;
-
-        System.arraycopy(encryptedBytes, 0, allEncryptedBytes, 8 + 1, len);
-        return '{' + Base64.getEncoder().encodeToString(allEncryptedBytes) + '}';
+        return new SimpleCodec(SimpleCodecConfiguration.builder().masterPassword(masterPassword).build())
+                .encrypt("auto".equals(password) ? UUID.randomUUID().toString() : password);
     }
 
     public String decryptPassword(final String value, final String pwd) {
-        if (value == null) {
-            return null;
-        }
-
-        final Matcher matcher = ENCRYPTED_PATTERN.matcher(value);
-        if (!matcher.matches() && !matcher.find()) {
-            return value; // not encrypted, just use it
-        }
-
-        final String bare = matcher.group(1);
-        if (value.startsWith("${env.")) {
-            final String key = bare.substring("env.".length());
-            return ofNullable(System.getenv(key)).orElseGet(() -> System.getProperty(bare));
-        }
-        if (value.startsWith("${")) { // all is system prop, no interpolation yet
-            return System.getProperty(bare);
-        }
-
-        if (pwd == null || pwd.isEmpty()) {
-            throw new IllegalArgumentException("Master password can't be null or empty.");
-        }
-
-        if (bare.contains("[") && bare.contains("]") && bare.contains("type=")) {
-            throw new IllegalArgumentException("Unsupported encryption for " + value);
-        }
-
-        final byte[] allEncryptedBytes = Base64.getMimeDecoder().decode(bare);
-        final int totalLen = allEncryptedBytes.length;
-        final byte[] salt = new byte[8];
-        System.arraycopy(allEncryptedBytes, 0, salt, 0, 8);
-        final byte padLen = allEncryptedBytes[8];
-        final byte[] encryptedBytes = new byte[totalLen - 8 - 1 - padLen];
-        System.arraycopy(allEncryptedBytes, 8 + 1, encryptedBytes, 0, encryptedBytes.length);
-
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] keyAndIv = new byte[16 * 2];
-            byte[] result;
-            int currentPos = 0;
-
-            while (currentPos < keyAndIv.length) {
-                digest.update(pwd.getBytes(StandardCharsets.UTF_8));
-
-                digest.update(salt, 0, 8);
-                result = digest.digest();
-
-                final int stillNeed = keyAndIv.length - currentPos;
-                if (result.length > stillNeed) {
-                    final byte[] b = new byte[stillNeed];
-                    System.arraycopy(result, 0, b, 0, b.length);
-                    result = b;
-                }
-
-                System.arraycopy(result, 0, keyAndIv, currentPos, result.length);
-
-                currentPos += result.length;
-                if (currentPos < keyAndIv.length) {
-                    digest.reset();
-                    digest.update(result);
-                }
-            }
-
-            final byte[] key = new byte[16];
-            final byte[] iv = new byte[16];
-            System.arraycopy(keyAndIv, 0, key, 0, key.length);
-            System.arraycopy(keyAndIv, key.length, iv, 0, iv.length);
-
-            final Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
-
-            final byte[] clearBytes = cipher.doFinal(encryptedBytes);
-            return new String(clearBytes, StandardCharsets.UTF_8);
-        } catch (final Exception e) {
-            throw new IllegalStateException(e);
-        }
+        return value == null ? null : new SimpleCodec(SimpleCodecConfiguration.builder().masterPassword(pwd).build()).decrypt(value);
     }
 
     @NoArgsConstructor(access = PRIVATE)

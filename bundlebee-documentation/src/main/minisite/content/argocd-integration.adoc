@@ -100,7 +100,7 @@ Please also note that ArgoCD:
 
 This is why at Yupiik we tend to not use ArgoCD but prefer a plain CI/CD pipeline which is offline (does not need a constant runtime resource allocation nor infra monitoring and is self-resilient since you just need `git` to restore an application).
 Most of the time we couple it with BundleBee `diff` command to ensure if the cluster is synchronized or not with the `git` state.
-We combine it with a ciphering to save password/keys in `git`, depending the project it can be a Vault, keypass or just our `(de)crypt` maven link:https://www.yupiik.io/tools-maven-plugin/mojos.html#_crypt_mojos[goal] which uses a master password for that task.
+We combine it with a ciphering to save password/keys in `git`, depending the project it can be a Vault, keypass or just our `(de)crypt` maven link:https://www.yupiik.io/tools-maven-plugin/mojos.html#_crypt_mojos[goal] which uses a master password for that task (similarly you can use `{{bundlebee-decipher:$masterKeyPlaceholder,$cipheredValue}}` placeholders, see more on xref:how-it-works.adoc[how it works] page).
 Finally, combine with link:https://www.yupiik.io/tools-maven-plugin/mojos.html#_minisite[minisite] generator we get live documentation reporting (including potential placeholders) which makes the solution complete.
 
 IMPORTANT: it is highly recommended to work on these points before adopting ArgoCD (using BundleBee or not indeed) and to evaluate the plain CI/CD option - including installing a light CI/CD like Harness/Drone which is simpler to setup.

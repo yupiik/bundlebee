@@ -17,7 +17,11 @@ package io.yupiik.bundlebee.core.lang;
 
 import io.yupiik.bundlebee.core.event.OnPlaceholder;
 import io.yupiik.bundlebee.core.kube.HttpKubeClient;
+import io.yupiik.tools.codec.simple.SimpleCodec;
+import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
+import org.eclipse.microprofile.config.Config;
 import org.eclipse.microprofile.config.ConfigProvider;
+import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.io.TempDir;
@@ -35,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.logging.Handler;
 import java.util.logging.Level;
@@ -107,10 +112,43 @@ class SubstitutorProducerTest {
                 }
             });
 
-            substitutor = producer.substitutor(ConfigProvider.getConfig());
+            substitutor = producer.substitutor(new Config() {
+                private final Config config = ConfigProvider.getConfig();
+
+                @Override
+                public <T> T getValue(final String propertyName, final Class<T> propertyType) {
+                    return config.getValue(propertyName, propertyType);
+                }
+
+                @Override
+                public <T> Optional<T> getOptionalValue(final String propertyName, final Class<T> propertyType) {
+                    if ("decipher.masterKey".equals(propertyName) && String.class == propertyType) {
+                        return Optional.of(propertyType.cast("test"));
+                    }
+                    return config.getOptionalValue(propertyName, propertyType);
+                }
+
+                @Override
+                public Iterable<String> getPropertyNames() {
+                    return config.getPropertyNames();
+                }
+
+                @Override
+                public Iterable<ConfigSource> getConfigSources() {
+                    return config.getConfigSources();
+                }
+            });
         } catch (final Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    @Test
+    void decipher() {
+        final var ciphered = new SimpleCodec(SimpleCodecConfiguration.builder().masterPassword("test").build()).encrypt("foo");
+        assertEquals(
+                "result=foo",
+                substitutor.replace("result={{bundlebee-decipher:{{decipher.masterKey}}, " + ciphered + "  }}"));
     }
 
     @Test

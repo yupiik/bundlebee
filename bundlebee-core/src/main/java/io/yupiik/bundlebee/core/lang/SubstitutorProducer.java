@@ -20,6 +20,8 @@ import io.yupiik.bundlebee.core.kube.HttpKubeClient;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.Maven;
+import io.yupiik.tools.codec.simple.SimpleCodec;
+import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.Config;
 
@@ -234,6 +236,9 @@ public class SubstitutorProducer {
                 throw new IllegalStateException(e);
             }
         }
+        if (placeholder.startsWith("bundlebee-decipher:")) {
+            return doDecipher(placeholder);
+        }
         if (placeholder.startsWith("bundlebee-uppercase:")) {
             return placeholder.substring("bundlebee-uppercase:".length()).toUpperCase(ROOT);
         }
@@ -313,6 +318,19 @@ public class SubstitutorProducer {
         }
 
         return config.getOptionalValue(placeholder, String.class).orElse(null);
+    }
+
+    private String doDecipher(final String string) {
+        final var confAndValue = string.substring("bundlebee-decipher:".length());
+        final int sep = confAndValue.lastIndexOf(','); // last cause value is base64 encoded so it enables a master password placeholder with a comma
+        if (sep < 0) {
+            throw new IllegalArgumentException("Usage: {{bundlebee-decipher:$masterKeyPlaceholder,$cipheredValue}}");
+        }
+        // todo: enable to cache the codec but should only be for a short duration or single apply/delete command
+        return new SimpleCodec(SimpleCodecConfiguration.builder()
+                .masterPassword(confAndValue.substring(0, sep))
+                .build())
+                .decrypt(confAndValue.substring(sep + 1).strip());
     }
 
     private byte[] readResource(final String text, final String prefix) throws IOException {

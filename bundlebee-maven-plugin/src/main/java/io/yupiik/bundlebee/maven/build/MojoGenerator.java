@@ -305,7 +305,9 @@ public final class MojoGenerator {
 
     // see io.yupiik.bundlebee.documentation.CommandConfigurationGenerator.skipSharedConfig
     private static boolean skipSharedConfig(final String name) {
-        return "add-alveolus".equals(name) ||
+        return "cipher".equals(name) ||
+                "decipher".equals(name) ||
+                "add-alveolus".equals(name) ||
                 "build".equals(name) ||
                 "cipher-password".equals(name) ||
                 "create-master-password".equals(name) ||
