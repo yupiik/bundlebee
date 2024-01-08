@@ -366,7 +366,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                                                     "      ]\n\nin " + alveolus))
                                             .getString("description")));
                             return "";
-                        }).replace(Files.readString(file, StandardCharsets.UTF_8));
+                        }).replace(Files.readString(file, StandardCharsets.UTF_8), null);
 
                         return placeholders.stream();
                     } catch (final IOException e) {

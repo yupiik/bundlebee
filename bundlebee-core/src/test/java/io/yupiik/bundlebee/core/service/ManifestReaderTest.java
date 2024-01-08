@@ -124,7 +124,7 @@ class ManifestReaderTest {
             } catch (final IOException e) {
                 throw new IllegalStateException(e);
             }
-        });
+        }, null);
         assertEquals(List.of("main", "ref1-alveolus"), manifest.getAlveoli().stream().map(Manifest.Alveolus::getName).collect(toList()));
     }
 
@@ -149,7 +149,7 @@ class ManifestReaderTest {
                     "}").getBytes(StandardCharsets.UTF_8));
             out.closeEntry();
         }
-        final var archive = archiveReader.read("whatever", jar); // we cheat a bit to reuse the logic behind the loading
+        final var archive = archiveReader.read("whatever", jar, null); // we cheat a bit to reuse the logic behind the loading
         final var manifest = archive.getManifest();
         assertEquals(List.of("main", "ref1-alveolus"), manifest.getAlveoli().stream().map(Manifest.Alveolus::getName).collect(toList()));
     }
@@ -168,7 +168,7 @@ class ManifestReaderTest {
                 "      ]" +
                 "    }" +
                 "  ]" +
-                "}").getBytes(StandardCharsets.UTF_8)), null);
+                "}").getBytes(StandardCharsets.UTF_8)), null, null);
         assertManifest(manifest);
     }
 
@@ -186,7 +186,7 @@ class ManifestReaderTest {
                 "      ]" +
                 "    }" +
                 "  ]" +
-                "}}").getBytes(StandardCharsets.UTF_8)), null);
+                "}}").getBytes(StandardCharsets.UTF_8)), null, null);
         assertManifest(manifest);
     }
 
@@ -220,6 +220,6 @@ class ManifestReaderTest {
             } catch (final IOException e) {
                 throw new IllegalStateException(e);
             }
-        }, null);
+        }, null, null);
     }
 }

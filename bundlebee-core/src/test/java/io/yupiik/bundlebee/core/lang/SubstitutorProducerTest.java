@@ -148,7 +148,7 @@ class SubstitutorProducerTest {
         final var ciphered = new SimpleCodec(SimpleCodecConfiguration.builder().masterPassword("test").build()).encrypt("foo");
         assertEquals(
                 "result=foo",
-                substitutor.replace("result={{bundlebee-decipher:{{decipher.masterKey}}, " + ciphered + "  }}"));
+                substitutor.replace("result={{bundlebee-decipher:{{decipher.masterKey}}, " + ciphered + "  }}", null));
     }
 
     @Test
@@ -239,7 +239,7 @@ class SubstitutorProducerTest {
                 "    content\n" +
                         "      foo\n" +
                         "    bar",
-                substitutor.replace("{{bundlebee-strip-trailing:{{bundlebee-indent:4:{{bundlebee-inline-file:" + file + "}}}}}}"));
+                substitutor.replace("{{bundlebee-strip-trailing:{{bundlebee-indent:4:{{bundlebee-inline-file:" + file + "}}}}}}", null));
     }
 
     @Test

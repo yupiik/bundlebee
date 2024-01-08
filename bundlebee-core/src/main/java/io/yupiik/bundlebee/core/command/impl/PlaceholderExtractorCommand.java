@@ -20,7 +20,6 @@ import io.yupiik.bundlebee.core.event.OnPlaceholder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -39,7 +38,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -161,12 +162,13 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
                     }
                 });
 
+        final var id = UUID.randomUUID().toString();
         final var lock = new ReentrantLock();
         final var collector = new HashSet<OnPlaceholder>();
-        final var oldListener = placeholderSpy.getListener();
-        placeholderSpy.setListener(p -> {
-            if (ignoredPlaceholders.stream().anyMatch(it -> Objects.equals(it, p.getName()) ||
-                    (it.endsWith(".*") && p.getName().startsWith(it.substring(0, it.length() - 2))))) {
+        final Consumer<OnPlaceholder> consumer = p -> {
+            if (Objects.equals(id, p.getId()) &&
+                    ignoredPlaceholders.stream().anyMatch(it -> Objects.equals(it, p.getName()) ||
+                            (it.endsWith(".*") && p.getName().startsWith(it.substring(0, it.length() - 2))))) {
                 return;
             }
             lock.lock();
@@ -175,8 +177,9 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
             } finally {
                 lock.unlock();
             }
-        });
-        return doExecute(from, manifest, alveolus, descriptor)
+        };
+        placeholderSpy.getListener().add(consumer);
+        return doExecute(from, manifest, alveolus, descriptor, id)
                 .thenAccept(data -> {
                     final var placeholders = collector.stream()
                             .collect(groupingBy(OnPlaceholder::getName)).entrySet().stream()
@@ -244,7 +247,7 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
                         }
                     }
                 })
-                .whenComplete((ok, ko) -> placeholderSpy.setListener(oldListener));
+                .whenComplete((ok, ko) -> placeholderSpy.getListener().remove(consumer));
     }
 
     protected String formatDoc(final List<Placeholder> placeholders, final Properties descriptions) {
@@ -338,13 +341,14 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
 
     @ApplicationScoped
     public static class PlaceholderSpy {
-        @Setter
         @Getter
-        private Consumer<OnPlaceholder> listener;
+        private List<Consumer<OnPlaceholder>> listener = new CopyOnWriteArrayList<>();
 
         public void onPlaceholder(@Observes final OnPlaceholder placeholder) {
             if (listener != null) {
-                listener.accept(placeholder);
+                for (final var it : listener) {
+                    it.accept(placeholder);
+                }
             }
         }
     }

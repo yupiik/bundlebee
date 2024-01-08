@@ -60,7 +60,7 @@ public class OperatorGenerator implements Runnable {
                         new Substitutor((k, v) -> {
                             map.put(k, v);
                             return v;
-                        }).replace(new String(stream.readAllBytes(), UTF_8));
+                        }).replace(new String(stream.readAllBytes(), UTF_8), null);
                     } catch (final IOException e) {
                         throw new IllegalStateException(e);
                     }

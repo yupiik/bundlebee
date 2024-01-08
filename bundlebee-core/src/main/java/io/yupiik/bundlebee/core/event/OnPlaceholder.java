@@ -22,4 +22,24 @@ public class OnPlaceholder {
     private final String name;
     private final String defaultValue;
     private final String resolvedValue;
+
+    /**
+     * an execution id, not needed anytime offline but enables to support concurrency in some commands.
+     */
+    private final String id;
+
+    /**
+     * @deprecated ensure to pass an id or explicitly {@code null}. Not doing it can have side effects with some commands.
+     */
+    @Deprecated
+    public OnPlaceholder(final String name, final String defaultValue, final String resolvedValue) {
+        this(name, defaultValue, resolvedValue, null);
+    }
+
+    public OnPlaceholder(final String name, final String defaultValue, final String resolvedValue, final String id) {
+        this.name = name;
+        this.defaultValue = defaultValue;
+        this.resolvedValue = resolvedValue;
+        this.id = id;
+    }
 }

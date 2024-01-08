@@ -89,7 +89,7 @@ public class InspectCommand extends VisitorCommand {
 
     @Override
     public CompletionStage<?> execute() {
-        return super.doExecute(from, manifest, alveolus, descriptor)
+        return super.doExecute(from, manifest, alveolus, descriptor, null)
                 .thenAccept(collected -> {
                     log.info("Inspection Report for alveolus=" + alveolus);
                     log.info("");

@@ -175,7 +175,7 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
                     }
                 };
         return visitor
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, null)
                 .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
                 .thenCompose(alveoli -> useChainInsteadOfAll ?
                         chain(alveoli.stream()
@@ -214,7 +214,7 @@ public class ProcessCommand extends BaseLabelEnricherCommand implements Completi
                     return completedFuture(processed);
                 }),
                 cache,
-                desc -> completedFuture(null), "processed");
+                desc -> completedFuture(null), "processed", null);
     }
 
     private String format(final JsonObject content,

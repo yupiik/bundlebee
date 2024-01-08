@@ -95,14 +95,54 @@ public class SubstitutorProducer {
     @Inject
     private HttpKubeClient httpKubeClient;
 
+    @Deprecated // for backward compat only
+    private ThreadLocal<String> idHolder;
+
     @Produces
     public Substitutor substitutor(final Config config) {
         final var self = new AtomicReference<Substitutor>();
-        final var ref = new Substitutor(it -> doSubstitute(self, config, it)) {
-            @Override
-            protected String getOrDefault(final String varName, final String varDefaultValue) {
-                final var value = super.getOrDefault(varName, varDefaultValue);
-                onPlaceholder(varName, varDefaultValue, value);
+
+        final boolean hasOldOnPlaceholderExtensionPoint = has(
+                () -> getClass().getDeclaredMethod("onPlaceholder", String.class, String.class, String.class).getDeclaringClass() != SubstitutorProducer.class);
+        final boolean hasOldSubstitute = has(
+                () -> getClass().getDeclaredMethod("doSubstitute", AtomicReference.class, Config.class, String.class).getDeclaringClass() != SubstitutorProducer.class);
+        idHolder = hasOldOnPlaceholderExtensionPoint || hasOldSubstitute ? new ThreadLocal<>() : null;
+
+        final var ref = new Substitutor(it -> doSubstitute(self, config, it, null)) {
+            @Override // mainly handle backward compat and id propagation, could be ~2-3 lines without that
+            protected String getOrDefault(final String varName, final String varDefaultValue, final String id) {
+                String value;
+
+                final var oldId = idHolder == null ? null : idHolder.get();
+                if (hasOldSubstitute) {
+                    idHolder.set(id);
+                }
+                try {
+                    try {
+                        value = ofNullable(doSubstitute(self, config, varName, id)).orElse(varDefaultValue);
+                    } catch (final RuntimeException re) {
+                        if (varDefaultValue != null) {
+                            value = varDefaultValue;
+                        } else {
+                            throw re;
+                        }
+                    }
+
+                    if (hasOldOnPlaceholderExtensionPoint) {
+                        idHolder.set(id);
+                        onPlaceholder(varName, varDefaultValue, value);
+                    } else {
+                        onPlaceholder(varName, varDefaultValue, value, id);
+                    }
+                } finally {
+                    if (idHolder != null) {
+                        if (oldId == null) {
+                            idHolder.remove();
+                        } else {
+                            idHolder.set(oldId);
+                        }
+                    }
+                }
                 return value;
             }
         };
@@ -110,14 +150,37 @@ public class SubstitutorProducer {
         return ref;
     }
 
-    protected void onPlaceholder(final String varName, final String varDefaultValue, final String value) {
-        log.finest(() -> "Resolved '" + varName + "' to '" + value + "'");
-        if (onPlaceholderEvent != null) {
-            onPlaceholderEvent.fire(new OnPlaceholder(varName, varDefaultValue, value));
+    private boolean has(final ThrowingBooleanSupplier test) {
+        try {
+            return test.get();
+        } catch (final Throwable t) {
+            return false;
         }
     }
 
+    /**
+     * @deprecated ensure to pass use the flavor with an id as parameter otherwise some commands will be broken.
+     */
+    @Deprecated
+    protected void onPlaceholder(final String varName, final String varDefaultValue, final String value) {
+        onPlaceholder(varName, varDefaultValue, value, idHolder == null ? null : idHolder.get());
+    }
+
+    protected void onPlaceholder(final String varName, final String varDefaultValue, final String value, final String id) {
+        log.finest(() -> "Resolved '" + varName + "' to '" + value + "'");
+        if (onPlaceholderEvent != null) {
+            onPlaceholderEvent.fire(new OnPlaceholder(varName, varDefaultValue, value, id));
+        }
+    }
+
+    /**
+     * @deprecated ensure to pass use the flavor with an id as parameter otherwise some commands will be broken.
+     */
     protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder) {
+        return doSubstitute(self, config, placeholder, idHolder == null ? null : idHolder.get());
+    }
+
+    protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder, final String id) {
         try {
             if (placeholder.equals("bundlebee-kubernetes-namespace")) {
                 return httpKubeClient.getNamespace();
@@ -125,7 +188,7 @@ public class SubstitutorProducer {
             if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs-content:")) {
                 final var delegate = doSubstitute(
                         self, config,
-                        "bundlebee-directory-json-key-value-pairs:" + placeholder.substring("bundlebee-directory-json-key-value-pairs-content:".length())).strip();
+                        "bundlebee-directory-json-key-value-pairs:" + placeholder.substring("bundlebee-directory-json-key-value-pairs-content:".length()), id).strip();
                 return delegate.substring(1, delegate.length() - 1); // drop brackets
             }
             if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs:")) { // enable easy injection of labels or more likely annotations
@@ -191,7 +254,7 @@ public class SubstitutorProducer {
                     return null;
                 }
                 // ensure nested interpolation is done before otherwise double escaping is way harder to handle
-                final var content = self.get().replace(new String(resource, StandardCharsets.UTF_8));
+                final var content = self.get().replace(new String(resource, StandardCharsets.UTF_8), id);
                 final var value = json.createValue(content).toString();
                 return value.substring(1, value.length() - 1);
             }
@@ -511,5 +574,9 @@ public class SubstitutorProducer {
                     .findFirst()
                     .orElse("js");
         }
+    }
+
+    private interface ThrowingBooleanSupplier {
+        boolean get() throws Throwable;
     }
 }

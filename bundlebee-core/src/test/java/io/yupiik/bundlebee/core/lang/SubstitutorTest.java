@@ -72,17 +72,17 @@ class SubstitutorTest {
                     public Iterable<ConfigSource> getConfigSources() {
                         throw new UnsupportedOperationException();
                     }
-                }).replace("{{bundlebee-base64:{{bundlebee-inlined-file:src/test/resources/dockerconfig.json}}}}"));
+                }).replace("{{bundlebee-base64:{{bundlebee-inlined-file:src/test/resources/dockerconfig.json}}}}", null));
     }
 
     @Test
     void replace() {
-        assertEquals("foo replaced dummy", new Substitutor(k -> "key".equals(k) ? "replaced" : null).replace("foo {{key}} dummy"));
+        assertEquals("foo replaced dummy", new Substitutor(k -> "key".equals(k) ? "replaced" : null).replace("foo {{key}} dummy", null));
     }
 
     @Test
     void fallback() {
-        assertEquals("foo or dummy", new Substitutor(k -> null).replace("foo {{key:-or}} dummy"));
+        assertEquals("foo or dummy", new Substitutor(k -> null).replace("foo {{key:-or}} dummy", null));
     }
 
     @Test
@@ -90,7 +90,7 @@ class SubstitutorTest {
         // we want to enable this escaping to propagate when not escaping {{}},
         // case where a bash script is injected in a deployment for ex (init container)
 
-        assertEquals("foo {{key:-or}} dummy", new Substitutor(k -> null).replace("foo \\{{key:-or}} dummy"));
+        assertEquals("foo {{key:-or}} dummy", new Substitutor(k -> null).replace("foo \\{{key:-or}} dummy", null));
         assertEquals("foo before {{key:-or}} / {{key:-or2}} after dummy", new Substitutor(k -> {
             switch (k) {
                 case "suffix":
@@ -100,18 +100,18 @@ class SubstitutorTest {
                 default:
                     return null;
             }
-        }).replace("foo {{prefix}} \\{{key:-or}} / {{test:-\\{{key:-or2}}}} {{suffix}} dummy"));
+        }).replace("foo {{prefix}} \\{{key:-or}} / {{test:-\\{{key:-or2}}}} {{suffix}} dummy", null));
     }
 
     @Test
     void nested() {
-        assertEquals("foo replaced dummy", new Substitutor(k -> "key".equals(k) ? "replaced" : null).replace("foo {{k{{missing:-e}}y}} dummy"));
+        assertEquals("foo replaced dummy", new Substitutor(k -> "key".equals(k) ? "replaced" : null).replace("foo {{k{{missing:-e}}y}} dummy", null));
     }
 
     @Test
     void complex() {
         assertEquals("1", new Substitutor(k -> "name".equals(k) ? "foo" : null)
-                .replace("{{{{name}}.resources.limits.cpu:-{{resources.limits.cpu:-1}}}}"));
+                .replace("{{{{name}}.resources.limits.cpu:-{{resources.limits.cpu:-1}}}}", null));
         assertEquals("2", new Substitutor(k -> {
             switch (k) {
                 case "name":
@@ -121,6 +121,6 @@ class SubstitutorTest {
                 default:
                     return null;
             }
-        }).replace("{{{{name}}.resources.limits.cpu:-{{resources.limits.cpu:-1}}}}"));
+        }).replace("{{{{name}}.resources.limits.cpu:-{{resources.limits.cpu:-1}}}}", null));
     }
 }

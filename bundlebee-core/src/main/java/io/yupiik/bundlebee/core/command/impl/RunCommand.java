@@ -145,7 +145,7 @@ public class RunCommand extends BaseLabelEnricherCommand implements CompletingEx
                                         final ArchiveReader.Cache cache) {
         final var collector = new ArrayList<JsonObject>();
         return visitor
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, null)
                 .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
                 .thenCompose(alveoli -> useChainInsteadOfAll ?
                         chain(alveoli.stream()
@@ -172,6 +172,6 @@ public class RunCommand extends BaseLabelEnricherCommand implements CompletingEx
                     return completedFuture(json);
                 }),
                 cache,
-                desc -> completedFuture(null), "ran");
+                desc -> completedFuture(null), "ran", null);
     }
 }

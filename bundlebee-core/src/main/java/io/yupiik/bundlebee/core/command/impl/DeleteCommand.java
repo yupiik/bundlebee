@@ -152,7 +152,7 @@ public class DeleteCommand implements CompletingExecutable {
         }
         final int awaitTimeout = awaitValue;
         return visitor
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, null)
                 .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
@@ -177,7 +177,7 @@ public class DeleteCommand implements CompletingExecutable {
                                 return completedFuture(null);
                             }
                             return conditionAwaiter.await(name(), desc, scheduledExecutorService, awaitTimeout);
-                        }, "deleted")
+                        }, "deleted", null)
                 .thenApply(done -> { // owner first
                     Collections.reverse(toDelete);
                     return toDelete;

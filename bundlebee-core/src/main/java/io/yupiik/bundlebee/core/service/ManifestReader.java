@@ -59,11 +59,21 @@ public class ManifestReader {
     @Inject
     private Event<OnManifestRead> onManifestReadEvent;
 
+    /**
+     * @deprecated prefer the flavor with the explicit id as parameter.
+     */
+    @Deprecated
     public Manifest readManifest(final String location, final Supplier<InputStream> manifest,
                                  final Function<String, InputStream> relativeResolver) {
+        return readManifest(location, manifest, relativeResolver, null);
+    }
+
+    public Manifest readManifest(final String location, final Supplier<InputStream> manifest,
+                                 final Function<String, InputStream> relativeResolver,
+                                 final String id) {
         try (final BufferedReader reader = new BufferedReader(
                 new InputStreamReader(manifest.get(), StandardCharsets.UTF_8))) {
-            final var content = substitutor.replace(reader.lines().collect(joining("\n")));
+            final var content = substitutor.replace(reader.lines().collect(joining("\n")), id);
             final var json = jsonb.fromJson(content, JsonObject.class);
             final Manifest mf;
             if (json.containsKey("bundlebee")) { // it is a wrapped manifest, we enable that to easily enrich manifest.json with custom attributes without breaking jsonschema
@@ -80,7 +90,7 @@ public class ManifestReader {
                         .filter(it -> it.getLocation() == null)
                         .forEach(desc -> desc.setLocation(location));
             }
-            resolveReferences(location, mf, relativeResolver);
+            resolveReferences(location, mf, relativeResolver, id);
             initInterpolateFlags(mf);
             onManifestReadEvent.fire(new OnManifestRead(mf));
             return mf;
@@ -106,13 +116,14 @@ public class ManifestReader {
     }
 
     private void resolveReferences(final String location, final Manifest main,
-                                   final Function<String, InputStream> relativeResolver) {
+                                   final Function<String, InputStream> relativeResolver,
+                                   final String id) {
         if (main.getReferences() == null || main.getReferences().isEmpty()) {
             return;
         }
 
         for (final var ref : main.getReferences()) {
-            final var loaded = readManifest(location, () -> relativeResolver.apply(ref.getPath()), relativeResolver);
+            final var loaded = readManifest(location, () -> relativeResolver.apply(ref.getPath()), relativeResolver, id);
             ofNullable(loaded.getAlveoli())
                     .ifPresent(it -> main.setAlveoli(Stream.concat(
                                     ofNullable(main.getAlveoli()).stream().flatMap(Collection::stream),

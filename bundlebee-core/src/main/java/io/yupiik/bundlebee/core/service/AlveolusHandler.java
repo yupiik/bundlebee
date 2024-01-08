@@ -122,19 +122,36 @@ public class AlveolusHandler {
                 .orElseThrow(() -> new IllegalArgumentException("No ThreadLocalConfigSource found"));
     }
 
+    /**
+     * @deprecated prefer the flavor with the explicit id as parameter.
+     */
+    @Deprecated
     public CompletionStage<Manifest> findManifest(final String from, final String manifest) {
+        return findManifest(from, null);
+    }
+
+    public CompletionStage<Manifest> findManifest(final String from, final String manifest, final String id) {
         if (!"skip".equals(manifest)) {
-            return completedFuture(readManifest(manifest));
+            return completedFuture(readManifest(manifest, id));
         }
         if (from == null || "auto".equals(from)) { // can't do
             return completedFuture(null);
         }
-        return archives.newCache().loadArchive(from).thenApply(ArchiveReader.Archive::getManifest);
+        return archives.newCache().loadArchive(from, id).thenApply(ArchiveReader.Archive::getManifest);
+    }
+
+    /**
+     * @deprecated ensure to pass an id or explicitly {@code null}.
+     */
+    @Deprecated
+    public CompletionStage<List<ManifestAndAlveolus>> findRootAlveoli(final String from, final String manifest,
+                                                                      final String alveolus) {
+        return findRootAlveoli(from, manifest, alveolus, null);
     }
 
     public CompletionStage<List<ManifestAndAlveolus>> findRootAlveoli(final String from, final String manifest,
-                                                                      final String alveolus) {
-        return doFindRootAlveoli(from, manifest, alveolus)
+                                                                      final String alveolus, final String id) {
+        return doFindRootAlveoli(from, manifest, alveolus, id)
                 .thenApply(a -> {
                     // only check root one since we assume it enforces dependencies ones if any +
                     // we want to be able to bypass it if needed
@@ -145,9 +162,10 @@ public class AlveolusHandler {
 
     private CompletionStage<List<ManifestAndAlveolus>> doFindRootAlveoli(final String from,
                                                                          final String manifest,
-                                                                         final String alveolus) {
+                                                                         final String alveolus,
+                                                                         final String id) {
         if (!"skip".equals(manifest)) {
-            final var mf = readManifest(manifest);
+            final var mf = readManifest(manifest, id);
             if (mf.getAlveoli() == null) {
                 throw new IllegalArgumentException("No alveoli in manifest '" + manifest + "'");
             }
@@ -169,21 +187,21 @@ public class AlveolusHandler {
             log.info("" +
                     "Auto scanning the classpath, this can be dangerous if you don't fully control your classpath, " +
                     "ensure to set a particular alveolus if you doubt about this behavior");
-            return completedFuture(manifests()
+            return completedFuture(manifests(id)
                     .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(it -> it.stream().map(a -> new ManifestAndAlveolus(m, a))))
                     .collect(toList()));
         }
         if (from == null || "auto".equals(from)) {
-            return completedFuture(List.of(findAlveolusInClasspath(alveolus)));
+            return completedFuture(List.of(findAlveolusInClasspath(alveolus, id)));
         }
-        return findAlveolus(from, alveolus, archives.newCache()).thenApply(List::of);
+        return findAlveolus(from, alveolus, archives.newCache(), id).thenApply(List::of);
     }
 
     public CompletionStage<?> executeOnceOnAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus alveolus,
                                                     final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
                                                     final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
                                                     final ArchiveReader.Cache cache, final Function<LoadedDescriptor, CompletionStage<Void>> awaiter,
-                                                    final String alreadyHandledMarker) {
+                                                    final String alreadyHandledMarker, final String id) {
         final var alreadyDone = new HashSet<String>();
         return executeOnAlveolus(prefixOnVisitLog, manifest, alveolus, onAlveolusUser, (ctx, desc) -> {
             if (!alreadyDone.add(desc.getConfiguration().getName() + '|' + desc.getContent())) {
@@ -191,31 +209,52 @@ public class AlveolusHandler {
                 return completedFuture(false);
             }
             return onDescriptor.apply(ctx, desc);
-        }, cache, awaiter);
+        }, cache, awaiter, id);
+    }
+
+    /**
+     * @deprecated prefer the flavor with the explicit id as parameter.
+     */
+    @Deprecated
+    public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus alveolus,
+                                                final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
+                                                final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
+                                                final ArchiveReader.Cache cache, final Function<LoadedDescriptor, CompletionStage<Void>> awaiter) {
+        return executeOnAlveolus(prefixOnVisitLog, manifest, alveolus, onAlveolusUser, onDescriptor, cache, awaiter, null);
     }
 
     public CompletionStage<?> executeOnAlveolus(final String prefixOnVisitLog, final Manifest manifest, final Manifest.Alveolus alveolus,
                                                 final Function<AlveolusContext, CompletionStage<?>> onAlveolusUser,
                                                 final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
-                                                final ArchiveReader.Cache cache, final Function<LoadedDescriptor, CompletionStage<Void>> awaiter) {
+                                                final ArchiveReader.Cache cache, final Function<LoadedDescriptor, CompletionStage<Void>> awaiter,
+                                                final String id) {
         final var ref = new AtomicReference<Function<AlveolusContext, CompletionStage<?>>>();
         final Function<AlveolusContext, CompletionStage<?>> internalOnAlveolus = ctx ->
-                this.onAlveolus(prefixOnVisitLog, manifest, ctx.alveolus, ctx.patches, ctx.excludes, ctx.cache, ref.get(), onDescriptor, awaiter, ctx.placeholders);
+                this.onAlveolus(prefixOnVisitLog, manifest, ctx.alveolus, ctx.patches, ctx.excludes, ctx.cache, ref.get(), onDescriptor, awaiter, ctx.placeholders, id);
         final Function<AlveolusContext, CompletionStage<?>> combinedOnAlveolus = onAlveolusUser == null ?
                 internalOnAlveolus :
                 ctx -> onAlveolusUser.apply(ctx).thenCompose(i -> internalOnAlveolus.apply(ctx));
         ref.set(combinedOnAlveolus);
-        return combinedOnAlveolus.apply(new AlveolusContext(manifest, alveolus, Map.of(), Map.of(), List.of(), cache));
+        return combinedOnAlveolus.apply(new AlveolusContext(manifest, alveolus, Map.of(), Map.of(), List.of(), cache, id));
     }
 
+    /**
+     * @deprecated prefer the flavor with the explicit id as parameter.
+     */
+    @Deprecated
     private Manifest readManifest(final String manifest) {
+        return readManifest(manifest, null);
+    }
+
+    private Manifest readManifest(final String manifest, final String id) {
         if (manifest.startsWith("{")) {
             return manifestReader.readManifest(
                     null,
                     () -> new ByteArrayInputStream(manifest.getBytes(StandardCharsets.UTF_8)),
                     s -> {
                         throw new IllegalArgumentException("Relative references foriddden for in memory manifest.json: '" + s + "'");
-                    });
+                    },
+                    id);
         }
         final var path = Paths.get(manifest);
         return manifestReader.readManifest(path.toAbsolutePath().getParent().getParent().normalize().toString(), () -> {
@@ -224,7 +263,7 @@ public class AlveolusHandler {
             } catch (final IOException e) {
                 throw new IllegalArgumentException(e);
             }
-        }, s -> resolveManifestReference(path, s));
+        }, s -> resolveManifestReference(path, s), id);
     }
 
     private InputStream resolveManifestReference(final Path path, final String name) {
@@ -236,8 +275,8 @@ public class AlveolusHandler {
         }
     }
 
-    private ManifestAndAlveolus findAlveolusInClasspath(final String alveolus) {
-        final var manifests = manifests().collect(toList());
+    private ManifestAndAlveolus findAlveolusInClasspath(final String alveolus, final String id) {
+        final var manifests = manifests(id).collect(toList());
         return manifests.stream()
                 .flatMap(m -> ofNullable(m.getAlveoli()).stream()
                         .flatMap(a -> a.stream().map(it -> new ManifestAndAlveolus(m, it))))
@@ -246,7 +285,7 @@ public class AlveolusHandler {
                 .orElseThrow(() -> new IllegalStateException("No alveolus named '" + alveolus + "' found"));
     }
 
-    private Stream<Manifest> manifests() {
+    private Stream<Manifest> manifests(final String id) {
         final var classLoader = Thread.currentThread().getContextClassLoader();
         try {
             return list(classLoader
@@ -258,7 +297,7 @@ public class AlveolusHandler {
                         } catch (final IOException e) {
                             throw new IllegalStateException(e);
                         }
-                    }, s -> s.startsWith("/") ? classLoader.getResourceAsStream(s) : classLoader.getResourceAsStream("bundlebee/" + s)))
+                    }, s -> s.startsWith("/") ? classLoader.getResourceAsStream(s) : classLoader.getResourceAsStream("bundlebee/" + s), id))
                     .distinct()
                     .collect(toList()) // materialize it to not leak manifest I/O outside of the method
                     .stream();
@@ -274,7 +313,8 @@ public class AlveolusHandler {
                                           final Function<AlveolusContext, CompletionStage<?>> onAlveolus,
                                           final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
                                           final Function<LoadedDescriptor, CompletionStage<Void>> awaiter,
-                                          final Map<String, String> placeholders) {
+                                          final Map<String, String> placeholders,
+                                          final String id) {
         if (prefixOnVisitLog != null) {
             log.info(() -> prefixOnVisitLog + " '" + from.getName() + "'");
         }
@@ -304,26 +344,26 @@ public class AlveolusHandler {
                                     .orElse(null);
                             if (found != null) {
                                 return (Supplier<CompletionStage<?>>) () -> onAlveolus.apply(new AlveolusContext(
-                                        manifest, found, currentPatches, currentPlaceholders, currentExcludes, cache));
+                                        manifest, found, currentPatches, currentPlaceholders, currentExcludes, cache, id));
                             }
                         }
-                        final var alveolus = findAlveolusInClasspath(it.getName());
+                        final var alveolus = findAlveolusInClasspath(it.getName(), id);
                         return (Supplier<CompletionStage<?>>) () -> onAlveolus.apply(new AlveolusContext(
-                                alveolus.getManifest(), alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache));
+                                alveolus.getManifest(), alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache, id));
                     }
-                    return (Supplier<CompletionStage<?>>) () -> findAlveolus(it.getLocation(), it.getName(), cache)
+                    return (Supplier<CompletionStage<?>>) () -> findAlveolus(it.getLocation(), it.getName(), cache, id)
                             .thenCompose(alveolus -> onAlveolus.apply(new AlveolusContext(
-                                    manifest, alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache)));
+                                    manifest, alveolus.getAlveolus(), currentPatches, currentPlaceholders, currentExcludes, cache, id)));
                 });
         if (from.isChainDependencies()) {
             return chain(dependenciesTasks.iterator(), true)
                     .thenCompose(ready -> all(
                             selectDescriptors(from, excludes)
-                                    .map(desc -> findDescriptor(desc, cache))
+                                    .map(desc -> findDescriptor(desc, cache, id))
                                     .collect(toList()), toList(), true)
                             .thenCompose(descriptors -> afterDependencies(
                                     manifest, from, patches, excludes, cache, onDescriptor,
-                                    awaiter, currentPlaceholders, currentPatches, descriptors)));
+                                    awaiter, currentPlaceholders, currentPatches, descriptors, id)));
         }
         return all(
                 dependenciesTasks
@@ -333,11 +373,11 @@ public class AlveolusHandler {
                 counting(), true)
                 .thenCompose(ready -> all(
                         selectDescriptors(from, excludes)
-                                .map(desc -> findDescriptor(desc, cache))
+                                .map(desc -> findDescriptor(desc, cache, id))
                                 .collect(toList()), toList(), true)
                         .thenCompose(descriptors -> afterDependencies(
                                 manifest, from, patches, excludes, cache, onDescriptor,
-                                awaiter, currentPlaceholders, currentPatches, descriptors)));
+                                awaiter, currentPlaceholders, currentPatches, descriptors, id)));
     }
 
     private CompletionStage<?> afterDependencies(final Manifest manifest, final Manifest.Alveolus from,
@@ -348,7 +388,8 @@ public class AlveolusHandler {
                                                  final Function<LoadedDescriptor, CompletionStage<Void>> awaiter,
                                                  final Map<String, String> placeholders,
                                                  final Map<Predicate<String>, Manifest.Patch> currentPatches,
-                                                 final List<LoadedDescriptor> descriptors) {
+                                                 final List<LoadedDescriptor> descriptors,
+                                                 final String id) {
         log.finest(() -> "Applying " + descriptors);
         final Collection<Collection<LoadedDescriptor>> rankedDescriptors = rankDescriptors(descriptors);
         CompletionStage<?> promise = completedFuture(true);
@@ -356,7 +397,7 @@ public class AlveolusHandler {
                 .map(descs -> {
                     if (awaiter == null) {
                         return prepareDescriptors(
-                                manifest, from, patches, placeholders, excludes, cache, onDescriptor, currentPatches, descs);
+                                manifest, from, patches, placeholders, excludes, cache, onDescriptor, currentPatches, descs, id);
                     }
 
                     final var filteredDescs = new ArrayList<LoadedDescriptor>();
@@ -368,7 +409,7 @@ public class AlveolusHandler {
                                 }
                                 return onDescriptor.apply(ctx, desc);
                             },
-                            currentPatches, descs);
+                            currentPatches, descs, id);
                     return descriptorApply.thenCompose(result -> {
                         final Collection<CompletionStage<Void>> awaiters = filteredDescs.stream()
                                 .map(awaiter)
@@ -405,12 +446,13 @@ public class AlveolusHandler {
                                                      final ArchiveReader.Cache cache,
                                                      final BiFunction<AlveolusContext, LoadedDescriptor, CompletionStage<?>> onDescriptor,
                                                      final Map<Predicate<String>, Manifest.Patch> currentPatches,
-                                                     final Collection<LoadedDescriptor> descs) {
+                                                     final Collection<LoadedDescriptor> descs,
+                                                     final String id) {
         return all(
                 descs.stream()
-                        .peek(it -> onPrepareDescriptorEvent.fire(new OnPrepareDescriptor(from.getName(), it.getConfiguration().getName(), it.getContent(), placeholders)))
-                        .map(it -> prepare(it, currentPatches, placeholders))
-                        .map(it -> onDescriptor.apply(new AlveolusContext(manifest, from, patches, placeholders, excludes, cache), it))
+                        .peek(it -> onPrepareDescriptorEvent.fire(new OnPrepareDescriptor(id, from.getName(), it.getConfiguration().getName(), it.getContent(), placeholders)))
+                        .map(it -> prepare(it, currentPatches, placeholders, id))
+                        .map(it -> onDescriptor.apply(new AlveolusContext(manifest, from, patches, placeholders, excludes, cache, id), it))
                         .collect(toList()), counting(), true);
     }
 
@@ -425,8 +467,9 @@ public class AlveolusHandler {
     }
 
     private CompletionStage<ManifestAndAlveolus> findAlveolus(final String from, final String alveolus,
-                                                              final ArchiveReader.Cache cache) {
-        return cache.loadArchive(from)
+                                                              final ArchiveReader.Cache cache,
+                                                              final String id) {
+        return cache.loadArchive(from, id)
                 .thenApply(archive -> requireNonNull(requireNonNull(archive.getManifest(), "No manifest found in " + from)
                         .getAlveoli(), "No alveolus in manifest of " + from).stream()
                         .filter(it -> Objects.equals(it.getName(), alveolus))
@@ -447,7 +490,8 @@ public class AlveolusHandler {
     }
 
     private CompletionStage<LoadedDescriptor> findDescriptor(final Manifest.Descriptor desc,
-                                                             final ArchiveReader.Cache cache) {
+                                                             final ArchiveReader.Cache cache,
+                                                             final String id) {
         final var type = ofNullable(desc.getType()).orElse("kubernetes");
         final var resource = String.join("/", "bundlebee", type, desc.getName() + findExtension(desc.getName(), type));
         return handled(() -> ofNullable(Thread.currentThread().getContextClassLoader().getResource(resource))
@@ -465,7 +509,7 @@ public class AlveolusHandler {
                     if (desc.getLocation() == null || desc.getLocation().isBlank()) {
                         throw new IllegalArgumentException("No location for descriptor: >" + desc + "< so it will not be downloadable.");
                     }
-                    return cache.loadArchive(desc.getLocation())
+                    return cache.loadArchive(desc.getLocation(), id)
                             .thenApply(archive -> {
                                 final var content = archive.getDescriptors().get(resource);
                                 if (content == null) {
@@ -510,11 +554,12 @@ public class AlveolusHandler {
 
     private LoadedDescriptor prepare(final LoadedDescriptor desc,
                                      final Map<Predicate<String>, Manifest.Patch> patches,
-                                     final Map<String, String> placeholders) {
-        return threadLocalConfigSource.withContext(placeholders, () -> doPrepare(desc, patches));
+                                     final Map<String, String> placeholders,
+                                     final String id) {
+        return threadLocalConfigSource.withContext(placeholders, () -> doPrepare(desc, patches, id));
     }
 
-    private LoadedDescriptor doPrepare(final LoadedDescriptor desc, final Map<Predicate<String>, Manifest.Patch> patches) {
+    private LoadedDescriptor doPrepare(final LoadedDescriptor desc, final Map<Predicate<String>, Manifest.Patch> patches, final String id) {
         var content = desc.getContent();
 
         final var descPatches = patches.entrySet().stream()
@@ -527,7 +572,7 @@ public class AlveolusHandler {
         if (!descPatches.isEmpty()) {
             for (final Manifest.Patch patch : descPatches) {
                 if (patch.isInterpolate()) {
-                    content = substitutor.replace(content);
+                    content = substitutor.replace(content, id);
                 }
                 if (patch.getPatch() == null) {
                     continue;
@@ -541,7 +586,7 @@ public class AlveolusHandler {
 
                 final JsonArray array;
                 if (patch.isInterpolate()) { // interpolate patch too, if not desired the patch can be split in 2
-                    array = jsonb.fromJson(substitutor.replace(patch.getPatch().toString()), JsonArray.class);
+                    array = jsonb.fromJson(substitutor.replace(patch.getPatch().toString(), id), JsonArray.class);
                 } else {
                     array = patch.getPatch();
                 }
@@ -556,14 +601,14 @@ public class AlveolusHandler {
                     log.finest(() -> "" +
                             "Trying to interpolate the descriptor before patching it since it failed without: '" +
                             desc.getConfiguration().getName() + "'");
-                    content = substitutor.replace(content);
+                    content = substitutor.replace(content, id);
                     alreadyInterpolated = true;
                     content = jsonPatch.apply(loadJsonStructure(desc, content)).toString();
                 }
             }
         }
         if (!alreadyInterpolated && desc.getConfiguration().getInterpolate()) {
-            content = substitutor.replace(content);
+            content = substitutor.replace(content, id);
         }
         return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension(), desc.getUri(), desc.getResource());
     }
@@ -600,7 +645,8 @@ public class AlveolusHandler {
         try {
             return findManifest(
                     ofNullable(options.get("from")).orElse("auto"),
-                    ofNullable(options.get("manifest")).orElse("skip"))
+                    ofNullable(options.get("manifest")).orElse("skip"),
+                    null)
                     .exceptionally(e -> null)
                     .thenApply(m -> {
                         if (m == null || m.getAlveoli() == null) {
@@ -635,6 +681,7 @@ public class AlveolusHandler {
         private final Map<String, String> placeholders;
         private final Collection<Manifest.DescriptorRef> excludes;
         private final ArchiveReader.Cache cache;
+        private final String id;
     }
 
     @Data

@@ -347,7 +347,7 @@ public class LintCommand implements CompletingExecutable {
                     .collect(joining(", ", "", " missing.")));
         }
         return visitor
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, null)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
                                 .map(it -> {
@@ -365,7 +365,7 @@ public class LintCommand implements CompletingExecutable {
                                                             return promise;
                                                         });
                                             },
-                                            cache, null, "inspected");
+                                            cache, null, "inspected", null);
                                     return all(allLints, mergeLists(), true);
                                 })
                                 .collect(toList()),

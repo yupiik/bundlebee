@@ -72,7 +72,7 @@ class KubeClientTest {
         };
         handler.setResponseLocator(spyingResponseLocator);
         assertEquals("bearer-token", substitutor.replace(
-                "{{kubernetes.default.serviceaccount.the-account.secrets.the-secret-token.data.token.180:-missing}}"));
+                "{{kubernetes.default.serviceaccount.the-account.secrets.the-secret-token.data.token.180:-missing}}", null));
 
         final var mocks = spyingResponseLocator.getFound();
         assertEquals(2, mocks.size());
