@@ -33,6 +33,9 @@ class PlaceholderExtractorCommandTest {
         final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
                 "placeholder-extract", "--alveolus", "ApplyCommandTest.fromTemplate"));
         assertEquals("" +
+                "JSON\n" +
+                "{\"items\":[{\"name\":\"ApplyCommandTest.fromTemplate.port\",\"description\":\"ApplyCommandTest.fromTemplate.port\",\"defaultValue\":\"9090\",\"required\":false,\"defaultValues\":[\"9090\"]},{\"name\":\"some.placeholder1\",\"description\":\"some.placeholder1\",\"defaultValue\":\"with defaultvalue\",\"required\":false,\"defaultValues\":[\"with defaultvalue\"]},{\"name\":\"some.placeholder2\",\"description\":\"some.placeholder2\",\"defaultValue\":\"with defaultvalue 2\",\"required\":false,\"defaultValues\":[\"with defaultvalue 2\"]}]}\n" +
+                "\n" +
                 "Sample\n" +
                 "# HELP: ApplyCommandTest.fromTemplate.port\n" +
                 "# ApplyCommandTest.fromTemplate.port = 9090\n" +
