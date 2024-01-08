@@ -187,7 +187,7 @@ public class AlveolusHandler {
             log.info("" +
                     "Auto scanning the classpath, this can be dangerous if you don't fully control your classpath, " +
                     "ensure to set a particular alveolus if you doubt about this behavior");
-            return completedFuture(manifests(id)
+            return completedFuture(findManifestsFromClasspath(id)
                     .flatMap(m -> ofNullable(m.getAlveoli()).stream().flatMap(it -> it.stream().map(a -> new ManifestAndAlveolus(m, a))))
                     .collect(toList()));
         }
@@ -276,7 +276,7 @@ public class AlveolusHandler {
     }
 
     private ManifestAndAlveolus findAlveolusInClasspath(final String alveolus, final String id) {
-        final var manifests = manifests(id).collect(toList());
+        final var manifests = findManifestsFromClasspath(id).collect(toList());
         return manifests.stream()
                 .flatMap(m -> ofNullable(m.getAlveoli()).stream()
                         .flatMap(a -> a.stream().map(it -> new ManifestAndAlveolus(m, it))))
@@ -285,7 +285,7 @@ public class AlveolusHandler {
                 .orElseThrow(() -> new IllegalStateException("No alveolus named '" + alveolus + "' found"));
     }
 
-    private Stream<Manifest> manifests(final String id) {
+    public Stream<Manifest> findManifestsFromClasspath(final String id) {
         final var classLoader = Thread.currentThread().getContextClassLoader();
         try {
             return list(classLoader

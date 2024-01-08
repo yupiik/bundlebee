@@ -47,8 +47,10 @@ public class ListLintCommand implements Executable {
 
     @Override
     public CompletionStage<?> execute() {
-        return completedFuture(checks.stream()
+        final var output = checks.stream()
                 .map(c -> " *" + c.name())
-                .collect(joining("\n")));
+                .collect(joining("\n"));
+        log.info(output);
+        return completedFuture(output);
     }
 }

@@ -141,6 +141,8 @@ public class CommandConfigurationGenerator implements Runnable {
     // see io.yupiik.bundlebee.maven.build.MojoGenerator.skipSharedConfig
     private boolean skipSharedConfig(final String name) {
         return "add-alveolus".equals(name) ||
+                "list-alveoli".equals(name) ||
+                "list-lint-rules".equals(name) ||
                 "cipher".equals(name) ||
                 "decipher".equals(name) ||
                 "build".equals(name) ||

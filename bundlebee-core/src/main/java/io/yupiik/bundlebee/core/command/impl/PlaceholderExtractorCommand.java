@@ -28,6 +28,7 @@ import javax.enterprise.context.Dependent;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.json.JsonArrayBuilder;
+import javax.json.JsonBuilderFactory;
 import javax.json.JsonString;
 import javax.json.spi.JsonProvider;
 import java.io.IOException;
@@ -48,6 +49,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -96,6 +98,11 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
     private String propertiesFilename;
 
     @Inject
+    @Description("JSON filename (relative to `dumpLocation`) when `outputType` is `FILE`. Ignores JSON dump if value is `skip`.")
+    @ConfigProperty(name = "bundlebee.placeholder-extract.jsonFilename", defaultValue = "placeholders.json")
+    private String jsonFilename;
+
+    @Inject
     @Description("Completion properties filename - see https://github.com/rmannibucau/vscode-properties-custom-completion - (relative to `dumpLocation`) when `outputType` is `FILE`. Ignores this extraction if value is `skip`.")
     @ConfigProperty(name = "bundlebee.placeholder-extract.completionFilename", defaultValue = "placeholders.completion.properties")
     private String completionFilename;
@@ -122,7 +129,11 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
 
     @Inject
     @BundleBee
-    private JsonProvider json;
+    private JsonBuilderFactory json;
+
+    @Inject
+    @BundleBee
+    private JsonProvider jsonProvider;
 
     @Inject
     private PlaceholderSpy placeholderSpy;
@@ -191,6 +202,7 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
                                 return new Placeholder(
                                         e.getKey(), defaultValues.size() == 1 ? defaultValues.get(0) : null, defaultValues);
                             })
+                            .sorted(comparing(Placeholder::getName))
                             .collect(toList());
 
                     if (outputType == OutputType.ARGOCD) {
@@ -220,8 +232,37 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
                                         },
                                         JsonArrayBuilder::addAll,
                                         JsonArrayBuilder::build));
-                        System.out.println(argoCdDynamicConf);
+                        System.out.println(argoCdDynamicConf); // ArgoCD reads stdout so writes it there
                     } else {
+                        if (!"skip".equals(jsonFilename)) {
+                            doWrite("JSON",
+                                    () -> Path.of(dumpLocation).resolve(jsonFilename), () -> json.createObjectBuilder()
+                                            .add("items", placeholders.stream()
+                                                    .map(p -> {
+                                                        final var key = p.getName();
+                                                        final var desc = descriptions.getProperty(key, key);
+                                                        final var defaultValue = p.getDefaultValue();
+                                                        final var base = json.createObjectBuilder()
+                                                                .add("name", key)
+                                                                .add("description", desc);
+                                                        if (defaultValue != null) {
+                                                            base
+                                                                    .add("defaultValue", defaultValue)
+                                                                    .add("required", false);
+                                                        } else {
+                                                            base.add("required", true);
+                                                        }
+                                                        if (p.getDefaultValues() != null) {
+                                                            base.add("defaultValues", p.getDefaultValues().stream()
+                                                                    .collect(Collector.of(json::createArrayBuilder, JsonArrayBuilder::add, JsonArrayBuilder::addAll)));
+                                                        }
+                                                        return base.build();
+                                                    })
+                                                    .collect(Collector.of(json::createArrayBuilder, JsonArrayBuilder::add, JsonArrayBuilder::addAll)))
+                                            .build()
+                                            .toString() + '\n');
+                        }
+
                         if (!"skip".equals(propertiesFilename)) {
                             doWrite("Sample",
                                     () -> Path.of(dumpLocation).resolve(propertiesFilename), () -> placeholders.stream()
@@ -274,7 +315,7 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
     }
 
     private String unescapeJson(final String value) {
-        try (final var reader = json.createReader(new StringReader(value))) {
+        try (final var reader = jsonProvider.createReader(new StringReader(value))) {
             return ((JsonString) reader.readValue()).getString();
         }
     }
