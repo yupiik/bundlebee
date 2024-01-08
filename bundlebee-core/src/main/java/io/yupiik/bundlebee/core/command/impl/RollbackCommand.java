@@ -168,7 +168,7 @@ public class RollbackCommand implements CompletingExecutable {
     public CompletionStage<?> execute() {
         final var cache = archives.newCache();
         return alveolusHandler
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, null)
                 .thenCompose(alveolus -> all(
                         alveolus.stream()
                                 .map(it -> findPreviousVersion(it, cache)
@@ -201,7 +201,7 @@ public class RollbackCommand implements CompletingExecutable {
         }
         return alveolusHandler
                 // todo: can be found from alveolus.location too
-                .findRootAlveoli(previousFrom, previousManifest, previousAlveolus)
+                .findRootAlveoli(previousFrom, previousManifest, previousAlveolus, null)
                 .thenApply(list -> {
                     if (list.size() != 1) {
                         throw new IllegalArgumentException("Ambiguous previous version, found: " + list.stream()
@@ -226,7 +226,7 @@ public class RollbackCommand implements CompletingExecutable {
                         .thenCompose(versions -> {
                             final String previousVersion = matchPreviousVersion(alveolus, versions);
                             segments[2] = previousVersion;
-                            return alveolusHandler.findRootAlveoli(findPreviousFrom(segments), manifest, String.join(":", segments));
+                            return alveolusHandler.findRootAlveoli(findPreviousFrom(segments), manifest, String.join(":", segments), null);
                         })
                         .thenApply(alveoli -> {
                             if (alveoli.size() != 1) {
@@ -252,7 +252,7 @@ public class RollbackCommand implements CompletingExecutable {
                 final var version = potentialVersionsIt.next();
                 log.finest(() -> "Testing version='" + version + "' for '" + alveolus.getName() + "'");
                 alveolusHandler
-                        .findRootAlveoli(previousFrom, previousManifest, alveolus.getName())
+                        .findRootAlveoli(previousFrom, previousManifest, alveolus.getName(), null)
                         .whenComplete((list, error) -> {
                             if (error == null || list.isEmpty()) {
                                 tryToFindPreviousVersion(alveolus, potentialVersionsIt).whenComplete((r, e) -> {

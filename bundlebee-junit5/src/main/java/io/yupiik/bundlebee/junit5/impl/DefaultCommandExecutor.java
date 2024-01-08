@@ -41,7 +41,7 @@ public class DefaultCommandExecutor implements CommandExecutor {
                                 "--bundlebee.kube.api", mockServer,
                                 "--kubeconfig", "explicit"),
                         Stream.of(config.options())
-                                .map(interpolator::replace),
+                                .map(it -> interpolator.replace(it, null)),
                         Stream.of(config.placeholders())
                                 .flatMap(it -> Stream.of("--" + it.key(), it.value())))
                 .flatMap(identity())

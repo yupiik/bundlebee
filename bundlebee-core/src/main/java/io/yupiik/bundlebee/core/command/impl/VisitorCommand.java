@@ -62,13 +62,23 @@ public abstract class VisitorCommand implements CompletingExecutable {
         return "Diff an alveolus against a running cluster.";
     }
 
+    /**
+     * @deprecated ensure to pass an id or explicitly {@code null}.
+     */
+    @Deprecated
     protected CompletionStage<Collected> doExecute(final String from, final String manifest,
                                                    final String alveolus, final String descriptorFilter) {
+        return doExecute(from, manifest, alveolus, descriptorFilter, null);
+    }
+
+    protected CompletionStage<Collected> doExecute(final String from, final String manifest,
+                                                   final String alveolus, final String descriptorFilter,
+                                                   final String id) {
         final var cache = archives.newCache();
         final var collected = new Collected();
         final var filter = createDescriptorFilter(descriptorFilter);
         return visitor
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, id)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
                                 .map(it -> visitor.executeOnceOnAlveolus(
@@ -81,7 +91,7 @@ public abstract class VisitorCommand implements CompletingExecutable {
                                             }
                                             return completedFuture(true);
                                         },
-                                        cache, null, "inspected"))
+                                        cache, null, "inspected", id))
                                 .collect(toList()), toList(),
                         true))
                 .thenApply(ok -> collected);

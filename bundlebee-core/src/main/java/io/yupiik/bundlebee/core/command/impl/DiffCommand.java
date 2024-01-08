@@ -308,7 +308,7 @@ public class DiffCommand extends VisitorCommand {
 
     protected CompletionStage<Map<Item, ActualState>> doExecute() {
         return super
-                .doExecute(from, manifest, alveolus, descriptor)
+                .doExecute(from, manifest, alveolus, descriptor, null)
                 .thenCompose(collected -> {
                     // 1. load all descriptor to get the resource type
                     final var resources = collected.getDescriptors().entrySet().stream()

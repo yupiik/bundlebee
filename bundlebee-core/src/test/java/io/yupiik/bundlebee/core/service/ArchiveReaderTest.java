@@ -76,7 +76,7 @@ class ArchiveReaderTest {
             zipOutputStream.write(yaml.getBytes(StandardCharsets.UTF_8));
             zipOutputStream.closeEntry();
         }
-        final var archive = reader.read(null, zip);
+        final var archive = reader.read(null, zip, null);
         assertEquals(1, archive.getManifest().getAlveoli().size());
 
         final var alveolus = archive.getManifest().getAlveoli().get(0);

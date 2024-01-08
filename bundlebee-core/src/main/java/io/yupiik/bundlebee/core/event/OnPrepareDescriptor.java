@@ -21,8 +21,25 @@ import java.util.Map;
 
 @Data
 public class OnPrepareDescriptor {
+    private final String id;
     private final String alveolus;
     private final String descriptor;
     private final String content;
     private final Map<String, String> placeholders;
+
+    /**
+     * @deprecated ensure to pass an id or explicitly {@code null}. Not doing it can have side effects with some commands.
+     */
+    @Deprecated
+    public OnPrepareDescriptor(final String alveolus, final String descriptor, final String content, final Map<String, String> placeholders) {
+        this(null, alveolus, descriptor, content, placeholders);
+    }
+
+    public OnPrepareDescriptor(final String id, final String alveolus, final String descriptor, final String content, final Map<String, String> placeholders) {
+        this.id = id;
+        this.alveolus = alveolus;
+        this.descriptor = descriptor;
+        this.content = content;
+        this.placeholders = placeholders;
+    }
 }

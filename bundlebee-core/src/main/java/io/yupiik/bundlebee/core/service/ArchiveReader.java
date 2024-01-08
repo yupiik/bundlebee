@@ -58,7 +58,15 @@ public class ArchiveReader {
     @Inject
     private Event<OnLoadArchive> onLoadArchiveEvent;
 
+    /**
+     * @deprecated prefer the flavor with the explicit id as parameter.
+     */
+    @Deprecated
     public Archive read(final String coords, final Path zipLocation) {
+        return read(coords, zipLocation, null);
+    }
+
+    public Archive read(final String coords, final Path zipLocation, final String id) {
         log.finest(() -> "Reading " + zipLocation);
         if (Files.isDirectory(zipLocation)) {
             final var manifest = zipLocation.resolve("bundlebee/manifest.json");
@@ -79,7 +87,8 @@ public class ArchiveReader {
                             } catch (final IOException e) {
                                 throw new IllegalArgumentException(e);
                             }
-                        });
+                        },
+                        id);
                 final var descriptors = new HashMap<String, String>();
                 try {
                     Files.walkFileTree(zipLocation, new SimpleFileVisitor<>() {
@@ -128,7 +137,8 @@ public class ArchiveReader {
                         } catch (final IOException e) {
                             throw new IllegalStateException(e);
                         }
-                    });
+                    },
+                    id);
             return new Archive(
                     zipLocation,
                     manifest,
@@ -159,11 +169,19 @@ public class ArchiveReader {
     public class Cache {
         private final Map<String, CompletionStage<Archive>> cache = new ConcurrentHashMap<>();
 
+        /**
+         * @deprecated prefer the flavor with the explicit id as parameter.
+         */
+        @Deprecated
         public CompletionStage<Archive> loadArchive(final String coords) {
-            return cache.computeIfAbsent(coords, this::doLoadArchive);
+            return loadArchive(coords, null);
         }
 
-        private CompletionStage<Archive> doLoadArchive(final String coords) {
+        public CompletionStage<Archive> loadArchive(final String coords, final String id) {
+            return cache.computeIfAbsent(coords, it -> doLoadArchive(it, id));
+        }
+
+        private CompletionStage<Archive> doLoadArchive(final String coords, final String id) {
             final var archive = new OnLoadArchive(coords);
             onLoadArchiveEvent.fire(archive);
             if (archive.getLoader() != null) {
@@ -172,9 +190,9 @@ public class ArchiveReader {
 
             final var local = Paths.get(coords);
             if (Files.exists(local)) {
-                return completedFuture(read(coords, local));
+                return completedFuture(read(coords, local, id));
             }
-            return mvn.findOrDownload(coords).thenApply(it -> read(coords, it));
+            return mvn.findOrDownload(coords).thenApply(it -> read(coords, it, id));
         }
     }
 

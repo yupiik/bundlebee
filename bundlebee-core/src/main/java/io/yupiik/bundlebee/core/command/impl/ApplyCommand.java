@@ -126,7 +126,7 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
                                             final boolean injectTimestamp, final boolean injectBundleBeeMetadata,
                                             final ArchiveReader.Cache cache) {
         return visitor
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, null)
                 .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
                 .thenCompose(alveoli -> useChainInsteadOfAll ?
                         chain(alveoli.stream()
@@ -148,6 +148,6 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
                 (ctx, desc) -> kube.apply(desc.getContent(), desc.getExtension(), labels),
                 cache,
                 desc -> conditionAwaiter.await(name(), desc, scheduledExecutorService, awaitTimeout),
-                "deployed");
+                "deployed", null);
     }
 }

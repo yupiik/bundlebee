@@ -26,7 +26,6 @@ import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
 import lombok.Data;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
@@ -43,8 +42,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -153,10 +154,10 @@ public class HelmCommand extends BaseLabelEnricherCommand implements CompletingE
                 "Note that this conversion has some limitation in placeholder syntax for example (ensure no conflict under a key).";
     }
 
-    private void doExport(final List<Manifest.Alveolus> foundAlveoli) {
+    private void doExport(final List<Manifest.Alveolus> foundAlveoli, final String id) {
         final var root = Path.of(output);
 
-        final var placeholders = new ArrayList<>(placeholderObserver.getEvents());
+        final var placeholders = new ArrayList<>(placeholderObserver.getSpies().get(id).getEvents());
         final var placeholderLoadedDescriptions = new Properties();
 
         try {
@@ -179,9 +180,9 @@ public class HelmCommand extends BaseLabelEnricherCommand implements CompletingE
             // todo: support charts creating nested charts == alveoli?
             //       -> technically it would be as easy as doing this logic per alveolus in the visitor instead of globally
             final var charts = Files.createDirectories(root.resolve("templates"));
-            final var descriptors = placeholderObserver.getDescriptors();
+            final var descriptors = placeholderObserver.getSpies().get(id).getDescriptors();
             for (final var entry : descriptors) {
-                copyDescriptor(entry.getContent(), charts.resolve(entry.getAlveolus() + "." + stripExtension(entry.getDescriptor()) + ".yaml"));
+                copyDescriptor(entry.getContent(), charts.resolve(entry.getAlveolus() + "." + stripExtension(entry.getDescriptor()) + ".yaml"), id);
             }
         } catch (final IOException ioe) {
             throw new IllegalStateException(ioe);
@@ -201,9 +202,9 @@ public class HelmCommand extends BaseLabelEnricherCommand implements CompletingE
         return descriptor;
     }
 
-    private void copyDescriptor(final String value, final Path target) throws IOException {
+    private void copyDescriptor(final String value, final Path target, final String id) throws IOException {
         final var helmContent = new Substitutor(k -> "@{@{@ .Values." + k + " @}@}@")
-                .replace(value)
+                .replace(value, id)
                 .replace("@{@{@", "{{")
                 .replace("@}@}@", "}}");
         Files.writeString(target, helmContent);
@@ -309,10 +310,10 @@ public class HelmCommand extends BaseLabelEnricherCommand implements CompletingE
 
     @Override
     public CompletionStage<?> execute() {
-        final var observerActive = placeholderObserver.isActive();
-        placeholderObserver.setActive(true);
-        return doExecute(from, manifest, alveolus, archives.newCache())
-                .whenComplete((ok, ko) -> placeholderObserver.setActive(observerActive));
+        final var id = UUID.randomUUID().toString();
+        placeholderObserver.getSpies().put(id, new SpyCollector());
+        return doExecute(from, manifest, alveolus, archives.newCache(), id)
+                .whenComplete((ok, ko) -> placeholderObserver.getSpies().remove(id));
     }
 
     private String dropSnapshotIfNeeded(final String version) {
@@ -320,64 +321,77 @@ public class HelmCommand extends BaseLabelEnricherCommand implements CompletingE
     }
 
     private CompletionStage<?> doExecute(final String from, final String manifest, final String alveolus,
-                                         final ArchiveReader.Cache cache) {
+                                         final ArchiveReader.Cache cache, final String id) {
         final var foundAlveoli = new ArrayList<Manifest.Alveolus>();
         return visitor
-                .findRootAlveoli(from, manifest, alveolus)
+                .findRootAlveoli(from, manifest, alveolus, id)
                 .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
                 .thenCompose(alveoli -> {
                     foundAlveoli.addAll(alveoli.stream().map(AlveolusHandler.ManifestAndAlveolus::getAlveolus).collect(toList()));
                     return chain(alveoli.stream()
-                            .map(it -> (Supplier<CompletionStage<?>>) () -> doExecute(cache, it))
+                            .map(it -> (Supplier<CompletionStage<?>>) () -> doExecute(cache, it, id))
                             .iterator(), true);
 
                 })
-                .thenRun(() -> doExport(foundAlveoli));
+                .thenRun(() -> doExport(foundAlveoli, id));
     }
 
     private CompletionStage<?> doExecute(final ArchiveReader.Cache cache,
-                                         final AlveolusHandler.ManifestAndAlveolus it) {
+                                         final AlveolusHandler.ManifestAndAlveolus it,
+                                         final String id) {
+        final var spyCollector = placeholderObserver.getSpies().get(id);
         it.getAlveolus().setChainDependencies(true); // forced to ensure we process everything - including placeholders - synchronously
         return visitor.executeOnceOnAlveolus(
                 "Visiting", it.getManifest(), it.getAlveolus(), null,
                 (ctx, desc) -> kube.forDescriptor("Visiting", desc.getContent(), desc.getExtension(), CompletableFuture::completedFuture),
                 cache, desc -> {
-                    placeholderObserver.getIgnoredKeys().clear();
+                    spyCollector.getIgnoredKeys().clear();
                     return completedFuture(null);
-                }, "visited");
+                }, "visited", id);
     }
 
     @Getter
     @ApplicationScoped
     public static class HelmChartSpy {
-        @Setter
-        private boolean active;
-
-        private final Collection<String> ignoredKeys = new HashSet<>();
-        private final Collection<OnPlaceholder> events = new ArrayList<>();
-        private final Collection<OnPrepareDescriptor> descriptors = new ArrayList<>();
+        @Getter
+        private Map<String, SpyCollector> spies = new ConcurrentHashMap<>();
 
         public void onDescriptor(@Observes final OnPrepareDescriptor onPrepareDescriptor) {
-            if (!active) {
+            if (onPrepareDescriptor.getId() == null) {
                 return;
             }
-            synchronized (descriptors) {
-                descriptors.add(onPrepareDescriptor);
-                ignoredKeys.addAll(onPrepareDescriptor.getPlaceholders().keySet());
+            final var spy = spies.get(onPrepareDescriptor.getId());
+            if (spy == null) {
+                return;
+            }
+            synchronized (spy.descriptors) {
+                spy.descriptors.add(onPrepareDescriptor);
+                spy.ignoredKeys.addAll(onPrepareDescriptor.getPlaceholders().keySet());
             }
         }
 
         public void onPlaceholder(@Observes final OnPlaceholder onPlaceholder) {
-            if (!active) {
+            if (onPlaceholder.getId() == null) {
                 return;
             }
-            if (ignoredKeys.contains(onPlaceholder.getName())) {
+            final var spy = spies.get(onPlaceholder.getId());
+            if (spy == null) {
                 return;
             }
-            synchronized (events) {
-                events.add(onPlaceholder);
+            if (spy.ignoredKeys.contains(onPlaceholder.getName())) {
+                return;
+            }
+            synchronized (spy.events) {
+                spy.events.add(onPlaceholder);
             }
         }
+    }
+
+    @Data
+    private static class SpyCollector {
+        private final Collection<String> ignoredKeys = new HashSet<>();
+        private final Collection<OnPlaceholder> events = new ArrayList<>();
+        private final Collection<OnPrepareDescriptor> descriptors = new ArrayList<>();
     }
 
     @Data

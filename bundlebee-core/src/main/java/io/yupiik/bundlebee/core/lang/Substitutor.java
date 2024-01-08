@@ -41,21 +41,29 @@ public class Substitutor {
         this.lookup = (key, defVal) -> lookup.apply(key);
     }
 
+    /**
+     * @deprecated ensure to pass an execution id or explicitly {@code null}.
+     */
+    @Deprecated
     public String replace(final String source) {
+        return replace(source, null);
+    }
+
+    public String replace(final String source, final String id) {
         if (source == null) {
             return null;
         }
         String current = source;
         do {
             final var previous = current;
-            current = substitute(current, 0);
+            current = substitute(current, 0, id);
             if (previous.equals(current)) {
                 return previous.replace(ESCAPE + PREFIX, PREFIX);
             }
         } while (true);
     }
 
-    private String substitute(final String input, int iteration) {
+    private String substitute(final String input, int iteration, final String id) {
         if (iteration > maxIterations) {
             return input;
         }
@@ -82,7 +90,7 @@ public class Substitutor {
         final var nested = key.indexOf(PREFIX);
         if (nested >= 0 && !(nested > 0 && key.charAt(nested - 1) == ESCAPE)) {
             final var nestedPlaceholder = key + SUFFIX;
-            final var newKey = substitute(nestedPlaceholder, iteration + 1);
+            final var newKey = substitute(nestedPlaceholder, iteration + 1, id);
             return input.replace(nestedPlaceholder, newKey);
         }
 
@@ -93,12 +101,17 @@ public class Substitutor {
         if (sep > 0) {
             final var actualKey = key.substring(0, sep);
             final var fallback = key.substring(sep + VALUE_DELIMITER.length());
-            return startOfString + getOrDefault(actualKey, fallback) + endOfString;
+            return startOfString + getOrDefault(actualKey, fallback, id) + endOfString;
         }
-        return startOfString + getOrDefault(key, null) + endOfString;
+        return startOfString + getOrDefault(key, null, id) + endOfString;
     }
 
+    @Deprecated
     protected String getOrDefault(final String varName, final String varDefaultValue) {
+        return getOrDefault(varName, varDefaultValue, null);
+    }
+
+    protected String getOrDefault(final String varName, final String varDefaultValue, final String id) {
         try {
             return ofNullable(lookup.apply(varName, varDefaultValue)).orElse(varDefaultValue);
         } catch (final RuntimeException re) {
