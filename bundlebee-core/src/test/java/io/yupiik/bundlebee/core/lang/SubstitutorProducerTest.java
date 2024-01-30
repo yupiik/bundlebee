@@ -284,6 +284,15 @@ class SubstitutorProducerTest {
     }
 
     @Test
+    void jsonFileFromFileWithEscaping(@TempDir final Path root) throws IOException {
+        final var file = root.resolve("test.txt");
+        Files.writeString(file, "{\"foo\":\\{{dontescape}}}");
+        assertEquals(
+                "{\\\"foo\\\":{{dontescape}}}",
+                substitutor.getOrDefault("bundlebee-json-inline-file:" + file, "failed"));
+    }
+
+    @Test
     void jsonFileFromResource() {
         assertEquals(
                 "from \\\"resource\\\"",
