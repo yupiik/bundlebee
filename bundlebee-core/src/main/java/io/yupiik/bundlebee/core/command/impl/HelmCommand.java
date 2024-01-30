@@ -147,7 +147,7 @@ public class HelmCommand extends BaseLabelEnricherCommand implements CompletingE
 
     @Override
     public String description() {
-        return "Converts an alveolus deployment to a simple helm chart.\"" +
+        return "Converts an alveolus deployment to a simple helm chart.\n" +
                 "// end of short description\n" +
                 "Note you will loose some features doing that but in case some rigid rules force to use helm it enables to " +
                 "still rely on bundlebee setup and share a helm chart to ops.\n" +
