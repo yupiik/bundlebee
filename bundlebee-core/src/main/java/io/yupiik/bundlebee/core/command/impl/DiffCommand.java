@@ -228,8 +228,8 @@ public class DiffCommand extends VisitorCommand {
 
     @Override
     public String description() {
-        return "Diff an alveolus against a running cluster." +
-                "// end of short description\n\n" +
+        return "Diff an alveolus against a running cluster.\n" +
+                "// end of short description\n" +
                 "The logic behind is to visit the configured alveolus and for each of its descriptor, query the cluster state and do a JSON-Diff between both.\n" +
                 "To avoid false positives, you will likely want to tune the ignored pointers which enable to drop dynamic data (managed by Kubernetes server).\n\n" +
                 "The diff output has two types of diff:\n\n" +
