@@ -198,14 +198,7 @@ public class SubstitutorProducer {
                 try (final var dir = lastSep < 0 ?
                         Files.newDirectoryStream(Path.of(directory)) :
                         Files.newDirectoryStream(Path.of(directory.substring(0, lastSep)), directory.substring(lastSep + 1));
-                     final var stream = stream(Spliterators.spliteratorUnknownSize(dir.iterator(), Spliterator.DISTINCT), false)
-                             .onClose(() -> {
-                                 try {
-                                     dir.close();
-                                 } catch (final IOException ioe) {
-                                     throw new IllegalStateException(ioe);
-                                 }
-                             })) {
+                     final var stream = stream(Spliterators.spliteratorUnknownSize(dir.iterator(), Spliterator.DISTINCT), false)) {
                     return stream
                             .sorted(comparing(Path::getFileName))
                             .collect(Collector.of(
