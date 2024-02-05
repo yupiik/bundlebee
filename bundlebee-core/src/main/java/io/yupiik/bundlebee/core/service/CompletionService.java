@@ -75,7 +75,9 @@ public class CompletionService {
     }
 
     private Stream<String> noSharedConfigCommandNames() {
-        return Stream.of("add-alveolus", "build", "cipher-password", "create-master-password", "new", "version");
+        return Stream.of(
+                "add-alveolus", "build", "cipher-password", "create-master-password", "new", "version",
+                "cipher", "decipher", "list-alveoli", "list-lint-rules");
     }
 
     private <T> Stream<T> stream(final Instance<T> instance) { // mvn 3.6 workaround
