@@ -357,6 +357,7 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
                 } catch (final IOException ioe) {
                     throw new IllegalStateException(ioe);
                 }
+                break;
             default:
                 log.info(() -> what + '\n' + contentProvider.get());
         }
