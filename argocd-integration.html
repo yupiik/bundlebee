@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.25-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.26-SNAPSHOT">
     
 </head>
 <body>
@@ -279,7 +279,7 @@ To do that, edit <code>argocd-repo-server</code> descriptor (we explain how to d
 <div class="sectionbody">
 <div class="paragraph">
 <p>The limitations of the integration is that BundleBee does not deploy any more, it is just used as a templating engine (similarly to helm integration) so ArgoCD is the deployer.
-The drawback of that option is you loose the deployment options (like forcing <code>PUT</code> to force to override a resource, the control between the merge strategy when you install a resource or the awaiting logic which is different).</p>
+The drawback of that option is you loose the deployment options (like forcing <code>PUT</code> to force to override a resource, the control of the merge strategy when you install a resource or the awaiting logic which is different).</p>
 </div>
 <div class="paragraph">
 <p>Please also note that ArgoCD:</p>
@@ -315,14 +315,20 @@ The drawback of that option is you loose the deployment options (like forcing <c
 <p>Does use a custom RBAC model for security which is not always trivial to set up.</p>
 </li>
 <li>
-<p>As any software is a new thing to learn for your ops team and can compete with the idea of CI/CD (which has its own RBAC model for example).</p>
+<p>As any software is a new thing to learn for your ops team and can compete with the idea of CI/CD (which has its own RBAC model for example),</p>
+</li>
+<li>
+<p>Since it will store your clusters client configuration, the cluster ArgoCD is installed on must have very secured secrets (don&#8217;t use a weaky-leaky dev environment for example),</p>
+</li>
+<li>
+<p>Similarly to the cluster, if you use some ciphering solution, ensure its storage is very well secured (can go through Kubernetes secrets if you have a specific backend - ie not the default one).</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
 <p>This is why at Yupiik we tend to not use ArgoCD but prefer a plain CI/CD pipeline which is offline (does not need a constant runtime resource allocation nor infra monitoring and is self-resilient since you just need <code>git</code> to restore an application).
 Most of the time we couple it with BundleBee <code>diff</code> command to ensure if the cluster is synchronized or not with the <code>git</code> state.
-We combine it with a ciphering to save password/keys in <code>git</code>, depending the project it can be a Vault, keypass or just our <code>(de)crypt</code> maven <a href="https://www.yupiik.io/tools-maven-plugin/mojos.html#_crypt_mojos">goal</a> which uses a master password for that task.
+We combine it with a ciphering to save password/keys in <code>git</code>, depending the project it can be a Vault, keypass or just our <code>(de)crypt</code> maven <a href="https://www.yupiik.io/tools-maven-plugin/mojos.html#_crypt_mojos">goal</a> which uses a master password for that task (similarly you can use <code>{{bundlebee-decipher:$masterKeyPlaceholder,$cipheredValue}}</code> placeholders, see more on <a href="how-it-works.html">how it works</a> page).
 Finally, combine with <a href="https://www.yupiik.io/tools-maven-plugin/mojos.html#_minisite">minisite</a> generator we get live documentation reporting (including potential placeholders) which makes the solution complete.</p>
 </div>
 <div class="admonitionblock important">
@@ -391,7 +397,7 @@ it is highly recommended to work on these points before adopting ArgoCD (using B
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.highlightAll(); }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.25-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.26-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

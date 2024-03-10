@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.25-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.26-SNAPSHOT">
     
 </head>
 <body>
@@ -92,10 +92,16 @@
 <p><a href="commands/cipher-password.configuration.html">cipher-password</a>: cipher a password to put it in <code>~/.m2/settings.xml</code> servers (useful for deploy command for example).</p>
 </li>
 <li>
+<p><a href="commands/cipher.configuration.html">cipher</a>: enables to cipher a value using <code>AES/CBC/PKCS5Padding</code> algorithm with a master password. It can then be used as a placeholder with the syntax <code>{{bundlebee-decipher:{{my.master.password}},$cipheredValue}}</code>.</p>
+</li>
+<li>
 <p><a href="commands/completion.configuration.html">completion</a>: execute bash completion. Should be setup in your ~/.bashrc or ~/.profile file to be active.</p>
 </li>
 <li>
 <p><a href="commands/create-master-password.configuration.html">create-master-password</a>: generate a master password if none exist (in <code>~/.m2/settings-security.xml</code>).</p>
+</li>
+<li>
+<p><a href="commands/decipher.configuration.html">decipher</a>: enables to decipher a value using <code>AES/CBC/PKCS5Padding</code> algorithm with a master password.</p>
 </li>
 <li>
 <p><a href="commands/delete.configuration.html">delete</a>: delete an alveolus deployment by deleting all related descriptors.</p>
@@ -104,46 +110,54 @@
 <p><a href="commands/deploy.configuration.html">deploy</a>: build and deploy a project. It inherits from most configuration of build command and adds remote repository settings.</p>
 </li>
 <li>
-<p><a href="commands/diff.configuration.html">diff</a>: diff an alveolus against a running cluster.// end of short description</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The logic behind is to visit the configured alveolus and for each of its descriptor, query the cluster state and do a JSON-Diff between both.
-To avoid false positives, you will likely want to tune the ignored pointers which enable to drop dynamic data (managed by Kubernetes server).</p>
-</div>
-<div class="paragraph">
-<p>The diff output has two types of diff:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>JSON-Patch</code>: a JSON-Patch which, once applied on the actual state will bring up the state to the expected one,</p>
+<p><a href="commands/diff.configuration.html">diff</a>: diff an alveolus against a running cluster.</p>
 </li>
 <li>
-<p><code>JSON</code>: means the Kubernetes server misses an alveolus descriptor and the expected one is fully printed</p>
+<p><a href="commands/helm.configuration.html">helm</a>: converts an alveolus deployment to a simple helm chart.</p>
+</li>
+<li>
+<p><a href="commands/help.configuration.html">help</a>: print help for all available commands.</p>
+</li>
+<li>
+<p><a href="commands/http.configuration.html">http</a>: execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
+</li>
+<li>
+<p><a href="commands/inspect.configuration.html">inspect</a>: inspect an alveolus, i.e. list the descriptors to apply.</p>
+</li>
+<li>
+<p><a href="commands/lint.configuration.html">lint</a>: do common validations on descriptors. As of today mainly cpu/memory resources definition.</p>
+</li>
+<li>
+<p><a href="commands/list-alveoli.configuration.html">list-alveoli</a>: lists all found alveoli.</p>
+</li>
+<li>
+<p><a href="commands/list-lint-rules.configuration.html">list-lint-rules</a>: list available linting rules (ease exclusions for ex).</p>
+</li>
+<li>
+<p><a href="commands/new.configuration.html">new</a>: creates a new project.</p>
+</li>
+<li>
+<p><a href="commands/placeholder-extract.configuration.html">placeholder-extract</a>: extracts placeholders from an alveolus (often for documentation).</p>
+</li>
+<li>
+<p><a href="commands/process.configuration.html">process</a>: process all descriptors - as in an apply command - from a root descriptor. If <code>output</code> is set, it dumps the descriptors in this directory. Don&#8217;t forget to set <code>--kubeconfig explicit</code> to ignore kube setup.</p>
+</li>
+<li>
+<p><a href="commands/rollback.configuration.html">rollback</a>: rollback an alveolus deployment.</p>
+</li>
+<li>
+<p><a href="commands/run.configuration.html">run</a>: tries to run the recipe as plain forks on the host. In this mode, Bundlebee is used as the orchestrator. It is highly recommended to only do that with application matching the <code>bundlebee</code> command environment.</p>
+</li>
+<li>
+<p><a href="commands/version.configuration.html">version</a>: shows the application version.</p>
+</li>
+<li>
+<p><a href="commands/versions.configuration.html">versions</a>: list versions for an artifact to know which ones are available.</p>
+</li>
+<li>
+<p><a href="commands/yaml2json.configuration.html">yaml2json</a>: convert yaml files of a directory to json. This command is useful to transform Kubernetes yaml files to json to write Bundlebee descriptors.</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p>The diff line syntax is: <code>diff --$alveolusName a/$expectedLocalDescriptor b/$remoteDescriptor</code>.
-.
-- <a href="commands/helm.configuration.html">helm</a>: converts an alveolus deployment to a simple helm chart."// end of short description
-Note you will loose some features doing that but in case some rigid rules force to use helm it enables to still rely on bundlebee setup and share a helm chart to ops.
-Note that this conversion has some limitation in placeholder syntax for example (ensure no conflict under a key).
-- <a href="commands/help.configuration.html">help</a>: print help for all available commands.
-- <a href="commands/http.configuration.html">http</a>: execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.
-- <a href="commands/inspect.configuration.html">inspect</a>: inspect an alveolus, i.e. list the descriptors to apply.
-- <a href="commands/lint.configuration.html">lint</a>: do common validations on descriptors. As of today mainly cpu/memory resources definition.
-- <a href="commands/list-lint-rules.configuration.html">list-lint-rules</a>: list available linting rules (ease exclusions for ex).
-- <a href="commands/new.configuration.html">new</a>: creates a new project.
-- <a href="commands/placeholder-extract.configuration.html">placeholder-extract</a>: extracts placeholders from an alveolus (often for documentation).
-- <a href="commands/process.configuration.html">process</a>: process all descriptors - as in an apply command - from a root descriptor. If <code>output</code> is set, it dumps the descriptors in this directory. Don&#8217;t forget to set <code>--kubeconfig explicit</code> to ignore kube setup.
-- <a href="commands/rollback.configuration.html">rollback</a>: rollback an alveolus deployment.
-- <a href="commands/run.configuration.html">run</a>: tries to run the recipe as plain forks on the host. In this mode, Bundlebee is used as the orchestrator. It is highly recommended to only do that with application matching the <code>bundlebee</code> command environment.
-- <a href="commands/version.configuration.html">version</a>: shows the application version.
-- <a href="commands/versions.configuration.html">versions</a>: list versions for an artifact to know which ones are available.
-- <a href="commands/yaml2json.configuration.html">yaml2json</a>: convert yaml files of a directory to json. This command is useful to transform Kubernetes yaml files to json to write Bundlebee descriptors.</p>
 </div>
                 
             </div>
@@ -197,7 +211,7 @@ Note that this conversion has some limitation in placeholder syntax for example 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
     <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.highlightAll(); }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.25-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.26-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
