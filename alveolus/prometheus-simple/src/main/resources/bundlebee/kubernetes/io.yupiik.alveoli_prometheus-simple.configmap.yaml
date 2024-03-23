@@ -24,8 +24,8 @@ metadata:
 data:
   prometheus.yml: |
     global:
-      scrape_interval: 5s
-      evaluation_interval: 5s
+      scrape_interval: {{prometheus-simple.scrape_internal:-{{prometheus-simple.internal:-5s}}}}
+      evaluation_interval: {{prometheus-simple.evaluation_interval:-{{prometheus-simple.internal:-5s}}}}
     rule_files:
       - /etc/prometheus/prometheus.rules
     alerting:

@@ -27,6 +27,22 @@
       ],
       "placeholdersDoc": [
         {
+          "name": "prometheus-simple.serviceaccount",
+          "description": "Name of prometheus service account - where cluster role will be bound. Note that we use default by default for simplicity but in a real cluster it can make sense to create a dedicated service account.."
+        },
+        {
+          "name": "prometheus-simple.internal",
+          "description": "Default for evaluation and scrape interval in prometheus configuration if not overridden by the specific placeholders."
+        },
+        {
+          "name": "prometheus-simple.evaluation_interval",
+          "description": "Default evaluation interval in prometheus configuration."
+        },
+        {
+          "name": "prometheus-simple.scrape_internal",
+          "description": "Default scrape interval in prometheus configuration."
+        },
+        {
           "name": "prometheus-simple.image",
           "description": "The image to use."
         },

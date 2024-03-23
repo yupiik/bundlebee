@@ -25,5 +25,5 @@ roleRef:
   name: prometheus
 subjects:
   - kind: ServiceAccount
-    name: default
-    namespace: default
+    name: "{{prometheus-simple.serviceaccount:-default}}"
+    namespace: "{{prometheus-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
