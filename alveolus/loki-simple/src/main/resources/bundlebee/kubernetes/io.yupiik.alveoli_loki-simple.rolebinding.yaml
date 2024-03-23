@@ -22,7 +22,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: promtail-serviceaccount
-    namespace: default
+    namespace: "{{loki-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
 roleRef:
   kind: ClusterRole
   name: promtail-clusterrole
