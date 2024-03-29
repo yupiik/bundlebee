@@ -37,7 +37,7 @@
     <owb.version>2.0.27</owb.version>
     <xbean.version>4.23</xbean.version>
     <junit5.version>5.9.0</junit5.version>
-    <arthur.version>1.0.7</arthur.version>
+    <arthur.version>1.0.8</arthur.version>
     <yupiik-logging.version>1.0.7</yupiik-logging.version>
     <johnzon.version>1.2.21</johnzon.version>
     <yupiik-tools.version>1.2.1</yupiik-tools.version>
@@ -123,7 +123,7 @@
         <artifactId>arthur-maven-plugin</artifactId>
         <version>${arthur.version}</version>
         <configuration>
-          <graalVersion>22.1.0</graalVersion>
+          <graalVersion>17.0.9-graalce</graalVersion>
           <attach>true</attach>
           <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
           <output>${project.build.directory}/${project.artifactId}</output>
@@ -134,6 +134,9 @@
             <graalExtension>openwebbeans</graalExtension>
           </graalExtensions>
           <customOptions>
+            <customOption>-J--add-exports=jdk.internal.vm.compiler/org.graalvm.compiler.options=ALL-UNNAMED</customOption>
+            <customOption>-J--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.option=ALL-UNNAMED</customOption>
+            <customOption>-J--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.jdk=ALL-UNNAMED</customOption>
             <customOption>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</customOption>
             <customOption>-Djava.net.preferIPv4Stack=true</customOption>
             <customOption>--enable-http</customOption>
