@@ -49,6 +49,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -108,7 +110,13 @@ public class SubstitutorProducer {
                 () -> getClass().getDeclaredMethod("doSubstitute", AtomicReference.class, Config.class, String.class).getDeclaringClass() != SubstitutorProducer.class);
         idHolder = hasOldOnPlaceholderExtensionPoint || hasOldSubstitute ? new ThreadLocal<>() : null;
 
+        final var helpers = new HashMap<String, Function<Object, String>>();
         final var ref = new Substitutor(it -> doSubstitute(self, config, it, null)) {
+            @Override
+            protected Map<String, Function<Object, String>> handlebarsHelpers() {
+                return helpers;
+            }
+
             @Override // mainly handle backward compat and id propagation, could be ~2-3 lines without that
             protected String getOrDefault(final String varName, final String varDefaultValue, final String id) {
                 String value;
@@ -147,6 +155,14 @@ public class SubstitutorProducer {
             }
         };
         self.set(ref);
+
+        // handlebars helpers
+        // - placeholder helper enables to get the standard placeholder behavior from a string
+        helpers.put("placeholder", args -> {
+            final Object[] casted = (Object[]) args; // (key, execution id injected)
+            return self.get().replace(casted[0].toString(), casted[1].toString());
+        });
+
         return ref;
     }
 
@@ -176,11 +192,13 @@ public class SubstitutorProducer {
     /**
      * @deprecated ensure to pass use the flavor with an id as parameter otherwise some commands will be broken.
      */
+    @Deprecated
     protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder) {
         return doSubstitute(self, config, placeholder, idHolder == null ? null : idHolder.get());
     }
 
-    protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder, final String id) {
+    protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config,
+                                  final String placeholder, final String id) {
         try {
             if (placeholder.equals("bundlebee-kubernetes-namespace")) {
                 return httpKubeClient.getNamespace();

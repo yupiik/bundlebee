@@ -52,6 +52,32 @@ class ApplyCommandTest {
     private HttpApiHandler<?> handler;
 
     @Test
+    void handlebars(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
+                "apply",
+                "--alveolus", "handlebars",
+                "--injectBundleBeeMetadata", "false",
+                "--injectTimestamp", "false"));
+        assertEquals("Deploying 'handlebars'\nApplying 'handlebars' (kind=services) for namespace 'default'\n", logs);
+
+        assertEquals(1, spyingResponseLocator.requests.size());
+        assertEquals("{" +
+                "\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
+                "\"metadata\":{" +
+                "\"name\":\"handlebars\"," +
+                "\"namespace\":\"default\"," +
+                "\"labels\":{" +
+                "\"app\":\"handlebars\"," +
+                "\"label\":\"notset\"," +
+                "\"label2\":\"ewogICJhdXRocyI6IHsKICAgICJudWxsIjogewogICAgICAidXNlcm5hbWUiOiAicm1hbm5pYnVjYXUiLAogICAgICAicGFzc3dvcmQiOiAibnVsbCIsCiAgICAgICJlbWFpbCI6ICJybWFubmlidWNhdUB0ZXN0LmNvbSIsCiAgICAgICJhdXRoIjogImNtMWhibTVwWW5WallYVTZiblZzYkE9PSIKICAgIH0KICB9Cn0K\"}}," +
+                "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1235,\"targetPort\":1235}]," +
+                "\"selector\":{\"app\":\"handlebars\"}}}", spyingResponseLocator.requests.get(0).payload());
+    }
+
+    @Test
     void patchCustomContentType(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);

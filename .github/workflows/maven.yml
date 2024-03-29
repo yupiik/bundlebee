@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Clone
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Cache Maven Repository
         uses: actions/cache@v2
         with:
@@ -36,9 +36,11 @@ jobs:
             /home/runner/work/bundlebee/bundlebee/bundlebee-documentation/src/main/minisite/assets/generated/kubernetes
           key: m2_repository
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: '11.0.21'
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'maven'
       - name: Build
         run: mvn install -Pnative -Dm2.location=/home/runner/work/bundlebee/bundlebee/.m2
       - name: Remove Snapshots Before Caching
@@ -48,16 +50,18 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - name: Clone
-        uses: actions/checkout@v1
+        uses: actions/checkout@v4
       - name: Cache Maven Repository
         uses: actions/cache@v1
         with:
           path: /home/runner/work/bundlebee/bundlebee/.m2
           key: m2_repository
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: '11.0.21'
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'maven'
       - name: Build
         run: mvn install -DskipTests ossindex:audit
       - name: Remove Snapshots Before Caching

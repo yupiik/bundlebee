@@ -186,6 +186,8 @@ bundlebee \
 
 Placeholders can use some keywords to get some particular values:
 
+- `alveolus.name`: name of the alveolus the descriptor comes from,
+- `descriptor.name`: name of the descriptor,
 - `bundlebee-strip:<value>`: strips the provided value,
 - `bundlebee-strip-leading:<value>`: strips the provided value at the beginning,
 - `bundlebee-strip-trailing:<value>`: strips the provided value at the end,
@@ -215,6 +217,27 @@ Placeholders can use some keywords to get some particular values:
 If none of these placeholders match, then Microprofile Config is used to lookup the value (so system properties, environment variables and BundleBee args are used).
 
 TIP: file placeholders can also read a resource from the classpath if the path does not match any existing file.
+
+== Use Handlebars instead of plain placeholders
+
+IMPORTANT: this feature is still experimental and value interpolation can be refined.
+
+Sometimes it can be more convenient to use handlebars language to templatize the *descriptors* (not the manifest) rather than placeholders.
+It is the case when you have some logic depending some placeholder or value.
+
+IMPORTANT: it is also generally the case your template becomes complex so before jumping into handlebars templating please think if you should split your template in multiple imported files or just multiple files.
+
+By replacing the `.json` or `.yaml` extension of the descriptor in `kubernetes/` (sub)folder(s) by `.hb` or `.handlebars` you can use Yupiik `fusion-handlebars` templating running on java >= 17 and adding the dependency to the classpath (not available yet in native mode).
+
+Then the descriptor, if `interpolated` is set to `true` in the manifest (as usual) will be interpolating using Handlerbars engine.
+
+The main difference is that it gives you conditional blocks.
+
+You can still use the plain placeholder interpolation since we try to keep a compatibility layer and default functions with some corner cases but most will work smoothly.
+
+TIP: we still recommend to use JSON format instead of YAML since it is harder to break even using handlebars.
+
+Finally you can use `alveolus.name`, `descriptor.name` which will be correctly interpolated.
 
 == Windows and CLI
 
