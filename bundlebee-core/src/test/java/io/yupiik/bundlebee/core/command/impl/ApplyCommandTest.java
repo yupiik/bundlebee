@@ -30,6 +30,7 @@ import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +41,7 @@ import java.util.function.Predicate;
 
 import static java.util.logging.Level.INFO;
 import static java.util.stream.Collectors.toSet;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -64,6 +66,14 @@ class ApplyCommandTest {
         assertEquals("Deploying 'handlebars'\nApplying 'handlebars' (kind=services) for namespace 'default'\n", logs);
 
         assertEquals(1, spyingResponseLocator.requests.size());
+        final var payload = spyingResponseLocator.requests.get(0).payload();
+
+        final int label2Start = payload.indexOf("\"label2\":\"");
+        final int label2End = payload.indexOf("\"", label2Start + "\"label2\":\"".length() + 1);
+        final var base64 = payload.substring(label2Start +"\"label2\":\"".length(), label2End);
+        assertDoesNotThrow(() -> Base64.getDecoder().decode(base64));
+
+        final var actual = payload.substring(0, label2Start + "\"label2\":\"".length()) + "xxxx" + payload.substring(label2End);
         assertEquals("{" +
                 "\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
                 "\"metadata\":{" +
@@ -72,9 +82,10 @@ class ApplyCommandTest {
                 "\"labels\":{" +
                 "\"app\":\"handlebars\"," +
                 "\"label\":\"notset\"," +
-                "\"label2\":\"ewogICJhdXRocyI6IHsKICAgICJudWxsIjogewogICAgICAidXNlcm5hbWUiOiAicm1hbm5pYnVjYXUiLAogICAgICAicGFzc3dvcmQiOiAibnVsbCIsCiAgICAgICJlbWFpbCI6ICJybWFubmlidWNhdUB0ZXN0LmNvbSIsCiAgICAgICJhdXRoIjogImNtMWhibTVwWW5WallYVTZiblZzYkE9PSIKICAgIH0KICB9Cn0K\"}}," +
+                "\"label2\":\"xxxx\"}}," +
                 "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1235,\"targetPort\":1235}]," +
-                "\"selector\":{\"app\":\"handlebars\"}}}", spyingResponseLocator.requests.get(0).payload());
+                "\"selector\":{\"app\":\"handlebars\"}}}",
+                actual);
     }
 
     @Test
