@@ -46,6 +46,7 @@ class ListAlveoliCommandTest {
                 "- RollbackCommandTest.first\n" +
                 "- RollbackCommandTest.second\n" +
                 "- customContentType\n" +
+                "- handlebars\n" +
                 "\n", logs);
     }
 }

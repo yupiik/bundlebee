@@ -1,6 +1,15 @@
 {
   "alveoli": [
     {
+      "name": "handlebars",
+      "descriptors": [
+        {
+          "name": "custom-template-hb.handlebars",
+          "interpolate": true
+        }
+      ]
+    },
+    {
       "name": "customContentType",
       "descriptors": [
         {

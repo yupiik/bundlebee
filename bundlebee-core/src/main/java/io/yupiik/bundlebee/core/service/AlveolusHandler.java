@@ -451,7 +451,7 @@ public class AlveolusHandler {
         return all(
                 descs.stream()
                         .peek(it -> onPrepareDescriptorEvent.fire(new OnPrepareDescriptor(id, from.getName(), it.getConfiguration().getName(), it.getContent(), placeholders)))
-                        .map(it -> prepare(it, currentPatches, placeholders, id))
+                        .map(it -> prepare(from, it, currentPatches, placeholders, id))
                         .map(it -> onDescriptor.apply(new AlveolusContext(manifest, from, patches, placeholders, excludes, cache, id), it))
                         .collect(toList()), counting(), true);
     }
@@ -552,14 +552,16 @@ public class AlveolusHandler {
         return descriptorName::equals;
     }
 
-    private LoadedDescriptor prepare(final LoadedDescriptor desc,
+    private LoadedDescriptor prepare(final Manifest.Alveolus alveolus,
+                                     final LoadedDescriptor desc,
                                      final Map<Predicate<String>, Manifest.Patch> patches,
                                      final Map<String, String> placeholders,
                                      final String id) {
-        return threadLocalConfigSource.withContext(placeholders, () -> doPrepare(desc, patches, id));
+        return threadLocalConfigSource.withContext(placeholders, () -> doPrepare(alveolus, desc, patches, id));
     }
 
-    private LoadedDescriptor doPrepare(final LoadedDescriptor desc, final Map<Predicate<String>, Manifest.Patch> patches, final String id) {
+    private LoadedDescriptor doPrepare(final Manifest.Alveolus alveolus, final LoadedDescriptor desc,
+                                       final Map<Predicate<String>, Manifest.Patch> patches, final String id) {
         var content = desc.getContent();
 
         final var descPatches = patches.entrySet().stream()
@@ -572,7 +574,7 @@ public class AlveolusHandler {
         if (!descPatches.isEmpty()) {
             for (final Manifest.Patch patch : descPatches) {
                 if (patch.isInterpolate()) {
-                    content = substitutor.replace(content, id);
+                    content = substitutor.replace(alveolus, desc, content, id);
                 }
                 if (patch.getPatch() == null) {
                     continue;
@@ -601,14 +603,14 @@ public class AlveolusHandler {
                     log.finest(() -> "" +
                             "Trying to interpolate the descriptor before patching it since it failed without: '" +
                             desc.getConfiguration().getName() + "'");
-                    content = substitutor.replace(content, id);
+                    content = substitutor.replace(alveolus, desc, content, id);
                     alreadyInterpolated = true;
                     content = jsonPatch.apply(loadJsonStructure(desc, content)).toString();
                 }
             }
         }
         if (!alreadyInterpolated && desc.getConfiguration().getInterpolate()) {
-            content = substitutor.replace(content, id);
+            content = substitutor.replace(alveolus, desc, content, id);
         }
         return new LoadedDescriptor(desc.getConfiguration(), content, desc.getExtension(), desc.getUri(), desc.getResource());
     }
@@ -632,7 +634,9 @@ public class AlveolusHandler {
 
     private String findExtension(final String name, final String type) {
         if ("kubernetes".equals(type)) {
-            if (name.endsWith(".yaml") || name.endsWith("yml") || name.endsWith(".json")) {
+            if (name.endsWith(".yaml") || name.endsWith("yml") ||
+                    name.endsWith(".json") ||
+                    name.endsWith(".hb") || name.endsWith(".handlebars")) {
                 return "";
             }
             // yaml is the most common even if we would like json....

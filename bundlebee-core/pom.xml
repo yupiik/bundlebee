@@ -93,6 +93,19 @@
       <version>${yupiik-tools.version}</version>
     </dependency>
 
+    <dependency> <!-- for now experimental (we bridged the plain placeholder to hb) -->
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-handlebars</artifactId>
+      <version>1.0.16</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>io.yupiik.fusion</groupId>
+          <artifactId>fusion-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <dependency>
       <groupId>org.apache.openwebbeans</groupId>
       <artifactId>openwebbeans-junit5</artifactId>
@@ -100,8 +113,19 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.openjdk.nashorn</groupId>
+      <artifactId>nashorn-core</artifactId>
+      <version>15.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.talend.sdk.component</groupId>
       <artifactId>component-runtime-http-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency> <!-- for http-junit self seigned cert generation on java 17 -->
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency> <!-- for talend mock http server -->
