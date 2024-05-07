@@ -19,6 +19,7 @@ import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.http.JsonHttpResponse;
 import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import io.yupiik.bundlebee.core.service.ContainerSanitizer;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
 import lombok.Data;
 import lombok.extern.java.Log;
@@ -78,6 +79,9 @@ import static java.util.stream.Collectors.toMap;
 public class KubeClient implements ConfigHolder {
     @Inject
     private Yaml2JsonConverter yaml2json;
+
+    @Inject
+    private ContainerSanitizer containerSanitizer;
 
     @Inject
     private ApiPreloader apiPreloader;
@@ -487,9 +491,16 @@ public class KubeClient implements ConfigHolder {
                         return completedStage(findResponse);
                     }
 
+                    final JsonObject preparedAndFilteredDescriptor;
+                    if (findResponse.statusCode() == 404 && containerSanitizer.canSanitizeCpuResource(kindLowerCased)) {
+                        preparedAndFilteredDescriptor = containerSanitizer.dropCpuResources(kindLowerCased, preparedDesc);
+                    } else {
+                        preparedAndFilteredDescriptor = preparedDesc;
+                    }
+
                     log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
                     return api.execute(HttpRequest.newBuilder()
-                                            .POST(HttpRequest.BodyPublishers.ofString(preparedDesc.toString()))
+                                            .POST(HttpRequest.BodyPublishers.ofString(preparedAndFilteredDescriptor.toString()))
                                             .header("Content-Type", "application/json")
                                             .header("Accept", "application/json"),
                                     baseUri + fieldManager)
