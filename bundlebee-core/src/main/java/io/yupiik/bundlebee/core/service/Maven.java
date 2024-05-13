@@ -63,7 +63,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Semaphore;
 import java.util.function.BiFunction;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.command.Executable.UNSET;
@@ -82,7 +81,6 @@ import static lombok.AccessLevel.PRIVATE;
 @ApplicationScoped
 public class Maven implements ConfigHolder {
     private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
-    private static final Pattern ENCRYPTED_PATTERN = Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
 
     @Inject
     @Description("When fetching a dependency using HTTP, the connection timeout for this dependency.")
@@ -90,7 +88,10 @@ public class Maven implements ConfigHolder {
     private int connectTimeout;
 
     @Inject
-    @Description("Where to cache maven dependencies. If set to `auto`, `$HOME/.m2/repository` is used.")
+    @Description("Where to cache maven dependencies. " +
+            "If set to `auto`, tries to read the system property `maven.repo.local`" +
+            " then the `settings.xml` `localRepository`" +
+            " and finally it would fallback on `$HOME/.m2/repository`.")
     @ConfigProperty(name = "bundlebee.maven.cache", defaultValue = "auto")
     private String m2CacheConfig;
 
@@ -479,6 +480,11 @@ public class Maven implements ConfigHolder {
                 .filter(it -> !"auto".equals(it))
                 .map(Paths::get)
                 .orElseGet(() -> {
+                    final var sp = System.getProperty("maven.repo.local");
+                    if (sp != null) {
+                        return Path.of(sp);
+                    }
+
                     final var m2 = Paths.get(System.getProperty("user.home")).resolve(".m2/repository");
                     final var settingsXml = m2.resolve("settings.xml");
                     if (Files.exists(settingsXml)) {
