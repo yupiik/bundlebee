@@ -25,7 +25,10 @@ import javax.enterprise.inject.Disposes;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -81,7 +84,15 @@ public class HttpClientProducer implements ConfigHolder {
         if (followRedirects != null && !followRedirects.isBlank()) {
             builder.followRedirects(HttpClient.Redirect.valueOf(followRedirects));
         }
-        return builder.build();
+        return new DelegatingClient(builder.build()) {
+            @Override
+            public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler) {
+                return delegate.sendAsync(request, responseBodyHandler)
+                        // enforce the right classloader
+                        .whenCompleteAsync((r, t) -> {
+                        }, delegate.executor().orElseGet(ForkJoinPool::commonPool));
+            }
+        };
     }
 
     private boolean isMaven() {
