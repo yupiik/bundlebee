@@ -220,6 +220,13 @@ class SubstitutorProducerTest {
     }
 
     @Test
+    void debase64() {
+        assertEquals(
+                "content",
+                substitutor.getOrDefault("bundlebee-base64-decode:" + Base64.getEncoder().encodeToString("content".getBytes(StandardCharsets.UTF_8)), "failed"));
+    }
+
+    @Test
     void base64File(@TempDir final Path root) throws IOException {
         final var file = root.resolve("test.txt");
         Files.writeString(file, "content");

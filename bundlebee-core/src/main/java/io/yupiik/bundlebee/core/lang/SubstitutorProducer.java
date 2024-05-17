@@ -249,8 +249,15 @@ public class SubstitutorProducer {
                 final var src = readResource(placeholder, "bundlebee-base64-file:");
                 return src == null ? null : Base64.getEncoder().encodeToString(src);
             }
+            if (placeholder.startsWith("bundlebee-base64-decode-file:")) {
+                final var src = readResource(placeholder, "bundlebee-base64-decode-file:");
+                return src == null ? null : new String(Base64.getDecoder().decode(src), StandardCharsets.UTF_8);
+            }
             if (placeholder.startsWith("bundlebee-base64:")) {
                 return Base64.getEncoder().encodeToString(placeholder.substring("bundlebee-base64:".length()).getBytes(StandardCharsets.UTF_8));
+            }
+            if (placeholder.startsWith("bundlebee-base64-decode:")) {
+                return new String(Base64.getDecoder().decode(placeholder.substring("bundlebee-base64-decode:".length()).getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
             }
             if (placeholder.startsWith("bundlebee-quote-escaped-inline-file:")) {
                 final var resource = readResource(placeholder, "bundlebee-quote-escaped-inline-file:");
