@@ -124,9 +124,20 @@
         <artifactId>yupiik-tools-maven-plugin</artifactId>
         <configuration>
           <siteBase>//www.yupiik.io/bundlebee</siteBase>
-          <logoText>Yupiik BundleBee</logoText>
+          <title>BundleBee documentation</title>
+          <description>BundleBee is a light Java Kubernetes package manager.</description>
           <indexText>Yupiik BundleBee</indexText>
           <indexSubTitle>A light Java Kubernetes package manager.</indexSubTitle>
+          <logoText>Bundlebee</logoText>
+          <logoSideText>Documentation</logoSideText>
+          <copyright>© 2024 &lt;strong&gt;&lt;a href="https://www.yupiik.com"&gt;Yupiik&lt;/a&gt;&lt;/strong&gt;. All Rights Reserved</copyright>
+          <templateExtensionPoints>
+            <socialLinks>
+              &lt;li class="list-inline-item"&gt;&lt;a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"&gt;&lt;i class="fab fa-linkedin fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
+              &lt;li class="list-inline-item"&gt;&lt;a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"&gt;&lt;i class="fab fa-twitter fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
+              &lt;li class="list-inline-item"&gt;&lt;a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"&gt;&lt;i class="fab fa-github fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
+            </socialLinks>
+          </templateExtensionPoints>
           <customScripts>
             &lt;script&gt;
             document.querySelector('div.site-logo &gt; a').href =
