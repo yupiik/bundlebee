@@ -404,7 +404,7 @@
     {
       "group":"flowcontrol.apiserver.k8s.io",
       "kind":"FlowSchema",
-      "version":"v1beta1"
+      "version":"v1alpha1"
     }
   ]
 }

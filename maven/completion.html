@@ -6,19 +6,99 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="A light Java Kubernetes package manager.">
+    <meta name="description" content="BundleBee is a light Java Kubernetes package manager.">
     <meta name="author" content="Yupiik Minisite Generator">
     <meta name="generator" content="Yupiik Minisite Generator">
     
-    <link rel="shortcut icon" href="//www.yupiik.io/bundlebee/images/logo.svg">
+    <link rel="shortcut icon" href="//www.yupiik.io/bundlebee/images/favicon.png">
 
     <link href="//fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i|Montserrat:300,400,500,700" rel="stylesheet">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/vs2015.min.css" integrity="sha512-w8aclkBlN3Ha08SMwFKXFJqhSUx2qlvTBFLLelF8sm4xQnlg64qmGB/A6pBIKy0W8Bo51yDMDtQiPLNRq1WMcQ==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/atom-one-dark.min.css" integrity="sha512-Fcqyubi5qOvl+yCwSJ+r7lli+CO1eHXMaugsZrnxuU4DVpLYWXTVoHy55+mCb4VZpMgy7PBhV7IiymC0yu9tkQ==" crossorigin="anonymous" />
+    <style>
+        :root {
+            /* YUPIIK colors (from dark to light) */
+            --yupiik-site-green: #46F72F;
+            --yupiik-site-purple: #D858FF;
+            --yupiik-site-blue-light: #02ABEA;
+            --yupiik-site-blue-dark: #056EBB;
+            --yupiik-site-grey-light: #F4F4F4;
+            --yupiik-site-grey-dark: #212121;
+
+            --yupiik-blue1: var(--yupiik-site-blue-dark);
+            --yupiik-blue2: var(--yupiik-site-blue-dark);
+            --yupiik-blue3: var(--yupiik-site-blue-dark);
+
+            --yupiik-color-white: #fff;
+            --yupiik-color-black: #000;
+
+            --yupiik-color-gray-0: var(--yupiik-color-white);
+            --yupiik-color-gray-100: #f5f6f7;
+            --yupiik-color-gray-200: #ebedf0;
+            --yupiik-color-gray-300: #dadde1;
+            --yupiik-color-gray-400: #ccd0d5;
+            --yupiik-color-gray-500: #bec3c9;
+            --yupiik-color-gray-600: #8d949e;
+            --yupiik-color-gray-700: #606770;
+            --yupiik-color-gray-800: #444950;
+            --yupiik-color-gray-900: #1c1e21;
+            --yupiik-color-gray-1000: var(--yupiik-color-black);
+
+            --yupiik-color-emphasis-0: var(--yupiik-color-gray-0);
+            --yupiik-color-emphasis-100: var(--yupiik-color-gray-100);
+            --yupiik-color-emphasis-200: var(--yupiik-color-gray-200);
+            --yupiik-color-emphasis-300: var(--yupiik-color-gray-300);
+            --yupiik-color-emphasis-400: var(--yupiik-color-gray-400);
+            --yupiik-color-emphasis-500: var(--yupiik-color-gray-500);
+            --yupiik-color-emphasis-600: var(--yupiik-color-gray-600);
+            --yupiik-color-emphasis-700: var(--yupiik-color-gray-700);
+            --yupiik-color-emphasis-800: var(--yupiik-color-gray-800);
+            --yupiik-color-emphasis-900: var(--yupiik-color-gray-900);
+            --yupiik-color-emphasis-1000: var(--yupiik-color-gray-1000);
+            --yupiik-color-content: var(--yupiik-color-emphasis-900);
+
+            --yupiik-font-family-base: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            --yupiik-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            --yupiik-font-size-base: 100%;
+
+            --yupiik-font-weight-light: 300;
+            --yupiik-font-weight-normal: 400;
+            --yupiik-font-weight-semibold: 500;
+            --yupiik-font-weight-bold: 700;
+
+            --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
+            --yupiik-line-height-base: 1.65;
+            --yupiik-font-weight-light: 300;
+            --yupiik-font-weight-normal: 400;
+            --yupiik-font-weight-semibold: 500;
+            --yupiik-font-weight-bold: 700;
+
+            --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
+            --yupiik-line-height-base: 1.65;
+
+            --yupiik-global-spacing: 1rem;
+            --yupiik-spacing-vertical: var(--yupiik-global-spacing);
+            --yupiik-spacing-horizontal: var(--yupiik-global-spacing);
+
+            --yupiik-h1-font-size: 2rem;
+            --yupiik-h2-font-size: 1.5rem;
+            --yupiik-h3-font-size: 1.25rem;
+            --yupiik-h4-font-size: 1rem;
+            --yupiik-h5-font-size: 0.875rem;
+            --yupiik-h6-font-size: 0.85rem;
+
+            --yupiik-heading-color: var(--yupiik-blue1);
+            --yupiik-heading-margin-top: 0;
+            --yupiik-heading-margin-bottom: var(--yupiik-spacing-vertical);
+            --yupiik-heading-font-family: var(--yupiik-font-family-base);
+            --yupiik-heading-font-weight: var(--yupiik-font-weight-bold);
+            --yupiik-heading-line-height: 1.25;
+        }
+    </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.27-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -27,7 +107,7 @@
                 <div class="docs-logo-wrapper">
 	                <div class="site-logo"><a title="Home" class="navbar-brand" href="//www.yupiik.io/bundlebee/index.html">
 	                <img class="logo-icon mr-2" src="//www.yupiik.io/bundlebee/images/logo.svg" alt="logo">
-	                <span class="logo-text">Yupiik BundleBee <span class="text-alt">Docs</span></span></a></div>
+	                <span class="logo-text">Bundlebee <span class="text-alt">Documentation</span></span></a></div>
                 </div>
 	            <div class="docs-top-utilities d-flex justify-content-end align-items-center">
 					
@@ -35,7 +115,9 @@
 
 					<ul class="social-list list-inline mx-md-3 mx-lg-5 mb-0 d-none d-lg-flex">
 						
-						<li class="list-inline-item"><a title="Github" href="https://www.github.com/yupiik/"><i class="fab fa-github fa-fw"></i></a></li><li class="list-inline-item"><a title="LinkedIn" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+						<li class="list-inline-item"><a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
 		            </ul>
 	            </div>
             </div>
@@ -69,7 +151,7 @@
             </ul>
         </div>
 
-        <div id="maven-completion-html-container" class="container page-content maven-completion-html">
+        <div id="maven-completion-html-container" class="container page-content maven-completion-html ">
                         <div class="page-header">
                 <h1>bundlebee:completion</h1>
             </div>
@@ -89,7 +171,7 @@
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
-  &lt;version&gt;1.0.27-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
 &lt;/plugin&gt;</code></pre>
 </div>
 </div>
@@ -104,7 +186,7 @@
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
-  &lt;version&gt;1.0.27-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
   &lt;executions&gt;
     &lt;execution&gt;
       &lt;id&gt;my-execution&lt;/id&gt;
@@ -275,7 +357,7 @@
 </dd>
 <dt class="hdlist1">mavenCache (<code>String</code>)</dt>
 <dd>
-<p>Where to cache maven dependencies. If set to <code>auto</code>, <code>$HOME/.m2/repository</code> is used. Default value: <code>auto</code>. Property: <code>${bundlebee.maven.cache}</code>.</p>
+<p>Where to cache maven dependencies. If set to <code>auto</code>, tries to read the system property <code>maven.repo.local</code> then the <code>settings.xml</code> <code>localRepository</code> and finally it would fallback on <code>$HOME/.m2/repository</code>. Default value: <code>auto</code>. Property: <code>${bundlebee.maven.cache}</code>.</p>
 </dd>
 <dt class="hdlist1">mavenForceCustomSettingsXml (<code>boolean</code>)</dt>
 <dd>
@@ -349,9 +431,11 @@
     <footer class="footer pb-5">
 	    <div class="text-center">
 		    <ul class="social-list list-unstyled">
-                <li class="list-inline-item"><a title="Github" href="https://www.github.com/yupiik/"><i class="fab fa-github fa-fw"></i></a></li><li class="list-inline-item"><a title="LinkedIn" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+                <li class="list-inline-item"><a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
 	        </ul>
-            <small class="copyright">Yupiik &copy;</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
+            <small class="copyright">© 2024 <strong><a href="https://www.yupiik.com">Yupiik</a></strong>. All Rights Reserved</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
 	    </div>
     </footer>
 
@@ -393,7 +477,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.27-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

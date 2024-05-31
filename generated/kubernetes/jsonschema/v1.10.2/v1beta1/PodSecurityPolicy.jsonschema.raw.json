@@ -15,12 +15,12 @@
     },
     "spec":{
       "description":"spec defines the policy enforced.",
-      "$ref":"#/definitions/io.k8s.api.extensions.v1beta1.PodSecurityPolicySpec"
+      "$ref":"#/definitions/io.k8s.api.policy.v1beta1.PodSecurityPolicySpec"
     }
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
+      "group":"policy",
       "kind":"PodSecurityPolicy",
       "version":"v1beta1"
     }

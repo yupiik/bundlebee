@@ -37,7 +37,7 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
+      "group":"apps",
       "version":"v1beta1",
       "kind":"DeploymentRollback"
     }

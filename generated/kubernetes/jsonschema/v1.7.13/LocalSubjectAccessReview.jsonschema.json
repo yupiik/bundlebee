@@ -259,7 +259,7 @@
             }
           }
         },
-        "groups":{
+        "group":{
           "description":"Groups is the groups you're testing for.",
           "type":"array",
           "items":{
@@ -313,7 +313,7 @@
           }
         },
         "user":{
-          "description":"User is the user you're testing for. If you specify \"User\" but not \"Groups\", then is it interpreted as \"What if User were not a member of any groups",
+          "description":"User is the user you're testing for. If you specify \"User\" but not \"Group\", then is it interpreted as \"What if User were not a member of any groups",
           "type":"string"
         }
       }
@@ -342,7 +342,7 @@
   "x-kubernetes-group-version-kind":[
     {
       "group":"authorization.k8s.io",
-      "version":"v1",
+      "version":"v1beta1",
       "kind":"LocalSubjectAccessReview"
     }
   ]

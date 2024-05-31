@@ -1,5 +1,5 @@
 {
-  "description":"represents a scaling request for a resource.",
+  "description":"Scale represents a scaling request for a resource.",
   "properties":{
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
@@ -244,7 +244,7 @@
       }
     },
     "spec":{
-      "description":"describes the attributes of a scale subresource",
+      "description":"ScaleSpec describes the attributes of a scale subresource.",
       "properties":{
         "replicas":{
           "description":"desired number of instances for the scaled object.",
@@ -254,7 +254,7 @@
       }
     },
     "status":{
-      "description":"represents the current status of a scale subresource.",
+      "description":"ScaleStatus represents the current status of a scale subresource.",
       "required":[
         "replicas"
       ],
@@ -265,14 +265,7 @@
           "format":"int32"
         },
         "selector":{
-          "description":"label query over pods that should match the replicas count. More info: http://kubernetes.io/docs/user-guide/labels#label-selectors",
-          "type":"object",
-          "additionalProperties":{
-            "type":"string"
-          }
-        },
-        "targetSelector":{
-          "description":"label selector for pods that should match the replicas count. This is a serializated version of both map-based and more expressive set-based selectors. This is done to avoid introspection in the clients. The string will be in the same format as the query-param syntax. If the target type only supports map-based selectors, both this field and map-based selector field are populated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors",
+          "description":"label query over pods that should match the replicas count. This is same as the label selector but in the string format to avoid introspection by clients. The string will be in the same format as the query-param syntax. More info about label selectors: http://kubernetes.io/docs/user-guide/labels#label-selectors",
           "type":"string"
         }
       }
@@ -280,8 +273,8 @@
   },
   "x-kubernetes-group-version-kind":[
     {
-      "group":"extensions",
-      "version":"v1beta1",
+      "group":"autoscaling",
+      "version":"v1",
       "kind":"Scale"
     }
   ]

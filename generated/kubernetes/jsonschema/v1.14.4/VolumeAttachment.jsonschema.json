@@ -374,7 +374,7 @@
     {
       "group":"storage.k8s.io",
       "kind":"VolumeAttachment",
-      "version":"v1"
+      "version":"v1beta1"
     }
   ]
 }

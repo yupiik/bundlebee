@@ -342,7 +342,7 @@
           {
             "group":"storage.k8s.io",
             "kind":"VolumeAttachment",
-            "version":"v1"
+            "version":"v1alpha1"
           }
         ]
       }
@@ -373,7 +373,7 @@
     {
       "group":"storage.k8s.io",
       "kind":"VolumeAttachmentList",
-      "version":"v1"
+      "version":"v1alpha1"
     }
   ]
 }

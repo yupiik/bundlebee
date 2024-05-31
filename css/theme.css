@@ -1,80 +1,11 @@
 /*@import "https://fonts.googleapis.com/css?family=Open+Sans:400,700%7cDroid+Serif:400,700";*/
 
-:root {
-    /* YUPIIK colors (from dark to light) */
-    --yupiik-blue1: #0b4672;
-    --yupiik-blue2: #0075ba;
-    --yupiik-blue3: #50aee2;
-
-    --yupiik-color-white: #fff;
-    --yupiik-color-black: #000;
-
-    --yupiik-color-gray-0: var(--yupiik-color-white);
-    --yupiik-color-gray-100: #f5f6f7;
-    --yupiik-color-gray-200: #ebedf0;
-    --yupiik-color-gray-300: #dadde1;
-    --yupiik-color-gray-400: #ccd0d5;
-    --yupiik-color-gray-500: #bec3c9;
-    --yupiik-color-gray-600: #8d949e;
-    --yupiik-color-gray-700: #606770;
-    --yupiik-color-gray-800: #444950;
-    --yupiik-color-gray-900: #1c1e21;
-    --yupiik-color-gray-1000: var(--yupiik-color-black);
-
-    --yupiik-color-emphasis-0: var(--yupiik-color-gray-0);
-    --yupiik-color-emphasis-100: var(--yupiik-color-gray-100);
-    --yupiik-color-emphasis-200: var(--yupiik-color-gray-200);
-    --yupiik-color-emphasis-300: var(--yupiik-color-gray-300);
-    --yupiik-color-emphasis-400: var(--yupiik-color-gray-400);
-    --yupiik-color-emphasis-500: var(--yupiik-color-gray-500);
-    --yupiik-color-emphasis-600: var(--yupiik-color-gray-600);
-    --yupiik-color-emphasis-700: var(--yupiik-color-gray-700);
-    --yupiik-color-emphasis-800: var(--yupiik-color-gray-800);
-    --yupiik-color-emphasis-900: var(--yupiik-color-gray-900);
-    --yupiik-color-emphasis-1000: var(--yupiik-color-gray-1000);
-    --yupiik-color-content: var(--yupiik-color-emphasis-900);
-
-    --yupiik-font-family-base: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-    --yupiik-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-    --yupiik-font-size-base: 100%;
-
-    --yupiik-font-weight-light: 300;
-    --yupiik-font-weight-normal: 400;
-    --yupiik-font-weight-semibold: 500;
-    --yupiik-font-weight-bold: 700;
-
-    --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
-    --yupiik-line-height-base: 1.65;
-    --yupiik-font-weight-light: 300;
-    --yupiik-font-weight-normal: 400;
-    --yupiik-font-weight-semibold: 500;
-    --yupiik-font-weight-bold: 700;
-
-    --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
-    --yupiik-line-height-base: 1.65;
-
-    --yupiik-global-spacing: 1rem;
-    --yupiik-spacing-vertical: var(--yupiik-global-spacing);
-    --yupiik-spacing-horizontal: var(--yupiik-global-spacing);
-
-    --yupiik-h1-font-size: 2rem;
-    --yupiik-h2-font-size: 1.5rem;
-    --yupiik-h3-font-size: 1.25rem;
-    --yupiik-h4-font-size: 1rem;
-    --yupiik-h5-font-size: 0.875rem;
-    --yupiik-h6-font-size: 0.85rem;
-
-    --yupiik-heading-color: var(--yupiik-blue1);
-    --yupiik-heading-margin-top: 0;
-    --yupiik-heading-margin-bottom: var(--yupiik-spacing-vertical);
-    --yupiik-heading-font-family: var(--yupiik-font-family-base);
-    --yupiik-heading-font-weight: var(--yupiik-font-weight-bold);
-    --yupiik-heading-line-height: 1.25;
-}
-
 body {
+    min-height: 100vh;
     height: 100% !important;
-    padding-top: 70px !important;
+    display: flex;
+    padding-top: 58px !important;
+    flex-direction: column;
 }
 
 main {
@@ -860,11 +791,14 @@ p a > code:hover {
 }
 
 .footer {
-    height: 120px;
+    display: flex;
+    height: fit-content;
+    justify-content: space-evenly;
+    margin-top: auto;
+    position: unset;
+    bottom: unset;
     padding-top: 30px;
     padding-bottom: 20px;
-    position: fixed;
-    bottom: 0;
     width: 100%;
 }
 
@@ -1131,7 +1065,7 @@ body.toc2 #header > h1:nth-last-child(2) {
 
 #footer {
     max-width: 100%;
-    background-color: #212c4a;
+    background-color: var(--yupiik-site-blue-light);
     padding: 1.25em
 }
 
@@ -2402,7 +2336,11 @@ p.tableblock {
 }
 
 footer, header.fixed-top {
-    background-color: #212c4a !important;
+    background-color: var(--yupiik-site-blue-dark) !important;
+    /*
+    background: rgb(2,171,234) !important;
+    background: linear-gradient(90deg, rgba(2,171,234,1) 20%, rgba(5,110,187,1) 100%) !important;
+    */
 }
 
 .footer .copyright {
@@ -2667,7 +2605,7 @@ div.anchors > div {
 .page {
     display: flex;
     justify-content: center;
-    margin-bottom: 130px;
+    margin-bottom: 80px;
 }
 caption {
     color: #74B5FC !important;
@@ -2978,9 +2916,8 @@ div.colist.arabic > ol > li > p {
 
 .blog-links ul {
     list-style-type: none;
-    display: flex;
+    display: flex;background-color
     margin: auto;
-    width: 50%;
 }
 .blog-links ul > li {
     flex: 1;
