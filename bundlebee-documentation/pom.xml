@@ -123,6 +123,7 @@
         <groupId>io.yupiik.maven</groupId>
         <artifactId>yupiik-tools-maven-plugin</artifactId>
         <configuration>
+          <preferYupiikAsciidoc>true</preferYupiikAsciidoc>
           <siteBase>//www.yupiik.io/bundlebee</siteBase>
           <title>BundleBee documentation</title>
           <description>BundleBee is a light Java Kubernetes package manager.</description>
