@@ -20,6 +20,7 @@ import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.fusion.framework.handlebars.HandlebarsCompiler;
 import io.yupiik.fusion.framework.handlebars.compiler.accessor.MapAccessor;
 
+import javax.enterprise.inject.Vetoed;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,7 @@ import java.util.function.Function;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toMap;
 
+@Vetoed
 public class HandlebarsInterpolator {
     private final Manifest.Alveolus alveolus;
     private final AlveolusHandler.LoadedDescriptor descriptor;

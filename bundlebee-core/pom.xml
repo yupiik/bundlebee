@@ -28,6 +28,13 @@
   <name>BundleBee :: Core</name>
 
   <dependencies>
+    <dependency>
+      <groupId>org.apache.geronimo.arthur</groupId>
+      <artifactId>arthur-api</artifactId>
+      <version>${arthur.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency> <!-- todo: replace it by something lighter without the mapping feature? -->
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
