@@ -130,7 +130,7 @@
       <artifactId>component-runtime-http-junit</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency> <!-- for http-junit self seigned cert generation on java 17 -->
+    <dependency> <!-- for http-junit self signed cert generation on java 17 -->
       <groupId>org.bouncycastle</groupId>
       <artifactId>bcpkix-jdk15on</artifactId>
       <scope>test</scope>

@@ -20,7 +20,7 @@ metadata:
   name: prometheus-simple-deployment
   labels:
     app: prometheus-simple
-  namespace: "{{prometheus-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{prometheus-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 spec:
   replicas: 1
   selector:

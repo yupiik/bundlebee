@@ -18,7 +18,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   name: promtail-serviceaccount-token
-  namespace: "{{loki-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{loki-simple.namespace:-{{bundlebee-kube-namespace}}}}"
   annotations:
     kubernetes.io/service-account.name: promtail-serviceaccount
 type: kubernetes.io/service-account-token

@@ -20,7 +20,7 @@ metadata:
   name: grafana-simple-deployment
   labels:
     app: grafana-simple
-  namespace: "{{grafana-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{grafana-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 spec:
   replicas: 1
   selector:

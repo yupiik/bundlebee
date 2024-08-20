@@ -20,7 +20,7 @@ metadata:
   name: promtail
   labels:
     app: loki-simple
-  namespace: "{{loki-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{loki-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 spec:
   type: NodePort
   ports:

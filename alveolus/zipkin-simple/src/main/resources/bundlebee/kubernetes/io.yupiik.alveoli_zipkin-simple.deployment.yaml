@@ -20,7 +20,7 @@ metadata:
   name: zipkin-simple-deployment
   labels:
     app: zipkin-simple
-  namespace: "{{zipkin-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{zipkin-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 spec:
   replicas: 1
   selector:
