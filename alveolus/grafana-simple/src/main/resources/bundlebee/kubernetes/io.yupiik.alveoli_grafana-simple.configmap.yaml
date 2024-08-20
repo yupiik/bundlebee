@@ -20,7 +20,7 @@ metadata:
   name: grafana-simple-config
   labels:
     app: grafana-simple
-  namespace: "{{grafana-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{grafana-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 data:
   grafana.ini: |
     [analytics]

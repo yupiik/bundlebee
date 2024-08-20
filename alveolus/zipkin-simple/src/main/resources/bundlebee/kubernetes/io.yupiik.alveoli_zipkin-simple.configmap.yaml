@@ -20,6 +20,6 @@ metadata:
   name: zipkin-simple-config
   labels:
     app: zipkin-simple
-  namespace: "{{zipkin-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{zipkin-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 data:
   STORAGE_TYPE: "{{zipkin-simple.storageType:-mem}}"

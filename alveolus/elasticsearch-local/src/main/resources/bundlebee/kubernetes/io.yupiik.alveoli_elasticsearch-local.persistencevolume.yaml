@@ -30,6 +30,6 @@ spec:
     - ReadWriteMany
   claimRef:
     name: elasticsearch-pv-claim
-    namespace: default
+    namespace: "{{bundlebee.kube.namespace:-default}}"
   hostPath:
     path: "{{elasticsearch-local.mountPath:-/data/elasticsearch-local}}"

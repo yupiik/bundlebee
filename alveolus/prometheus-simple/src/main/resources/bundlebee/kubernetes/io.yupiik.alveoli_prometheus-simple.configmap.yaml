@@ -20,7 +20,7 @@ metadata:
   name: prometheus-simple-config
   labels:
     app: prometheus-simple
-  namespace: "{{prometheus-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{prometheus-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 data:
   prometheus.yml: |
     global:

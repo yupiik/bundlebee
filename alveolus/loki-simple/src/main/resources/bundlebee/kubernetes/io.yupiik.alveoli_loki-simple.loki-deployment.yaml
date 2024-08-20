@@ -21,7 +21,7 @@ metadata:
   labels:
     app: loki-simple
     app.loki: loki
-  namespace: "{{loki-simple.namespace:-{{bundlebee-kubernetes-namespace}}}}"
+  namespace: "{{loki-simple.namespace:-{{bundlebee-kube-namespace}}}}"
 spec:
   replicas: 1
   selector:
