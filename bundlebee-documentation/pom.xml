@@ -115,6 +115,11 @@
       <artifactId>minio-local</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>kafka-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <build>

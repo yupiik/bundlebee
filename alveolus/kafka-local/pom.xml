@@ -18,35 +18,12 @@
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <artifactId>bundlebee</artifactId>
-    <groupId>io.yupiik</groupId>
+    <artifactId>alveolus</artifactId>
+    <groupId>io.yupiik.alveoli</groupId>
     <version>1.0.28-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.yupiik.alveoli</groupId>
-  <artifactId>alveolus</artifactId>
-  <name>BundleBee :: Alveolus</name>
-  <packaging>pom</packaging>
-
-  <modules>
-    <module>postgres-local</module>
-    <module>elasticsearch-local</module>
-    <module>zipkin-simple</module>
-    <module>prometheus-simple</module>
-    <module>loki-simple</module>
-    <module>grafana-simple</module>
-    <module>monitoring-alveolus</module>
-    <module>minio-local</module>
-    <module>kafka-local</module>
-  </modules>
-
-  <build>
-    <resources>
-      <resource>
-        <directory>src/main/resources</directory>
-        <filtering>true</filtering>
-      </resource>
-    </resources>
-  </build>
+  <artifactId>kafka-local</artifactId>
+  <name>BundleBee :: Alveolus :: Kafka Local</name>
 </project>
