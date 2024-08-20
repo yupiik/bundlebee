@@ -1,0 +1,47 @@
+{
+  "alveoli": [
+    {
+      "//": "Setup \"${project.artifactId}\" which runs an Apache Kafka instance usable by other applications.",
+      "name": "${project.groupId}:${project.artifactId}:${project.version}",
+      "descriptors": [
+        {
+          "name": "${project.groupId}_${project.artifactId}.configmap",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.persistencevolume",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.persistencevolumeclaim",
+          "interpolate": true
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.service"
+        },
+        {
+          "name": "${project.groupId}_${project.artifactId}.statefulset",
+          "interpolate": true
+        }
+      ],
+      "placeholdersDoc": [
+        {
+          "name": "kafka-local.image",
+          "description": "The Apache Kafka image to use."
+        },
+        {
+          "name": "kafka-local.brokerId",
+          "description": "The Apache Kafka broker id."
+        },
+        {
+          "name": "kafka-local.javaOpts",
+          "description": "The JAVA_OPTS value."
+        },
+        {
+          "name": "kafka-local.mountPath",
+          "description": "Where to store Apache Kafka data on the host."
+        }
+      ]
+    }
+  ]
+}
