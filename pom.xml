@@ -38,7 +38,7 @@
     <xbean.version>4.25</xbean.version>
     <junit5.version>5.9.0</junit5.version>
     <arthur.version>1.0.8</arthur.version>
-    <yupiik-logging.version>1.0.7</yupiik-logging.version>
+    <yupiik-logging.version>1.0.8</yupiik-logging.version>
     <johnzon.version>1.2.21</johnzon.version>
     <yupiik-tools.version>1.2.3</yupiik-tools.version>
 
