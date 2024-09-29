@@ -240,7 +240,14 @@
               <main>io.yupiik.bundlebee.core.BundleBee</main>
             </configuration>
           </plugin>
+        </plugins>
+      </build>
+    </profile>
 
+    <profile>
+      <id>krew</id>
+      <build>
+        <plugins>
           <!-- enable to work with krew kubectl plugin manager (zip + manifest filtering) -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
