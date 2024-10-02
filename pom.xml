@@ -46,6 +46,8 @@
     <m2.location>${settings.localRepository}</m2.location>
     -->
     <m2.location>${session.repositorySession.localRepository.basedir.absolutePath}</m2.location>
+
+    <project.build.outputTimestamp>2024-10-09T14:14:10Z</project.build.outputTimestamp>
   </properties>
 
   <modules>
