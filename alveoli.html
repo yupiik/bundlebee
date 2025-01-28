@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -156,80 +156,80 @@
                 <h1>Available Alveoli</h1>
             </div>
             <div class="page-content-body">
-                <div class="ulist">
-<ul>
-<li>
-<p><strong>elasticsearch-local</strong> (<a href="alveoli/elasticsearch-local-io-yupiik-alveoli-elasticsearch-local.html">io.yupiik.alveoli:elasticsearch-local:1.0.28-SNAPSHOT</a>): setup "elasticsearch-local" which runs an Elasticsearch instance usable by other applications.</p>
-</li>
-<li>
-<p><strong>grafana-simple</strong> (<a href="alveoli/grafana-simple-io-yupiik-alveoli-grafana-simple.html">io.yupiik.alveoli:grafana-simple:1.0.28-SNAPSHOT</a>): simple Grafana instance, note we preconfigure it with Loki, Prometheus and grafana alveoli, ensure to override the configuration if you don&#8217;t use them.</p>
-</li>
-<li>
-<p><strong>loki-simple</strong> (<a href="alveoli/loki-simple-io-yupiik-alveoli-loki-simple.html">io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT</a>): loki setup to aggregate service logs using promtail, the prometheus for logs.</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Warning</div>
-</td>
-<td class="content">
-Starting from 1.0.20, the Promtail descriptor moved from Deployment to DaemonSet.
-</td>
-</tr>
-</table>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>minio-local</strong> (<a href="alveoli/minio-local-io-yupiik-alveoli-minio-local.html">io.yupiik.alveoli:minio-local:1.0.28-SNAPSHOT</a>): setup "minio-local" which runs a MinIO instance usable by other applications.</p>
-</li>
-<li>
-<p><strong>monitoring-alveolus</strong> (<a href="alveoli/monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus.html">io.yupiik.alveoli:monitoring-alveolus:1.0.28-SNAPSHOT</a>): includes loki+prometheus+zipkin+grafana at once.</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-You can set --monitoring.namespace to deploy the full stack in a dedicated namespace.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Starting from 1.0.20, we added the resource request/limit placeHolder with default in all the dependencies. You can remove them by patching the descriptor like:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "op": "remove",
-  "path": "/spec/template/spec/containers/0/resources"
+                <div class="paragraph">
+ <p>- <b>elasticsearch-local</b> ): setup &quot;elasticsearch-local&quot; which runs an Elasticsearch instance usable by other applications.</p>
+ </div>
+ <div class="paragraph">
+ <p>- <b>grafana-simple</b> ): simple Grafana instance, note we preconfigure it with Loki, Prometheus and grafana alveoli, ensure to override the configuration if you don't use them.</p>
+ </div>
+ <div class="paragraph">
+ <p>- <b>kafka-local</b> ): setup &quot;kafka-local&quot; which runs an Apache Kafka instance usable by other applications.</p>
+ </div>
+ <div class="paragraph">
+ <p>- <b>loki-simple</b> ): loki setup to aggregate service logs using promtail, the prometheus for logs.</p>
+ </div>
+ <div class="admonitionblock warning">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">WARNING</div>
+       </td>
+      <td class="content">
+Starting from 1.0.20, the Promtail descriptor moved from Deployment to DaemonSet.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>- <b>minio-local</b> ): setup &quot;minio-local&quot; which runs a MinIO instance usable by other applications.</p>
+ </div>
+ <div class="paragraph">
+ <p>- <b>monitoring-alveolus</b> ): includes loki+prometheus+zipkin+grafana at once.</p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+You can set --monitoring.namespace to deploy the full stack in a dedicated namespace.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>
+Starting from 1.0.20, we added the resource request/limit placeHolder with default in all the dependencies. You can remove them by patching the descriptor like:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;op&quot;: &quot;remove&quot;,
+  &quot;path&quot;: &quot;/spec/template/spec/containers/0/resources&quot;
 }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>You need to add this in all the descriptor dependencies.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>postgres-local</strong> (<a href="alveoli/postgres-local-io-yupiik-alveoli-postgres-local.html">io.yupiik.alveoli:postgres-local:1.0.28-SNAPSHOT</a>): setup "postgres-local" which runs a PostgreSQL instance usable by other applications.</p>
-</li>
-<li>
-<p><strong>prometheus-simple</strong> (<a href="alveoli/prometheus-simple-io-yupiik-alveoli-prometheus-simple.html">io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT</a>): prometheus local/dev setup. Will be available on <a href="http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT" class="bare">http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT</a>).</p>
-</li>
-<li>
-<p><strong>zipkin-simple</strong> (<a href="alveoli/zipkin-simple-io-yupiik-alveoli-zipkin-simple.html">io.yupiik.alveoli:zipkin-simple:1.0.28-SNAPSHOT</a>): zipkin in memory setup. Will be available on <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT</a>). For example <a href="http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans" class="bare">http://$(ZIPKIN_SERVICE_SERVICE_HOST):$(ZIPKIN_SERVICE_SERVICE_PORT)/api/v2/spans</a> to push spans through HTTP.</p>
-</li>
-</ul>
-</div>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+You need to add this in all the descriptor dependencies.
+ </p>
+ </div>
+ <div class="paragraph">
+ <p>- <b>postgres-local</b> ): setup &quot;postgres-local&quot; which runs a PostgreSQL instance usable by other applications.</p>
+ </div>
+ <div class="paragraph">
+ <p>- <b>prometheus-simple</b> ): prometheus local/dev setup. Will be available on  <a href="http://$(PROMETHEUS">http://$(PROMETHEUS</a>
+<i>SERVICE</i>SERVICE<i>HOST):$(PROMETHEUS</i>SERVICE<i>SERVICE</i>PORT).</p>
+ </div>
+ <div class="paragraph">
+ <p>- <b>zipkin-simple</b> ): zipkin in memory setup. Will be available on  <a href="http://$(ZIPKIN">http://$(ZIPKIN</a>
+<i>SERVICE</i>SERVICE<i>HOST):$(ZIPKIN</i>SERVICE<i>SERVICE</i>PORT). For example  <a href="http://$(ZIPKIN">http://$(ZIPKIN</a>
+<i>SERVICE</i>SERVICE<i>HOST):$(ZIPKIN</i>SERVICE<i>SERVICE</i>PORT)/api/v2/spans to push spans through HTTP.</p>
+ </div>
                 
                 
             </div>
@@ -288,7 +288,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

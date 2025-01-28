@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -157,171 +157,195 @@
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="quoteblock abstract">
-<blockquote>
-BundleBee is a light Java package manager for Kubernetes applications.
-This page explains how to get started with it.
-</blockquote>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_installation">Installation</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_java_mode">Java  Mode</h3>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Ensure to use java &gt;= 11.0.7 (previous Java 11 versions can work but have an issue with TLS HTTP client you can hit).</p>
-</li>
-<li>
-<p>Download the <code>bundlebee-core</code> fat jar on <a href="https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/" class="bare">https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/</a> (ensure to take <code>-fat.jar</code> artifact).</p>
-</li>
-<li>
-<p>You can now run it with the command: <code>java -jar bundlebee-core-&lt;version&gt;-fat.jar</code>.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_binary">Binary</h3>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-this only works for linux amd64 computers.
-</td>
-</tr>
-</table>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-sh hljs" data-lang="sh">curl -L https://yupiik.github.io/bundlebee/install/install.sh | bash</code></pre>
-</div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-since 1.0.3, once installed this way (and your <code>PATH</code> variable updated to include bundlebee) you can use <code>check-update</code> command to check if a new version is available:
-<code>bundlebee check-update [--update true]</code>.
-The <code>--update true</code> option enables to automatically replace the binary if needed, not specifying it will just log if a new version can be downloaded.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_create_your_first_alveolus">Create your first alveolus</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_pre_requisite">Pre-requisite</h3>
-<div class="paragraph">
-<p>BundleBee assumes it is installed itself indeed but depending how you package your alveolus it can require Java (&gt;= 8) and Maven.
-If they are not installed on your system, we encourage you to use <a href="https://sdkman.io/">sdkman</a> to do so.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-this can be replaced by any zip packager and is not a strong requirement.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="start_with_maven">Start with a maven project</h3>
-<div class="paragraph">
-<p>There are a ton of ways to create a maven projects but here is the simplest one:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mvn archetype:generate \
+ <div class="sectionbody">
+ <p> <div class="quoteblock abstract">
+  <blockquote>
+BundleBee is a light Java package manager for Kubernetes applications. This page explains how to get started with it.  </blockquote>
+ </div></p>
+ </div>
+ </div>
+ <div class="sect1" id="_installation">
+  <h2>Installation</h2>
+ <div class="sectionbody">
+ <div class="sect2" id="_java__mode">
+  <h3>Java  Mode</h3>
+ <div class="sectionbody">
+ <ol>
+  <li>
+ <p>
+Ensure to use java &gt;= 11.0.7 (previous Java 11 versions can work but have an issue with TLS HTTP client you can hit).
+ </p>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>Download the <code>bundlebee-core</code> fat jar on  <a href="https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/">https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/</a>
+ (ensure to take <code>-fat.jar</code> artifact).</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>You can now run it with the command: <code>java -jar bundlebee-core-&lt;version&gt;-fat.jar</code>.</p>
+ </div>
+  </li>
+ </ol>
+ </div>
+ </div>
+ <div class="sect2" id="_binary">
+  <h3>Binary</h3>
+ <div class="sectionbody">
+ <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+this only works for linux amd64 computers.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-sh hljs" data-lang="sh">curl -L https://yupiik.github.io/bundlebee/install/install.sh | bash</code></pre>
+ </div>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>since 1.0.3, once installed this way (and your <code>PATH</code> variable updated to include bundlebee) you can use <code>check-update</code> command to check if a new version is available:<code>bundlebee check-update [--update true]</code>. The <code>--update true</code> option enables to automatically replace the binary if needed, not specifying it will just log if a new version can be downloaded.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_create_your_first_alveolus">
+  <h2>Create your first alveolus</h2>
+ <div class="sectionbody">
+ <div class="sect2" id="_prerequisite">
+  <h3>Pre-requisite</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>BundleBee assumes it is installed itself indeed but depending how you package your alveolus it can require Java (&gt;= 8) and Maven. If they are not installed on your system, we encourage you to use  <a href="https://sdkman.io/">sdkman</a>
+ to do so.</p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+this can be replaced by any zip packager and is not a strong requirement.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_start_with_a_maven_project">
+  <h3>Start with a maven project</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+There are a ton of ways to create a maven projects but here is the simplest one:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">mvn archetype:generate \
     -DgroupId=com.company \
     -DartifactId=my-app-alveolus \
     -DarchetypeArtifactId=maven-archetype-quickstart \
     -DarchetypeVersion=1.4 \
     -DinteractiveMode=false</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Then you can go in <code>my-app-alveolus/</code>.
-You can run <code>mvn package</code> to ensure your java/maven setup is correct.</p>
-</div>
-<div class="paragraph">
-<p>At that stage we can start working on our alveolus but if you want to be "purist" you can clean up the default skaffolded project: <code>rm -Rf src/test/ src/main/java/</code>.</p>
-</div>
-<div class="paragraph">
-<p>To start working on our alveolus, we will create <code>src/main/resources/bundlebee</code> folder: <code>mkdir -p src/main/resources/bundlebee</code>.</p>
-</div>
-<div class="paragraph">
-<p>At that stage your project should look like:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">.
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>Then you can go in <code>my-app-alveolus/</code>. You can run <code>mvn package</code> to ensure your java/maven setup is correct.</p>
+ </div>
+ <div class="paragraph">
+ <p>At that stage we can start working on our alveolus but if you want to be &quot;purist&quot; you can clean up the default skaffolded project: <code>rm -Rf src/test/ src/main/java/</code>.</p>
+ </div>
+ <div class="paragraph">
+ <p>To start working on our alveolus, we will create <code>src/main/resources/bundlebee</code> folder: <code>mkdir -p src/main/resources/bundlebee</code>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+At that stage your project should look like:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="null hljs">.
 ├── pom.xml
 └── src
     └── main
         └── resources
             └── bundlebee</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To describe an application, you have to create a <code>manifest.json</code> file in this <code>bundlebee</code> folder:</p>
-</div>
-<div class="listingblock">
-<div class="title">src/main/resources/bundlebee/manifest.json</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "alveoli": [
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>To describe an application, you have to create a <code>manifest.json</code> file in this <code>bundlebee</code> folder:</p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;alveoli&quot;: [
     {
-      "name": "hello", <b class="conum">(1)</b>
-      "descriptors": [
+      &quot;name&quot;: &quot;hello&quot;, <b class="conum">(1)</b>
+      &quot;descriptors&quot;: [
         {
-          "name": "hello-world", <b class="conum">(2)</b>
-          "location": "src/main/resources" <b class="conum">(3)</b>
+          &quot;name&quot;: &quot;hello-world&quot;, <b class="conum">(2)</b>
+          &quot;location&quot;: &quot;src/main/resources&quot; <b class="conum">(3)</b>
         }
       ]
     }
   ]
 }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Creates an alveolus named "hello",</p>
-</li>
-<li>
-<p>"hello" alveolus will use as descriptor (.yaml) "hello-world.yaml" which will be found in src/main/resources/<code>bundlebee/kubernetes</code>,</p>
-</li>
-<li>
-<p>References Bundlebee base folder because we are deploying in exploded mode (and not in a packaged jar).</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Then add the referenced Kubernetes descriptor in <code>kubernetes</code> subfolder:</p>
-</div>
-<div class="listingblock">
-<div class="title">src/main/resources/bundlebee/kubernetes/hello-world.yaml</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: apps/v1
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+Creates an alveolus named &quot;hello&quot;,
+ </span>
+   </li>
+   <li>
+ <span>
+&quot;hello&quot; alveolus will use as descriptor (.yaml) &quot;hello-world.yaml&quot; which will be found in src/main/resources/
+ </span>
+<code>bundlebee/kubernetes</code> <span>
+,
+ </span>
+   </li>
+   <li>
+ <span>
+References Bundlebee base folder because we are deploying in exploded mode (and not in a packaged jar).
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="paragraph">
+ <p>Then add the referenced Kubernetes descriptor in <code>kubernetes</code> subfolder:</p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hello-deployment
@@ -340,38 +364,43 @@ spec:
       containers:
         - name: hello
           image: hello-world:latest</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Here nothing changes from a "normal" .yaml used with kubectl.</p>
-</div>
-<div class="paragraph">
-<p>Now you can deploy this executing <code>bundlebee apply --alveolus hello --manifest ./src/main/resources/bundlebee/manifest.json</code>.</p>
-</div>
-<div class="paragraph">
-<p>And that&#8217;s it, now hello world application should be up and running in your Kubernetes cluster.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-it is more than encouraged to name the kubernetes descriptor based on the project unique identifier.
-For example <code>&lt;groupId&gt;.&lt;artifactId&gt;.&lt;alveolus_name&gt;.yaml</code>.
-It will avoid conflicts when multiple alveolus are in the same classpath using native java mode and not file driven mode.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>You could also have used the <code>bundlebee-maven-plugin</code>, simply add it in the plugins section of the pom.xml :</p>
-</div>
-<div class="listingblock">
-<div class="title">pom.xml</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-`xml` hljs" data-lang="`xml`">&lt;plugins&gt;
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+Here nothing changes from a &quot;normal&quot; .yaml used with kubectl.
+ </p>
+ </div>
+ <div class="paragraph">
+ <p>Now you can deploy this executing <code>bundlebee apply --alveolus hello --manifest ./src/main/resources/bundlebee/manifest.json</code>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+And that's it, now hello world application should be up and running in your Kubernetes cluster.
+ </p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>it is more than encouraged to name the kubernetes descriptor based on the project unique identifier. For example <code>&lt;groupId&gt;.&lt;artifactId&gt;.&lt;alveolus_name&gt;.yaml</code>. It will avoid conflicts when multiple alveolus are in the same classpath using native java mode and not file driven mode.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>You could also have used the <code>bundlebee-maven-plugin</code>, simply add it in the plugins section of the pom.xml :</p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-`xml` hljs" data-lang="`xml`">&lt;plugins&gt;
     &lt;plugin&gt;
       &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
       &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
@@ -391,125 +420,149 @@ It will avoid conflicts when multiple alveolus are in the same classpath using n
       &lt;/executions&gt;
     &lt;/plugin&gt;
   &lt;/plugins&gt;</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Reference to the deployment entry point of your module, it is optional if bundled in a transitive dependency.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Then you can deploy this executing <code>mvn bundlebee:apply@hello-world</code>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_start_from_scratch_without_java_and_maven">Start from scratch (without Java and Maven)</h3>
-<div class="paragraph">
-<p>In this part we will reuse the descriptors of <a href="#start_with_maven">Start with maven</a> section so we will just show how to bundle without Java/Maven the alveolus.</p>
-</div>
-<div class="paragraph">
-<p>The overall goal is to create a zip containing the <code>manifest.json</code> and the Kubernetes descriptor.
-Here is a small script helping to do that:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/bash
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+Reference to the deployment entry point of your module, it is optional if bundled in a transitive dependency.
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="paragraph">
+ <p>Then you can deploy this executing <code>mvn bundlebee:apply@hello-world</code>.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_start_from_scratch_without_java_and_maven">
+  <h3>Start from scratch (without Java and Maven)</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>In this part we will reuse the descriptors of  <a href="#start_with_maven">Start with maven</a>
+ section so we will just show how to bundle without Java/Maven the alveolus.</p>
+ </div>
+ <div class="paragraph">
+ <p>The overall goal is to create a zip containing the <code>manifest.json</code> and the Kubernetes descriptor. Here is a small script helping to do that:</p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/bash
 
-base="my-app-alveolus" <b class="conum">(1)</b>
-mkdir -p "$base/bundlebee/" "$base/bundlebee/kubernetes/" <b class="conum">(2)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>The name of the project (will create a root directory with this name)</p>
-</li>
-<li>
-<p>Create the alveolus structure</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Now you can copy the descriptors as in <a href="#start_with_maven">Start with maven</a> section in <code>my-app-alveolus/bundlebee/</code> folder.</p>
-</div>
-<div class="paragraph">
-<p>Once done we just have to bundle it as a zip. One option on UNIx system is to use this command:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/bash
+base=&quot;my-app-alveolus&quot; <b class="conum">(1)</b>
+mkdir -p &quot;$base/bundlebee/&quot; &quot;$base/bundlebee/kubernetes/&quot; <b class="conum">(2)</b></code></pre>
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+The name of the project (will create a root directory with this name)
+ </span>
+   </li>
+   <li>
+ <span>
+Create the alveolus structure
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="paragraph">
+ <p>Now you can copy the descriptors as in  <a href="#start_with_maven">Start with maven</a>
+ section in <code>my-app-alveolus/bundlebee/</code> folder.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Once done we just have to bundle it as a zip. One option on UNIx system is to use this command:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/bash
 
-base="my-app-alveolus" <b class="conum">(1)</b>
+base=&quot;my-app-alveolus&quot; <b class="conum">(1)</b>
 
-cd "$base"
-zip "$base.zip" -r . <b class="conum">(2)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Reuse the same setup than in previous script</p>
-</li>
-<li>
-<p>Create a zip containing the alveolus structure using <code>zip</code> command</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>And that&#8217;s it.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-this trick to create a zip can be adapted to any language (javascript, typescript, go, python, ruby, &#8230;&#8203;) and enables to bundle an alveolus in any build tool very easily.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_going_futher_k8s_operator">Going futher (K8s operator)</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To learn how to deploy directly an <code>Alveolus</code> on Kubernetes you can check out our <a href="operator.html">Operator</a> documentation.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_define_custom_templates">Define custom templates</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>You can use an alveolus as a template for others providing contextual placeholders.
-Learn more about this in <a href="template.html">template</a> documentation.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_testing_your_alveoli_with_junit_5">Testing your alveoli with JUnit 5</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Bundlebee provides a light testing framework integrated with JUnit 5 to ease the validation of alveoli.
-Learn more about this in <a href="junit5.html">junit5</a> documentation.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_integrate_with_argocd">Integrate with ArgoCD</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>If you are using (or will to use) <a href="https://argo-cd.readthedocs.io/" target="_blank" rel="noopener">ArgoCD</a>, you can still use BundleBee if you configure it as a plugin.
-See the <a href="argocd-integration.html">related</a> documentation.</p>
-</div>
-</div>
-</div>
+cd &quot;$base&quot;
+zip &quot;$base.zip&quot; -r . <b class="conum">(2)</b></code></pre>
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+Reuse the same setup than in previous script
+ </span>
+   </li>
+   <li>
+ <span>
+Create a zip containing the alveolus structure using 
+ </span>
+<code>zip</code> <span>
+ command
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="paragraph">
+ <p>
+And that's it.
+ </p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+this trick to create a zip can be adapted to any language (javascript, typescript, go, python, ruby, ...) and enables to bundle an alveolus in any build tool very easily.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_going_futher_k8s_operator">
+  <h2>Going futher (K8s operator)</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>To learn how to deploy directly an <code>Alveolus</code> on Kubernetes you can check out our  <a href="#operator.adoc#">Operator</a>
+ documentation.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_define_custom_templates">
+  <h2>Define custom templates</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>You can use an alveolus as a template for others providing contextual placeholders. Learn more about this in  <a href="#template.adoc#">template</a>
+ documentation.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_testing_your_alveoli_with_junit_5">
+  <h2>Testing your alveoli with JUnit 5</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Bundlebee provides a light testing framework integrated with JUnit 5 to ease the validation of alveoli. Learn more about this in  <a href="#junit5.adoc#">junit5</a>
+ documentation.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_integrate_with_argocd">
+  <h2>Integrate with ArgoCD</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>If you are using (or will to use)  <a href="https://argo-cd.readthedocs.io/">ArgoCD^</a>
+, you can still use BundleBee if you configure it as a plugin. See the  <a href="argocd-integration.html">related</a>
+ documentation.</p>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -568,7 +621,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

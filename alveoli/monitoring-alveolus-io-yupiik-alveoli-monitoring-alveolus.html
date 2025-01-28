@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>io.yupiik.alveoli:monitoring-alveolus:1.0.28-SNAPSHOT</title>
+    <title>io.yupiik.alveoli:monitoring-alveolus:1.0.29-SNAPSHOT</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -153,101 +153,117 @@
 
         <div id="alveoli-monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus-html-container" class="container page-content alveoli-monitoring-alveolus-io-yupiik-alveoli-monitoring-alveolus-html ">
                         <div class="page-header">
-                <h1>io.yupiik.alveoli:monitoring-alveolus:1.0.28-SNAPSHOT</h1>
+                <h1>io.yupiik.alveoli:monitoring-alveolus:1.0.29-SNAPSHOT</h1>
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Includes loki+prometheus+zipkin+grafana at once.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-You can set --monitoring.namespace to deploy the full stack in a dedicated namespace.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Starting from 1.0.20, we added the resource request/limit placeHolder with default in all the dependencies. You can remove them by patching the descriptor like:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "op": "remove",
-  "path": "/spec/template/spec/containers/0/resources"
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Includes loki+prometheus+zipkin+grafana at once.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+You can set --monitoring.namespace to deploy the full stack in a dedicated namespace.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>
+Starting from 1.0.20, we added the resource request/limit placeHolder with default in all the dependencies. You can remove them by patching the descriptor like:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;op&quot;: &quot;remove&quot;,
+  &quot;path&quot;: &quot;/spec/template/spec/containers/0/resources&quot;
 }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>You need to add this in all the descriptor dependencies.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_maven_dependency">Maven Dependency</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+You need to add this in all the descriptor dependencies.
+ </p>
+ </div>
+ <div class="sect1" id="_maven_dependency">
+  <h2>Maven Dependency</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
   &lt;artifactId&gt;monitoring-alveolus&lt;/artifactId&gt;
-  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.29-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_sample_usage">Sample Usage</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "alveoli": [
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_sample_usage">
+  <h2>Sample Usage</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;alveoli&quot;: [
     {
-      "//": "My alveolus.",
-      "name": "com.company:my-app:1.0.0",
-      "descriptors": [],
-      "dependencies": [
+      &quot;//&quot;: &quot;My alveolus.&quot;,
+      &quot;name&quot;: &quot;com.company:my-app:1.0.0&quot;,
+      &quot;descriptors&quot;: [],
+      &quot;dependencies&quot;: [
         {
-          "name": "io.yupiik.alveoli:monitoring-alveolus:1.0.28-SNAPSHOT",
-          "location": "io.yupiik.alveoli:monitoring-alveolus:1.0.28-SNAPSHOT",
+          &quot;name&quot;: &quot;io.yupiik.alveoli:monitoring-alveolus:1.0.29-SNAPSHOT&quot;,
+          &quot;location&quot;: &quot;io.yupiik.alveoli:monitoring-alveolus:1.0.29-SNAPSHOT&quot;,
         }
       ]
     }
   ]
 }</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_dependencies">Dependencies</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p><code>io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT</code> from <code>io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT</code> dependency</p>
-</li>
-<li>
-<p><code>io.yupiik.alveoli:zipkin-simple:1.0.28-SNAPSHOT</code> from <code>io.yupiik.alveoli:zipkin-simple:1.0.28-SNAPSHOT</code> dependency</p>
-</li>
-<li>
-<p><code>io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT</code> from <code>io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT</code> dependency</p>
-</li>
-<li>
-<p><code>io.yupiik.alveoli:grafana-simple:1.0.28-SNAPSHOT</code> from <code>io.yupiik.alveoli:grafana-simple:1.0.28-SNAPSHOT</code> dependency</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_dependencies">
+  <h2>Dependencies</h2>
+ <div class="sectionbody">
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+ <p><code>io.yupiik.alveoli:prometheus-simple:1.0.29-SNAPSHOT</code> from <code>io.yupiik.alveoli:prometheus-simple:1.0.29-SNAPSHOT</code> dependency</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p><code>io.yupiik.alveoli:zipkin-simple:1.0.29-SNAPSHOT</code> from <code>io.yupiik.alveoli:zipkin-simple:1.0.29-SNAPSHOT</code> dependency</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p><code>io.yupiik.alveoli:loki-simple:1.0.29-SNAPSHOT</code> from <code>io.yupiik.alveoli:loki-simple:1.0.29-SNAPSHOT</code> dependency</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p><code>io.yupiik.alveoli:grafana-simple:1.0.29-SNAPSHOT</code> from <code>io.yupiik.alveoli:grafana-simple:1.0.29-SNAPSHOT</code> dependency</p>
+ </div>
+  </li>
+ </ul>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -306,7 +322,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

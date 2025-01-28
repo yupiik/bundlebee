@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -157,52 +157,90 @@
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Name: <code>new</code>.</p>
-</div>
-<div class="paragraph">
-<p>Creates a new project.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--artifact (<code>BUNDLEBEE_NEW_ARTIFACT</code>)</dt>
-<dd>
-<p>Bundle artifactId.</p>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <code>new</code>.</p>
+ </div>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+Creates a new project.
+ </p>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--artifact (<code>BUNDLEBEE_NEW_ARTIFACT</code>)</p>
+ </div>
+</dt>
+  <dd>
+Bundle artifactId.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--dir (<code>BUNDLEBEE_NEW_DIR</code>)</p>
+ </div>
+</dt>
+  <dd>
+Where to create the project. If not set it will use the artifact value in current folder.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--force (<code>BUNDLEBEE_NEW_FORCE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> the execution runs even if dir already exists. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--dir (<code>BUNDLEBEE_NEW_DIR</code>)</dt>
-<dd>
-<p>Where to create the project. If not set it will use the artifact value in current folder.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--group (<code>BUNDLEBEE_NEW_GROUP</code>)</p>
+ </div>
+</dt>
+  <dd>
+Bundle groupId.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--skipPom (<code>BUNDLEBEE_NEW_SKIPPOM</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> no pom.xml is generated. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--force (<code>BUNDLEBEE_NEW_FORCE</code>)</dt>
-<dd>
-<p>If <code>true</code> the execution runs even if dir already exists. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--skipSamples (<code>BUNDLEBEE_NEW_SKIPSAMPLES</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>By default a sample alveolus with a config map is generated, if <code>false</code> it will be skipped. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--group (<code>BUNDLEBEE_NEW_GROUP</code>)</dt>
-<dd>
-<p>Bundle groupId.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--version (<code>BUNDLEBEE_NEW_VERSION</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Bundle version. Default value: <code>1.0.0</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--skipPom (<code>BUNDLEBEE_NEW_SKIPPOM</code>)</dt>
-<dd>
-<p>If <code>true</code> no pom.xml is generated. Default value: <code>false</code></p>
-</dd>
-<dt class="hdlist1">--skipSamples (<code>BUNDLEBEE_NEW_SKIPSAMPLES</code>)</dt>
-<dd>
-<p>By default a sample alveolus with a config map is generated, if <code>false</code> it will be skipped. Default value: <code>false</code></p>
-</dd>
-<dt class="hdlist1">--version (<code>BUNDLEBEE_NEW_VERSION</code>)</dt>
-<dd>
-<p>Bundle version. Default value: <code>1.0.0</code></p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
+ </dl>
+ </div>
+ </div>
                 
                 
             </div>
@@ -261,7 +299,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

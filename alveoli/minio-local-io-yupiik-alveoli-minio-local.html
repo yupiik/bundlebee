@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>io.yupiik.alveoli:minio-local:1.0.28-SNAPSHOT</title>
+    <title>io.yupiik.alveoli:minio-local:1.0.29-SNAPSHOT</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -153,171 +153,211 @@
 
         <div id="alveoli-minio-local-io-yupiik-alveoli-minio-local-html-container" class="container page-content alveoli-minio-local-io-yupiik-alveoli-minio-local-html ">
                         <div class="page-header">
-                <h1>io.yupiik.alveoli:minio-local:1.0.28-SNAPSHOT</h1>
+                <h1>io.yupiik.alveoli:minio-local:1.0.29-SNAPSHOT</h1>
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Setup "minio-local" which runs a MinIO instance usable by other applications.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_maven_dependency">Maven Dependency</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Setup &quot;minio-local&quot; which runs a MinIO instance usable by other applications.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="sect1" id="_maven_dependency">
+  <h2>Maven Dependency</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
   &lt;artifactId&gt;minio-local&lt;/artifactId&gt;
-  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.29-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_default_configuration">Default Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">MINIO_ROOT_USER</dt>
-<dd>
-<p><code>{{minio-local.rootUser:-s3user}}</code></p>
-</dd>
-<dt class="hdlist1">MINIO_ROOT_PASSWORD</dt>
-<dd>
-<p><code>{{minio-local.rootPassword:-s3password}}</code></p>
-</dd>
-<dt class="hdlist1">MINIO_REGION_NAME</dt>
-<dd>
-<p><code>{{minio-local.regionName:-us-east-1}}</code></p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_ports">Ports</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <code>minio (minio-api)</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Port: 9000</p>
-</li>
-<li>
-<p>Target Port: 9000</p>
-</li>
-<li>
-<p>Node Port: {}</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Name: <code>minio (minio-console)</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Port: 9100</p>
-</li>
-<li>
-<p>Target Port: 9100</p>
-</li>
-<li>
-<p>Node Port: {}</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-on linux and with minikube you can access this service using <code><a href="http://$(minikube" class="bare">http://$(minikube</a> ip):{}</code> on your host.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_sample_usage">Sample Usage</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "alveoli": [
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_default_configuration">
+  <h2>Default Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt> <div class="paragraph">
+ <p>MINIO<i>ROOT</i>USER</p>
+ </div>
+</dt>
+  <dd>
+<code>{{minio-local.rootUser:-s3user}}</code></dd>
+  <dt> <div class="paragraph">
+ <p>MINIO<i>ROOT</i>PASSWORD</p>
+ </div>
+</dt>
+  <dd>
+<code>{{minio-local.rootPassword:-s3password}}</code></dd>
+  <dt> <div class="paragraph">
+ <p>MINIO<i>REGION</i>NAME</p>
+ </div>
+</dt>
+  <dd>
+<code>{{minio-local.regionName:-us-east-1}}</code></dd>
+ </dl>
+ </div>
+ </div>
+ <div class="sect1" id="_ports">
+  <h2>Ports</h2>
+ <div class="sectionbody">
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+Name: <code>minio (minio-api)</code> <div class="ulist">
+ <ul>
+  <li>
+ <p>
+Port: 9000
+ </p>
+  </li>
+  <li>
+ <p>
+Target Port: 9000
+ </p>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>Node Port: </p>
+ </div>
+  </li>
+ </ul>
+ </div>
+ </div>
+  </li>
+ </ul>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+Name: <code>minio (minio-console)</code> <div class="ulist">
+ <ul>
+  <li>
+ <p>
+Port: 9100
+ </p>
+  </li>
+  <li>
+ <p>
+Target Port: 9100
+ </p>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>Node Port: </p>
+ </div>
+  </li>
+ </ul>
+ </div>
+ </div>
+  </li>
+ </ul>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+on linux and with minikube you can access this service using on your host.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_sample_usage">
+  <h2>Sample Usage</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;alveoli&quot;: [
     {
-      "//": "My alveolus.",
-      "name": "com.company:my-app:1.0.0",
-      "descriptors": [],
-      "dependencies": [
+      &quot;//&quot;: &quot;My alveolus.&quot;,
+      &quot;name&quot;: &quot;com.company:my-app:1.0.0&quot;,
+      &quot;descriptors&quot;: [],
+      &quot;dependencies&quot;: [
         {
-          "name": "io.yupiik.alveoli:minio-local:1.0.28-SNAPSHOT",
-          "location": "io.yupiik.alveoli:minio-local:1.0.28-SNAPSHOT",
+          &quot;name&quot;: &quot;io.yupiik.alveoli:minio-local:1.0.29-SNAPSHOT&quot;,
+          &quot;location&quot;: &quot;io.yupiik.alveoli:minio-local:1.0.29-SNAPSHOT&quot;,
         }
       ],
-      "patches": [{
-        "descriptorName": "io.yupiik.alveoli:minio-local:1.0.28-SNAPSHOT",
-        "interpolate": true
+      &quot;patches&quot;: [{
+        &quot;descriptorName&quot;: &quot;io.yupiik.alveoli:minio-local:1.0.29-SNAPSHOT&quot;,
+        &quot;interpolate&quot;: true
       }]
     }
   ]
 }</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">minio-local.apiNodePort</dt>
-<dd>
-<p>The published port of the api outside of the cluster.
-Default value: <code>30090</code>.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt>minio-local.apiNodePort</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The published port of the api outside of the cluster. Default value: <code>30090</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">minio-local.consoleNodePort</dt>
-<dd>
-<p>The published port of the console outside of the cluster.
-Default value: <code>30091</code>.</p>
+ </dl>
+ <dl>
+  <dt>minio-local.consoleNodePort</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The published port of the console outside of the cluster. Default value: <code>30091</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">minio-local.image</dt>
-<dd>
-<p>The minio image to use.
-Default value: <code>minio/minio:latest</code>.</p>
+ </dl>
+ <dl>
+  <dt>minio-local.image</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The minio image to use. Default value: <code>minio/minio:latest</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">minio-local.regionName</dt>
-<dd>
-<p>The S3 region name.
-Default value: <code>us-east-1</code>.</p>
+ </dl>
+ <dl>
+  <dt>minio-local.regionName</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The S3 region name. Default value: <code>us-east-1</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">minio-local.rootPassword</dt>
-<dd>
-<p>The root password.
-Default value: <code>s3password</code>.</p>
+ </dl>
+ <dl>
+  <dt>minio-local.rootPassword</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The root password. Default value: <code>s3password</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">minio-local.rootUser</dt>
-<dd>
-<p>The root user.
-Default value: <code>s3user</code>.</p>
+ </dl>
+ <dl>
+  <dt>minio-local.rootUser</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The root user. Default value: <code>s3user</code>.</p>
+ </div>
 </dd>
-</dl>
-</div>
-</div>
-</div>
+ </dl>
+ </div>
+ </div>
                 
                 
             </div>
@@ -376,7 +416,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

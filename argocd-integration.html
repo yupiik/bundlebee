@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -157,52 +157,62 @@
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Use the following steps to integrate ArgoCD with BundleBee.</p>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-this page assumes you are already familiar with ArgoCD, if it is not the case refer to ArgoCD documentation please.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_define_bundlebee_as_a_plugin">Define BundleBee as a plugin</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The goal is to be able to identify a repository with a <code>manifest.json</code> as a BundleBee repository and use BundleBee to convert the repository to JSON files ArgoCD will deploy as descriptors.</p>
-</div>
-<div class="paragraph">
-<p>The steps to integrate with bundlebee are the following ones:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Create a <code>ConfigManagementPlugin</code>,</p>
-</li>
-<li>
-<p>Configure your application to scan for <code>manifest.json</code>.</p>
-</li>
-</ol>
-</div>
-<div class="sect2">
-<h3 id="_create_the_bundlebee_configmanagementplugin">Create the BundleBee ConfigManagementPlugin</h3>
-<div class="paragraph">
-<p>First define this descriptor:</p>
-</div>
-<div class="listingblock">
-<div class="title">bundlebee.argocd-plugin.yaml</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: argoproj.io/v1alpha1
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Use the following steps to integrate ArgoCD with BundleBee.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+this page assumes you are already familiar with ArgoCD, if it is not the case refer to ArgoCD documentation please.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="sect1" id="_define_bundlebee_as_a_plugin">
+  <h2>Define BundleBee as a plugin</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>The goal is to be able to identify a repository with a <code>manifest.json</code> as a BundleBee repository and use BundleBee to convert the repository to JSON files ArgoCD will deploy as descriptors.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+The steps to integrate with bundlebee are the following ones:
+ </p>
+ </div>
+ <ol>
+  <li>
+ <div class="paragraph">
+ <p>Create a <code>ConfigManagementPlugin</code>,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>Configure your application to scan for <code>manifest.json</code>.</p>
+ </div>
+  </li>
+ </ol>
+ <div class="sect2" id="_create_the_bundlebee_configmanagementplugin">
+  <h3>Create the BundleBee ConfigManagementPlugin</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+First define this descriptor:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: argoproj.io/v1alpha1
 kind: ConfigManagementPlugin
 metadata:
   name: bundlebee-plugin
@@ -211,122 +221,141 @@ spec:
   init:
     # if you use any kind of secret management, it can be neat to run a command there to decipher the secrets and prepare generate command
     command: [sh]
-    args: [-c, 'echo "BundleBee plugin"']
+    args: [-c, 'echo &quot;BundleBee plugin&quot;']
   generate:
-    command: [ "/opt/yupiik/bundlebee/bin/bundlebee.sh" ]
+    command: [ &quot;/opt/yupiik/bundlebee/bin/bundlebee.sh&quot; ]
   discover:
     find:
-      glob: "**/bundlebee/manifest.json"
+      glob: &quot;**/bundlebee/manifest.json&quot;
   parameters:
     dynamic:
-      command: [ "/opt/yupiik/bundlebee/bin/bundlebee.placeholders.sh" ]
+      command: [ &quot;/opt/yupiik/bundlebee/bin/bundlebee.placeholders.sh&quot; ]
     preserveFileMode: false</code></pre>
-</div>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-this is NOT a Kubernetes descriptor so don&#8217;t install it wit <code>kubectl</code> or BundleBee. Also note that the command used there only work for BundleBee &gt;= 1.0.25, for versions before use <code>process</code> command to dump the descriptors and then a small script to cat them for ArgoCD.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Now create a plugin docker image:</p>
-</div>
-<div class="listingblock">
-<div class="title">Dockerfile</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-Dockerfile hljs" data-lang="Dockerfile">FROM ossyupiik/java:17.0.9.1
+ </div>
+ </div>
+ <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>this is NOT a Kubernetes descriptor so don't install it wit <code>kubectl</code> or BundleBee. Also note that the command used there only work for BundleBee &gt;= 1.0.25, for versions before use <code>process</code> command to dump the descriptors and then a small script to cat them for ArgoCD.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>
+Now create a plugin docker image:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-Dockerfile hljs" data-lang="Dockerfile">FROM ossyupiik/java:17.0.9.1
 RUN mkdir -p /opt/yupiik/bundlebee/lib /opt/yupiik/bundlebee/bin &amp;&amp; \
     wget https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/1.0.24/bundlebee-core-1.0.24-fat.jar -O /opt/yupiik/bundlebee/lib/bundlebee.jar <b class="conum">(1)</b>
 COPY ./bundlebee.argocd-plugin.yaml /home/argocd/cmp-server/config/plugin.yaml <b class="conum">(2)</b>
 COPY ./bundlebee.plugin.sh /opt/yupiik/bundlebee/bin/bundlebee.sh
 RUN chmod +x /opt/yupiik/bundlebee/bin/*.sh &amp;&amp; chown 999:0 -R /opt/yupiik/
 USER 999
-ENTRYPOINT ["/opt/yupiik/bundlebee/bin/bundlebee.sh"]</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Ensure to adjust the version you want to use at your needs,</p>
-</li>
-<li>
-<p>Ensure to add the plugin configuration we just created locally in previous step (target location is required by the entry point).</p>
-</li>
-</ol>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-you can also use the native version of BundleBee but this requires some more knowledge about the Java native dependencies (<code>apk add --no-cache zlib libstdc++ gcompat</code> for alpine for example).
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>The launching script will be something like:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/sh
+ENTRYPOINT [&quot;/opt/yupiik/bundlebee/bin/bundlebee.sh&quot;]</code></pre>
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+Ensure to adjust the version you want to use at your needs,
+ </span>
+   </li>
+   <li>
+ <span>
+Ensure to add the plugin configuration we just created locally in previous step (target location is required by the entry point).
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>you can also use the native version of BundleBee but this requires some more knowledge about the Java native dependencies (<code>apk add --no-cache zlib libstdc++ gcompat</code> for alpine for example).</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>
+The launching script will be something like:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/sh
 
 java -Dio.yupiik.bundlebee.level=WARNING -jar \
     /opt/yupiik/bundlebee/lib/bundlebee.jar process \
     --injectTimestamp false --injectBundleBeeMetadata false \
     --output stdout \
-    --bundlebee-kube-namespace "${ARGOCD_APP_NAMESPACE}" \
-    --from "$ARGOCD_APP_SOURCE_PATH" --manifest "${ARGOCD_APP_SOURCE_PATH}/bundlebee/manifest.json" --alveolus "$ARGOCD_APP_NAME"</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And the discovery script will be something like:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/sh
+    --bundlebee-kube-namespace &quot;${ARGOCD_APP_NAMESPACE}&quot; \
+    --from &quot;$ARGOCD_APP_SOURCE_PATH&quot; --manifest &quot;${ARGOCD_APP_SOURCE_PATH}/bundlebee/manifest.json&quot; --alveolus &quot;$ARGOCD_APP_NAME&quot;</code></pre>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+And the discovery script will be something like:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-bash hljs" data-lang="bash">#! /bin/sh
 
 java -Dio.yupiik.bundlebee.level=WARNING -jar \
     /opt/yupiik/bundlebee/lib/bundlebee.jar placeholder-extract \
     --outputType ARGOCD \
-    --bundlebee-kube-namespace "${ARGOCD_APP_NAMESPACE}" \
-    --from "$ARGOCD_APP_SOURCE_PATH" --manifest "${ARGOCD_APP_SOURCE_PATH}/bundlebee/manifest.json" --alveolus "$ARGOCD_APP_NAME"</code></pre>
-</div>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-the placeholder discovery and descriptor templating assume ArgoCD application name matches the alveolus name, you can modify the script to make it more resilient.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Then build the image: <code>docker build -t yupiik/argocd-bundlebee-plugin:latest .</code>.</p>
-</div>
-<div class="paragraph">
-<p>Now we need to add this configuration into a sidecar of ArgoCD (CMP server).
-To do that, edit <code>argocd-repo-server</code> descriptor (we explain how to do it manually but you can do it with BundleBee): <code>kubectl edit deploy -n argocd argocd-repo-server</code>.</p>
-</div>
-<div class="paragraph">
-<p>Add the plugin container:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">containers:
+    --bundlebee-kube-namespace &quot;${ARGOCD_APP_NAMESPACE}&quot; \
+    --from &quot;$ARGOCD_APP_SOURCE_PATH&quot; --manifest &quot;${ARGOCD_APP_SOURCE_PATH}/bundlebee/manifest.json&quot; --alveolus &quot;$ARGOCD_APP_NAME&quot;</code></pre>
+ </div>
+ </div>
+ <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+the placeholder discovery and descriptor templating assume ArgoCD application name matches the alveolus name, you can modify the script to make it more resilient.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>Then build the image: <code>docker build -t yupiik/argocd-bundlebee-plugin:latest .</code>.</p>
+ </div>
+ <div class="paragraph">
+ <p>Now we need to add this configuration into a sidecar of ArgoCD (CMP server). To do that, edit <code>argocd-repo-server</code> descriptor (we explain how to do it manually but you can do it with BundleBee): <code>kubectl edit deploy -n argocd argocd-repo-server</code>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Add the plugin container:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">containers:
 ... <b class="conum">(1)</b>
 - name: bundlebee-plugin
   command: [/var/run/argocd/argocd-cmp-server]
@@ -341,92 +370,120 @@ To do that, edit <code>argocd-repo-server</code> descriptor (we explain how to d
       name: var-files
     - mountPath: /home/argocd/cmp-server/plugins
       name: plugins</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Keep default container(s),</p>
-</li>
-<li>
-<p>Set the image you just built.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_limitations">Limitations</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The limitations of the integration is that BundleBee does not deploy any more, it is just used as a templating engine (similarly to helm integration) so ArgoCD is the deployer.
-The drawback of that option is you loose the deployment options (like forcing <code>PUT</code> to force to override a resource, the control of the merge strategy when you install a resource or the awaiting logic which is different).</p>
-</div>
-<div class="paragraph">
-<p>Please also note that ArgoCD:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Is a runtime so you must ensure it is</p>
-<div class="ulist">
-<ul>
-<li>
-<p>up and running,</p>
-</li>
-<li>
-<p>has enough allocated resources (including to redeploy a new version if you use rollout),</p>
-</li>
-<li>
-<p>monitored for upgrades when needed (security + features),</p>
-</li>
-<li>
-<p>has enough storage for its usage (avoid a disk full for ex),</p>
-</li>
-<li>
-<p>has a correct monitoring to ensure you don&#8217;t get into infra troubles if you host it on premise.</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Does not come with a solution for secrets (and passwords/keys management) so you still need an option for that,</p>
-</li>
-<li>
-<p>Does use a custom RBAC model for security which is not always trivial to set up.</p>
-</li>
-<li>
-<p>As any software is a new thing to learn for your ops team and can compete with the idea of CI/CD (which has its own RBAC model for example),</p>
-</li>
-<li>
-<p>Since it will store your clusters client configuration, the cluster ArgoCD is installed on must have very secured secrets (don&#8217;t use a weaky-leaky dev environment for example),</p>
-</li>
-<li>
-<p>Similarly to the cluster, if you use some ciphering solution, ensure its storage is very well secured (can go through Kubernetes secrets if you have a specific backend - ie not the default one).</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>This is why at Yupiik we tend to not use ArgoCD but prefer a plain CI/CD pipeline which is offline (does not need a constant runtime resource allocation nor infra monitoring and is self-resilient since you just need <code>git</code> to restore an application).
-Most of the time we couple it with BundleBee <code>diff</code> command to ensure if the cluster is synchronized or not with the <code>git</code> state.
-We combine it with a ciphering to save password/keys in <code>git</code>, depending the project it can be a Vault, keypass or just our <code>(de)crypt</code> maven <a href="https://www.yupiik.io/tools-maven-plugin/mojos.html#_crypt_mojos">goal</a> which uses a master password for that task (similarly you can use <code>{{bundlebee-decipher:$masterKeyPlaceholder,$cipheredValue}}</code> placeholders, see more on <a href="how-it-works.html">how it works</a> page).
-Finally, combine with <a href="https://www.yupiik.io/tools-maven-plugin/mojos.html#_minisite">minisite</a> generator we get live documentation reporting (including potential placeholders) which makes the solution complete.</p>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-it is highly recommended to work on these points before adopting ArgoCD (using BundleBee or not indeed) and to evaluate the plain CI/CD option - including installing a light CI/CD like Harness/Drone which is simpler to setup.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+Keep default container(s),
+ </span>
+   </li>
+   <li>
+ <span>
+Set the image you just built.
+ </span>
+   </li>
+  </ol>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_limitations">
+  <h2>Limitations</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>The limitations of the integration is that BundleBee does not deploy any more, it is just used as a templating engine (similarly to helm integration) so ArgoCD is the deployer. The drawback of that option is you loose the deployment options (like forcing <code>PUT</code> to force to override a resource, the control of the merge strategy when you install a resource or the awaiting logic which is different).</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Please also note that ArgoCD:
+ </p>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+Is a runtime so you must ensure it is <div class="ulist">
+ <ul>
+  <li>
+ <p>
+up and running,
+ </p>
+  </li>
+  <li>
+ <p>
+has enough allocated resources (including to redeploy a new version if you use rollout),
+ </p>
+  </li>
+  <li>
+ <p>
+monitored for upgrades when needed (security + features),
+ </p>
+  </li>
+  <li>
+ <p>
+has enough storage for its usage (avoid a disk full for ex),
+ </p>
+  </li>
+  <li>
+ <p>
+has a correct monitoring to ensure you don't get into infra troubles if you host it on premise.
+ </p>
+  </li>
+ </ul>
+ </div>
+ </div>
+  </li>
+  <li>
+ <p>
+Does not come with a solution for secrets (and passwords/keys management) so you still need an option for that,
+ </p>
+  </li>
+  <li>
+ <p>
+Does use a custom RBAC model for security which is not always trivial to set up.
+ </p>
+  </li>
+  <li>
+ <p>
+As any software is a new thing to learn for your ops team and can compete with the idea of CI/CD (which has its own RBAC model for example),
+ </p>
+  </li>
+  <li>
+ <p>
+Since it will store your clusters client configuration, the cluster ArgoCD is installed on must have very secured secrets (don't use a weaky-leaky dev environment for example),
+ </p>
+  </li>
+  <li>
+ <p>
+Similarly to the cluster, if you use some ciphering solution, ensure its storage is very well secured (can go through Kubernetes secrets if you have a specific backend - ie not the default one).
+ </p>
+  </li>
+ </ul>
+ </div>
+ <div class="paragraph">
+ <p>This is why at Yupiik we tend to not use ArgoCD but prefer a plain CI/CD pipeline which is offline (does not need a constant runtime resource allocation nor infra monitoring and is self-resilient since you just need <code>git</code> to restore an application). Most of the time we couple it with BundleBee <code>diff</code> command to ensure if the cluster is synchronized or not with the <code>git</code> state. We combine it with a ciphering to save password/keys in <code>git</code>, depending the project it can be a Vault, keypass or just our <code>(de)crypt</code> maven  <a href="https://www.yupiik.io/tools-maven-plugin/mojos.html#_crypt_mojos">goal</a>
+ which uses a master password for that task (similarly you can use <code>{{bundlebee-decipher:$masterKeyPlaceholder,$cipheredValue}}</code> placeholders, see more on  <a href="how-it-works.html">how it works</a>
+ page). Finally, combine with  <a href="https://www.yupiik.io/tools-maven-plugin/mojos.html#_minisite">minisite</a>
+ generator we get live documentation reporting (including potential placeholders) which makes the solution complete.</p>
+ </div>
+ <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+it is highly recommended to work on these points before adopting ArgoCD (using BundleBee or not indeed) and to evaluate the plain CI/CD option - including installing a light CI/CD like Harness/Drone which is simpler to setup.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -485,7 +542,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -156,387 +156,732 @@
                 <h1>Bundlebee K8s Operator</h1>
             </div>
             <div class="page-content-body">
-                <div id="preamble">
-<div class="sectionbody">
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Warning</div>
-</td>
-<td class="content">
-this module is new and can change.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Bundlebee operator provides a Kubernetes operator which creates a custom resource of type <code>Alveolus</code>.
-This way you can deploy directly an alveolus and the operator will take care to deploy it.
-Similarly, if you delete the alveolus, the operator will delete it all.</p>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-in current version there is no catch up logic so if the deletion fails you should re-run it or finish to clean up the data manually (this is on the roadmap).
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_installation">Installation</h2>
-<div class="sectionbody">
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Warning</div>
-</td>
-<td class="content">
-as of today, the image is not yet available on docker hub (&gt;= 1.0.14) so you will need to build it yourself.
-This can be done 1. cloning the project, 2. building it with <code>mvn install -DskipTests -Pdocker</code>, 3. push the <code>yupiik/bundlebee/operator:&lt;version&gt;</code> on your kubernetes image registry.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>You can install the Bundlebee operator using bundlebee client on your machine
-(or the maven plugin/fat jar if you prefer):
-<code>bundlebee --from io.yupiik:bundlebee-operator:&lt;version&gt; --alveolis io.yupiik:bundlebee-operator:&lt;version</code>.</p>
-</div>
-<div class="paragraph">
-<p>The bundlebee alveolus installation supports the following configuration:</p>
-</div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">bundlebee.operator.crd.scope</dt>
-<dd>
-<p>scope of the operator. Default value: <code>Namespaced</code>.</p>
+                <div class="admonitionblock warning">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">WARNING</div>
+       </td>
+      <td class="content">
+this module is new and can change.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div id="preamble">
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Bundlebee operator provides a Kubernetes operator which creates a custom resource of type <code>Alveolus</code>. This way you can deploy directly an alveolus and the operator will take care to deploy it. Similarly, if you delete the alveolus, the operator will delete it all.</p>
+ </div>
+ </div>
+ </div>
+ <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+in current version there is no catch up logic so if the deletion fails you should re-run it or finish to clean up the data manually (this is on the roadmap).    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="sect1" id="_installation">
+  <h2>Installation</h2>
+ <div class="sectionbody">
+ <div class="admonitionblock warning">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">WARNING</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>as of today, the image is not yet available on docker hub (&gt;= 1.0.14) so you will need to build it yourself. This can be done 1. cloning the project, 2. building it with <code>mvn install -DskipTests -Pdocker</code>, 3. push the <code>yupiik/bundlebee/operator:&lt;version&gt;</code> on your kubernetes image registry.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>You can install the Bundlebee operator using bundlebee client on your machine (or the maven plugin/fat jar if you prefer):<code>bundlebee --from io.yupiik:bundlebee-operator:&lt;version&gt; --alveolis io.yupiik:bundlebee-operator:&lt;version</code>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+The bundlebee alveolus installation supports the following configuration:
+ </p>
+ </div>
+ <div class="paragraph">
+ <dl>
+  <dt>bundlebee.operator.crd.scope</dt>
+  <dd>
+ <div class="paragraph">
+ <p>scope of the operator. Default value: <code>Namespaced</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">bundlebee.operator.namespace</dt>
-<dd>
-<p>namespace of the operator. Default value: <code>default</code>.</p>
+ </dl>
+ <dl>
+  <dt>bundlebee.operator.namespace</dt>
+  <dd>
+ <div class="paragraph">
+ <p>namespace of the operator. Default value: <code>default</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">bundlebee.operator.deployment.dryRun</dt>
-<dd>
-<p>is dry run mode enabled (for testing purposes). Default value: <code>false</code>.</p>
+ </dl>
+ <dl>
+  <dt>bundlebee.operator.deployment.dryRun</dt>
+  <dd>
+ <div class="paragraph">
+ <p>is dry run mode enabled (for testing purposes). Default value: <code>false</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">bundlebee.operator.deployment.http.threads</dt>
-<dd>
-<p>how many threads are allocated to the http client. Default value: <code>8</code>.</p>
+ </dl>
+ <dl>
+  <dt>bundlebee.operator.deployment.http.threads</dt>
+  <dd>
+ <div class="paragraph">
+ <p>how many threads are allocated to the http client. Default value: <code>8</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">bundlebee.operator.deployment.downloads.enabled</dt>
-<dd>
-<p>can the operator download alveoli or should it use the local provisionned maven repository only (kind of explicit enablement of dependencies). Default value: <code>false</code>.</p>
+ </dl>
+ <dl>
+  <dt>bundlebee.operator.deployment.downloads.enabled</dt>
+  <dd>
+ <div class="paragraph">
+ <p>can the operator download alveoli or should it use the local provisionned maven repository only (kind of explicit enablement of dependencies). Default value: <code>false</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">bundlebee.operator.deployment.verbose</dt>
-<dd>
-<p>does the operator log or not the HTTP requests/responses it does (for debug purposes). Default value: <code>false</code>.</p>
+ </dl>
+ <dl>
+  <dt>bundlebee.operator.deployment.verbose</dt>
+  <dd>
+ <div class="paragraph">
+ <p>does the operator log or not the HTTP requests/responses it does (for debug purposes). Default value: <code>false</code>.</p>
+ </div>
 </dd>
-</dl>
-</div>
-<div class="paragraph">
-<p>Alternatively you can use the following "all in file" JSON file you can use with <code>kubectl apply -f &lt;bundlebee.operator.install.json&gt;</code>.
-See <a href="#all-in-one-installation">all in one</a> descriptor.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-if you don&#8217;t install it in default namespace, don&#8217;t hesitate to customize <code>KUBECONFIG</code> value in the all in one descriptor or use placeholders for the bundlebee installation.
-You can also desire to customize the roles affected to the <code>ServiceAccount</code> mounted in the operator <code>Deployment</code> to give it more or less permissions on what it can deploy/delete.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The operator configuration is globally the same than standard Bundlebee with a small difference: the global configuration is configured once - in the <code>Deployment</code> of the installation part - and only command configuration can be set in the <code>Alveolus</code> descriptors.</p>
-</div>
-<div class="sect2">
-<h3 id="_global_configuration">Global configuration</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">BUNDLEBEE_OPERATOR_STORAGE</dt>
-<dd>
-<p>Where to store the internal operator state to not restart from scratch when restarting.
-Default value: <code>/opt/yupiik/state/bundlebee-operator</code>.</p>
+ </dl>
+ </div>
+ <div class="paragraph">
+ <p>Alternatively you can use the following &quot;all in file&quot; JSON file you can use with <code>kubectl apply -f &lt;bundlebee.operator.install.json&gt;</code>. See  <a href="##all-in-one-installation"> all in one</a>
+ descriptor.</p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>if you don't install it in default namespace, don't hesitate to customize <code>KUBECONFIG</code> value in the all in one descriptor or use placeholders for the bundlebee installation. You can also desire to customize the roles affected to the <code>ServiceAccount</code> mounted in the operator <code>Deployment</code> to give it more or less permissions on what it can deploy/delete.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>The operator configuration is globally the same than standard Bundlebee with a small difference: the global configuration is configured once - in the <code>Deployment</code> of the installation part - and only command configuration can be set in the <code>Alveolus</code> descriptors.</p>
+ </div>
+ <div class="sect2" id="_global_configuration">
+  <h3>Global configuration</h3>
+ <div class="sectionbody">
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>OPERATOR</i>STORAGE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Where to store the internal operator state to not restart from scratch when restarting. Default value: <code>/opt/yupiik/state/bundlebee-operator</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_AWAITER_RETRYINTERVAL</dt>
-<dd>
-<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code></p>
+ </dl>
+ <div class="paragraph">
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>AWAITER</i>RETRYINTERVAL</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_HTTPCLIENT_CONNECTTIMEOUT</dt>
-<dd>
-<p>The HTTP client connect timeout (in java Duration format), <code>none</code> can be used to ignore this setting. Default value: <code>none</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>HTTPCLIENT</i>CONNECTTIMEOUT</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client connect timeout (in java Duration format), <code>none</code> can be used to ignore this setting. Default value: <code>none</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_HTTPCLIENT_FOLLOWREDIRECTS</dt>
-<dd>
-<p>The HTTP client redirect policy. Default to <code>NORMAL</code>, can be set to <code>ALWAYS</code> or <code>NEVER</code>. Default value: <code>NORMAL</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>HTTPCLIENT</i>FOLLOWREDIRECTS</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client redirect policy. Default to <code>NORMAL</code>, can be set to <code>ALWAYS</code> or <code>NEVER</code>. Default value: <code>NORMAL</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_HTTPCLIENT_FORCEDHTTPVERSION</dt>
-<dd>
-<p>The HTTP client version, <code>none</code> mean the JVM default (v2), <code>HTTP_1_1</code> v1.1 and <code>HTTP_2</code> v2.0. Default value: <code>none</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>HTTPCLIENT</i>FORCEDHTTPVERSION</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client version, <code>none</code> mean the JVM default (v2), <code>HTTP_1_1</code> v1.1 and <code>HTTP_2</code> v2.0. Default value: <code>none</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_HTTPCLIENT_THREADS</dt>
-<dd>
-<p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>HTTPCLIENT</i>THREADS</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_API</dt>
-<dd>
-<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>API</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When kubeconfig is not set the base API endpoint. Default value: <code> <a href="http://localhost:8080" class="inline-code">http://localhost:8080</a>
+</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_CONTEXT</dt>
-<dd>
-<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>CONTEXT</p>
+ </div>
+</dt>
+  <dd>
+When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>CUSTOMMETADATAINJECTIONPOINT</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations. Default value: <code>labels</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_CUSTOMMETADATAINJECTIONPOINT</dt>
-<dd>
-<p>When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations. Default value: <code>labels</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>DEFAULTPROPAGATIONPOLICY</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_DEFAULTPROPAGATIONPOLICY</dt>
-<dd>
-<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>DRYRUN</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_DRYRUN</dt>
-<dd>
-<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>FIELDVALIDATION</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p><code>fieldValidation</code> - server side validation - value when applying a descriptor, values can be <code>Strict</code>, <code>Warn</code> pr <code>Ignore</code>. Note that using <code>skip</code> will ignore the query parameter. Default value: <code>Strict</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_FIELDVALIDATION</dt>
-<dd>
-<p><code>fieldValidation</code> - server side validation - value when applying a descriptor, values can be <code>Strict</code>, <code>Warn</code> pr <code>Ignore</code>. Note that using <code>skip</code> will ignore the query parameter. Default value: <code>Strict</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>FILTERS<i>STATEFULESET</i>SPEC_ALLOWED</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The attributes to keep from <code>StatefulSet</code> (<code>spec</code> children) descriptor on updates. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_FILTERS_STATEFULESET_SPEC_ALLOWED</dt>
-<dd>
-<p>The attributes to keep from <code>StatefulSet</code> (<code>spec</code> children) descriptor on updates. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>FORCE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself and for cases it is not enough, you can set <code>force</code> to <code>true</code> to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). Note that you can set it to <code>true</code> in a descriptor annotation <code>io.yupiik.bundlebee/force</code> too to not be global. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_FORCE</dt>
-<dd>
-<p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself and for cases it is not enough, you can set <code>force</code> to <code>true</code> to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). Note that you can set it to <code>true</code> in a descriptor annotation <code>io.yupiik.bundlebee/force</code> too to not be global. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>HTTP_TIMEOUT</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>HTTP timeout in ms, ignored if &lt;= 0. Default value: <code>60000</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_HTTP_TIMEOUT</dt>
-<dd>
-<p>HTTP timeout in ms, ignored if &#8656; 0. Default value: <code>60000</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>IMPLICITLYDROPPEDATTRIBUTES</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using <code>none</code> ignores this processing. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_IMPLICITLYDROPPEDATTRIBUTES</dt>
-<dd>
-<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using <code>none</code> ignores this processing. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>LOGDESCRIPTORONPARSINGERROR</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should YAML/JSON be logged when it can't be parsed. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_LOGDESCRIPTORONPARSINGERROR</dt>
-<dd>
-<p>Should YAML/JSON be logged when it can&#8217;t be parsed. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>NAMESPACE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_NAMESPACE</dt>
-<dd>
-<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>PATCHCONTENTTYPE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_PATCHCONTENTTYPE</dt>
-<dd>
-<p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>PROXY_HOST</p>
+ </div>
+</dt>
+  <dd>
+If a proxy is needed to contact the target cluster API, its host, ignore if not set.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>PROXY_PASSWORD</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_PROXY_HOST</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its host, ignore if not set.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>PROXY_PORT</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its port. Default value: <code>3128</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_PROXY_PASSWORD</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>PROXY_SETPROXYSYSTEMPROPERTIES</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is configured to use authentication, automatically set <code>-Djdk.http.auth.tunneling.disabledSchemes=</code>, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is &quot;leaked&quot;, ie it is not cleaned up to limit side effect in concurrent mode. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_PROXY_PORT</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its port. Default value: <code>3128</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>PROXY_USERNAME</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_PROXY_SETPROXYSYSTEMPROPERTIES</dt>
-<dd>
-<p>If a proxy is configured to use authentication, automatically set <code>-Djdk.http.auth.tunneling.disabledSchemes=</code>, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is "leaked", ie it is not cleaned up to limit side effect in concurrent mode. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>PUTONUPDATE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_PROXY_USERNAME</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>RATELIMITER_ENABLED</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should HTTP client requests be limited and HTTP 427 responses be handled. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_PUTONUPDATE</dt>
-<dd>
-<p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>RATELIMITER_PERMITS</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How many calls can be done if rate limiting is enabled. Note that setting it to <code>Integer.MAX_VALUE</code> will disable the client rate limiting and only enable server one. Default value: <code>100</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_RATELIMITER_ENABLED</dt>
-<dd>
-<p>Should HTTP client requests be limited and HTTP 427 responses be handled. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>RATELIMITER_WINDOW</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Rate limiting window duration in milliseconds (default being 1 second). Default value: <code>1000</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_RATELIMITER_PERMITS</dt>
-<dd>
-<p>How many calls can be done if rate limiting is enabled. Note that setting it to <code>Integer.MAX_VALUE</code> will disable the client rate limiting and only enable server one. Default value: <code>100</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>RESOURCEMAPPING</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to define resource mapping, syntax uses propeties one: <code>&lt;lowercased resource kind&gt;s = /apis/....</code>. Default value: <code></code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_RATELIMITER_WINDOW</dt>
-<dd>
-<p>Rate limiting window duration in milliseconds (default being 1 second). Default value: <code>1000</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>SKIPDRYRUNFORGET</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> GET http requests are not skipped when <code>dryRun</code> is true. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_RESOURCEMAPPING</dt>
-<dd>
-<p>Enables to define resource mapping, syntax uses propeties one: <code>&lt;lowercased resource kind&gt;s = /apis/&#8230;&#8203;.</code>. Default value: ``</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>SKIPUPDATEFORKINDS</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>List of <i>kind</i> of descriptors updates can be skipped, it is often useful for <code>PersistentVolumeClaim</code>. Default value: <code>PersistentVolumeClaim</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_SKIPDRYRUNFORGET</dt>
-<dd>
-<p>If <code>true</code> GET http requests are not skipped when <code>dryRun</code> is true. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>TOKEN</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When <code>kubeconfig</code> is set to <code>explicit</code>, the bearer token to use (if set).</p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_SKIPUPDATEFORKINDS</dt>
-<dd>
-<p>List of <em>kind</em> of descriptors updates can be skipped, it is often useful for <code>PersistentVolumeClaim</code>. Default value: <code>PersistentVolumeClaim</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>VALIDATESSL</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should SSL connector be validated or not. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_TOKEN</dt>
-<dd>
-<p>When <code>kubeconfig</code> is set to <code>explicit</code>, the bearer token to use (if set).</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>KUBE</i>VERBOSE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_VALIDATESSL</dt>
-<dd>
-<p>Should SSL connector be validated or not. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>CACHE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Where to cache maven dependencies. If set to <code>auto</code>, tries to read the system property <code>maven.repo.local</code> then the <code>settings.xml</code> <code>localRepository</code> and finally it would fallback on <code>$HOME/.m2/repository</code>. Default value: <code>auto</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_KUBE_VERBOSE</dt>
-<dd>
-<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>FORCECUSTOMSETTINGSXML</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_CACHE</dt>
-<dd>
-<p>Where to cache maven dependencies. If set to <code>auto</code>, tries to read the system property <code>maven.repo.local</code> then the <code>settings.xml</code> <code>localRepository</code> and finally it would fallback on <code>$HOME/.m2/repository</code>. Default value: <code>auto</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>HTTP_CONNECTTIMEOUT</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_FORCECUSTOMSETTINGSXML</dt>
-<dd>
-<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>PREFERCUSTOMSETTINGSXML</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_HTTP_CONNECTTIMEOUT</dt>
-<dd>
-<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>REPOSITORIES<i>DOWNLOADS</i>ENABLED</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_PREFERCUSTOMSETTINGSXML</dt>
-<dd>
-<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>REPOSITORIES_HTTPHEADERS</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Note that you can use maven <code>~/.m2/settings.xml</code> servers (potentially ciphered) username/password pairs. In this last case the server id must be <code>bundlebee.&lt;server host&gt;</code>. Still in settings.xml case, if the username is null the password value is used as raw <code>Authorization</code> header else username/password is encoded as a basic header.</p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED</dt>
-<dd>
-<p>Enable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>REPOSITORIES_RELEASE</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default release repository. Default value: <code> <a href="https://repo.maven.apache.org/maven2/" class="inline-code">https://repo.maven.apache.org/maven2/</a>
+</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_REPOSITORIES_HTTPHEADERS</dt>
-<dd>
-<p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Note that you can use maven <code>~/.m2/settings.xml</code> servers (potentially ciphered) username/password pairs. In this last case the server id must be <code>bundlebee.&lt;server host&gt;</code>. Still in settings.xml case, if the username is null the password value is used as raw <code>Authorization</code> header else username/password is encoded as a basic header.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>BUNDLEBEE<i>MAVEN</i>REPOSITORIES_SNAPSHOT</p>
+ </div>
+</dt>
+  <dd>
+Default snapshot repository, not set by default.</dd>
+ </dl>
+ <dl>
+  <dt>KUBECONFIG</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. The content can also be set inline!. Default value: <code>auto</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_REPOSITORIES_RELEASE</dt>
-<dd>
-<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code></p>
-</dd>
-<dt class="hdlist1">BUNDLEBEE_MAVEN_REPOSITORIES_SNAPSHOT</dt>
-<dd>
-<p>Default snapshot repository, not set by default.</p>
-</dd>
-<dt class="hdlist1">KUBECONFIG</dt>
-<dd>
-<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. The content can also be set inline!. Default value: <code>auto</code></p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_deleteapply_an_alveolus">Delete/Apply an alveolus</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To apply a custmo <code>Alveolus</code> you can write a descriptor like:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: bundlebee.yupiik.io/v1 <b class="conum">(1)</b>
+ </dl>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_deleteapply_an_alveolus">
+  <h2>Delete/Apply an alveolus</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>To apply a custmo <code>Alveolus</code> you can write a descriptor like:</p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: bundlebee.yupiik.io/v1 <b class="conum">(1)</b>
 kind: Alveolus <b class="conum">(2)</b>
 metadata: <b class="conum">(3)</b>
   name: test-alveolus
 spec:
   args: <b class="conum">(4)</b>
-    - "--from"
-    - "io.yupiik.alveoli:elasticsearch-local:1.0.13"
-    - "--alveolus"
-    - "io.yupiik.alveoli:elasticsearch-local:1.0.13"</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Use <code>apiVersion</code> <code>bundlebee.yupiik.io/v1</code>,</p>
-</li>
-<li>
-<p>Use <code>kind</code> <code>Alveolus</code>,</p>
-</li>
-<li>
-<p><code>metadata</code> object is a standard one so you can set a name, labels, etc&#8230;&#8203;,</p>
-</li>
-<li>
-<p><code>args</code> are the options of the <code>apply</code> command for this deployment (without the global configuration indeed).</p>
-</li>
-</ol>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-you can check <a href="commands/apply.configuration.html"><code>apply</code> documentation to see all the options available</a>.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="all-in-one-installation">Appendix, all in one installation</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="title">bundlebee.operator.install.json</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "apiVersion": "apiextensions.k8s.io/v1",
-  "kind": "CustomResourceDefinition",
-  "metadata": {
-    "name": "alveoli.bundlebee.yupiik.io"
+    - &quot;--from&quot;
+    - &quot;io.yupiik.alveoli:elasticsearch-local:1.0.13&quot;
+    - &quot;--alveolus&quot;
+    - &quot;io.yupiik.alveoli:elasticsearch-local:1.0.13&quot;</code></pre>
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+Use 
+ </span>
+<code>apiVersion</code> <span>
+ 
+ </span>
+<code>bundlebee.yupiik.io/v1</code> <span>
+,
+ </span>
+   </li>
+   <li>
+ <span>
+Use 
+ </span>
+<code>kind</code> <span>
+ 
+ </span>
+<code>Alveolus</code> <span>
+,
+ </span>
+   </li>
+   <li>
+<code>metadata</code> <span>
+ object is a standard one so you can set a name, labels, etc...,
+ </span>
+   </li>
+   <li>
+<code>args</code> <span>
+ are the options of the 
+ </span>
+<code>apply</code> <span>
+ command for this deployment (without the global configuration indeed).
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>you can check  <a href="#commands/apply.configuration.adoc#"> `apply` documentation to see all the options available</a>
+.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="all-in-one-installation">
+  <h2>Appendix, all in one installation</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;apiVersion&quot;: &quot;apiextensions.k8s.io/v1&quot;,
+  &quot;kind&quot;: &quot;CustomResourceDefinition&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;alveoli.bundlebee.yupiik.io&quot;
   },
-  "spec": {
-    "group": "bundlebee.yupiik.io",
-    "scope": "Namespaced",
-    "names": {
-      "plural": "alveoli",
-      "singular": "alveolus",
-      "kind": "Alveolus",
-      "shortNames": [
-        "av"
+  &quot;spec&quot;: {
+    &quot;group&quot;: &quot;bundlebee.yupiik.io&quot;,
+    &quot;scope&quot;: &quot;Namespaced&quot;,
+    &quot;names&quot;: {
+      &quot;plural&quot;: &quot;alveoli&quot;,
+      &quot;singular&quot;: &quot;alveolus&quot;,
+      &quot;kind&quot;: &quot;Alveolus&quot;,
+      &quot;shortNames&quot;: [
+        &quot;av&quot;
       ]
     },
-    "versions": [
+    &quot;versions&quot;: [
       {
-        "name": "v1",
-        "served": true,
-        "storage": true,
-        "schema": {
-          "openAPIV3Schema": {
-            "type": "object",
-            "properties": {
-              "spec": {
-                "type": "object",
-                "properties": {
-                  "args": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
+        &quot;name&quot;: &quot;v1&quot;,
+        &quot;served&quot;: true,
+        &quot;storage&quot;: true,
+        &quot;schema&quot;: {
+          &quot;openAPIV3Schema&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+              &quot;spec&quot;: {
+                &quot;type&quot;: &quot;object&quot;,
+                &quot;properties&quot;: {
+                  &quot;args&quot;: {
+                    &quot;type&quot;: &quot;array&quot;,
+                    &quot;items&quot;: {
+                      &quot;type&quot;: &quot;string&quot;
                     }
                   }
                 }
@@ -549,171 +894,171 @@ you can check <a href="commands/apply.configuration.html"><code>apply</code> doc
   }
 }
 {
-  "apiVersion": "rbac.authorization.k8s.io/v1",
-  "kind": "Role",
-  "metadata": {
-    "name": "bundlebee-operator",
-    "labels": {
-      "app.kubernetes.io/component": "controller",
-      "app.kubernetes.io/name": "bundlebee-operator",
-      "app.kubernetes.io/version": "1.0.28-SNAPSHOT"
+  &quot;apiVersion&quot;: &quot;rbac.authorization.k8s.io/v1&quot;,
+  &quot;kind&quot;: &quot;Role&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;bundlebee-operator&quot;,
+    &quot;labels&quot;: {
+      &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
+      &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.29-SNAPSHOT&quot;
     }
   },
-  "rules": [
+  &quot;rules&quot;: [
     {
-      "apiGroups": [
-        "bundlebee.yupiik.io"
+      &quot;apiGroups&quot;: [
+        &quot;bundlebee.yupiik.io&quot;
       ],
-      "resources": [
-        "alveoli"
+      &quot;resources&quot;: [
+        &quot;alveoli&quot;
       ],
-      "verbs": [
-        "*"
+      &quot;verbs&quot;: [
+        &quot;*&quot;
       ]
     },
     {
-      "apiGroups": [
-        "apps"
+      &quot;apiGroups&quot;: [
+        &quot;apps&quot;
       ],
-      "resources": [
-        "daemonsets",
-        "statefulsets",
-        "deployments"
+      &quot;resources&quot;: [
+        &quot;daemonsets&quot;,
+        &quot;statefulsets&quot;,
+        &quot;deployments&quot;
       ],
-      "verbs": [
-        "get",
-        "create",
-        "update",
-        "delete"
+      &quot;verbs&quot;: [
+        &quot;get&quot;,
+        &quot;create&quot;,
+        &quot;update&quot;,
+        &quot;delete&quot;
       ]
     },
     {
-      "apiGroups": [
-        ""
+      &quot;apiGroups&quot;: [
+        &quot;&quot;
       ],
-      "resources": [
-        "configmaps",
-        "secrets",
-        "pods",
-        "persistentvolumes",
-        "persistentvolumeclaims",
-        "services"
+      &quot;resources&quot;: [
+        &quot;configmaps&quot;,
+        &quot;secrets&quot;,
+        &quot;pods&quot;,
+        &quot;persistentvolumes&quot;,
+        &quot;persistentvolumeclaims&quot;,
+        &quot;services&quot;
       ],
-      "verbs": [
-        "*"
+      &quot;verbs&quot;: [
+        &quot;*&quot;
       ]
     }
   ]
 }
 {
-  "apiVersion": "rbac.authorization.k8s.io/v1",
-  "kind": "RoleBinding",
-  "metadata": {
-    "name": "bundlebee-operator",
-    "labels": {
-      "app.kubernetes.io/component": "controller",
-      "app.kubernetes.io/name": "bundlebee-operator",
-      "app.kubernetes.io/version": "1.0.28-SNAPSHOT"
+  &quot;apiVersion&quot;: &quot;rbac.authorization.k8s.io/v1&quot;,
+  &quot;kind&quot;: &quot;RoleBinding&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;bundlebee-operator&quot;,
+    &quot;labels&quot;: {
+      &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
+      &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.29-SNAPSHOT&quot;
     }
   },
-  "roleRef": {
-    "apiGroup": "rbac.authorization.k8s.io",
-    "kind": "Role",
-    "name": "bundlebee-operator"
+  &quot;roleRef&quot;: {
+    &quot;apiGroup&quot;: &quot;rbac.authorization.k8s.io&quot;,
+    &quot;kind&quot;: &quot;Role&quot;,
+    &quot;name&quot;: &quot;bundlebee-operator&quot;
   },
-  "subjects": [
+  &quot;subjects&quot;: [
     {
-      "kind": "ServiceAccount",
-      "name": "bundlebee-operator",
-      "namespace": "default"
+      &quot;kind&quot;: &quot;ServiceAccount&quot;,
+      &quot;name&quot;: &quot;bundlebee-operator&quot;,
+      &quot;namespace&quot;: &quot;default&quot;
     }
   ]
 }
 {
-  "apiVersion": "v1",
-  "kind": "ServiceAccount",
-  "metadata": {
-    "name": "bundlebee-operator",
-    "namespace": "default",
-    "labels": {
-      "app.kubernetes.io/component": "controller",
-      "app.kubernetes.io/name": "bundlebee-operator",
-      "app.kubernetes.io/version": "1.0.28-SNAPSHOT"
+  &quot;apiVersion&quot;: &quot;v1&quot;,
+  &quot;kind&quot;: &quot;ServiceAccount&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;bundlebee-operator&quot;,
+    &quot;namespace&quot;: &quot;default&quot;,
+    &quot;labels&quot;: {
+      &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
+      &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.29-SNAPSHOT&quot;
     }
   }
 }
 {
-  "apiVersion": "v1",
-  "kind": "Secret",
-  "metadata": {
-    "name": "bundlebee-operator-token",
-    "namespace": "default",
-    "annotations": {
-      "kubernetes.io/service-account.name": "bundlebee-operator"
+  &quot;apiVersion&quot;: &quot;v1&quot;,
+  &quot;kind&quot;: &quot;Secret&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;bundlebee-operator-token&quot;,
+    &quot;namespace&quot;: &quot;default&quot;,
+    &quot;annotations&quot;: {
+      &quot;kubernetes.io/service-account.name&quot;: &quot;bundlebee-operator&quot;
     }
   },
-  "type": "kubernetes.io/service-account-token"
+  &quot;type&quot;: &quot;kubernetes.io/service-account-token&quot;
 }
 {
-  "apiVersion": "apps/v1",
-  "kind": "Deployment",
-  "metadata": {
-    "name": "bundlebee-operator",
-    "labels": {
-      "app.kubernetes.io/component": "controller",
-      "app.kubernetes.io/name": "bundlebee-operator",
-      "app.kubernetes.io/version": "1.0.28-SNAPSHOT"
+  &quot;apiVersion&quot;: &quot;apps/v1&quot;,
+  &quot;kind&quot;: &quot;Deployment&quot;,
+  &quot;metadata&quot;: {
+    &quot;name&quot;: &quot;bundlebee-operator&quot;,
+    &quot;labels&quot;: {
+      &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
+      &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.29-SNAPSHOT&quot;
     }
   },
-  "spec": {
-    "replicas": 1,
-    "selector": {
-      "matchLabels": {
-        "app.kubernetes.io/component": "controller",
-        "app.kubernetes.io/name": "bundlebee-operator"
+  &quot;spec&quot;: {
+    &quot;replicas&quot;: 1,
+    &quot;selector&quot;: {
+      &quot;matchLabels&quot;: {
+        &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
+        &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;
       }
     },
-    "template": {
-      "metadata": {
-        "annotations": {
-          "kubectl.kubernetes.io/default-container": "bundlebee-operator"
+    &quot;template&quot;: {
+      &quot;metadata&quot;: {
+        &quot;annotations&quot;: {
+          &quot;kubectl.kubernetes.io/default-container&quot;: &quot;bundlebee-operator&quot;
         },
-        "labels": {
-          "app.kubernetes.io/component": "controller",
-          "app.kubernetes.io/name": "bundlebee-operator",
-          "app.kubernetes.io/version": "1.0.28-SNAPSHOT"
+        &quot;labels&quot;: {
+          &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
+          &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
+          &quot;app.kubernetes.io/version&quot;: &quot;1.0.29-SNAPSHOT&quot;
         }
       },
-      "spec": {
-        "serviceAccountName": "bundlebee-operator",
-        "containers": [
+      &quot;spec&quot;: {
+        &quot;serviceAccountName&quot;: &quot;bundlebee-operator&quot;,
+        &quot;containers&quot;: [
           {
-            "name": "bundlebee-operator",
-            "image": "yupiik/bundlebee/operator:1.0.28-SNAPSHOT",
-            "env": [
+            &quot;name&quot;: &quot;bundlebee-operator&quot;,
+            &quot;image&quot;: &quot;yupiik/bundlebee/operator:1.0.29-SNAPSHOT&quot;,
+            &quot;env&quot;: [
               {
-                "name": "BUNDLEBEE_KUBE_DRYRUN",
-                "value": "false"
+                &quot;name&quot;: &quot;BUNDLEBEE_KUBE_DRYRUN&quot;,
+                &quot;value&quot;: &quot;false&quot;
               },
               {
-                "name": "BUNDLEBEE_KUBE_SKIPDRYRUNFORGET",
-                "value": "false"
+                &quot;name&quot;: &quot;BUNDLEBEE_KUBE_SKIPDRYRUNFORGET&quot;,
+                &quot;value&quot;: &quot;false&quot;
               },
               {
-                "name": "BUNDLEBEE_KUBE_VERBOSE",
-                "value": "false"
+                &quot;name&quot;: &quot;BUNDLEBEE_KUBE_VERBOSE&quot;,
+                &quot;value&quot;: &quot;false&quot;
               },
               {
-                "name": "BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED",
-                "value": "false"
+                &quot;name&quot;: &quot;BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED&quot;,
+                &quot;value&quot;: &quot;false&quot;
               },
               {
-                "name": "BUNDLEBEE_HTTPCLIENT_THREADS",
-                "value": "8"
+                &quot;name&quot;: &quot;BUNDLEBEE_HTTPCLIENT_THREADS&quot;,
+                &quot;value&quot;: &quot;8&quot;
               },
               {
-                "name": "KUBECONFIG",
-                "value": "{\n  \"apiVersion\": \"v1\",\n  \"kind\": \"Config\",\n  \"current-context\": \"ctx\",\n  \"clusters\": [{\"name\": \"clt\",\"cluster\": {\n    \"certificate-authority\": \"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\",\n    \"server\": \"https://kubernetes.default.svc\"}}],\n  \"contexts\": [{\"name\": \"ctx\",\"context\": {\"cluster\": \"clt\", \"user\": \"sa\",\n    \"namespace\": \"default\"}}],\n  \"users\": [{\"name\": \"sa\",\"user\": {\n    \"tokenFile\": \"/var/run/secrets/kubernetes.io/serviceaccount/token\"}}]\n}"
+                &quot;name&quot;: &quot;KUBECONFIG&quot;,
+                &quot;value&quot;: &quot;{\n  \&quot;apiVersion\&quot;: \&quot;v1\&quot;,\n  \&quot;kind\&quot;: \&quot;Config\&quot;,\n  \&quot;current-context\&quot;: \&quot;ctx\&quot;,\n  \&quot;clusters\&quot;: [{\&quot;name\&quot;: \&quot;clt\&quot;,\&quot;cluster\&quot;: {\n    \&quot;certificate-authority\&quot;: \&quot;/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\&quot;,\n    \&quot;server\&quot;: \&quot;https://kubernetes.default.svc\&quot;}}],\n  \&quot;contexts\&quot;: [{\&quot;name\&quot;: \&quot;ctx\&quot;,\&quot;context\&quot;: {\&quot;cluster\&quot;: \&quot;clt\&quot;, \&quot;user\&quot;: \&quot;sa\&quot;,\n    \&quot;namespace\&quot;: \&quot;default\&quot;}}],\n  \&quot;users\&quot;: [{\&quot;name\&quot;: \&quot;sa\&quot;,\&quot;user\&quot;: {\n    \&quot;tokenFile\&quot;: \&quot;/var/run/secrets/kubernetes.io/serviceaccount/token\&quot;}}]\n}&quot;
               }
             ]
           }
@@ -722,10 +1067,10 @@ you can check <a href="commands/apply.configuration.html"><code>apply</code> doc
     }
   }
 }</code></pre>
-</div>
-</div>
-</div>
-</div>
+ </div>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -784,7 +1129,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

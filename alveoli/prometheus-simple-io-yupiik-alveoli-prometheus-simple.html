@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT</title>
+    <title>io.yupiik.alveoli:prometheus-simple:1.0.29-SNAPSHOT</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -153,41 +153,40 @@
 
         <div id="alveoli-prometheus-simple-io-yupiik-alveoli-prometheus-simple-html-container" class="container page-content alveoli-prometheus-simple-io-yupiik-alveoli-prometheus-simple-html ">
                         <div class="page-header">
-                <h1>io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT</h1>
+                <h1>io.yupiik.alveoli:prometheus-simple:1.0.29-SNAPSHOT</h1>
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Prometheus local/dev setup. Will be available on <a href="http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT" class="bare">http://$(PROMETHEUS_SERVICE_SERVICE_HOST):$(PROMETHEUS_SERVICE_SERVICE_PORT</a>).</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_maven_dependency">Maven Dependency</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Prometheus local/dev setup. Will be available on  <a href="http://$(PROMETHEUS">http://$(PROMETHEUS</a>
+<i>SERVICE</i>SERVICE<i>HOST):$(PROMETHEUS</i>SERVICE<i>SERVICE</i>PORT).</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_maven_dependency">
+  <h2>Maven Dependency</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
   &lt;artifactId&gt;prometheus-simple&lt;/artifactId&gt;
-  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.29-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_default_configuration">Default Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">prometheus.yml</dt>
-</dl>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs">global:
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_default_configuration">
+  <h2>Default Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt>prometheus.yml</dt>
+  <dd>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="null hljs">global:
   scrape_interval: {{prometheus-simple.scrape_internal:-{{prometheus-simple.internal:-5s}}}}
   evaluation_interval: {{prometheus-simple.evaluation_interval:-{{prometheus-simple.internal:-5s}}}}
 rule_files:
@@ -197,7 +196,7 @@ alerting:
   - scheme: http
     static_configs:
     - targets:
-      - "alertmanager.monitoring.svc:9093"
+      - &quot;alertmanager.monitoring.svc:9093&quot;
 scrape_configs:
   - job_name: 'kubernetes-apiservers'
     kubernetes_sd_configs:
@@ -300,137 +299,175 @@ scrape_configs:
     - source_labels: [__meta_kubernetes_service_name]
       action: replace
       target_label: kubernetes_name</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_ports">Ports</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <code>prometheus</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Protocol: TCP</p>
-</li>
-<li>
-<p>Port: 9090</p>
-</li>
-<li>
-<p>Target Port: 9090</p>
-</li>
-<li>
-<p>Node Port: 32090</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-on linux and with minikube you can access this service using <code><a href="http://$(minikube" class="bare">http://$(minikube</a> ip):32090</code> on your host.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_sample_usage">Sample Usage</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "alveoli": [
+ </div>
+ </div>
+</dd>
+ </dl>
+ </div>
+ </div>
+ <div class="sect1" id="_ports">
+  <h2>Ports</h2>
+ <div class="sectionbody">
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+Name: <code>prometheus</code> <div class="ulist">
+ <ul>
+  <li>
+ <p>
+Protocol: TCP
+ </p>
+  </li>
+  <li>
+ <p>
+Port: 9090
+ </p>
+  </li>
+  <li>
+ <p>
+Target Port: 9090
+ </p>
+  </li>
+  <li>
+ <p>
+Node Port: 32090
+ </p>
+  </li>
+ </ul>
+ </div>
+ </div>
+  </li>
+ </ul>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+on linux and with minikube you can access this service using on your host.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_sample_usage">
+  <h2>Sample Usage</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;alveoli&quot;: [
     {
-      "//": "My alveolus.",
-      "name": "com.company:my-app:1.0.0",
-      "descriptors": [],
-      "dependencies": [
+      &quot;//&quot;: &quot;My alveolus.&quot;,
+      &quot;name&quot;: &quot;com.company:my-app:1.0.0&quot;,
+      &quot;descriptors&quot;: [],
+      &quot;dependencies&quot;: [
         {
-          "name": "io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT",
-          "location": "io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT",
+          &quot;name&quot;: &quot;io.yupiik.alveoli:prometheus-simple:1.0.29-SNAPSHOT&quot;,
+          &quot;location&quot;: &quot;io.yupiik.alveoli:prometheus-simple:1.0.29-SNAPSHOT&quot;,
         }
       ],
-      "patches": [{
-        "descriptorName": "io.yupiik.alveoli:prometheus-simple:1.0.28-SNAPSHOT",
-        "interpolate": true
+      &quot;patches&quot;: [{
+        &quot;descriptorName&quot;: &quot;io.yupiik.alveoli:prometheus-simple:1.0.29-SNAPSHOT&quot;,
+        &quot;interpolate&quot;: true
       }]
     }
   ]
 }</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">prometheus-simple.evaluation_interval</dt>
-<dd>
-<p>Default evaluation interval in prometheus configuration.
-Default value: ``.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt>prometheus-simple.evaluation_interval</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default evaluation interval in prometheus configuration. Default value: <code></code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.image</dt>
-<dd>
-<p>The image to use.
-Default value: <code>prom/prometheus:v2.37.0</code>.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.image</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The image to use. Default value: <code>prom/prometheus:v2.37.0</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.internal</dt>
-<dd>
-<p>Default for evaluation and scrape interval in prometheus configuration if not overridden by the specific placeholders.
-Default value: <code>5s</code>.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.internal</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default for evaluation and scrape interval in prometheus configuration if not overridden by the specific placeholders. Default value: <code>5s</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.namespace</dt>
-<dd>
-<p>The Kubernetes namespace to use for the installation.
-Default value: ``.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.namespace</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The Kubernetes namespace to use for the installation. Default value: <code></code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.resources.limits.cpu</dt>
-<dd>
-<p>The resource limits cpu for Prometheus.
-Default value: <code>0.2</code>.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.resources.limits.cpu</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource limits cpu for Prometheus. Default value: <code>0.2</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.resources.limits.memory</dt>
-<dd>
-<p>The resource limits memory for Prometheus.
-Default value: <code>128Mi</code>.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.resources.limits.memory</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource limits memory for Prometheus. Default value: <code>128Mi</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.resources.requests.cpu</dt>
-<dd>
-<p>The resource requests cpu for Prometheus.
-Default value: <code>0.1</code>.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.resources.requests.cpu</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource requests cpu for Prometheus. Default value: <code>0.1</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.resources.requests.memory</dt>
-<dd>
-<p>The resource requests memory for Prometheus.
-Default value: <code>64Mi</code>.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.resources.requests.memory</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource requests memory for Prometheus. Default value: <code>64Mi</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.scrape_internal</dt>
-<dd>
-<p>Default scrape interval in prometheus configuration.
-Default value: ``.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.scrape_internal</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default scrape interval in prometheus configuration. Default value: <code></code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">prometheus-simple.serviceaccount</dt>
-<dd>
-<p>Name of prometheus service account - where cluster role will be bound. Note that we use default by default for simplicity but in a real cluster it can make sense to create a dedicated service account..
-Default value: <code>default</code>.</p>
+ </dl>
+ <dl>
+  <dt>prometheus-simple.serviceaccount</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Name of prometheus service account - where cluster role will be bound. Note that we use default by default for simplicity but in a real cluster it can make sense to create a dedicated service account.. Default value: <code>default</code>.</p>
+ </div>
 </dd>
-</dl>
-</div>
-</div>
-</div>
+ </dl>
+ </div>
+ </div>
                 
                 
             </div>
@@ -489,7 +526,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

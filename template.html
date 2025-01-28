@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -156,77 +156,68 @@
                 <h1>Create your own templates</h1>
             </div>
             <div class="page-content-body">
-                <div id="preamble">
-<div class="sectionbody">
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-feature available since Bundlebee 1.0.14.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>A template is an alveolus which is not intended to be installed by itself in general - even if it is possible.
-It relies on placeholders to be contextualized and, in general, placeholders are provided in the context if a <em>contextual alveolus</em> which represents the consumer.</p>
-</div>
-<div class="paragraph">
-<p>But why using templates? Most of the time, the Kubernetes flavor you are using (OpenShift for example or a cloud specific instance or with a particular service mesh stack) is relying on specific metadata/labels etc&#8230;&#8203;
-Your company can also standardize the way to write kubernetes descriptors.
-All that make it quite hard to define generic and maintainable descriptors generally speaking but it also makes it quite repetitive to write it for each microservice in your own context.</p>
-</div>
-<div class="paragraph">
-<p>To solve that issue, Bundlebee enables you to write a generic contextual alveolus (a deployment, a service etc&#8230;&#8203;) and bind placeholders from another alveolus.</p>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-the context is the alveolus and not the dependency to ensure the binding is more obvious and not ultra nested. it can require you to split a bit the definition in the <code>manifest.json</code> but it is to simplify the maintenance.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_create_your_first_template">Create your first template</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To create a template, just define a standard alveolus with placeholders in descriptors.
-For example:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">manifest.json
-----
-{
-  "alveoli": [
-    {
-      "name": "my-service-template",
-      "descriptors": [
-        {
-          "name": "service.template",
-          "interpolate": true
-        }
-      ]
-    }
-  ]
-}
-----</code></pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">service.template.yaml</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: v1
+                <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+feature available since Bundlebee 1.0.14.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div id="preamble">
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>A template is an alveolus which is not intended to be installed by itself in general - even if it is possible. It relies on placeholders to be contextualized and, in general, placeholders are provided in the context if a <i>contextual alveolus</i> which represents the consumer.</p>
+ </div>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+But why using templates? Most of the time, the Kubernetes flavor you are using (OpenShift for example or a cloud specific instance or with a particular service mesh stack) is relying on specific metadata/labels etc... Your company can also standardize the way to write kubernetes descriptors. All that make it quite hard to define generic and maintainable descriptors generally speaking but it also makes it quite repetitive to write it for each microservice in your own context.
+ </p>
+ </div>
+ <div class="paragraph">
+ <p>
+To solve that issue, Bundlebee enables you to write a generic contextual alveolus (a deployment, a service etc...) and bind placeholders from another alveolus.
+ </p>
+ </div>
+ <div class="admonitionblock important">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">IMPORTANT</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>the context is the alveolus and not the dependency to ensure the binding is more obvious and not ultra nested. it can require you to split a bit the definition in the <code>manifest.json</code> but it is to simplify the maintenance.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="sect1" id="_create_your_first_template">
+  <h2>Create your first template</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+To create a template, just define a standard alveolus with placeholders in descriptors. For example:
+ </p>
+ </div>
+ <div class="paragraph">
+ <p>
+manifest.json ---- { &quot;alveoli&quot;: [ { &quot;name&quot;: &quot;my-service-template&quot;, &quot;descriptors&quot;: [ { &quot;name&quot;: &quot;service.template&quot;, &quot;interpolate&quot;: true } ] } ] } ----
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">apiVersion: v1
 kind: Service
 metadata:
   name: {{service.name}}
@@ -239,90 +230,107 @@ spec:
       targetPort: {{service.port}}
   selector:
     app: {{service.app}}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Here we can see we just defined an alveolus requiring the placeholders:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>service.name</code>,</p>
-</li>
-<li>
-<p><code>service.app</code>,</p>
-</li>
-<li>
-<p><code>service.type</code>,</p>
-</li>
-<li>
-<p><code>service.port</code>.</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-this is a valid alveolus, if you provide all the placeholders you can install it directly but it is not recommended to ensure it is reproducible.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_use_your_first_template">Use your first template</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To use the template previously defined, just define another alveolus which binds the required placeholders in its definition:</p>
-</div>
-<div class="listingblock">
-<div class="title">manifest.json snippet</div>
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "name": "my-service-7070",
-  "dependencies": [
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+Here we can see we just defined an alveolus requiring the placeholders:
+ </p>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+ <p><code>service.name</code>,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p><code>service.app</code>,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p><code>service.type</code>,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p><code>service.port</code>.</p>
+ </div>
+  </li>
+ </ul>
+ </div>
+ <div class="admonitionblock note">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">NOTE</div>
+       </td>
+      <td class="content">
+this is a valid alveolus, if you provide all the placeholders you can install it directly but it is not recommended to ensure it is reproducible.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_use_your_first_template">
+  <h2>Use your first template</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+To use the template previously defined, just define another alveolus which binds the required placeholders in its definition:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;name&quot;: &quot;my-service-7070&quot;,
+  &quot;dependencies&quot;: [
     { <b class="conum">(1)</b>
-      "name": "my-service-template"
+      &quot;name&quot;: &quot;my-service-template&quot;
     }
   ],
-  "placeholders": { <b class="conum">(2)</b>
-    "service.app": "my-simple-app",
-    "service.name": "simple-port",
-    "service.type": "NodePort",
-    "service.port": "7070"
+  &quot;placeholders&quot;: { <b class="conum">(2)</b>
+    &quot;service.app&quot;: &quot;my-simple-app&quot;,
+    &quot;service.name&quot;: &quot;simple-port&quot;,
+    &quot;service.type&quot;: &quot;NodePort&quot;,
+    &quot;service.port&quot;: &quot;7070&quot;
   }
 }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>import the template in the alveolus,</p>
-</li>
-<li>
-<p>Binds the placeholders of the imported template.</p>
-</li>
-</ol>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-if your alveolus imports a dependency reimporting the template, the placeholders nesting will be respected which means the context is always the deepest one.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+import the template in the alveolus,
+ </span>
+   </li>
+   <li>
+ <span>
+Binds the placeholders of the imported template.
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+if your alveolus imports a dependency reimporting the template, the placeholders nesting will be respected which means the context is always the deepest one.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -381,7 +389,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

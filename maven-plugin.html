@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -156,46 +156,51 @@
                 <h1>BundleBee Maven Plugin</h1>
             </div>
             <div class="page-content-body">
-                <div class="sect1">
-<h2 id="_declaration">Declaration</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
+                <div class="sect1" id="_declaration">
+  <h2>Declaration</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
   &lt;version&gt;${bundlebee.version}&lt;/version&gt;
 &lt;/plugin&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_mojo">Mojo</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>All BundleBee <a href="commands.html">commands</a> have their mojo.</p>
-</div>
-<div class="paragraph">
-<p>They are named exactly the same way (i.e. to execute <code>apply</code> command you can run <code>bundlebee:apply</code> mojo).</p>
-</div>
-<div class="paragraph">
-<p>The configuration is the same than the ones of the CLI so you can review the <a href="commands.html">commands</a> documentation or use your IDE completion.</p>
-</div>
-<div class="paragraph">
-<p>More information on <a href="maven/bundlebee-maven-plugin.html">mojos</a> documentation.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_example">Example</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Here a sample to generate a web alveolus in a maven module (note it can be defined in parent pom):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_mojo">
+  <h2>Mojo</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>All BundleBee  <a href="commands.html">commands</a>
+ have their mojo.</p>
+ </div>
+ <div class="paragraph">
+ <p>They are named exactly the same way (i.e. to execute <code>apply</code> command you can run <code>bundlebee:apply</code> mojo).</p>
+ </div>
+ <div class="paragraph">
+ <p>The configuration is the same than the ones of the CLI so you can review the  <a href="commands.html">commands</a>
+ documentation or use your IDE completion.</p>
+ </div>
+ <div class="paragraph">
+ <p>More information on  <a href="maven/bundlebee-maven-plugin.html">mojos</a>
+ documentation.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_example">
+  <h2>Example</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Here a sample to generate a web alveolus in a maven module (note it can be defined in parent pom):
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
   &lt;version&gt;${bundlebee.version}&lt;/version&gt;
@@ -219,39 +224,51 @@
     &lt;/execution&gt;
   &lt;/executions&gt;
 &lt;/plugin&gt;</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>initialize a bundlebee folder in <code>target/classes/bundlebee</code> (default)</p>
-</li>
-<li>
-<p>add a web (default type) alveolus for this module</p>
-</li>
-<li>
-<p>ensure to set the image name for the module, it is required</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>This will enable to bundle the alveolus in the jar and then rely on it in a <code>manifest.json</code>.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-even if the <code>add-alveolus</code> goal will enable you to deploy your web service, it is recommended to customize the configuration (at least the config map).
-This goal (<code>add-alveolus</code>) is mainly to get started but once you got your <code>manifest.json</code> written you can remove the plugin execution until you write a custom <code>io.yupiik.bundlebee.core.command.AddAlveolusTypeHandler</code> added in plugin dependencies.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
+ </div>
+ </div>
+ <div class="colist arabic">
+  <ol>
+   <li>
+ <span>
+initialize a bundlebee folder in 
+ </span>
+<code>target/classes/bundlebee</code> <span>
+ (default)
+ </span>
+   </li>
+   <li>
+ <span>
+add a web (default type) alveolus for this module
+ </span>
+   </li>
+   <li>
+ <span>
+ensure to set the image name for the module, it is required
+ </span>
+   </li>
+  </ol>
+ </div>
+ <div class="paragraph">
+ <p>This will enable to bundle the alveolus in the jar and then rely on it in a <code>manifest.json</code>.</p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>even if the <code>add-alveolus</code> goal will enable you to deploy your web service, it is recommended to customize the configuration (at least the config map). This goal (<code>add-alveolus</code>) is mainly to get started but once you got your <code>manifest.json</code> written you can remove the plugin execution until you write a custom <code>io.yupiik.bundlebee.core.command.AddAlveolusTypeHandler</code> added in plugin dependencies.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -310,7 +327,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

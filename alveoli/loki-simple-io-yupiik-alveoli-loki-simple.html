@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT</title>
+    <title>io.yupiik.alveoli:loki-simple:1.0.29-SNAPSHOT</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -153,53 +153,55 @@
 
         <div id="alveoli-loki-simple-io-yupiik-alveoli-loki-simple-html-container" class="container page-content alveoli-loki-simple-io-yupiik-alveoli-loki-simple-html ">
                         <div class="page-header">
-                <h1>io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT</h1>
+                <h1>io.yupiik.alveoli:loki-simple:1.0.29-SNAPSHOT</h1>
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Loki setup to aggregate service logs using promtail, the prometheus for logs.</p>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Warning</div>
-</td>
-<td class="content">
-Starting from 1.0.20, the Promtail descriptor moved from Deployment to DaemonSet.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_maven_dependency">Maven Dependency</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Loki setup to aggregate service logs using promtail, the prometheus for logs.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="admonitionblock warning">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">WARNING</div>
+       </td>
+      <td class="content">
+Starting from 1.0.20, the Promtail descriptor moved from Deployment to DaemonSet.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="sect1" id="_maven_dependency">
+  <h2>Maven Dependency</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
   &lt;artifactId&gt;loki-simple&lt;/artifactId&gt;
-  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.29-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_default_configuration">Default Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">loki.yaml</dt>
-</dl>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs"># this is the default local configuration for loki
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_default_configuration">
+  <h2>Default Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt>loki.yaml</dt>
+  <dd>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="null hljs"># this is the default local configuration for loki
 auth_enabled: false
 server:
   http_listen_port: 3100
@@ -257,16 +259,16 @@ ruler:
     kvstore:
       store: inmemory
   enable_api: true</code></pre>
-</div>
-</div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">promtail.yaml</dt>
-</dl>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-none hljs"># See also https://clymene-project.github.io/docs/service-discovery/promtail-config/
+ </div>
+ </div>
+</dd>
+ </dl>
+ <dl>
+  <dt>promtail.yaml</dt>
+  <dd>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="null hljs"># See also https://clymene-project.github.io/docs/service-discovery/promtail-config/
 server:
   log_level: info
   http_listen_port: 3101
@@ -575,187 +577,245 @@ scrape_configs:
         - __meta_kubernetes_pod_annotation_kubernetes_io_config_hash
         - __meta_kubernetes_pod_container_name
         target_label: __path__</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_ports">Ports</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <code>loki (loki)</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Protocol: TCP</p>
-</li>
-<li>
-<p>Port: 3100</p>
-</li>
-<li>
-<p>Target Port: 3100</p>
-</li>
-<li>
-<p>Node Port: 32100</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-on linux and with minikube you can access this service using <code><a href="http://$(minikube" class="bare">http://$(minikube</a> ip):32100</code> on your host.
-</td>
-</tr>
-</table>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Name: <code>promtail (promtail-http)</code></p>
-<div class="ulist">
-<ul>
-<li>
-<p>Protocol: TCP</p>
-</li>
-<li>
-<p>Port: 3101</p>
-</li>
-<li>
-<p>Target Port: 3101</p>
-</li>
-<li>
-<p>Node Port: 32101</p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-on linux and with minikube you can access this service using <code><a href="http://$(minikube" class="bare">http://$(minikube</a> ip):32101</code> on your host.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_sample_usage">Sample Usage</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "alveoli": [
+ </div>
+ </div>
+</dd>
+ </dl>
+ </div>
+ </div>
+ <div class="sect1" id="_ports">
+  <h2>Ports</h2>
+ <div class="sectionbody">
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+Name: <code>loki (loki)</code> <div class="ulist">
+ <ul>
+  <li>
+ <p>
+Protocol: TCP
+ </p>
+  </li>
+  <li>
+ <p>
+Port: 3100
+ </p>
+  </li>
+  <li>
+ <p>
+Target Port: 3100
+ </p>
+  </li>
+  <li>
+ <p>
+Node Port: 32100
+ </p>
+  </li>
+ </ul>
+ </div>
+ </div>
+  </li>
+ </ul>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+on linux and with minikube you can access this service using on your host.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+Name: <code>promtail (promtail-http)</code> <div class="ulist">
+ <ul>
+  <li>
+ <p>
+Protocol: TCP
+ </p>
+  </li>
+  <li>
+ <p>
+Port: 3101
+ </p>
+  </li>
+  <li>
+ <p>
+Target Port: 3101
+ </p>
+  </li>
+  <li>
+ <p>
+Node Port: 32101
+ </p>
+  </li>
+ </ul>
+ </div>
+ </div>
+  </li>
+ </ul>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+on linux and with minikube you can access this service using on your host.    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_sample_usage">
+  <h2>Sample Usage</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;alveoli&quot;: [
     {
-      "//": "My alveolus.",
-      "name": "com.company:my-app:1.0.0",
-      "descriptors": [],
-      "dependencies": [
+      &quot;//&quot;: &quot;My alveolus.&quot;,
+      &quot;name&quot;: &quot;com.company:my-app:1.0.0&quot;,
+      &quot;descriptors&quot;: [],
+      &quot;dependencies&quot;: [
         {
-          "name": "io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT",
-          "location": "io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT",
+          &quot;name&quot;: &quot;io.yupiik.alveoli:loki-simple:1.0.29-SNAPSHOT&quot;,
+          &quot;location&quot;: &quot;io.yupiik.alveoli:loki-simple:1.0.29-SNAPSHOT&quot;,
         }
       ],
-      "patches": [{
-        "descriptorName": "io.yupiik.alveoli:loki-simple:1.0.28-SNAPSHOT",
-        "interpolate": true
+      &quot;patches&quot;: [{
+        &quot;descriptorName&quot;: &quot;io.yupiik.alveoli:loki-simple:1.0.29-SNAPSHOT&quot;,
+        &quot;interpolate&quot;: true
       }]
     }
   ]
 }</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">loki-simple.loki.client_url</dt>
-<dd>
-<p>URL of the Loki API used to push data.
-Default value: <code><a href="http://loki:3100/loki/api/v1/push" class="bare">http://loki:3100/loki/api/v1/push</a></code>.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt>loki-simple.loki.client_url</dt>
+  <dd>
+ <div class="paragraph">
+ <p>URL of the Loki API used to push data. Default value: <code> <a href="http://loki:3100/loki/api/v1/push" class="inline-code">http://loki:3100/loki/api/v1/push</a>
+</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.loki.image</dt>
-<dd>
-<p>The image to use for loki.
-Default value: <code>grafana/loki:2.8.2</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.loki.image</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The image to use for loki. Default value: <code>grafana/loki:2.8.2</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.loki.pipeline_stage</dt>
-<dd>
-<p>Pipeline stage to use, generally <code>cri</code> or <code>docker</code>.
-Default value: <code>cri</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.loki.pipeline_stage</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Pipeline stage to use, generally <code>cri</code> or <code>docker</code>. Default value: <code>cri</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.loki.resources.limits.cpu</dt>
-<dd>
-<p>The resource limits cpu for Loki API.
-Default value: <code>0.2</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.loki.resources.limits.cpu</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource limits cpu for Loki API. Default value: <code>0.2</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.loki.resources.limits.memory</dt>
-<dd>
-<p>The resource limits memory for Loki API.
-Default value: <code>128Mi</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.loki.resources.limits.memory</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource limits memory for Loki API. Default value: <code>128Mi</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.loki.resources.requests.cpu</dt>
-<dd>
-<p>The resource requests cpu for Loki API.
-Default value: <code>0.1</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.loki.resources.requests.cpu</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource requests cpu for Loki API. Default value: <code>0.1</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.loki.resources.requests.memory</dt>
-<dd>
-<p>The resource requests memory for Loki API.
-Default value: <code>64Mi</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.loki.resources.requests.memory</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource requests memory for Loki API. Default value: <code>64Mi</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.namespace</dt>
-<dd>
-<p>The Kubernetes namespace to use for the installation.
-Default value: ``.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.namespace</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The Kubernetes namespace to use for the installation. Default value: <code></code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.promtail.image</dt>
-<dd>
-<p>The image to use for promtail.
-Default value: <code>grafana/promtail:2.8.2</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.promtail.image</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The image to use for promtail. Default value: <code>grafana/promtail:2.8.2</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.resources.limits.cpu</dt>
-<dd>
-<p>The resource limits cpu for Promtail.
-Default value: <code>0.2</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.resources.limits.cpu</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource limits cpu for Promtail. Default value: <code>0.2</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.resources.limits.memory</dt>
-<dd>
-<p>The resource limits memory for Promtail.
-Default value: <code>128Mi</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.resources.limits.memory</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource limits memory for Promtail. Default value: <code>128Mi</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.resources.requests.cpu</dt>
-<dd>
-<p>The resource requests cpu for Promtail.
-Default value: <code>0.1</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.resources.requests.cpu</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource requests cpu for Promtail. Default value: <code>0.1</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">loki-simple.resources.requests.memory</dt>
-<dd>
-<p>The resource requests memory for Promtail.
-Default value: <code>64Mi</code>.</p>
+ </dl>
+ <dl>
+  <dt>loki-simple.resources.requests.memory</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The resource requests memory for Promtail. Default value: <code>64Mi</code>.</p>
+ </div>
 </dd>
-</dl>
-</div>
-</div>
-</div>
+ </dl>
+ </div>
+ </div>
                 
                 
             </div>
@@ -814,7 +874,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

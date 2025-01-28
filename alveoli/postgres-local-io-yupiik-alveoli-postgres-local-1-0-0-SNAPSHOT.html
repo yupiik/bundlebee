@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -157,82 +157,93 @@
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Setup "postgres-local" which runs a PostgreSQL instance usable by other applications.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_maven_dependency">Maven Dependency</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Setup &quot;postgres-local&quot; which runs a PostgreSQL instance usable by other applications.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="sect1" id="_maven_dependency">
+  <h2>Maven Dependency</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
   &lt;artifactId&gt;postgres-local&lt;/artifactId&gt;
   &lt;version&gt;1.0.0-SNAPSHOT&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_sample_usage">Sample Usage</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
-  "alveoli": [
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_sample_usage">
+  <h2>Sample Usage</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-json hljs" data-lang="json">{
+  &quot;alveoli&quot;: [
     {
-      "//": "My alveolus.",
-      "name": "com.company:my-app:1.0.0",
-      "descriptors": []
-      "dependencies": [        {
-          "name": "io.yupiik.alveoli:postgres-local:1.0.0-SNAPSHOT",
-          "location": "io.yupiik.alveoli:postgres-local:1.0.0-SNAPSHOT",
+      &quot;//&quot;: &quot;My alveolus.&quot;,
+      &quot;name&quot;: &quot;com.company:my-app:1.0.0&quot;,
+      &quot;descriptors&quot;: []
+      &quot;dependencies&quot;: [        {
+          &quot;name&quot;: &quot;io.yupiik.alveoli:postgres-local:1.0.0-SNAPSHOT&quot;,
+          &quot;location&quot;: &quot;io.yupiik.alveoli:postgres-local:1.0.0-SNAPSHOT&quot;,
         }
       ],
-      "patches": [{
-        "descriptorName": "io.yupiik.alveoli:postgres-local:1.0.0-SNAPSHOT",
-        "interpolate": true
+      &quot;patches&quot;: [{
+        &quot;descriptorName&quot;: &quot;io.yupiik.alveoli:postgres-local:1.0.0-SNAPSHOT&quot;,
+        &quot;interpolate&quot;: true
       }]
     }
   ]
 }</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">postgres-local.db</dt>
-<dd>
-<p>The default database name in the PostgreSQL instance.
-Default value: <code>postgres</code>.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt>postgres-local.db</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The default database name in the PostgreSQL instance. Default value: <code>postgres</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">postgres-local.mountPath</dt>
-<dd>
-<p>Where to persist data - using a hostPath mounting point by default.
-Default value: <code>/data/postgres-local</code>.</p>
+ </dl>
+ <dl>
+  <dt>postgres-local.mountPath</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Where to persist data - using a hostPath mounting point by default. Default value: <code>/data/postgres-local</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">postgres-local.password</dt>
-<dd>
-<p>The default user PostgreSQL password.
-Default value: <code>postgres</code>.</p>
+ </dl>
+ <dl>
+  <dt>postgres-local.password</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The default user PostgreSQL password. Default value: <code>postgres</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">postgres-local.username</dt>
-<dd>
-<p>The default user PostgreSQL username.
-Default value: <code>postgres</code>.</p>
+ </dl>
+ <dl>
+  <dt>postgres-local.username</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The default user PostgreSQL username. Default value: <code>postgres</code>.</p>
+ </div>
 </dd>
-</dl>
-</div>
-</div>
-</div>
+ </dl>
+ </div>
+ </div>
                 
                 
             </div>
@@ -291,7 +302,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

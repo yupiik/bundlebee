@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -157,804 +157,1414 @@
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Name: <code>lint</code>.</p>
-</div>
-<div class="paragraph">
-<p>Do common validations on descriptors. As of today mainly cpu/memory resources definition.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_linting_checks">Linting Checks</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Here is the list of available checks by defaults.</p>
-</div>
-<div class="sect2">
-<h3 id="_access_to_create_pods">access-to-create-pods</h3>
-<div class="paragraph">
-<p>Name: <strong>access-to-create-pods</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a subject (Group/User/ServiceAccount) has create access to Pods.
-CIS Benchmark 5.1.4: The ability to create pods in a cluster opens up possibilities for privilege escalation and should be restricted, where possible.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation">Remediation</h4>
-<div class="paragraph">
-<p>Where possible, remove create access to pod objects in the cluster.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_access_to_secrets">access-to-secrets</h3>
-<div class="paragraph">
-<p>Name: <strong>access-to-secrets</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a subject (Group/User/ServiceAccount) has access to Secrets.
-CIS Benchmark 5.1.2: Access to secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_2">Remediation</h4>
-<div class="paragraph">
-<p>Where possible, remove get, list and watch access to secret objects in the cluster.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_cpu_limits">cpu-limits</h3>
-<div class="paragraph">
-<p>Name: <strong>cpu-limits</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.limits.cpu is set.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_3">Remediation</h4>
-<div class="paragraph">
-<p>Set resources.limits.cpu.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_cpu_requests">cpu-requests</h3>
-<div class="paragraph">
-<p>Name: <strong>cpu-requests</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.requests.cpu is set.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_4">Remediation</h4>
-<div class="paragraph">
-<p>Set resources.requests.cpu.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_default_service_account">default-service-account</h3>
-<div class="paragraph">
-<p>Name: <strong>default-service-account</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when pods use the default service account.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_5">Remediation</h4>
-<div class="paragraph">
-<p>Create a dedicated service account for your pod.
-Refer to <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" class="bare">https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_deprecated_service_account_field">deprecated-service-account-field</h3>
-<div class="paragraph">
-<p>Name: <strong>deprecated-service-account-field</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when deployments use the deprecated serviceAccount field.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_6">Remediation</h4>
-<div class="paragraph">
-<p>Use the serviceAccountName field instead. If you must specify serviceAccount, ensure values for serviceAccount and serviceAccountName match.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_dnsconfig_options">dnsconfig-options</h3>
-<div class="paragraph">
-<p>Name: <strong>dnsconfig-options</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments that have no specified dnsConfig options</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_7">Remediation</h4>
-<div class="paragraph">
-<p>Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod.
-Refer to <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config" class="bare">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_docker_sock">docker-sock</h3>
-<div class="paragraph">
-<p>Name: <strong>docker-sock</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with docker.sock mounted in containers.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_8">Remediation</h4>
-<div class="paragraph">
-<p>Ensure the Docker socket is not mounted inside any containers by removing the associated
-Volume and VolumeMount in deployment yaml specification.
-If the Docker socket is mounted inside a container it could allow processes running within
-the container to execute Docker commands which would effectively allow for full control of the host.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_drop_net_raw_capability">drop-net-raw-capability</h3>
-<div class="paragraph">
-<p>Name: <strong>drop-net-raw-capability</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers do not drop NET_RAW capability</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_9">Remediation</h4>
-<div class="paragraph">
-<p><code>NET_RAW</code> makes it so that an application within the container is able to craft raw packets, use raw sockets, and bind to any address. Remove this capability in the containers under containers security contexts.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_duplicate_env_var">duplicate-env-var</h3>
-<div class="paragraph">
-<p>Name: <strong>duplicate-env-var</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Check that duplicate named env vars aren&#8217;t passed to a deployment like.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_10">Remediation</h4>
-<div class="paragraph">
-<p>Confirm that your DeploymentLike doesn&#8217;t have duplicate env vars names.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_host_ipc">host-ipc</h3>
-<div class="paragraph">
-<p>Name: <strong>host-ipc</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on pods/deployment-likes with sharing host&#8217;s IPC namespace</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_11">Remediation</h4>
-<div class="paragraph">
-<p>Ensure the host&#8217;s IPC namespace is not shared.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_host_network">host-network</h3>
-<div class="paragraph">
-<p>Name: <strong>host-network</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on pods/deployment-likes with sharing host&#8217;s network namespace</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_12">Remediation</h4>
-<div class="paragraph">
-<p>Ensure the host&#8217;s network namespace is not shared.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_host_pid">host-pid</h3>
-<div class="paragraph">
-<p>Name: <strong>host-pid</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on pods/deployment-likes with sharing host&#8217;s process namespace</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_13">Remediation</h4>
-<div class="paragraph">
-<p>Ensure the host&#8217;s process namespace is not shared.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hpa_minimum_three_replicas">hpa-minimum-three-replicas</h3>
-<div class="paragraph">
-<p>Name: <strong>hpa-minimum-three-replicas</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a HorizontalPodAutoscaler specifies less than three minReplicas</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_14">Remediation</h4>
-<div class="paragraph">
-<p>Increase the number of replicas in the HorizontalPodAutoscaler to at least three to increase fault tolerance.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_memory_limits">memory-limits</h3>
-<div class="paragraph">
-<p>Name: <strong>memory-limits</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.limits.memory is set.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_15">Remediation</h4>
-<div class="paragraph">
-<p>Set resources.limits.memory.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_memory_requests">memory-requests</h3>
-<div class="paragraph">
-<p>Name: <strong>memory-requests</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.requests.memory is set.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_16">Remediation</h4>
-<div class="paragraph">
-<p>Set resources.requests.memory.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_minimum_three_replicas">minimum-three-replicas</h3>
-<div class="paragraph">
-<p>Name: <strong>minimum-three-replicas</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a deployment uses less than three replicas</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_17">Remediation</h4>
-<div class="paragraph">
-<p>Increase the number of replicas in the deployment to at least three to increase the fault tolerance of the deployment.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_mismatching_selector">mismatching-selector</h3>
-<div class="paragraph">
-<p>Name: <strong>mismatching-selector</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when deployment selectors fail to match the pod template labels.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_18">Remediation</h4>
-<div class="paragraph">
-<p>Confirm that your deployment selector correctly matches the labels in its pod template.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_missing_anti_affinity">missing-anti-affinity</h3>
-<div class="paragraph">
-<p>Name: <strong>missing-anti-affinity</strong>.</p>
-</div>
-<div class="paragraph">
-<p>When replicas &gt; 1 setting an anti-affinity enables to distribute the load accross machines setting 'topologyKey: "kubernetes.io/hostname"', see <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity" class="bare">https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity</a>.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_19">Remediation</h4>
-<div class="paragraph">
-<p>Add podAntiAffinity in your deployment descriptor.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_no_extensions_v1beta">no-extensions-v1beta</h3>
-<div class="paragraph">
-<p>Name: <strong>no-extensions-v1beta</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when objects use deprecated API versions under extensions/v1beta.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_20">Remediation</h4>
-<div class="paragraph">
-<p>Migrate using the apps/v1 API versions for the objects.
-Refer to <a href="https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/" class="bare">https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_no_latest">no-latest</h3>
-<div class="paragraph">
-<p>Name: <strong>no-latest</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures no latest image is used.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_21">Remediation</h4>
-<div class="paragraph">
-<p>Ensure to tag any image you use and use an immutable tag if possible or at least versionned flavor.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_no_liveness_probe">no-liveness-probe</h3>
-<div class="paragraph">
-<p>Name: <strong>no-liveness-probe</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures a liveness probe is defined.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_22">Remediation</h4>
-<div class="paragraph">
-<p>Any container (from containers array) should have a liveness probe.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_no_read_only_root_fs">no-read-only-root-fs</h3>
-<div class="paragraph">
-<p>Name: <strong>no-read-only-root-fs</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers are running without a read-only root filesystem.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_23">Remediation</h4>
-<div class="paragraph">
-<p>Set readOnlyRootFilesystem to true in the container securityContext.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_no_readiness_probe">no-readiness-probe</h3>
-<div class="paragraph">
-<p>Name: <strong>no-readiness-probe</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures a readinessProbe probe is defined.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_24">Remediation</h4>
-<div class="paragraph">
-<p>Any container (from containers array) should have a readinessProbe probe.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_privilege_escalation_container">privilege-escalation-container</h3>
-<div class="paragraph">
-<p>Name: <strong>privilege-escalation-container</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on containers of allowing privilege escalation that could gain more privileges than its parent process.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_25">Remediation</h4>
-<div class="paragraph">
-<p>Ensure containers do not allow privilege escalation by setting
-allowPrivilegeEscalation=false, privileged=false and removing CAP_SYS_ADMIN capability.
-See <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" class="bare">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a> for more details.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_privileged_container">privileged-container</h3>
-<div class="paragraph">
-<p>Name: <strong>privileged-container</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when deployments have containers running in privileged mode.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_26">Remediation</h4>
-<div class="paragraph">
-<p>Do not run your container as privileged unless it is required.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_privileged_ports">privileged-ports</h3>
-<div class="paragraph">
-<p>Name: <strong>privileged-ports</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with privileged ports mapped in containers</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_27">Remediation</h4>
-<div class="paragraph">
-<p>Ensure privileged ports [0, 1024] are not mapped within containers.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_read_secret_from_env_var">read-secret-from-env-var</h3>
-<div class="paragraph">
-<p>Name: <strong>read-secret-from-env-var</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a deployment reads secret from environment variables.
-CIS Benchmark 5.4.1: "Prefer using secrets as files over secrets as environment variables. "</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_28">Remediation</h4>
-<div class="paragraph">
-<p>If possible, rewrite application code to read secrets from mounted secret files, rather than from environment variables.
-Refer to <a href="https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets" class="bare">https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_run_as_non_root">run-as-non-root</h3>
-<div class="paragraph">
-<p>Name: <strong>run-as-non-root</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers are not set to runAsNonRoot.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_29">Remediation</h4>
-<div class="paragraph">
-<p>Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext.
-Refer to <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" class="bare">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_sensitive_host_mounts">sensitive-host-mounts</h3>
-<div class="paragraph">
-<p>Name: <strong>sensitive-host-mounts</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with sensitive host system directories mounted in containers.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_30">Remediation</h4>
-<div class="paragraph">
-<p>Ensure sensitive host system directories are not mounted in containers by removing those Volumes and VolumeMounts.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_unsafe_proc_mount">unsafe-proc-mount</h3>
-<div class="paragraph">
-<p>Name: <strong>unsafe-proc-mount</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with unsafe /proc mount (procMount=Unmasked) that will bypass the default masking behavior of the container runtime</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_31">Remediation</h4>
-<div class="paragraph">
-<p>Ensure container does not unsafely exposes parts of /proc by setting procMount=Default.
-Unmasked ProcMount bypasses the default masking behavior of the container runtime.
-See <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/" class="bare">https://kubernetes.io/docs/concepts/security/pod-security-standards/</a> for more details.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_unsafe_sysctls">unsafe-sysctls</h3>
-<div class="paragraph">
-<p>Name: <strong>unsafe-sysctls</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments specifying unsafe sysctls that may lead to severe problems like wrong behavior of containers</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_32">Remediation</h4>
-<div class="paragraph">
-<p>Ensure container does not allow unsafe allocation of system resources by removing unsafe sysctls configurations.
-For more details see <a href="https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/" class="bare">https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/</a>
-<a href="https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime" class="bare">https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_use_namespace">use-namespace</h3>
-<div class="paragraph">
-<p>Name: <strong>use-namespace</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a resource is deployed to the default namespace.
-CIS Benchmark 5.7.1: Create administrative boundaries between resources using namespaces.
-CIS Benchmark 5.7.4: The default namespace should not be used.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_33">Remediation</h4>
-<div class="paragraph">
-<p>Create namespaces for objects in your deployment.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_wildcard_in_rules">wildcard-in-rules</h3>
-<div class="paragraph">
-<p>Name: <strong>wildcard-in-rules</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicate when a wildcard is used in Role or ClusterRole rules.
-CIS Benchmark 5.1.3 Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_34">Remediation</h4>
-<div class="paragraph">
-<p>Where possible replace any use of wildcards in clusterroles and roles with specific objects or actions.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_writable_host_mount">writable-host-mount</h3>
-<div class="paragraph">
-<p>Name: <strong>writable-host-mount</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers mount a host path as writable.</p>
-</div>
-<div class="sect3">
-<h4 id="_remediation_35">Remediation</h4>
-<div class="paragraph">
-<p>Set containers to mount host paths as readOnly, if you need to access files on the host.</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--alveolus (<code>BUNDLEBEE_LINT_ALVEOLUS</code>)</dt>
-<dd>
-<p>Alveolus name to inspect. When set to <code>auto</code>, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <code>lint</code>.</p>
+ </div>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>
+Do common validations on descriptors. As of today mainly cpu/memory resources definition. // end of short description
+ </p>
+ </div>
+ <div class="sect1" id="_linting_checks">
+  <h2>Linting Checks</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Here is the list of available checks by defaults.
+ </p>
+ </div>
+ <div class="sect2" id="_accesstocreatepods">
+  <h3>access-to-create-pods</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>access-to-create-pods</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a subject (Group/User/ServiceAccount) has create access to Pods. CIS Benchmark 5.1.4: The ability to create pods in a cluster opens up possibilities for privilege escalation and should be restricted, where possible.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible, remove create access to pod objects in the cluster.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_accesstosecrets">
+  <h3>access-to-secrets</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>access-to-secrets</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a subject (Group/User/ServiceAccount) has access to Secrets. CIS Benchmark 5.1.2: Access to secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible, remove get, list and watch access to secret objects in the cluster.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_cpulimits">
+  <h3>cpu-limits</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>cpu-limits</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.limits.cpu is set.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.limits.cpu.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_cpurequests">
+  <h3>cpu-requests</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>cpu-requests</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.requests.cpu is set.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.requests.cpu.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_defaultserviceaccount">
+  <h3>default-service-account</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>default-service-account</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when pods use the default service account.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Create a dedicated service account for your pod. Refer to  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/">https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_deprecatedserviceaccountfield">
+  <h3>deprecated-service-account-field</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>deprecated-service-account-field</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployments use the deprecated serviceAccount field.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Use the serviceAccountName field instead. If you must specify serviceAccount, ensure values for serviceAccount and serviceAccountName match.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_dnsconfigoptions">
+  <h3>dnsconfig-options</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>dnsconfig-options</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments that have no specified dnsConfig options
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod. Refer to  <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_dockersock">
+  <h3>docker-sock</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>docker-sock</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with docker.sock mounted in containers.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the Docker socket is not mounted inside any containers by removing the associated Volume and VolumeMount in deployment yaml specification. If the Docker socket is mounted inside a container it could allow processes running within the container to execute Docker commands which would effectively allow for full control of the host.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_dropnetrawcapability">
+  <h3>drop-net-raw-capability</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>drop-net-raw-capability</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers do not drop NET_RAW capability
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p><code>NET_RAW</code> makes it so that an application within the container is able to craft raw packets, use raw sockets, and bind to any address. Remove this capability in the containers under containers security contexts.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_duplicateenvvar">
+  <h3>duplicate-env-var</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>duplicate-env-var</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Check that duplicate named env vars aren't passed to a deployment like.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Confirm that your DeploymentLike doesn't have duplicate env vars names.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_hostipc">
+  <h3>host-ipc</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-ipc</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's IPC namespace
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's IPC namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_hostnetwork">
+  <h3>host-network</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-network</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's network namespace
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's network namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_hostpid">
+  <h3>host-pid</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-pid</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's process namespace
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's process namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_hpaminimumthreereplicas">
+  <h3>hpa-minimum-three-replicas</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>hpa-minimum-three-replicas</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a HorizontalPodAutoscaler specifies less than three minReplicas
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Increase the number of replicas in the HorizontalPodAutoscaler to at least three to increase fault tolerance.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_memorylimits">
+  <h3>memory-limits</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>memory-limits</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.limits.memory is set.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.limits.memory.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_memoryrequests">
+  <h3>memory-requests</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>memory-requests</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.requests.memory is set.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.requests.memory.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_minimumthreereplicas">
+  <h3>minimum-three-replicas</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>minimum-three-replicas</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a deployment uses less than three replicas
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Increase the number of replicas in the deployment to at least three to increase the fault tolerance of the deployment.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_mismatchingselector">
+  <h3>mismatching-selector</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>mismatching-selector</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployment selectors fail to match the pod template labels.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Confirm that your deployment selector correctly matches the labels in its pod template.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_missingantiaffinity">
+  <h3>missing-anti-affinity</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>missing-anti-affinity</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>When replicas &gt; 1 setting an anti-affinity enables to distribute the load accross machines setting 'topologyKey: &quot;kubernetes.io/hostname&quot;', see  <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity.">https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity.</a>
+</p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Add podAntiAffinity in your deployment descriptor.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_noextensionsv1beta">
+  <h3>no-extensions-v1beta</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-extensions-v1beta</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when objects use deprecated API versions under extensions/v1beta.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Migrate using the apps/v1 API versions for the objects. Refer to  <a href="https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/">https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_nolatest">
+  <h3>no-latest</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-latest</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures no latest image is used.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure to tag any image you use and use an immutable tag if possible or at least versionned flavor.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_nolivenessprobe">
+  <h3>no-liveness-probe</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-liveness-probe</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures a liveness probe is defined.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Any container (from containers array) should have a liveness probe.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_noreadonlyrootfs">
+  <h3>no-read-only-root-fs</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-read-only-root-fs</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers are running without a read-only root filesystem.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set readOnlyRootFilesystem to true in the container securityContext.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_noreadinessprobe">
+  <h3>no-readiness-probe</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-readiness-probe</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures a readinessProbe probe is defined.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Any container (from containers array) should have a readinessProbe probe.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_privilegeescalationcontainer">
+  <h3>privilege-escalation-container</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privilege-escalation-container</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on containers of allowing privilege escalation that could gain more privileges than its parent process.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure containers do not allow privilege escalation by setting allowPrivilegeEscalation=false, privileged=false and removing CAP<i>SYS</i>ADMIN capability. See  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a>
+ for more details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_privilegedcontainer">
+  <h3>privileged-container</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privileged-container</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployments have containers running in privileged mode.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Do not run your container as privileged unless it is required.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_privilegedports">
+  <h3>privileged-ports</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privileged-ports</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with privileged ports mapped in containers
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure privileged ports [0, 1024] are not mapped within containers.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_readsecretfromenvvar">
+  <h3>read-secret-from-env-var</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>read-secret-from-env-var</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a deployment reads secret from environment variables. CIS Benchmark 5.4.1: &quot;Prefer using secrets as files over secrets as environment variables. &quot;
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>If possible, rewrite application code to read secrets from mounted secret files, rather than from environment variables. Refer to  <a href="https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets">https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_runasnonroot">
+  <h3>run-as-non-root</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>run-as-non-root</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers are not set to runAsNonRoot.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_sensitivehostmounts">
+  <h3>sensitive-host-mounts</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>sensitive-host-mounts</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with sensitive host system directories mounted in containers.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure sensitive host system directories are not mounted in containers by removing those Volumes and VolumeMounts.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_unsafeprocmount">
+  <h3>unsafe-proc-mount</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>unsafe-proc-mount</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with unsafe /proc mount (procMount=Unmasked) that will bypass the default masking behavior of the container runtime
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure container does not unsafely exposes parts of /proc by setting procMount=Default. Unmasked ProcMount bypasses the default masking behavior of the container runtime. See  <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">https://kubernetes.io/docs/concepts/security/pod-security-standards/</a>
+ for more details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_unsafesysctls">
+  <h3>unsafe-sysctls</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>unsafe-sysctls</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments specifying unsafe sysctls that may lead to severe problems like wrong behavior of containers
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure container does not allow unsafe allocation of system resources by removing unsafe sysctls configurations. For more details see  <a href="https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/">https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/</a>
+ <a href="https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.">https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.</a>
+</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_usenamespace">
+  <h3>use-namespace</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>use-namespace</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a resource is deployed to the default namespace. CIS Benchmark 5.7.1: Create administrative boundaries between resources using namespaces. CIS Benchmark 5.7.4: The default namespace should not be used.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Create namespaces for objects in your deployment.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_wildcardinrules">
+  <h3>wildcard-in-rules</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>wildcard-in-rules</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicate when a wildcard is used in Role or ClusterRole rules. CIS Benchmark 5.1.3 Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible replace any use of wildcards in clusterroles and roles with specific objects or actions.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_writablehostmount">
+  <h3>writable-host-mount</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>writable-host-mount</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers mount a host path as writable.
+ </p>
+ </div>
+ <div class="sect3" id="_remediation">
+  <h4>Remediation</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set containers to mount host paths as readOnly, if you need to access files on the host.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--alveolus (<code>BUNDLEBEE_LINT_ALVEOLUS</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Alveolus name to inspect. When set to <code>auto</code>, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--failLevel (<code>BUNDLEBEE_LINT_FAILLEVEL</code>)</dt>
-<dd>
-<p>If <code>true</code>, an exception is throw if there is at least one error. Default value: <code>ERROR</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--failLevel (<code>BUNDLEBEE_LINT_FAILLEVEL</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code>, an exception is throw if there is at least one error. Default value: <code>ERROR</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--forcedRules (<code>BUNDLEBEE_LINT_FORCEDRULES</code>)</dt>
-<dd>
-<p>Comma separated list of rules to use (others being ignored). <code>all</code> means use all discovered rules and <code>none</code> skip them all (useful as a toggle/bypass mode). Default value: <code>all</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--forcedRules (<code>BUNDLEBEE_LINT_FORCEDRULES</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Comma separated list of rules to use (others being ignored). <code>all</code> means use all discovered rules and <code>none</code> skip them all (useful as a toggle/bypass mode). Default value: <code>all</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--from (<code>BUNDLEBEE_LINT_FROM</code>)</dt>
-<dd>
-<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--from (<code>BUNDLEBEE_LINT_FROM</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--ignoredAlveoli (<code>BUNDLEBEE_LINT_IGNOREDALVEOLI</code>)</dt>
-<dd>
-<p>Comma separated list of alveoli names to ignore. Default value: <code>-</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--ignoredAlveoli (<code>BUNDLEBEE_LINT_IGNOREDALVEOLI</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Comma separated list of alveoli names to ignore. Default value: <code>-</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--ignoredDescriptors (<code>BUNDLEBEE_LINT_IGNOREDDESCRIPTORS</code>)</dt>
-<dd>
-<p>Comma separated list of descriptors to ignore. Default value: <code>-</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--ignoredDescriptors (<code>BUNDLEBEE_LINT_IGNOREDDESCRIPTORS</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Comma separated list of descriptors to ignore. Default value: <code>-</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--ignoredRules (<code>BUNDLEBEE_LINT_IGNOREDRULES</code>)</dt>
-<dd>
-<p>Comma separated list of rules to ignore (simple class name for built-in ones and check name for the others). Default value: <code>-</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--ignoredRules (<code>BUNDLEBEE_LINT_IGNOREDRULES</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Comma separated list of rules to ignore (simple class name for built-in ones and check name for the others). Default value: <code>-</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--manifest (<code>BUNDLEBEE_LINT_MANIFEST</code>)</dt>
-<dd>
-<p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--manifest (<code>BUNDLEBEE_LINT_MANIFEST</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--output (<code>BUNDLEBEE_LINT_OUTPUT</code>)</dt>
-<dd>
-<p>If not <code>false</code>, the path of the output in <a href="https://github.com/microsoft/sarif-tutorials">SARIF</a> format (JSON). Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--output (<code>BUNDLEBEE_LINT_OUTPUT</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If not <code>false</code>, the path of the output in  <a href="https://github.com/microsoft/sarif-tutorials">SARIF</a>
+ format (JSON). Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--showRemediation (<code>BUNDLEBEE_LINT_SHOWREMEDIATION</code>)</dt>
-<dd>
-<p>Should remediation be shown (it is verbose so skipped by default). Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--showRemediation (<code>BUNDLEBEE_LINT_SHOWREMEDIATION</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should remediation be shown (it is verbose so skipped by default). Default value: <code>false</code></p>
+ </div>
 </dd>
-</dl>
-</div>
-<div class="sect2">
-<h3 id="_inherited_global_configuration">Inherited Global Configuration</h3>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-for these configurations, don&#8217;t hesitate to use <code>~/.bundlebeerc</code> or <code>--config-file &lt;path to config&gt;</code> (just remove the <code>--</code> prefix from option keys).
-</td>
-</tr>
-</table>
-</div>
-<div class="dlist">
-<dl>
-<dt class="hdlist1">--bundlebee.awaiter.retryInterval (<code>BUNDLEBEE_AWAITER_RETRYINTERVAL</code>)</dt>
-<dd>
-<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code></p>
+ </dl>
+ <div class="sect2" id="_inherited_global_configuration">
+  <h3>Inherited Global Configuration</h3>
+ <div class="sectionbody">
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>for these configurations, don't hesitate to use <code>~/.bundlebeerc</code> or <code>--config-file &lt;path to config&gt;</code> (just remove the <code>--</code> prefix from option keys).</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.awaiter.retryInterval (<code>BUNDLEBEE_AWAITER_RETRYINTERVAL</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.httpclient.connectTimeout (<code>BUNDLEBEE_HTTPCLIENT_CONNECTTIMEOUT</code>)</dt>
-<dd>
-<p>The HTTP client connect timeout (in java Duration format), <code>none</code> can be used to ignore this setting. Default value: <code>none</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.httpclient.connectTimeout (<code>BUNDLEBEE_HTTPCLIENT_CONNECTTIMEOUT</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client connect timeout (in java Duration format), <code>none</code> can be used to ignore this setting. Default value: <code>none</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.httpclient.followRedirects (<code>BUNDLEBEE_HTTPCLIENT_FOLLOWREDIRECTS</code>)</dt>
-<dd>
-<p>The HTTP client redirect policy. Default to <code>NORMAL</code>, can be set to <code>ALWAYS</code> or <code>NEVER</code>. Default value: <code>NORMAL</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.httpclient.followRedirects (<code>BUNDLEBEE_HTTPCLIENT_FOLLOWREDIRECTS</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client redirect policy. Default to <code>NORMAL</code>, can be set to <code>ALWAYS</code> or <code>NEVER</code>. Default value: <code>NORMAL</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.httpclient.forcedHttpVersion (<code>BUNDLEBEE_HTTPCLIENT_FORCEDHTTPVERSION</code>)</dt>
-<dd>
-<p>The HTTP client version, <code>none</code> mean the JVM default (v2), <code>HTTP_1_1</code> v1.1 and <code>HTTP_2</code> v2.0. Default value: <code>none</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.httpclient.forcedHttpVersion (<code>BUNDLEBEE_HTTPCLIENT_FORCEDHTTPVERSION</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client version, <code>none</code> mean the JVM default (v2), <code>HTTP_1_1</code> v1.1 and <code>HTTP_2</code> v2.0. Default value: <code>none</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.httpclient.threads (<code>BUNDLEBEE_HTTPCLIENT_THREADS</code>)</dt>
-<dd>
-<p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.httpclient.threads (<code>BUNDLEBEE_HTTPCLIENT_THREADS</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.api (<code>BUNDLEBEE_KUBE_API</code>)</dt>
-<dd>
-<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.api (<code>BUNDLEBEE_KUBE_API</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When kubeconfig is not set the base API endpoint. Default value: <code> <a href="http://localhost:8080" class="inline-code">http://localhost:8080</a>
+</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.context (<code>BUNDLEBEE_KUBE_CONTEXT</code>)</dt>
-<dd>
-<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.context (<code>BUNDLEBEE_KUBE_CONTEXT</code>)</p>
+ </div>
+</dt>
+  <dd>
+When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.customMetadataInjectionPoint (<code>BUNDLEBEE_KUBE_CUSTOMMETADATAINJECTIONPOINT</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations. Default value: <code>labels</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.customMetadataInjectionPoint (<code>BUNDLEBEE_KUBE_CUSTOMMETADATAINJECTIONPOINT</code>)</dt>
-<dd>
-<p>When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations. Default value: <code>labels</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.defaultPropagationPolicy (<code>BUNDLEBEE_KUBE_DEFAULTPROPAGATIONPOLICY</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.defaultPropagationPolicy (<code>BUNDLEBEE_KUBE_DEFAULTPROPAGATIONPOLICY</code>)</dt>
-<dd>
-<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.dryRun (<code>BUNDLEBEE_KUBE_DRYRUN</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.dryRun (<code>BUNDLEBEE_KUBE_DRYRUN</code>)</dt>
-<dd>
-<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.fieldValidation (<code>BUNDLEBEE_KUBE_FIELDVALIDATION</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p><code>fieldValidation</code> - server side validation - value when applying a descriptor, values can be <code>Strict</code>, <code>Warn</code> pr <code>Ignore</code>. Note that using <code>skip</code> will ignore the query parameter. Default value: <code>Strict</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.fieldValidation (<code>BUNDLEBEE_KUBE_FIELDVALIDATION</code>)</dt>
-<dd>
-<p><code>fieldValidation</code> - server side validation - value when applying a descriptor, values can be <code>Strict</code>, <code>Warn</code> pr <code>Ignore</code>. Note that using <code>skip</code> will ignore the query parameter. Default value: <code>Strict</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.filters.statefuleset.spec.allowed (<code>BUNDLEBEE_KUBE_FILTERS_STATEFULESET_SPEC_ALLOWED</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The attributes to keep from <code>StatefulSet</code> (<code>spec</code> children) descriptor on updates. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.filters.statefuleset.spec.allowed (<code>BUNDLEBEE_KUBE_FILTERS_STATEFULESET_SPEC_ALLOWED</code>)</dt>
-<dd>
-<p>The attributes to keep from <code>StatefulSet</code> (<code>spec</code> children) descriptor on updates. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.force (<code>BUNDLEBEE_KUBE_FORCE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself and for cases it is not enough, you can set <code>force</code> to <code>true</code> to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). Note that you can set it to <code>true</code> in a descriptor annotation <code>io.yupiik.bundlebee/force</code> too to not be global. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.force (<code>BUNDLEBEE_KUBE_FORCE</code>)</dt>
-<dd>
-<p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself and for cases it is not enough, you can set <code>force</code> to <code>true</code> to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). Note that you can set it to <code>true</code> in a descriptor annotation <code>io.yupiik.bundlebee/force</code> too to not be global. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.http.timeout (<code>BUNDLEBEE_KUBE_HTTP_TIMEOUT</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>HTTP timeout in ms, ignored if &lt;= 0. Default value: <code>60000</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.http.timeout (<code>BUNDLEBEE_KUBE_HTTP_TIMEOUT</code>)</dt>
-<dd>
-<p>HTTP timeout in ms, ignored if &#8656; 0. Default value: <code>60000</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.implicitlyDroppedAttributes (<code>BUNDLEBEE_KUBE_IMPLICITLYDROPPEDATTRIBUTES</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using <code>none</code> ignores this processing. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.implicitlyDroppedAttributes (<code>BUNDLEBEE_KUBE_IMPLICITLYDROPPEDATTRIBUTES</code>)</dt>
-<dd>
-<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using <code>none</code> ignores this processing. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.logDescriptorOnParsingError (<code>BUNDLEBEE_KUBE_LOGDESCRIPTORONPARSINGERROR</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should YAML/JSON be logged when it can't be parsed. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.logDescriptorOnParsingError (<code>BUNDLEBEE_KUBE_LOGDESCRIPTORONPARSINGERROR</code>)</dt>
-<dd>
-<p>Should YAML/JSON be logged when it can&#8217;t be parsed. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.namespace (<code>BUNDLEBEE_KUBE_NAMESPACE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.namespace (<code>BUNDLEBEE_KUBE_NAMESPACE</code>)</dt>
-<dd>
-<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.patchContentType (<code>BUNDLEBEE_KUBE_PATCHCONTENTTYPE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.patchContentType (<code>BUNDLEBEE_KUBE_PATCHCONTENTTYPE</code>)</dt>
-<dd>
-<p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.proxy.host (<code>BUNDLEBEE_KUBE_PROXY_HOST</code>)</p>
+ </div>
+</dt>
+  <dd>
+If a proxy is needed to contact the target cluster API, its host, ignore if not set.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.proxy.password (<code>BUNDLEBEE_KUBE_PROXY_PASSWORD</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.proxy.host (<code>BUNDLEBEE_KUBE_PROXY_HOST</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its host, ignore if not set.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.proxy.port (<code>BUNDLEBEE_KUBE_PROXY_PORT</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its port. Default value: <code>3128</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.proxy.password (<code>BUNDLEBEE_KUBE_PROXY_PASSWORD</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.proxy.setProxySystemProperties (<code>BUNDLEBEE_KUBE_PROXY_SETPROXYSYSTEMPROPERTIES</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is configured to use authentication, automatically set <code>-Djdk.http.auth.tunneling.disabledSchemes=</code>, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is &quot;leaked&quot;, ie it is not cleaned up to limit side effect in concurrent mode. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.proxy.port (<code>BUNDLEBEE_KUBE_PROXY_PORT</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its port. Default value: <code>3128</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.proxy.username (<code>BUNDLEBEE_KUBE_PROXY_USERNAME</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.proxy.setProxySystemProperties (<code>BUNDLEBEE_KUBE_PROXY_SETPROXYSYSTEMPROPERTIES</code>)</dt>
-<dd>
-<p>If a proxy is configured to use authentication, automatically set <code>-Djdk.http.auth.tunneling.disabledSchemes=</code>, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is "leaked", ie it is not cleaned up to limit side effect in concurrent mode. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.putOnUpdate (<code>BUNDLEBEE_KUBE_PUTONUPDATE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.proxy.username (<code>BUNDLEBEE_KUBE_PROXY_USERNAME</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options).</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.rateLimiter.enabled (<code>BUNDLEBEE_KUBE_RATELIMITER_ENABLED</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should HTTP client requests be limited and HTTP 427 responses be handled. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.putOnUpdate (<code>BUNDLEBEE_KUBE_PUTONUPDATE</code>)</dt>
-<dd>
-<p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.rateLimiter.permits (<code>BUNDLEBEE_KUBE_RATELIMITER_PERMITS</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How many calls can be done if rate limiting is enabled. Note that setting it to <code>Integer.MAX_VALUE</code> will disable the client rate limiting and only enable server one. Default value: <code>100</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.rateLimiter.enabled (<code>BUNDLEBEE_KUBE_RATELIMITER_ENABLED</code>)</dt>
-<dd>
-<p>Should HTTP client requests be limited and HTTP 427 responses be handled. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.rateLimiter.window (<code>BUNDLEBEE_KUBE_RATELIMITER_WINDOW</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Rate limiting window duration in milliseconds (default being 1 second). Default value: <code>1000</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.rateLimiter.permits (<code>BUNDLEBEE_KUBE_RATELIMITER_PERMITS</code>)</dt>
-<dd>
-<p>How many calls can be done if rate limiting is enabled. Note that setting it to <code>Integer.MAX_VALUE</code> will disable the client rate limiting and only enable server one. Default value: <code>100</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.resourceMapping (<code>BUNDLEBEE_KUBE_RESOURCEMAPPING</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to define resource mapping, syntax uses propeties one: <code>&lt;lowercased resource kind&gt;s = /apis/....</code>. Default value: <code></code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.rateLimiter.window (<code>BUNDLEBEE_KUBE_RATELIMITER_WINDOW</code>)</dt>
-<dd>
-<p>Rate limiting window duration in milliseconds (default being 1 second). Default value: <code>1000</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.skipDryRunForGet (<code>BUNDLEBEE_KUBE_SKIPDRYRUNFORGET</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> GET http requests are not skipped when <code>dryRun</code> is true. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.resourceMapping (<code>BUNDLEBEE_KUBE_RESOURCEMAPPING</code>)</dt>
-<dd>
-<p>Enables to define resource mapping, syntax uses propeties one: <code>&lt;lowercased resource kind&gt;s = /apis/&#8230;&#8203;.</code>. Default value: ``</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.skipUpdateForKinds (<code>BUNDLEBEE_KUBE_SKIPUPDATEFORKINDS</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>List of <i>kind</i> of descriptors updates can be skipped, it is often useful for <code>PersistentVolumeClaim</code>. Default value: <code>PersistentVolumeClaim</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.skipDryRunForGet (<code>BUNDLEBEE_KUBE_SKIPDRYRUNFORGET</code>)</dt>
-<dd>
-<p>If <code>true</code> GET http requests are not skipped when <code>dryRun</code> is true. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.token (<code>BUNDLEBEE_KUBE_TOKEN</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When <code>kubeconfig</code> is set to <code>explicit</code>, the bearer token to use (if set).</p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.skipUpdateForKinds (<code>BUNDLEBEE_KUBE_SKIPUPDATEFORKINDS</code>)</dt>
-<dd>
-<p>List of <em>kind</em> of descriptors updates can be skipped, it is often useful for <code>PersistentVolumeClaim</code>. Default value: <code>PersistentVolumeClaim</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.validateSSL (<code>BUNDLEBEE_KUBE_VALIDATESSL</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should SSL connector be validated or not. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.token (<code>BUNDLEBEE_KUBE_TOKEN</code>)</dt>
-<dd>
-<p>When <code>kubeconfig</code> is set to <code>explicit</code>, the bearer token to use (if set).</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.kube.verbose (<code>BUNDLEBEE_KUBE_VERBOSE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.validateSSL (<code>BUNDLEBEE_KUBE_VALIDATESSL</code>)</dt>
-<dd>
-<p>Should SSL connector be validated or not. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.cache (<code>BUNDLEBEE_MAVEN_CACHE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Where to cache maven dependencies. If set to <code>auto</code>, tries to read the system property <code>maven.repo.local</code> then the <code>settings.xml</code> <code>localRepository</code> and finally it would fallback on <code>$HOME/.m2/repository</code>. Default value: <code>auto</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.kube.verbose (<code>BUNDLEBEE_KUBE_VERBOSE</code>)</dt>
-<dd>
-<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.forceCustomSettingsXml (<code>BUNDLEBEE_MAVEN_FORCECUSTOMSETTINGSXML</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.maven.cache (<code>BUNDLEBEE_MAVEN_CACHE</code>)</dt>
-<dd>
-<p>Where to cache maven dependencies. If set to <code>auto</code>, tries to read the system property <code>maven.repo.local</code> then the <code>settings.xml</code> <code>localRepository</code> and finally it would fallback on <code>$HOME/.m2/repository</code>. Default value: <code>auto</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.http.connectTimeout (<code>BUNDLEBEE_MAVEN_HTTP_CONNECTTIMEOUT</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.maven.forceCustomSettingsXml (<code>BUNDLEBEE_MAVEN_FORCECUSTOMSETTINGSXML</code>)</dt>
-<dd>
-<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.preferCustomSettingsXml (<code>BUNDLEBEE_MAVEN_PREFERCUSTOMSETTINGSXML</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.maven.http.connectTimeout (<code>BUNDLEBEE_MAVEN_HTTP_CONNECTTIMEOUT</code>)</dt>
-<dd>
-<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.repositories.downloads.enabled (<code>BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.maven.preferCustomSettingsXml (<code>BUNDLEBEE_MAVEN_PREFERCUSTOMSETTINGSXML</code>)</dt>
-<dd>
-<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.repositories.httpHeaders (<code>BUNDLEBEE_MAVEN_REPOSITORIES_HTTPHEADERS</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Note that you can use maven <code>~/.m2/settings.xml</code> servers (potentially ciphered) username/password pairs. In this last case the server id must be <code>bundlebee.&lt;server host&gt;</code>. Still in settings.xml case, if the username is null the password value is used as raw <code>Authorization</code> header else username/password is encoded as a basic header.</p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.maven.repositories.downloads.enabled (<code>BUNDLEBEE_MAVEN_REPOSITORIES_DOWNLOADS_ENABLED</code>)</dt>
-<dd>
-<p>Enable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code></p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.repositories.release (<code>BUNDLEBEE_MAVEN_REPOSITORIES_RELEASE</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default release repository. Default value: <code> <a href="https://repo.maven.apache.org/maven2/" class="inline-code">https://repo.maven.apache.org/maven2/</a>
+</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.maven.repositories.httpHeaders (<code>BUNDLEBEE_MAVEN_REPOSITORIES_HTTPHEADERS</code>)</dt>
-<dd>
-<p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Note that you can use maven <code>~/.m2/settings.xml</code> servers (potentially ciphered) username/password pairs. In this last case the server id must be <code>bundlebee.&lt;server host&gt;</code>. Still in settings.xml case, if the username is null the password value is used as raw <code>Authorization</code> header else username/password is encoded as a basic header.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--bundlebee.maven.repositories.snapshot (<code>BUNDLEBEE_MAVEN_REPOSITORIES_SNAPSHOT</code>)</p>
+ </div>
+</dt>
+  <dd>
+Default snapshot repository, not set by default.</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>--kubeconfig (<code>KUBECONFIG</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. The content can also be set inline!. Default value: <code>auto</code></p>
+ </div>
 </dd>
-<dt class="hdlist1">--bundlebee.maven.repositories.release (<code>BUNDLEBEE_MAVEN_REPOSITORIES_RELEASE</code>)</dt>
-<dd>
-<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code></p>
-</dd>
-<dt class="hdlist1">--bundlebee.maven.repositories.snapshot (<code>BUNDLEBEE_MAVEN_REPOSITORIES_SNAPSHOT</code>)</dt>
-<dd>
-<p>Default snapshot repository, not set by default.</p>
-</dd>
-<dt class="hdlist1">--kubeconfig (<code>KUBECONFIG</code>)</dt>
-<dd>
-<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. The content can also be set inline!. Default value: <code>auto</code></p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
+ </dl>
+ </div>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -1013,7 +1623,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

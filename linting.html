@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -157,683 +157,973 @@
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Linting is the process of running validations on descriptors.</p>
-</div>
-<div class="paragraph">
-<p>Bundlebee is able to read common "pre-rendered" descriptors (from Helm for example) as long as a <code>manifest.json</code> is properly formatted so you can run the linter on any descriptor even if it is working out of the box for Bundlebee alveoli (where you just run <code>bundlebee lint &#8230;&#8203;</code> command without pre-processing).</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configure">Configure</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The main configuration of the linter are the inclusions or exclusions (see <code>lint</code> command details).</p>
-</div>
-<div class="paragraph">
-<p>You can also exclude rules in <code>ignoredLintingRules</code> of the <code>manifest.json</code> (per manifest not global) or in the descriptors directly using virtual <code>$bundlebeeIgnoredLintingRules</code> attribute which is equivalent.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-while in the manifest the list is a list of object with a <code>name</code> attribute, manifest and descriptor lists are list of rule names to keep it simple.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Indeed the <code>lint</code> command enables to exclude alveoli and descriptors but it is generally more convenient to create a <code>my-project:lint</code> alveolus which will disable (using placeholders or <code>includeIf</code> conditions) undesired external dependencies and descriptors during the linting process.
-This makes it quite easy and efficient to control what you deploy and avoid to trigger rules you don&#8217;t want.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_rules">Rules</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Here is the available rules (built-in).</p>
-</div>
-<div class="sect2">
-<h3 id="_linting_checks">Linting Checks</h3>
-<div class="paragraph">
-<p>Here is the list of available checks by defaults.</p>
-</div>
-<div class="sect3">
-<h4 id="_access_to_create_pods">access-to-create-pods</h4>
-<div class="paragraph">
-<p>Name: <strong>access-to-create-pods</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a subject (Group/User/ServiceAccount) has create access to Pods.
-CIS Benchmark 5.1.4: The ability to create pods in a cluster opens up possibilities for privilege escalation and should be restricted, where possible.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation">Remediation</h5>
-<div class="paragraph">
-<p>Where possible, remove create access to pod objects in the cluster.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_access_to_secrets">access-to-secrets</h4>
-<div class="paragraph">
-<p>Name: <strong>access-to-secrets</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a subject (Group/User/ServiceAccount) has access to Secrets.
-CIS Benchmark 5.1.2: Access to secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_2">Remediation</h5>
-<div class="paragraph">
-<p>Where possible, remove get, list and watch access to secret objects in the cluster.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_cpu_limits">cpu-limits</h4>
-<div class="paragraph">
-<p>Name: <strong>cpu-limits</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.limits.cpu is set.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_3">Remediation</h5>
-<div class="paragraph">
-<p>Set resources.limits.cpu.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_cpu_requests">cpu-requests</h4>
-<div class="paragraph">
-<p>Name: <strong>cpu-requests</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.requests.cpu is set.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_4">Remediation</h5>
-<div class="paragraph">
-<p>Set resources.requests.cpu.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_default_service_account">default-service-account</h4>
-<div class="paragraph">
-<p>Name: <strong>default-service-account</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when pods use the default service account.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_5">Remediation</h5>
-<div class="paragraph">
-<p>Create a dedicated service account for your pod.
-Refer to <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/" class="bare">https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_deprecated_service_account_field">deprecated-service-account-field</h4>
-<div class="paragraph">
-<p>Name: <strong>deprecated-service-account-field</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when deployments use the deprecated serviceAccount field.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_6">Remediation</h5>
-<div class="paragraph">
-<p>Use the serviceAccountName field instead. If you must specify serviceAccount, ensure values for serviceAccount and serviceAccountName match.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_dnsconfig_options">dnsconfig-options</h4>
-<div class="paragraph">
-<p>Name: <strong>dnsconfig-options</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments that have no specified dnsConfig options</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_7">Remediation</h5>
-<div class="paragraph">
-<p>Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod.
-Refer to <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config" class="bare">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_docker_sock">docker-sock</h4>
-<div class="paragraph">
-<p>Name: <strong>docker-sock</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with docker.sock mounted in containers.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_8">Remediation</h5>
-<div class="paragraph">
-<p>Ensure the Docker socket is not mounted inside any containers by removing the associated
-Volume and VolumeMount in deployment yaml specification.
-If the Docker socket is mounted inside a container it could allow processes running within
-the container to execute Docker commands which would effectively allow for full control of the host.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_drop_net_raw_capability">drop-net-raw-capability</h4>
-<div class="paragraph">
-<p>Name: <strong>drop-net-raw-capability</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers do not drop NET_RAW capability</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_9">Remediation</h5>
-<div class="paragraph">
-<p><code>NET_RAW</code> makes it so that an application within the container is able to craft raw packets, use raw sockets, and bind to any address. Remove this capability in the containers under containers security contexts.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_duplicate_env_var">duplicate-env-var</h4>
-<div class="paragraph">
-<p>Name: <strong>duplicate-env-var</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Check that duplicate named env vars aren&#8217;t passed to a deployment like.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_10">Remediation</h5>
-<div class="paragraph">
-<p>Confirm that your DeploymentLike doesn&#8217;t have duplicate env vars names.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_host_ipc">host-ipc</h4>
-<div class="paragraph">
-<p>Name: <strong>host-ipc</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on pods/deployment-likes with sharing host&#8217;s IPC namespace</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_11">Remediation</h5>
-<div class="paragraph">
-<p>Ensure the host&#8217;s IPC namespace is not shared.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_host_network">host-network</h4>
-<div class="paragraph">
-<p>Name: <strong>host-network</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on pods/deployment-likes with sharing host&#8217;s network namespace</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_12">Remediation</h5>
-<div class="paragraph">
-<p>Ensure the host&#8217;s network namespace is not shared.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_host_pid">host-pid</h4>
-<div class="paragraph">
-<p>Name: <strong>host-pid</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on pods/deployment-likes with sharing host&#8217;s process namespace</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_13">Remediation</h5>
-<div class="paragraph">
-<p>Ensure the host&#8217;s process namespace is not shared.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_hpa_minimum_three_replicas">hpa-minimum-three-replicas</h4>
-<div class="paragraph">
-<p>Name: <strong>hpa-minimum-three-replicas</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a HorizontalPodAutoscaler specifies less than three minReplicas</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_14">Remediation</h5>
-<div class="paragraph">
-<p>Increase the number of replicas in the HorizontalPodAutoscaler to at least three to increase fault tolerance.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_memory_limits">memory-limits</h4>
-<div class="paragraph">
-<p>Name: <strong>memory-limits</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.limits.memory is set.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_15">Remediation</h5>
-<div class="paragraph">
-<p>Set resources.limits.memory.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_memory_requests">memory-requests</h4>
-<div class="paragraph">
-<p>Name: <strong>memory-requests</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures resources.requests.memory is set.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_16">Remediation</h5>
-<div class="paragraph">
-<p>Set resources.requests.memory.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_minimum_three_replicas">minimum-three-replicas</h4>
-<div class="paragraph">
-<p>Name: <strong>minimum-three-replicas</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a deployment uses less than three replicas</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_17">Remediation</h5>
-<div class="paragraph">
-<p>Increase the number of replicas in the deployment to at least three to increase the fault tolerance of the deployment.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_mismatching_selector">mismatching-selector</h4>
-<div class="paragraph">
-<p>Name: <strong>mismatching-selector</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when deployment selectors fail to match the pod template labels.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_18">Remediation</h5>
-<div class="paragraph">
-<p>Confirm that your deployment selector correctly matches the labels in its pod template.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_missing_anti_affinity">missing-anti-affinity</h4>
-<div class="paragraph">
-<p>Name: <strong>missing-anti-affinity</strong>.</p>
-</div>
-<div class="paragraph">
-<p>When replicas &gt; 1 setting an anti-affinity enables to distribute the load accross machines setting 'topologyKey: "kubernetes.io/hostname"', see <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity" class="bare">https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity</a>.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_19">Remediation</h5>
-<div class="paragraph">
-<p>Add podAntiAffinity in your deployment descriptor.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_no_extensions_v1beta">no-extensions-v1beta</h4>
-<div class="paragraph">
-<p>Name: <strong>no-extensions-v1beta</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when objects use deprecated API versions under extensions/v1beta.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_20">Remediation</h5>
-<div class="paragraph">
-<p>Migrate using the apps/v1 API versions for the objects.
-Refer to <a href="https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/" class="bare">https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_no_latest">no-latest</h4>
-<div class="paragraph">
-<p>Name: <strong>no-latest</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures no latest image is used.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_21">Remediation</h5>
-<div class="paragraph">
-<p>Ensure to tag any image you use and use an immutable tag if possible or at least versionned flavor.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_no_liveness_probe">no-liveness-probe</h4>
-<div class="paragraph">
-<p>Name: <strong>no-liveness-probe</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures a liveness probe is defined.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_22">Remediation</h5>
-<div class="paragraph">
-<p>Any container (from containers array) should have a liveness probe.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_no_read_only_root_fs">no-read-only-root-fs</h4>
-<div class="paragraph">
-<p>Name: <strong>no-read-only-root-fs</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers are running without a read-only root filesystem.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_23">Remediation</h5>
-<div class="paragraph">
-<p>Set readOnlyRootFilesystem to true in the container securityContext.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_no_readiness_probe">no-readiness-probe</h4>
-<div class="paragraph">
-<p>Name: <strong>no-readiness-probe</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Ensures a readinessProbe probe is defined.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_24">Remediation</h5>
-<div class="paragraph">
-<p>Any container (from containers array) should have a readinessProbe probe.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_privilege_escalation_container">privilege-escalation-container</h4>
-<div class="paragraph">
-<p>Name: <strong>privilege-escalation-container</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on containers of allowing privilege escalation that could gain more privileges than its parent process.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_25">Remediation</h5>
-<div class="paragraph">
-<p>Ensure containers do not allow privilege escalation by setting
-allowPrivilegeEscalation=false, privileged=false and removing CAP_SYS_ADMIN capability.
-See <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" class="bare">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a> for more details.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_privileged_container">privileged-container</h4>
-<div class="paragraph">
-<p>Name: <strong>privileged-container</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when deployments have containers running in privileged mode.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_26">Remediation</h5>
-<div class="paragraph">
-<p>Do not run your container as privileged unless it is required.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_privileged_ports">privileged-ports</h4>
-<div class="paragraph">
-<p>Name: <strong>privileged-ports</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with privileged ports mapped in containers</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_27">Remediation</h5>
-<div class="paragraph">
-<p>Ensure privileged ports [0, 1024] are not mapped within containers.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_read_secret_from_env_var">read-secret-from-env-var</h4>
-<div class="paragraph">
-<p>Name: <strong>read-secret-from-env-var</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a deployment reads secret from environment variables.
-CIS Benchmark 5.4.1: "Prefer using secrets as files over secrets as environment variables. "</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_28">Remediation</h5>
-<div class="paragraph">
-<p>If possible, rewrite application code to read secrets from mounted secret files, rather than from environment variables.
-Refer to <a href="https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets" class="bare">https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_run_as_non_root">run-as-non-root</h4>
-<div class="paragraph">
-<p>Name: <strong>run-as-non-root</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers are not set to runAsNonRoot.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_29">Remediation</h5>
-<div class="paragraph">
-<p>Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext.
-Refer to <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/" class="bare">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a> for details.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_sensitive_host_mounts">sensitive-host-mounts</h4>
-<div class="paragraph">
-<p>Name: <strong>sensitive-host-mounts</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with sensitive host system directories mounted in containers.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_30">Remediation</h5>
-<div class="paragraph">
-<p>Ensure sensitive host system directories are not mounted in containers by removing those Volumes and VolumeMounts.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_unsafe_proc_mount">unsafe-proc-mount</h4>
-<div class="paragraph">
-<p>Name: <strong>unsafe-proc-mount</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments with unsafe /proc mount (procMount=Unmasked) that will bypass the default masking behavior of the container runtime</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_31">Remediation</h5>
-<div class="paragraph">
-<p>Ensure container does not unsafely exposes parts of /proc by setting procMount=Default.
-Unmasked ProcMount bypasses the default masking behavior of the container runtime.
-See <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/" class="bare">https://kubernetes.io/docs/concepts/security/pod-security-standards/</a> for more details.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_unsafe_sysctls">unsafe-sysctls</h4>
-<div class="paragraph">
-<p>Name: <strong>unsafe-sysctls</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Alert on deployments specifying unsafe sysctls that may lead to severe problems like wrong behavior of containers</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_32">Remediation</h5>
-<div class="paragraph">
-<p>Ensure container does not allow unsafe allocation of system resources by removing unsafe sysctls configurations.
-For more details see <a href="https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/" class="bare">https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/</a>
-<a href="https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime" class="bare">https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_use_namespace">use-namespace</h4>
-<div class="paragraph">
-<p>Name: <strong>use-namespace</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when a resource is deployed to the default namespace.
-CIS Benchmark 5.7.1: Create administrative boundaries between resources using namespaces.
-CIS Benchmark 5.7.4: The default namespace should not be used.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_33">Remediation</h5>
-<div class="paragraph">
-<p>Create namespaces for objects in your deployment.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_wildcard_in_rules">wildcard-in-rules</h4>
-<div class="paragraph">
-<p>Name: <strong>wildcard-in-rules</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicate when a wildcard is used in Role or ClusterRole rules.
-CIS Benchmark 5.1.3 Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_34">Remediation</h5>
-<div class="paragraph">
-<p>Where possible replace any use of wildcards in clusterroles and roles with specific objects or actions.</p>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_writable_host_mount">writable-host-mount</h4>
-<div class="paragraph">
-<p>Name: <strong>writable-host-mount</strong>.</p>
-</div>
-<div class="paragraph">
-<p>Indicates when containers mount a host path as writable.</p>
-</div>
-<div class="sect4">
-<h5 id="_remediation_35">Remediation</h5>
-<div class="paragraph">
-<p>Set containers to mount host paths as readOnly, if you need to access files on the host.</p>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_write_your_own_rule">Write your own rule</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To write your own rule you have to implement and add to bundlebee (core) classpath a CDI bean implementing <code>LintingCheck</code> - or <code>SynchronousLintingCheck</code> which can be easier to implement.</p>
-</div>
-<div class="sect2">
-<h3 id="_synchronous_or_not">Synchronous or not</h3>
-<div class="paragraph">
-<p>The generic <code>LintingCheck</code> uses <code>CompletionStage</code> because it is possible to use validation rules which connect to a cluster (the bundlebee configured one) and using <code>KubeClient</code> - or any other logic - you can do checks against a particular cluster (does role exists for example).
-<code>CompletionStage</code> enable to run validations in parallel easily.</p>
-</div>
-<div class="paragraph">
-<p>When not needed, just go with the <code>SynchronousLintingCheck</code> base interface or one of its children.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_anatomy_of_a_check">Anatomy of a check</h3>
-<div class="paragraph">
-<p>A check is composed of:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>A <code>name</code> which enables to disable/force the check to run,</p>
-</li>
-<li>
-<p>A <code>remediation</code> string which explains how to fix the violation when it happens,</p>
-</li>
-<li>
-<p>A <code>decription</code> explaining the validation,</p>
-</li>
-<li>
-<p>A <code>validate</code> (or sync flavor) method doing validation when a descriptor is visited,</p>
-</li>
-<li>
-<p>Sometimes an <code>afterAll</code> method doing validations after all descriptors were seen (for joins accross desriptors for example).</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_json_json_json">JSON, JSON, JSON</h3>
-<div class="paragraph">
-<p>Yaml descriptors are converted to <code>JsonObject</code> and descriptors containing a list are flattened.</p>
-</div>
-<div class="paragraph">
-<p>What does it means is that you always validate a single descriptor which is an object in check code which makes it easier to work with.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_going_further">Going further</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>It is not yet possible to define custom rules, it is not very complicated to do it technically but the language (must be JSON based) is challenging.
-Here are the current evaluated options:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Custom DSL: likely the most powerful and consistent option since we could define it in <code>manifest.json</code> but requires to learn yet another language,</p>
-</li>
-<li>
-<p>JSON-Logic: a very good option but requires a lot of operators and resulting DSL is not that friendly/simple,</p>
-</li>
-<li>
-<p>Template based: idea there is to define a few options ("check this value at this JSON pointer", "check this chain of json pointer", &#8230;&#8203;) but this becomes quite hard to have a relevant dictionary set without making it overcomplex,</p>
-</li>
-<li>
-<p>Scripting based: we can run jruby/jython/js engine rules but they all required to embed a script manager runtime and they tend to be fatty for this need and not all are graalvm friendly to convert bundlebee to native mode.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>So as of today, since we didn&#8217;t find a compromise making us happy we didn&#8217;t enable to define JSON DSL based rules.
-Since it is easy to add custom rules in Java (and using the maven plugin), this is not blocking but we&#8217;d like to tackle it if we can come up with a better idea.
-Don&#8217;t hesistate to propose something on bundlebee github project if you have an idea or a common need.</p>
-</div>
-</div>
-</div>
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Linting is the process of running validations on descriptors.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>Bundlebee is able to read common &quot;pre-rendered&quot; descriptors (from Helm for example) as long as a <code>manifest.json</code> is properly formatted so you can run the linter on any descriptor even if it is working out of the box for Bundlebee alveoli (where you just run <code>bundlebee lint ...</code> command without pre-processing).</p>
+ </div>
+ <div class="sect1" id="_configure">
+  <h2>Configure</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>The main configuration of the linter are the inclusions or exclusions (see <code>lint</code> command details).</p>
+ </div>
+ <div class="paragraph">
+ <p>You can also exclude rules in <code>ignoredLintingRules</code> of the <code>manifest.json</code> (per manifest not global) or in the descriptors directly using virtual <code>$bundlebeeIgnoredLintingRules</code> attribute which is equivalent.</p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>while in the manifest the list is a list of object with a <code>name</code> attribute, manifest and descriptor lists are list of rule names to keep it simple.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>Indeed the <code>lint</code> command enables to exclude alveoli and descriptors but it is generally more convenient to create a <code>my-project:lint</code> alveolus which will disable (using placeholders or <code>includeIf</code> conditions) undesired external dependencies and descriptors during the linting process. This makes it quite easy and efficient to control what you deploy and avoid to trigger rules you don't want.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_rules">
+  <h2>Rules</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Here is the available rules (built-in).
+ </p>
+ </div>
+ <div class="sect2" id="_linting_checks">
+  <h3>Linting Checks</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Here is the list of available checks by defaults.
+ </p>
+ </div>
+ <div class="sect3" id="_accesstocreatepods">
+  <h4>access-to-create-pods</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>access-to-create-pods</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a subject (Group/User/ServiceAccount) has create access to Pods. CIS Benchmark 5.1.4: The ability to create pods in a cluster opens up possibilities for privilege escalation and should be restricted, where possible.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible, remove create access to pod objects in the cluster.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_accesstosecrets">
+  <h4>access-to-secrets</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>access-to-secrets</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a subject (Group/User/ServiceAccount) has access to Secrets. CIS Benchmark 5.1.2: Access to secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible, remove get, list and watch access to secret objects in the cluster.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_cpulimits">
+  <h4>cpu-limits</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>cpu-limits</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.limits.cpu is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.limits.cpu.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_cpurequests">
+  <h4>cpu-requests</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>cpu-requests</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.requests.cpu is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.requests.cpu.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_defaultserviceaccount">
+  <h4>default-service-account</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>default-service-account</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when pods use the default service account.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Create a dedicated service account for your pod. Refer to  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/">https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_deprecatedserviceaccountfield">
+  <h4>deprecated-service-account-field</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>deprecated-service-account-field</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployments use the deprecated serviceAccount field.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Use the serviceAccountName field instead. If you must specify serviceAccount, ensure values for serviceAccount and serviceAccountName match.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_dnsconfigoptions">
+  <h4>dnsconfig-options</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>dnsconfig-options</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments that have no specified dnsConfig options
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod. Refer to  <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_dockersock">
+  <h4>docker-sock</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>docker-sock</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with docker.sock mounted in containers.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the Docker socket is not mounted inside any containers by removing the associated Volume and VolumeMount in deployment yaml specification. If the Docker socket is mounted inside a container it could allow processes running within the container to execute Docker commands which would effectively allow for full control of the host.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_dropnetrawcapability">
+  <h4>drop-net-raw-capability</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>drop-net-raw-capability</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers do not drop NET_RAW capability
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p><code>NET_RAW</code> makes it so that an application within the container is able to craft raw packets, use raw sockets, and bind to any address. Remove this capability in the containers under containers security contexts.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_duplicateenvvar">
+  <h4>duplicate-env-var</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>duplicate-env-var</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Check that duplicate named env vars aren't passed to a deployment like.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Confirm that your DeploymentLike doesn't have duplicate env vars names.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hostipc">
+  <h4>host-ipc</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-ipc</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's IPC namespace
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's IPC namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hostnetwork">
+  <h4>host-network</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-network</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's network namespace
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's network namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hostpid">
+  <h4>host-pid</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-pid</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's process namespace
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's process namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hpaminimumthreereplicas">
+  <h4>hpa-minimum-three-replicas</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>hpa-minimum-three-replicas</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a HorizontalPodAutoscaler specifies less than three minReplicas
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Increase the number of replicas in the HorizontalPodAutoscaler to at least three to increase fault tolerance.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_memorylimits">
+  <h4>memory-limits</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>memory-limits</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.limits.memory is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.limits.memory.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_memoryrequests">
+  <h4>memory-requests</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>memory-requests</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.requests.memory is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.requests.memory.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_minimumthreereplicas">
+  <h4>minimum-three-replicas</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>minimum-three-replicas</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a deployment uses less than three replicas
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Increase the number of replicas in the deployment to at least three to increase the fault tolerance of the deployment.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_mismatchingselector">
+  <h4>mismatching-selector</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>mismatching-selector</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployment selectors fail to match the pod template labels.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Confirm that your deployment selector correctly matches the labels in its pod template.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_missingantiaffinity">
+  <h4>missing-anti-affinity</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>missing-anti-affinity</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>When replicas &gt; 1 setting an anti-affinity enables to distribute the load accross machines setting 'topologyKey: &quot;kubernetes.io/hostname&quot;', see  <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity.">https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity.</a>
+</p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Add podAntiAffinity in your deployment descriptor.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_noextensionsv1beta">
+  <h4>no-extensions-v1beta</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-extensions-v1beta</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when objects use deprecated API versions under extensions/v1beta.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Migrate using the apps/v1 API versions for the objects. Refer to  <a href="https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/">https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_nolatest">
+  <h4>no-latest</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-latest</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures no latest image is used.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure to tag any image you use and use an immutable tag if possible or at least versionned flavor.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_nolivenessprobe">
+  <h4>no-liveness-probe</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-liveness-probe</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures a liveness probe is defined.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Any container (from containers array) should have a liveness probe.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_noreadonlyrootfs">
+  <h4>no-read-only-root-fs</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-read-only-root-fs</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers are running without a read-only root filesystem.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set readOnlyRootFilesystem to true in the container securityContext.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_noreadinessprobe">
+  <h4>no-readiness-probe</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-readiness-probe</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures a readinessProbe probe is defined.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Any container (from containers array) should have a readinessProbe probe.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_privilegeescalationcontainer">
+  <h4>privilege-escalation-container</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privilege-escalation-container</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on containers of allowing privilege escalation that could gain more privileges than its parent process.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure containers do not allow privilege escalation by setting allowPrivilegeEscalation=false, privileged=false and removing CAP<i>SYS</i>ADMIN capability. See  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a>
+ for more details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_privilegedcontainer">
+  <h4>privileged-container</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privileged-container</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployments have containers running in privileged mode.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Do not run your container as privileged unless it is required.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_privilegedports">
+  <h4>privileged-ports</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privileged-ports</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with privileged ports mapped in containers
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure privileged ports [0, 1024] are not mapped within containers.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_readsecretfromenvvar">
+  <h4>read-secret-from-env-var</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>read-secret-from-env-var</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a deployment reads secret from environment variables. CIS Benchmark 5.4.1: &quot;Prefer using secrets as files over secrets as environment variables. &quot;
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>If possible, rewrite application code to read secrets from mounted secret files, rather than from environment variables. Refer to  <a href="https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets">https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_runasnonroot">
+  <h4>run-as-non-root</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>run-as-non-root</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers are not set to runAsNonRoot.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_sensitivehostmounts">
+  <h4>sensitive-host-mounts</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>sensitive-host-mounts</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with sensitive host system directories mounted in containers.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure sensitive host system directories are not mounted in containers by removing those Volumes and VolumeMounts.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_unsafeprocmount">
+  <h4>unsafe-proc-mount</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>unsafe-proc-mount</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with unsafe /proc mount (procMount=Unmasked) that will bypass the default masking behavior of the container runtime
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure container does not unsafely exposes parts of /proc by setting procMount=Default. Unmasked ProcMount bypasses the default masking behavior of the container runtime. See  <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">https://kubernetes.io/docs/concepts/security/pod-security-standards/</a>
+ for more details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_unsafesysctls">
+  <h4>unsafe-sysctls</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>unsafe-sysctls</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments specifying unsafe sysctls that may lead to severe problems like wrong behavior of containers
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure container does not allow unsafe allocation of system resources by removing unsafe sysctls configurations. For more details see  <a href="https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/">https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/</a>
+ <a href="https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.">https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.</a>
+</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_usenamespace">
+  <h4>use-namespace</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>use-namespace</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a resource is deployed to the default namespace. CIS Benchmark 5.7.1: Create administrative boundaries between resources using namespaces. CIS Benchmark 5.7.4: The default namespace should not be used.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Create namespaces for objects in your deployment.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_wildcardinrules">
+  <h4>wildcard-in-rules</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>wildcard-in-rules</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicate when a wildcard is used in Role or ClusterRole rules. CIS Benchmark 5.1.3 Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible replace any use of wildcards in clusterroles and roles with specific objects or actions.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_writablehostmount">
+  <h4>writable-host-mount</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>writable-host-mount</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers mount a host path as writable.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set containers to mount host paths as readOnly, if you need to access files on the host.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_write_your_own_rule">
+  <h2>Write your own rule</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>To write your own rule you have to implement and add to bundlebee (core) classpath a CDI bean implementing <code>LintingCheck</code> - or <code>SynchronousLintingCheck</code> which can be easier to implement.</p>
+ </div>
+ <div class="sect2" id="_synchronous_or_not">
+  <h3>Synchronous or not</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>The generic <code>LintingCheck</code> uses <code>CompletionStage</code> because it is possible to use validation rules which connect to a cluster (the bundlebee configured one) and using <code>KubeClient</code> - or any other logic - you can do checks against a particular cluster (does role exists for example).<code>CompletionStage</code> enable to run validations in parallel easily.</p>
+ </div>
+ <div class="paragraph">
+ <p>When not needed, just go with the <code>SynchronousLintingCheck</code> base interface or one of its children.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_anatomy_of_a_check">
+  <h3>Anatomy of a check</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+A check is composed of:
+ </p>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+ <p>A <code>name</code> which enables to disable/force the check to run,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>A <code>remediation</code> string which explains how to fix the violation when it happens,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>A <code>decription</code> explaining the validation,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>A <code>validate</code> (or sync flavor) method doing validation when a descriptor is visited,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>Sometimes an <code>afterAll</code> method doing validations after all descriptors were seen (for joins accross desriptors for example).</p>
+ </div>
+  </li>
+ </ul>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_json_json_json">
+  <h3>JSON, JSON, JSON</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Yaml descriptors are converted to <code>JsonObject</code> and descriptors containing a list are flattened.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+What does it means is that you always validate a single descriptor which is an object in check code which makes it easier to work with.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_going_further">
+  <h2>Going further</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+It is not yet possible to define custom rules, it is not very complicated to do it technically but the language (must be JSON based) is challenging. Here are the current evaluated options:
+ </p>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+ <p>Custom DSL: likely the most powerful and consistent option since we could define it in <code>manifest.json</code> but requires to learn yet another language,</p>
+ </div>
+  </li>
+  <li>
+ <p>
+JSON-Logic: a very good option but requires a lot of operators and resulting DSL is not that friendly/simple,
+ </p>
+  </li>
+  <li>
+ <p>
+Template based: idea there is to define a few options (&quot;check this value at this JSON pointer&quot;, &quot;check this chain of json pointer&quot;, ...) but this becomes quite hard to have a relevant dictionary set without making it overcomplex,
+ </p>
+  </li>
+  <li>
+ <p>
+Scripting based: we can run jruby/jython/js engine rules but they all required to embed a script manager runtime and they tend to be fatty for this need and not all are graalvm friendly to convert bundlebee to native mode.
+ </p>
+  </li>
+ </ul>
+ </div>
+ <div class="paragraph">
+ <p>
+So as of today, since we didn't find a compromise making us happy we didn't enable to define JSON DSL based rules. Since it is easy to add custom rules in Java (and using the maven plugin), this is not blocking but we'd like to tackle it if we can come up with a better idea. Don't hesistate to propose something on bundlebee github project if you have an idea or a common need.
+ </p>
+ </div>
+ </div>
+ </div>
                 
                 
             </div>
@@ -892,7 +1182,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

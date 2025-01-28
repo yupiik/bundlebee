@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.28-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -157,36 +157,41 @@
             </div>
             <div class="page-content-body">
                 <div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Apply/deploy a set of descriptors from a root one.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_coordinates">Coordinates</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Apply/deploy a set of descriptors from a root one.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="sect1" id="_coordinates">
+  <h2>Coordinates</h2>
+ <div class="sectionbody">
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
-  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.29-SNAPSHOT&lt;/version&gt;
 &lt;/plugin&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>To call this goal from the command line execute: <code>mvn bundlebee:apply</code>.</p>
-</div>
-<div class="paragraph">
-<p>To bind this goal in the build you can use:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>To call this goal from the command line execute: <code>mvn bundlebee:apply</code>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+To bind this goal in the build you can use:
+ </p>
+ </div>
+ <div class="listingblock">
+ <div class="content">
+ <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;plugin&gt;
   &lt;groupId&gt;io.yupiik&lt;/groupId&gt;
   &lt;artifactId&gt;bundlebee-maven-plugin&lt;/artifactId&gt;
-  &lt;version&gt;1.0.28-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.29-SNAPSHOT&lt;/version&gt;
   &lt;executions&gt;
     &lt;execution&gt;
       &lt;id&gt;my-execution&lt;/id&gt;
@@ -199,254 +204,658 @@
     &lt;/execution&gt;
   &lt;/executions&gt;
 &lt;/plugin&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>You can execute this goal particularly with <code>mvn bundlebee:apply@my-execution</code> command.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="dlist">
-<dl>
-<dt class="hdlist1">alveolus (<code>String</code>)</dt>
-<dd>
-<p>Alveolus name to deploy. When set to <code>auto</code>, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code>. Property: <code>${bundlebee.apply.alveolus}</code>.</p>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>You can execute this goal particularly with <code>mvn bundlebee:apply@my-execution</code> command.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_configuration">
+  <h2>Configuration</h2>
+ <div class="sectionbody">
+ <dl>
+  <dt> <div class="paragraph">
+ <p>alveolus (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Alveolus name to deploy. When set to <code>auto</code>, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to <code>auto</code> and there is a single alveolus in it, this will default to it instead of using classpath deployment. Default value: <code>auto</code>. Property: <code>${bundlebee.apply.alveolus}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">awaiterRetryInterval (<code>long</code>)</dt>
-<dd>
-<p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code>. Property: <code>${bundlebee.awaiter.retryInterval}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>awaiterRetryInterval (<code>long</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example). Default value: <code>500</code>. Property: <code>${bundlebee.awaiter.retryInterval}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">customPlaceholders (<code>Map</code>)</dt>
-<dd>
-<p>Custom properties injected in the main, it is often used for placeholders. If the key (tag in pom) starts with <code>bundlebee-placeholder-import</code> then the value is resolved as a properties file which is injected in the resulting placeholders (indirect placeholders). Property: <code>${bundlebee.apply.customPlaceholders}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>customPlaceholders (<code>Map</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Custom properties injected in the main, it is often used for placeholders. If the key (tag in pom) starts with <code>bundlebee-placeholder-import</code> then the value is resolved as a properties file which is injected in the resulting placeholders (indirect placeholders). Property: <code>${bundlebee.apply.customPlaceholders}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">defaultManifest (<code>String</code>)</dt>
-<dd>
-<p>Just an alias for the built-in manifest property to ease the pom configuration for all commands. Default value: <code>skip</code>. Property: <code>${bundlebee.manifest}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>defaultManifest (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Just an alias for the built-in manifest property to ease the pom configuration for all commands. Default value: <code>skip</code>. Property: <code>${bundlebee.manifest}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">descriptorAwaitTimeout (<code>long</code>)</dt>
-<dd>
-<p>For descriptors with <code>await</code> = <code>true</code> the max duration the test can last. Default value: <code>60000</code>. Property: <code>${bundlebee.apply.descriptorAwaitTimeout}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>descriptorAwaitTimeout (<code>long</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>For descriptors with <code>await</code> = <code>true</code> the max duration the test can last. Default value: <code>60000</code>. Property: <code>${bundlebee.apply.descriptorAwaitTimeout}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">excludedDescriptors (<code>String</code>)</dt>
-<dd>
-<p>Enables to exclude descriptors from the command line. <code>none</code> to ignore. Value is comma separated. Note that using this setting, location is set to <code>*</code> so only the name is matched. Default value: <code>none</code>. Property: <code>${bundlebee.apply.excludedDescriptors}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>excludedDescriptors (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to exclude descriptors from the command line. <code>none</code> to ignore. Value is comma separated. Note that using this setting, location is set to <code>*</code> so only the name is matched. Default value: <code>none</code>. Property: <code>${bundlebee.apply.excludedDescriptors}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">excludedLocations (<code>String</code>)</dt>
-<dd>
-<p>Enables to exclude locations (descriptor is set to <code>*</code>) from the command line. <code>none</code> to ignore. Value is comma separated. Default value: <code>none</code>. Property: <code>${bundlebee.apply.excludedLocations}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>excludedLocations (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to exclude locations (descriptor is set to <code>*</code>) from the command line. <code>none</code> to ignore. Value is comma separated. Default value: <code>none</code>. Property: <code>${bundlebee.apply.excludedLocations}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">from (<code>String</code>)</dt>
-<dd>
-<p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code>. Property: <code>${bundlebee.apply.from}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>from (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Root dependency to download to get the manifest. If set to <code>auto</code> it is assumed to be present in current classpath. Default value: <code>auto</code>. Property: <code>${bundlebee.apply.from}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">httpclientConnectTimeout (<code>String</code>)</dt>
-<dd>
-<p>The HTTP client connect timeout (in java Duration format), <code>none</code> can be used to ignore this setting. Default value: <code>none</code>. Property: <code>${bundlebee.httpclient.connectTimeout}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>httpclientConnectTimeout (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client connect timeout (in java Duration format), <code>none</code> can be used to ignore this setting. Default value: <code>none</code>. Property: <code>${bundlebee.httpclient.connectTimeout}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">httpclientFollowRedirects (<code>String</code>)</dt>
-<dd>
-<p>The HTTP client redirect policy. Default to <code>NORMAL</code>, can be set to <code>ALWAYS</code> or <code>NEVER</code>. Default value: <code>NORMAL</code>. Property: <code>${bundlebee.httpclient.followRedirects}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>httpclientFollowRedirects (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client redirect policy. Default to <code>NORMAL</code>, can be set to <code>ALWAYS</code> or <code>NEVER</code>. Default value: <code>NORMAL</code>. Property: <code>${bundlebee.httpclient.followRedirects}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">httpclientForcedHttpVersion (<code>String</code>)</dt>
-<dd>
-<p>The HTTP client version, <code>none</code> mean the JVM default (v2), <code>HTTP_1_1</code> v1.1 and <code>HTTP_2</code> v2.0. Default value: <code>none</code>. Property: <code>${bundlebee.httpclient.forcedHttpVersion}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>httpclientForcedHttpVersion (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The HTTP client version, <code>none</code> mean the JVM default (v2), <code>HTTP_1_1</code> v1.1 and <code>HTTP_2</code> v2.0. Default value: <code>none</code>. Property: <code>${bundlebee.httpclient.forcedHttpVersion}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">httpclientThreads (<code>int</code>)</dt>
-<dd>
-<p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code>. Property: <code>${bundlebee.httpclient.threads}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>httpclientThreads (<code>int</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How many threads are allocated to async HTTP client, negative or zero value means to use common pool. Default value: <code>-1</code>. Property: <code>${bundlebee.httpclient.threads}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">injectBundleBeeMetadata (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code>, <code>bundlebee.*</code> labels will be injected into the descriptors. This is required for rollback command to work. Default value: <code>true</code>. Property: <code>${bundlebee.apply.injectBundleBeeMetadata}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>injectBundleBeeMetadata (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code>, <code>bundlebee.*</code> labels will be injected into the descriptors. This is required for rollback command to work. Default value: <code>true</code>. Property: <code>${bundlebee.apply.injectBundleBeeMetadata}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">injectTimestamp (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code>, a <code>bundlebee.timestamp</code> label will be injected into the descriptors with current date before applying the descriptor. Default value: <code>true</code>. Property: <code>${bundlebee.apply.injectTimestamp}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>injectTimestamp (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code>, a <code>bundlebee.timestamp</code> label will be injected into the descriptors with current date before applying the descriptor. Default value: <code>true</code>. Property: <code>${bundlebee.apply.injectTimestamp}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeApi (<code>String</code>)</dt>
-<dd>
-<p>When kubeconfig is not set the base API endpoint. Default value: <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code>. Property: <code>${bundlebee.kube.api}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeApi (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When kubeconfig is not set the base API endpoint. Default value: <code> <a href="http://localhost:8080" class="inline-code">http://localhost:8080</a>
+</code>. Property: <code>${bundlebee.kube.api}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeContext (<code>String</code>)</dt>
-<dd>
-<p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.context}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeContext (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.context}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeCustomMetadataInjectionPoint (<code>String</code>)</dt>
-<dd>
-<p>When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations. Default value: <code>labels</code>. Property: <code>${bundlebee.kube.customMetadataInjectionPoint}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeCustomMetadataInjectionPoint (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations. Default value: <code>labels</code>. Property: <code>${bundlebee.kube.customMetadataInjectionPoint}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeDefaultPropagationPolicy (<code>String</code>)</dt>
-<dd>
-<p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code>. Property: <code>${bundlebee.kube.defaultPropagationPolicy}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeDefaultPropagationPolicy (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default value for deletions of <code>propagationPolicy</code>. Values can be <code>Orphan</code>, <code>Foreground</code> and <code>Background</code>. Default value: <code>Foreground</code>. Property: <code>${bundlebee.kube.defaultPropagationPolicy}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeDryRun (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code>. Property: <code>${bundlebee.kube.dryRun}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeDryRun (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload. Default value: <code>false</code>. Property: <code>${bundlebee.kube.dryRun}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeFieldValidation (<code>String</code>)</dt>
-<dd>
-<p><code>fieldValidation</code> - server side validation - value when applying a descriptor, values can be <code>Strict</code>, <code>Warn</code> pr <code>Ignore</code>. Note that using <code>skip</code> will ignore the query parameter. Default value: <code>Strict</code>. Property: <code>${bundlebee.kube.fieldValidation}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeFieldValidation (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p><code>fieldValidation</code> - server side validation - value when applying a descriptor, values can be <code>Strict</code>, <code>Warn</code> pr <code>Ignore</code>. Note that using <code>skip</code> will ignore the query parameter. Default value: <code>Strict</code>. Property: <code>${bundlebee.kube.fieldValidation}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeFiltersStatefulesetSpecAllowed (<code>Set</code>)</dt>
-<dd>
-<p>The attributes to keep from <code>StatefulSet</code> (<code>spec</code> children) descriptor on updates. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code>. Property: <code>${bundlebee.kube.filters.statefuleset.spec.allowed}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeFiltersStatefulesetSpecAllowed (<code>Set</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>The attributes to keep from <code>StatefulSet</code> (<code>spec</code> children) descriptor on updates. Default value: <code>replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector</code>. Property: <code>${bundlebee.kube.filters.statefuleset.spec.allowed}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeForce (<code>boolean</code>)</dt>
-<dd>
-<p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself and for cases it is not enough, you can set <code>force</code> to <code>true</code> to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). Note that you can set it to <code>true</code> in a descriptor annotation <code>io.yupiik.bundlebee/force</code> too to not be global. Default value: <code>false</code>. Property: <code>${bundlebee.kube.force}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeForce (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself and for cases it is not enough, you can set <code>force</code> to <code>true</code> to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). Note that you can set it to <code>true</code> in a descriptor annotation <code>io.yupiik.bundlebee/force</code> too to not be global. Default value: <code>false</code>. Property: <code>${bundlebee.kube.force}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeHttpTimeout (<code>long</code>)</dt>
-<dd>
-<p>HTTP timeout in ms, ignored if &#8656; 0. Default value: <code>60000</code>. Property: <code>${bundlebee.kube.http.timeout}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeHttpTimeout (<code>long</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>HTTP timeout in ms, ignored if &lt;= 0. Default value: <code>60000</code>. Property: <code>${bundlebee.kube.http.timeout}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeImplicitlyDroppedAttributes (<code>String</code>)</dt>
-<dd>
-<p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using <code>none</code> ignores this processing. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code>. Property: <code>${bundlebee.kube.implicitlyDroppedAttributes}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeImplicitlyDroppedAttributes (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to tolerate custom attributes in the descriptors. Typically used to drop <code>/$schema</code> attribute which enables a nice completion in editors. Values are <code>|</code> delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using <code>none</code> ignores this processing. Default value: <code>/$schema|/$bundlebeeIgnoredLintingRules</code>. Property: <code>${bundlebee.kube.implicitlyDroppedAttributes}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeLogDescriptorOnParsingError (<code>boolean</code>)</dt>
-<dd>
-<p>Should YAML/JSON be logged when it can&#8217;t be parsed. Default value: <code>true</code>. Property: <code>${bundlebee.kube.logDescriptorOnParsingError}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeLogDescriptorOnParsingError (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should YAML/JSON be logged when it can't be parsed. Default value: <code>true</code>. Property: <code>${bundlebee.kube.logDescriptorOnParsingError}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeNamespace (<code>String</code>)</dt>
-<dd>
-<p>When kubeconfig is not set the namespace to use. Default value: <code>default</code>. Property: <code>${bundlebee.kube.namespace}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeNamespace (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When kubeconfig is not set the namespace to use. Default value: <code>default</code>. Property: <code>${bundlebee.kube.namespace}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubePatchContentType (<code>String</code>)</dt>
-<dd>
-<p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code>. Property: <code>${bundlebee.kube.patchContentType}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubePatchContentType (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default header value for <code>PATCH</code> <code>content-type</code> requests header. It uses strategic merge patch algorithm but in some cases you just want to use <code>application/json</code> or (better) <code>application/merge-patch+json</code>. Annotation <code>io.yupiik.bundlebee/patchContentType</code> is also supported. Default value: <code>application/strategic-merge-patch+json</code>. Property: <code>${bundlebee.kube.patchContentType}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeProxyHost (<code>String</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its host, ignore if not set. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.host}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeProxyHost (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its host, ignore if not set. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.host}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeProxyPassword (<code>String</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.password}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeProxyPassword (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.password}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeProxyPort (<code>int</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its port. Default value: <code>3128</code>. Property: <code>${bundlebee.kube.proxy.port}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeProxyPort (<code>int</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its port. Default value: <code>3128</code>. Property: <code>${bundlebee.kube.proxy.port}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeProxySetProxySystemProperties (<code>boolean</code>)</dt>
-<dd>
-<p>If a proxy is configured to use authentication, automatically set <code>-Djdk.http.auth.tunneling.disabledSchemes=</code>, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is "leaked", ie it is not cleaned up to limit side effect in concurrent mode. Default value: <code>true</code>. Property: <code>${bundlebee.kube.proxy.setProxySystemProperties}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeProxySetProxySystemProperties (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is configured to use authentication, automatically set <code>-Djdk.http.auth.tunneling.disabledSchemes=</code>, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is &quot;leaked&quot;, ie it is not cleaned up to limit side effect in concurrent mode. Default value: <code>true</code>. Property: <code>${bundlebee.kube.proxy.setProxySystemProperties}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeProxyUsername (<code>String</code>)</dt>
-<dd>
-<p>If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.username}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeProxyUsername (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee <code>-Djdk.http.auth.tunneling.disabledSchemes=</code> options). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.proxy.username}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubePutOnUpdate (<code>boolean</code>)</dt>
-<dd>
-<p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code>. Property: <code>${bundlebee.kube.putOnUpdate}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubePutOnUpdate (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>By default a descriptor update is done using <code>PATCH</code> with strategic merge patch logic, if set to <code>true</code> it will use a plain <code>PUT</code>. Note that <code>io.yupiik.bundlebee/putOnUpdate</code> annotations can be set to <code>true</code> to force that in the descriptor itself. Default value: <code>false</code>. Property: <code>${bundlebee.kube.putOnUpdate}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeRateLimiterEnabled (<code>boolean</code>)</dt>
-<dd>
-<p>Should HTTP client requests be limited and HTTP 427 responses be handled. Default value: <code>false</code>. Property: <code>${bundlebee.kube.rateLimiter.enabled}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeRateLimiterEnabled (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should HTTP client requests be limited and HTTP 427 responses be handled. Default value: <code>false</code>. Property: <code>${bundlebee.kube.rateLimiter.enabled}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeRateLimiterPermits (<code>int</code>)</dt>
-<dd>
-<p>How many calls can be done if rate limiting is enabled. Note that setting it to <code>Integer.MAX_VALUE</code> will disable the client rate limiting and only enable server one. Default value: <code>100</code>. Property: <code>${bundlebee.kube.rateLimiter.permits}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeRateLimiterPermits (<code>int</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>How many calls can be done if rate limiting is enabled. Note that setting it to <code>Integer.MAX_VALUE</code> will disable the client rate limiting and only enable server one. Default value: <code>100</code>. Property: <code>${bundlebee.kube.rateLimiter.permits}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeRateLimiterWindow (<code>int</code>)</dt>
-<dd>
-<p>Rate limiting window duration in milliseconds (default being 1 second). Default value: <code>1000</code>. Property: <code>${bundlebee.kube.rateLimiter.window}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeRateLimiterWindow (<code>int</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Rate limiting window duration in milliseconds (default being 1 second). Default value: <code>1000</code>. Property: <code>${bundlebee.kube.rateLimiter.window}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeResourceMapping (<code>String</code>)</dt>
-<dd>
-<p>Enables to define resource mapping, syntax uses propeties one: ` s = /apis/&#8230;&#8203;.<code>. Default value: `</code>. Property: <code>${bundlebee.kube.resourceMapping}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeResourceMapping (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enables to define resource mapping, syntax uses propeties one: <code>s = /apis/....</code>. Default value: <code></code>. Property: <code>${bundlebee.kube.resourceMapping}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeSkipDryRunForGet (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code> GET http requests are not skipped when <code>dryRun</code> is true. Default value: <code>false</code>. Property: <code>${bundlebee.kube.skipDryRunForGet}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeSkipDryRunForGet (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> GET http requests are not skipped when <code>dryRun</code> is true. Default value: <code>false</code>. Property: <code>${bundlebee.kube.skipDryRunForGet}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeSkipUpdateForKinds (<code>String</code>)</dt>
-<dd>
-<p>List of <em>kind</em> of descriptors updates can be skipped, it is often useful for <code>PersistentVolumeClaim</code>. Default value: <code>PersistentVolumeClaim</code>. Property: <code>${bundlebee.kube.skipUpdateForKinds}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeSkipUpdateForKinds (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>List of <i>kind</i> of descriptors updates can be skipped, it is often useful for <code>PersistentVolumeClaim</code>. Default value: <code>PersistentVolumeClaim</code>. Property: <code>${bundlebee.kube.skipUpdateForKinds}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeToken (<code>String</code>)</dt>
-<dd>
-<p>When <code>kubeconfig</code> is set to <code>explicit</code>, the bearer token to use (if set). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.token}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeToken (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When <code>kubeconfig</code> is set to <code>explicit</code>, the bearer token to use (if set). Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.kube.token}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeValidateSSL (<code>boolean</code>)</dt>
-<dd>
-<p>Should SSL connector be validated or not. Default value: <code>true</code>. Property: <code>${bundlebee.kube.validateSSL}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeValidateSSL (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should SSL connector be validated or not. Default value: <code>true</code>. Property: <code>${bundlebee.kube.validateSSL}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeVerbose (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code>. Property: <code>${bundlebee.kube.verbose}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeVerbose (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> http requests/responses to Kubernetes will be logged. Default value: <code>false</code>. Property: <code>${bundlebee.kube.verbose}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">kubeconfig (<code>String</code>)</dt>
-<dd>
-<p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. The content can also be set inline!. Default value: <code>auto</code>. Property: <code>${kubeconfig}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>kubeconfig (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Kubeconfig location. If set to <code>auto</code> it will try to guess from your <code>$HOME/.kube/config</code> file until you set it so <code>explicit</code> where it will use other <code>bundlebee.kube</code> properties to create the client. The content can also be set inline!. Default value: <code>auto</code>. Property: <code>${kubeconfig}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">manifest (<code>String</code>)</dt>
-<dd>
-<p>Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code>. Property: <code>${bundlebee.apply.manifest}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>manifest (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to <code>skip</code>. Default value: <code>skip</code>. Property: <code>${bundlebee.apply.manifest}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenCache (<code>String</code>)</dt>
-<dd>
-<p>Where to cache maven dependencies. If set to <code>auto</code>, tries to read the system property <code>maven.repo.local</code> then the <code>settings.xml</code> <code>localRepository</code> and finally it would fallback on <code>$HOME/.m2/repository</code>. Default value: <code>auto</code>. Property: <code>${bundlebee.maven.cache}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenCache (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Where to cache maven dependencies. If set to <code>auto</code>, tries to read the system property <code>maven.repo.local</code> then the <code>settings.xml</code> <code>localRepository</code> and finally it would fallback on <code>$HOME/.m2/repository</code>. Default value: <code>auto</code>. Property: <code>${bundlebee.maven.cache}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenForceCustomSettingsXml (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code>. Property: <code>${bundlebee.maven.forceCustomSettingsXml}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenForceCustomSettingsXml (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> we only use <code>cache</code> value and never fallback on default maven settings.xml location. Default value: <code>false</code>. Property: <code>${bundlebee.maven.forceCustomSettingsXml}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenHttpConnectTimeout (<code>int</code>)</dt>
-<dd>
-<p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code>. Property: <code>${bundlebee.maven.http.connectTimeout}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenHttpConnectTimeout (<code>int</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>When fetching a dependency using HTTP, the connection timeout for this dependency. Default value: <code>30000</code>. Property: <code>${bundlebee.maven.http.connectTimeout}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenPreferCustomSettingsXml (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code>. Property: <code>${bundlebee.maven.preferCustomSettingsXml}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenPreferCustomSettingsXml (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>false</code> we first try to read <code>settings.xml</code> file(s) in <code>cache</code> location before the default one. Default value: <code>true</code>. Property: <code>${bundlebee.maven.preferCustomSettingsXml}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenRepositoriesDownloadsEnabled (<code>boolean</code>)</dt>
-<dd>
-<p>Enable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code>. Property: <code>${bundlebee.maven.repositories.downloads.enabled}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenRepositoriesDownloadsEnabled (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Enable the download, i.e. ensure it runs only with local maven repository. Default value: <code>false</code>. Property: <code>${bundlebee.maven.repositories.downloads.enabled}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenRepositoriesHttpHeaders (<code>String</code>)</dt>
-<dd>
-<p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Note that you can use maven <code>~/.m2/settings.xml</code> servers (potentially ciphered) username/password pairs. In this last case the server id must be <code>bundlebee. `. Still in settings.xml case, if the username is null the password value is used as raw `Authorization</code> header else username/password is encoded as a basic header. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.httpHeaders}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenRepositoriesHttpHeaders (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Properties to define the headers to set per repository, syntax is <code>host1=headerName headerValue</code> and it supports as much lines as used repositories. Note that you can use maven <code>~/.m2/settings.xml</code> servers (potentially ciphered) username/password pairs. In this last case the server id must be <code>bundlebee.</code>. Still in settings.xml case, if the username is null the password value is used as raw <code>Authorization</code> header else username/password is encoded as a basic header. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.httpHeaders}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenRepositoriesRelease (<code>String</code>)</dt>
-<dd>
-<p>Default release repository. Default value: <code><a href="https://repo.maven.apache.org/maven2/" class="bare">https://repo.maven.apache.org/maven2/</a></code>. Property: <code>${bundlebee.maven.repositories.release}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenRepositoriesRelease (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default release repository. Default value: <code> <a href="https://repo.maven.apache.org/maven2/" class="inline-code">https://repo.maven.apache.org/maven2/</a>
+</code>. Property: <code>${bundlebee.maven.repositories.release}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">mavenRepositoriesSnapshot (<code>String</code>)</dt>
-<dd>
-<p>Default snapshot repository, not set by default. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>mavenRepositoriesSnapshot (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Default snapshot repository, not set by default. Default value: <code>&lt;unset&gt;</code>. Property: <code>${bundlebee.maven.repositories.snapshot}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">packaging (<code>String</code>)</dt>
-<dd>
-<p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: ``.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>packaging (<code>String</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Current module packaging. Default value: <code>${project.packaging}</code>. Property: <code></code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">skip (<code>boolean</code>)</dt>
-<dd>
-<p>Skip execution. Default value: <code>false</code>. Property: <code>${bundlebee.skip}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>skip (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Skip execution. Default value: <code>false</code>. Property: <code>${bundlebee.skip}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">skipMavenForcedFilteringForPlaceholders (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code>, bundlebee lookup in maven context will be one level only which means <code>foo</code> will be looked up as such in maven and not <code>`${foo}</code> which will work. Default value: <code>false</code>. Property: <code>${bundlebee.skipMavenForcedFilteringForPlaceholders}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>skipMavenForcedFilteringForPlaceholders (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code>, bundlebee lookup in maven context will be one level only which means <code>foo</code> will be looked up as such in maven and not <code></code>$<code>which will work. Default value:</code>false<code>. Property:</code>$`.</p>
+ </div>
 </dd>
-<dt class="hdlist1">skipPackaging (<code>List</code>)</dt>
-<dd>
-<p>Skipped packaging types. Default value: <code>pom</code>. Property: <code>${bundlebee.skipPackaging}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>skipPackaging (<code>List</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Skipped packaging types. Default value: <code>pom</code>. Property: <code>${bundlebee.skipPackaging}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">useChainInsteadOfAll (<code>boolean</code>)</dt>
-<dd>
-<p>If <code>true</code>, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors. Default value: <code>false</code>. Property: <code>${bundlebee.apply.useChainInsteadOfAll}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>useChainInsteadOfAll (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code>, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors. Default value: <code>false</code>. Property: <code>${bundlebee.apply.useChainInsteadOfAll}</code>.</p>
+ </div>
 </dd>
-<dt class="hdlist1">useDefaultLogging (<code>boolean</code>)</dt>
-<dd>
-<p>Should JUL logging redirected to Maven logging (enable it only if you set up maven to use JUL). Default value: <code>false</code>. Property: <code>${bundlebee.useDefaultLogging}</code>.</p>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>useDefaultLogging (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>Should JUL logging redirected to Maven logging (enable it only if you set up maven to use JUL). Default value: <code>false</code>. Property: <code>${bundlebee.useDefaultLogging}</code>.</p>
+ </div>
 </dd>
-</dl>
-</div>
-</div>
-</div>
+ </dl>
+ </div>
+ </div>
                 
                 
             </div>
@@ -505,7 +914,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.28-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
