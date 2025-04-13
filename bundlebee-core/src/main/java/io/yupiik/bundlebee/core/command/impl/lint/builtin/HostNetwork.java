@@ -33,7 +33,7 @@ public class HostNetwork extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/hostNetwork",
                         "Deployment", "/spec/template/spec/hostNetwork",
-                        "CronJob", "/spec/jobTemplate/template/spec/hostNetwork",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/hostNetwork",
                         "Job", "/spec/template/spec/hostNetwork",
                         "Pod", "/spec/hostNetwork"),
                 true);

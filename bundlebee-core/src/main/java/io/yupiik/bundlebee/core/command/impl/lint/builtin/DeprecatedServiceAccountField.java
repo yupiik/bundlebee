@@ -31,7 +31,7 @@ public class DeprecatedServiceAccountField extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/serviceAccount", // openshift
                         "Deployment", "/spec/template/spec/serviceAccount",
-                        "CronJob", "/spec/jobTemplate/template/spec/serviceAccount",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/serviceAccount",
                         "Job", "/spec/template/spec/serviceAccount",
                         "Pod", "/spec/serviceAccount"),
                 true);

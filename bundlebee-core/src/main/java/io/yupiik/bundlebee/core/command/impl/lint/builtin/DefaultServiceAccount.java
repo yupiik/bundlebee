@@ -32,7 +32,7 @@ public class DefaultServiceAccount extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/serviceAccountName", // openshift
                         "Deployment", "/spec/template/spec/serviceAccountName",
-                        "CronJob", "/spec/jobTemplate/template/spec/serviceAccountName",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/serviceAccountName",
                         "Job", "/spec/template/spec/serviceAccountName",
                         "Pod", "/spec/serviceAccountName"),
                 true);

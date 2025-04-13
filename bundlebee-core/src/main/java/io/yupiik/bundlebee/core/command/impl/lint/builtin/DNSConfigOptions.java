@@ -31,7 +31,7 @@ public class DNSConfigOptions extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/dnsConfig/options",
                         "Deployment", "/spec/template/spec/dnsConfig/options",
-                        "CronJob", "/spec/jobTemplate/template/spec/dnsConfig/options",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/dnsConfig/options",
                         "Job", "/spec/template/spec/dnsConfig/options",
                         "Pod", "/spec/dnsConfig/options"),
                 false);

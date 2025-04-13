@@ -33,7 +33,7 @@ public class HostPID extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/hostPID",
                         "Deployment", "/spec/template/spec/hostPID",
-                        "CronJob", "/spec/jobTemplate/template/spec/hostPID",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/hostPID",
                         "Job", "/spec/template/spec/hostPID",
                         "Pod", "/spec/hostPID"),
                 true);

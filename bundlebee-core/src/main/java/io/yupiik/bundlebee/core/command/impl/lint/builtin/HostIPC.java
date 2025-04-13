@@ -33,7 +33,7 @@ public class HostIPC extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/hostIPC",
                         "Deployment", "/spec/template/spec/hostIPC",
-                        "CronJob", "/spec/jobTemplate/template/spec/hostIPC",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/hostIPC",
                         "Job", "/spec/template/spec/hostIPC",
                         "Pod", "/spec/hostIPC"),
                 true);

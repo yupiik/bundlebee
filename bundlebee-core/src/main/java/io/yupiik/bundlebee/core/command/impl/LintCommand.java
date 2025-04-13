@@ -352,7 +352,7 @@ public class LintCommand implements CompletingExecutable {
                         alveoli.stream()
                                 .map(it -> {
                                     final var allLints = new CopyOnWriteArrayList<CompletionStage<List<DecoratedLintError>>>();
-                                    visitor.executeOnceOnAlveolus(
+                                    return visitor.executeOnceOnAlveolus(
                                             null, it.getManifest(), it.getAlveolus(), null,
                                             (ctx, desc) -> {
                                                 artifacts.put(desc.getConfiguration().getName(), new Artifact(new Location(desc.getUri())));
@@ -365,8 +365,8 @@ public class LintCommand implements CompletingExecutable {
                                                             return promise;
                                                         });
                                             },
-                                            cache, null, "inspected", null);
-                                    return all(allLints, mergeLists(), true);
+                                            cache, null, "inspected", null)
+                                            .thenCompose(ready -> all(allLints, mergeLists(), true));
                                 })
                                 .collect(toList()),
                         mergeLists(),
