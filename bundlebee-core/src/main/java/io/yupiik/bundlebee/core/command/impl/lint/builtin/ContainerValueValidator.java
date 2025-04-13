@@ -34,7 +34,7 @@ public abstract class ContainerValueValidator extends CheckValue {
     private static final Map<String, String> RUNNABLE_CONTAINERS_POINTERS = Map.of(
             "DeploymentConfig", "/spec/template/spec", // openshift
             "Deployment", "/spec/template/spec",
-            "CronJob", "/spec/jobTemplate/template/spec",
+            "CronJob", "/spec/jobTemplate/spec/template/spec",
             "Job", "/spec/template/spec",
             "Pod", "/spec");
 

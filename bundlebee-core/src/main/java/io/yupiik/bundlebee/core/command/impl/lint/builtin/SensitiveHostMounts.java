@@ -36,7 +36,7 @@ public class SensitiveHostMounts extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/volumes", // openshift
                         "Deployment", "/spec/template/spec/volumes",
-                        "CronJob", "/spec/jobTemplate/template/spec/volumes",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/volumes",
                         "Job", "/spec/template/spec/volumes",
                         "Pod", "/spec/volumes"),
                 true);
