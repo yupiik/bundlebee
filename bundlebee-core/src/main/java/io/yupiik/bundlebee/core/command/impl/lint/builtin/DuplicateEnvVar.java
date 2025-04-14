@@ -48,7 +48,7 @@ public class DuplicateEnvVar extends CheckValue {
                 Map.of(
                         "DeploymentConfig", "/spec/template/spec/containers",
                         "Deployment", "/spec/template/spec/containers",
-                        "CronJob", "/spec/jobTemplate/template/spec/containers",
+                        "CronJob", "/spec/jobTemplate/spec/template/spec/containers",
                         "Job", "/spec/template/spec/containers",
                         "Pod", "/spec/containers"),
                 true);
