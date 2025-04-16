@@ -47,7 +47,7 @@ jobs:
         run: find /home/runner/work/bundlebee/bundlebee/.m2 -name '*SNAPSHOT' | xargs rm -Rf
   security_audit:
     name: Security Audit
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Clone
         uses: actions/checkout@v4
