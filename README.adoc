@@ -74,6 +74,10 @@ Comprehensive documentation is available at:
 
 🌐 https://www.yupiik.io/bundlebee/
 
+You can see a full example of deployment in the Yupiik Fusion example project:
+
+🌐 https://github.com/yupiik/fusion-examples/tree/main/app-deployment
+
 == 🖥️ Contributing
 
 We warmly welcome contributions!
