@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.29-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.30-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -156,35 +156,170 @@
                 <h1>Available commands</h1>
             </div>
             <div class="page-content-body">
-                <div class="paragraph">
- <p>-  <a href="commands/add-alveolus.configuration.html">add-alveolus</a>
-: adds a service to the alveoli available in the defined folder. It is a skaffolding command. -  <a href="commands/apply.configuration.html">apply</a>
-: apply/deploy a set of descriptors from a root one. -  <a href="commands/build.configuration.html">build</a>
-: build a project. -  <a href="commands/check-update.configuration.html">check-update</a>
-: check if a new version is available. -  <a href="commands/cipher-password.configuration.html">cipher-password</a>
-: cipher a password to put it in <code>~/.m2/settings.xml</code> servers (useful for deploy command for example). -  <a href="commands/cipher.configuration.html">cipher</a>
-: enables to cipher a value using <code>AES/CBC/PKCS5Padding</code> algorithm with a master password. It can then be used as a placeholder with the syntax <code>{{bundlebee-decipher:{{my.master.password}},$cipheredValue}}</code>. -  <a href="commands/completion.configuration.html">completion</a>
-: execute bash completion. Should be setup in your <sub>/.bashrc or </sub>/.profile file to be active. -  <a href="commands/create-master-password.configuration.html">create-master-password</a>
-: generate a master password if none exist (in <code>~/.m2/settings-security.xml</code>). -  <a href="commands/decipher.configuration.html">decipher</a>
-: enables to decipher a value using <code>AES/CBC/PKCS5Padding</code> algorithm with a master password. -  <a href="commands/delete.configuration.html">delete</a>
-: delete an alveolus deployment by deleting all related descriptors. -  <a href="commands/deploy.configuration.html">deploy</a>
-: build and deploy a project. It inherits from most configuration of build command and adds remote repository settings. -  <a href="commands/diff.configuration.html">diff</a>
-: diff an alveolus against a running cluster. -  <a href="commands/helm.configuration.html">helm</a>
-: converts an alveolus deployment to a simple helm chart. -  <a href="commands/help.configuration.html">help</a>
-: print help for all available commands. -  <a href="commands/http.configuration.html">http</a>
-: execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration. -  <a href="commands/inspect.configuration.html">inspect</a>
-: inspect an alveolus, i.e. list the descriptors to apply. -  <a href="commands/lint.configuration.html">lint</a>
-: do common validations on descriptors. As of today mainly cpu/memory resources definition. -  <a href="commands/list-alveoli.configuration.html">list-alveoli</a>
-: lists all found alveoli. -  <a href="commands/list-lint-rules.configuration.html">list-lint-rules</a>
-: list available linting rules (ease exclusions for ex). -  <a href="commands/new.configuration.html">new</a>
-: creates a new project. -  <a href="commands/placeholder-extract.configuration.html">placeholder-extract</a>
-: extracts placeholders from an alveolus (often for documentation). -  <a href="commands/process.configuration.html">process</a>
-: process all descriptors - as in an apply command - from a root descriptor. If <code>output</code> is set, it dumps the descriptors in this directory. Don't forget to set <code>--kubeconfig explicit</code> to ignore kube setup. -  <a href="commands/rollback.configuration.html">rollback</a>
-: rollback an alveolus deployment. -  <a href="commands/run.configuration.html">run</a>
-: tries to run the recipe as plain forks on the host. In this mode, Bundlebee is used as the orchestrator. It is highly recommended to only do that with application matching the <code>bundlebee</code> command environment. -  <a href="commands/version.configuration.html">version</a>
-: shows the application version. -  <a href="commands/versions.configuration.html">versions</a>
-: list versions for an artifact to know which ones are available. -  <a href="commands/yaml2json.configuration.html">yaml2json</a>
+                <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+ <a href="commands/add-alveolus.configuration.html">add-alveolus</a>
+: adds a service to the alveoli available in the defined folder. It is a skaffolding command. </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/apply.configuration.html">apply</a>
+: apply/deploy a set of descriptors from a root one.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/build.configuration.html">build</a>
+: build a project.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/check-update.configuration.html">check-update</a>
+: check if a new version is available.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/cipher-password.configuration.html">cipher-password</a>
+: cipher a password to put it in <code>~/.m2/settings.xml</code> servers (useful for deploy command for example).</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/cipher.configuration.html">cipher</a>
+: enables to cipher a value using <code>AES/CBC/PKCS5Padding</code> algorithm with a master password. It can then be used as a placeholder with the syntax <code>{{bundlebee-decipher:{{my.master.password}},$cipheredValue}}</code>.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/completion.configuration.html">completion</a>
+: execute bash completion. Should be setup in your <sub>/.bashrc or </sub>/.profile file to be active.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/create-master-password.configuration.html">create-master-password</a>
+: generate a master password if none exist (in <code>~/.m2/settings-security.xml</code>).</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/decipher.configuration.html">decipher</a>
+: enables to decipher a value using <code>AES/CBC/PKCS5Padding</code> algorithm with a master password.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/delete.configuration.html">delete</a>
+: delete an alveolus deployment by deleting all related descriptors.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/deploy.configuration.html">deploy</a>
+: build and deploy a project. It inherits from most configuration of build command and adds remote repository settings.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/diff.configuration.html">diff</a>
+: diff an alveolus against a running cluster.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/helm.configuration.html">helm</a>
+: converts an alveolus deployment to a simple helm chart.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/help.configuration.html">help</a>
+: print help for all available commands.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/http.configuration.html">http</a>
+: execute a HTTP request over Kubernetes client. This is mainly for not yet existing commands and to reuse all the client auto-configuration.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/inspect.configuration.html">inspect</a>
+: inspect an alveolus, i.e. list the descriptors to apply.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/lint.configuration.html">lint</a>
+: do common validations on descriptors. As of today mainly cpu/memory resources definition.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/list-alveoli.configuration.html">list-alveoli</a>
+: lists all found alveoli.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/list-lint-rules.configuration.html">list-lint-rules</a>
+: list available linting rules (ease exclusions for ex).</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/new.configuration.html">new</a>
+: creates a new project.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/placeholder-extract.configuration.html">placeholder-extract</a>
+: extracts placeholders from an alveolus (often for documentation).</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/process.configuration.html">process</a>
+: process all descriptors - as in an apply command - from a root descriptor. If <code>output</code> is set, it dumps the descriptors in this directory. Don't forget to set <code>--kubeconfig explicit</code> to ignore kube setup.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/rollback.configuration.html">rollback</a>
+: rollback an alveolus deployment.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/run.configuration.html">run</a>
+: tries to run the recipe as plain forks on the host. In this mode, Bundlebee is used as the orchestrator. It is highly recommended to only do that with application matching the <code>bundlebee</code> command environment.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/version.configuration.html">version</a>
+: shows the application version.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/versions.configuration.html">versions</a>
+: list versions for an artifact to know which ones are available.</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p> <a href="commands/yaml2json.configuration.html">yaml2json</a>
 : convert yaml files of a directory to json. This command is useful to transform Kubernetes yaml files to json to write Bundlebee descriptors.</p>
+ </div>
+  </li>
+ </ul>
  </div>
                 
                 
@@ -244,7 +379,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.29-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.30-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
