@@ -83,7 +83,7 @@ public class AlveoliConfigurationGenerator implements Runnable {
                             "\n" +
                             docs.stream()
                                     .sorted()
-                                    .map(it -> "- " + it)
+                                    .map(it -> "* " + it)
                                     .collect(joining("\n\n")) +
                             "\n",
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
