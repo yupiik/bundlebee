@@ -66,7 +66,7 @@ public class CommandConfigurationGenerator implements Runnable {
                                     .sorted(Map.Entry.comparingByKey())
                                     .map(it -> {
                                         final var filename = it.getKey().getFileName().toString();
-                                        return "- xref:commands/" + filename + '[' + filename.substring(0, filename.length() - ".configuration.adoc".length()) + "]: " +
+                                        return "* xref:commands/" + filename + '[' + filename.substring(0, filename.length() - ".configuration.adoc".length()) + "]: " +
                                                 Character.toLowerCase(it.getValue().charAt(0)) + it.getValue().substring(1) + (it.getValue().endsWith(".") ? "" : ".");
                                     })
                                     .collect(joining("\n")) +
