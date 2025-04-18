@@ -40,7 +40,7 @@
     <arthur.version>1.0.9</arthur.version>
     <yupiik-logging.version>1.0.8</yupiik-logging.version>
     <johnzon.version>1.2.21</johnzon.version>
-    <yupiik-tools.version>1.2.5</yupiik-tools.version>
+    <yupiik-tools.version>1.2.6</yupiik-tools.version>
 
     <!-- deprecated in recent maven releases, we workaround the warnings using the new way (but dont support split repo)
     <m2.location>${settings.localRepository}</m2.location>
