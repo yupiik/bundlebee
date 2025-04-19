@@ -201,6 +201,8 @@ Placeholders can use some keywords to get some particular values:
 - `bundlebee-quote-escaped-inline-file:<file path>`: load the file content as a quoted value,
 - `bundlebee-json-inline-file:<file path>`: load the file content as a JSON string value - without quotes,
 - `bundlebee-json-string:content`: escapes a string to be a JSON string (useful when you inject with `bundlebee-json-inline-file` a string in another string like in JSON `ConfigMap` in a JSON configuration),
+- `bundlebee-lowercase:content`: lowercase a string,
+- `bundlebee-uppercase:content`: uppercase a string,
 - `bundlebee-maven-server-username:<server id>`: extract from your maven `settings.xml` a server username (see configuration for a custom settings.xml location),
 - `bundlebee-maven-server-password:<server id>`: extract from your maven `settings.xml` a server password (potentially deciphered),
 - `bundlebee-decipher`: use Maven ciphering logic (`AES/CBC/PKCS5Padding`) to read a clear value. Syntax is as follow `{{bundlebee-decipher:$masterKey,$cipheredValue}}` with `masterKey` another *placeholder* name which contains the master key and `cipheredValue` the value to decipher. Indeed we recommend to reference the master key with another shared placeholder if you use a single one (`{{bundlebee-decipher:{{myMasyterKey}},$cipheredValue}}`). Last, since the value will be surrounded by `{` and `}`, we tolerate spaces before/after to avoid any confusion with the mustable like syntax we use for placeholders: `{{bundlebee-decipher:{{my.master.key}}, {...base64....} }}`,
