@@ -275,9 +275,6 @@
               <com.yupiik.name>${project.artifactId}</com.yupiik.name>
               <com.yupiik.description>${project.description}</com.yupiik.description>
               <com.yupiik.vendor>Yupiik</com.yupiik.vendor>
-              <com.yupiik.user.id>10000</com.yupiik.user.id>
-              <com.yupiik.group.id>10000</com.yupiik.group.id>
-              <com.yupiik.group.name>yupiik</com.yupiik.group.name>
               <com.yupiik.params>_JAVA_OPTIONS=...</com.yupiik.params>
               <com.yupiik.cmd>docker run --user 1000 --detach ${image.name} &lt;args&gt;</com.yupiik.cmd>
             </labels>
@@ -291,6 +288,7 @@
         <groupId>org.apache.geronimo.arthur</groupId>
         <artifactId>arthur-maven-plugin</artifactId>
         <configuration>
+          <to>${image.name}-native</to>
           <main>io.yupiik.bundlebee.core.BundleBee</main>
         </configuration>
       </plugin>

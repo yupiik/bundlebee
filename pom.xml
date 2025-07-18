@@ -125,7 +125,7 @@
         <artifactId>arthur-maven-plugin</artifactId>
         <version>${arthur.version}</version>
         <configuration>
-          <graalVersion>21.0.1-graalce</graalVersion>
+          <graalVersion>21.0.2-graalce</graalVersion>
           <attach>true</attach>
           <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
           <output>${project.build.directory}/${project.artifactId}</output>
@@ -137,6 +137,27 @@
           <graalExtensions>
             <graalExtension>openwebbeans</graalExtension>
           </graalExtensions>
+          <labels>
+            <org.opencontainers.image.revision>${git.commit.id}</org.opencontainers.image.revision>
+            <org.opencontainers.image.ref.name>${git.branch}</org.opencontainers.image.ref.name>
+            <org.opencontainers.image.source>${git.remote.origin.url}</org.opencontainers.image.source>
+            <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>
+            <org.opencontainers.image.authors>Yupiik</org.opencontainers.image.authors>
+            <org.opencontainers.image.vendor>Yupiik</org.opencontainers.image.vendor>
+            <org.opencontainers.image.url>https://yupiik.io</org.opencontainers.image.url>
+            <org.opencontainers.image.documentation>https://yupiik.io/bundlebee/</org.opencontainers.image.documentation>
+            <org.opencontainers.image.title>${project.parent.name}</org.opencontainers.image.title>
+            <org.opencontainers.image.description>${project.parent.description}</org.opencontainers.image.description>
+            <org.opencontainers.image.version>${project.version}</org.opencontainers.image.version>
+            <com.yupiik.maintainer>Yupiik &lt;support@yupiik.com&gt;</com.yupiik.maintainer>
+            <com.yupiik.build-date>${maven.build.timestamp}</com.yupiik.build-date>
+            <com.yupiik.application>${project.artifactId}</com.yupiik.application>
+            <com.yupiik.name>${project.artifactId}</com.yupiik.name>
+            <com.yupiik.description>${project.description}</com.yupiik.description>
+            <com.yupiik.vendor>Yupiik</com.yupiik.vendor>
+            <com.yupiik.params>_JAVA_OPTIONS=...</com.yupiik.params>
+            <com.yupiik.cmd>docker run --user 1000 --detach ${image.name} &lt;args&gt;</com.yupiik.cmd>
+          </labels>
           <customOptions>
             <customOption>-J--add-exports=jdk.internal.vm.compiler/org.graalvm.compiler.options=ALL-UNNAMED</customOption>
             <customOption>-J--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.option=ALL-UNNAMED</customOption>
