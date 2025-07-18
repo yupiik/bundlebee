@@ -130,6 +130,8 @@
           <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
           <output>${project.build.directory}/${project.artifactId}</output>
           <buildStaticImage>false</buildStaticImage>
+          <binarySource>${project.build.directory}/${project.artifactId}</binarySource>
+          <useLDD>true</useLDD>
           <enableAllSecurityServices>false</enableAllSecurityServices>
           <allowIncompleteClasspath>false</allowIncompleteClasspath>
           <graalExtensions>

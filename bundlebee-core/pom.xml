@@ -287,6 +287,13 @@
           </outputPaths>
         </configuration>
       </plugin>
+      <plugin> <!-- mvn package arthur:native-image arthur:docker -DskipTests  -->
+        <groupId>org.apache.geronimo.arthur</groupId>
+        <artifactId>arthur-maven-plugin</artifactId>
+        <configuration>
+          <main>io.yupiik.bundlebee.core.BundleBee</main>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 
@@ -310,9 +317,6 @@
                 </goals>
               </execution>
             </executions>
-            <configuration>
-              <main>io.yupiik.bundlebee.core.BundleBee</main>
-            </configuration>
           </plugin>
         </plugins>
       </build>
