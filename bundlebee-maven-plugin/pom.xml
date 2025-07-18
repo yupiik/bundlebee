@@ -29,8 +29,8 @@
   <name>BundleBee :: Maven Plugin</name>
 
   <properties>
-    <mvn.version>3.8.3</mvn.version>
-    <mvn-plugin.version>3.9.0</mvn-plugin.version>
+    <mvn.version>3.9.9</mvn.version>
+    <mvn-plugin.version>3.15.1</mvn-plugin.version>
   </properties>
 
   <dependencies>
