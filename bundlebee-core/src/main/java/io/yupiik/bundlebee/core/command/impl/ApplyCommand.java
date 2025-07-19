@@ -76,6 +76,11 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
     private boolean useChainInsteadOfAll;
 
     @Inject
+    @Description("If `true`, the alveolus is installed without checking it already exists (assuming it doesn't) so some merge or sanitization logic is bypassed.")
+    @ConfigProperty(name = "bundlebee.apply.skipGet", defaultValue = "false")
+    private boolean skipGet;
+
+    @Inject
     @Description("" +
             "For descriptors with `await` = `true` the max duration the test can last.")
     @ConfigProperty(name = "bundlebee.apply.descriptorAwaitTimeout", defaultValue = "60000")

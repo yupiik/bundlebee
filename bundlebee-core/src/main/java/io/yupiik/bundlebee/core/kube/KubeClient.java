@@ -284,8 +284,13 @@ public class KubeClient implements ConfigHolder {
     }
 
     public CompletionStage<?> apply(final String descriptorContent, final String ext,
+                                    final Map<String, String> customLabels, final boolean skipGet) {
+        return forDescriptorWithOriginal("Applying", descriptorContent, ext, item -> doApply(item.getRaw(), item.getPrepared(), customLabels, skipGet));
+    }
+
+    public CompletionStage<?> apply(final String descriptorContent, final String ext,
                                     final Map<String, String> customLabels) {
-        return forDescriptorWithOriginal("Applying", descriptorContent, ext, item -> doApply(item.getRaw(), item.getPrepared(), customLabels));
+        return apply(descriptorContent, ext, customLabels, false);
     }
 
     public CompletionStage<?> delete(final String descriptorContent, final String ext, final int gracePeriod) {
@@ -391,7 +396,7 @@ public class KubeClient implements ConfigHolder {
                 });
     }
 
-    private CompletionStage<?> doApply(final JsonObject originalDontUseDesc, final JsonObject rawDesc, final Map<String, String> customLabels) {
+    private CompletionStage<?> doApply(final JsonObject originalDontUseDesc, final JsonObject rawDesc, final Map<String, String> customLabels, final boolean skipGet) {
         // apply logic is a "create or replace" one
         // so first thing we have to do is to test if the resource exists, and if not create it
         // for that we will need to extract the resource "kind" and "name" (id):
@@ -413,11 +418,12 @@ public class KubeClient implements ConfigHolder {
         final var desc = customLabels.isEmpty() ? rawDesc : injectMetadata(rawDesc, customLabels);
         final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
         return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
-                .thenCompose(ignored -> doApply(originalDontUseDesc, desc, kindLowerCased, 1));
+                .thenCompose(ignored -> doApply(originalDontUseDesc, desc, kindLowerCased, 1, skipGet));
     }
 
     private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc,
-                                                          final String kindLowerCased, final int retry) {
+                                                          final String kindLowerCased, final int retry,
+                                                          final boolean skipGet) {
         final var metadata = preparedDesc.getJsonObject("metadata");
         final var name = metadata.getString("name");
         final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
@@ -429,6 +435,12 @@ public class KubeClient implements ConfigHolder {
 
         if (api.isVerbose()) {
             log.info(() -> "Will apply descriptor " + preparedDesc + " on " + baseUri);
+        }
+
+        if (skipGet) {
+            return doApplyOnMissingDescriptor(
+                    rawDesc, preparedDesc, kindLowerCased, retry, name, baseUri, fieldManager,
+                    true);
         }
 
         return api.execute(HttpRequest.newBuilder()
@@ -491,48 +503,58 @@ public class KubeClient implements ConfigHolder {
                         return completedStage(findResponse);
                     }
 
-                    final JsonObject preparedAndFilteredDescriptor;
-                    if (findResponse.statusCode() == 404 && containerSanitizer.canSanitizeCpuResource(kindLowerCased)) {
-                        preparedAndFilteredDescriptor = containerSanitizer.dropCpuResources(kindLowerCased, preparedDesc);
-                    } else {
-                        preparedAndFilteredDescriptor = preparedDesc;
+                    return doApplyOnMissingDescriptor(
+                            rawDesc, preparedDesc, kindLowerCased, retry, name, baseUri, fieldManager,
+                            findResponse.statusCode() == 404);
+                });
+    }
+
+    private CompletionStage<HttpResponse<String>> doApplyOnMissingDescriptor(
+            final JsonObject rawDesc, final JsonObject preparedDesc,
+            final String kindLowerCased, final int retry,
+            final String name,
+            final String baseUri, final String fieldManager,
+            final boolean sanitize) {
+        final JsonObject preparedAndFilteredDescriptor;
+        if (sanitize && containerSanitizer.canSanitizeCpuResource(kindLowerCased)) {
+            preparedAndFilteredDescriptor = containerSanitizer.dropCpuResources(kindLowerCased, preparedDesc);
+        } else {
+            preparedAndFilteredDescriptor = preparedDesc;
+        }
+        log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
+        return api.execute(HttpRequest.newBuilder()
+                                .POST(HttpRequest.BodyPublishers.ofString(preparedAndFilteredDescriptor.toString()))
+                                .header("Content-Type", "application/json")
+                                .header("Accept", "application/json"),
+                        baseUri + fieldManager)
+                .thenCompose(response -> {
+                    if (api.isVerbose()) {
+                        log.info(response::toString);
                     }
 
-                    log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
-                    return api.execute(HttpRequest.newBuilder()
-                                            .POST(HttpRequest.BodyPublishers.ofString(preparedAndFilteredDescriptor.toString()))
-                                            .header("Content-Type", "application/json")
-                                            .header("Accept", "application/json"),
-                                    baseUri + fieldManager)
-                            .thenCompose(response -> {
-                                if (api.isVerbose()) {
-                                    log.info(response::toString);
-                                }
+                    // can we retry, happens for service accounts for ex when implicitly created
+                    if (response.statusCode() == 409 && retry > 0) {
+                        try {
+                            final var payload = jsonb.fromJson(response.body(), JsonObject.class);
+                            if ("AlreadyExists".equals(payload.getString("reason", "")) &&
+                                    ofNullable(payload.getJsonObject("details"))
+                                            .map(o -> "serviceaccounts".equals(o.getString("kind", "")))
+                                            .orElse(false)) {
+                                return doApply(rawDesc, preparedDesc, kindLowerCased, retry - 1, false);
+                            }
+                        } catch (final RuntimeException re) {
+                            // let it fail
+                            log.log(Level.FINEST, re, re::getMessage);
+                        }
+                    }
 
-                                // can we retry, happens for service accounts for ex when implicitly created
-                                if (response.statusCode() == 409 && retry > 0) {
-                                    try {
-                                        final var payload = jsonb.fromJson(response.body(), JsonObject.class);
-                                        if ("AlreadyExists".equals(payload.getString("reason", "")) &&
-                                                ofNullable(payload.getJsonObject("details"))
-                                                        .map(o -> "serviceaccounts".equals(o.getString("kind", "")))
-                                                        .orElse(false)) {
-                                            return doApply(rawDesc, preparedDesc, kindLowerCased, retry - 1);
-                                        }
-                                    } catch (final RuntimeException re) {
-                                        // let it fail
-                                        log.log(Level.FINEST, re, re::getMessage);
-                                    }
-                                }
-
-                                if (response.statusCode() != 201) {
-                                    throw new IllegalStateException(
-                                            "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                                    response.body());
-                                }
-                                log.info(() -> "Created " + name + " (" + kindLowerCased + ") successfully");
-                                return completedStage(response);
-                            });
+                    if (response.statusCode() != 201) {
+                        throw new IllegalStateException(
+                                "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +
+                                        response.body());
+                    }
+                    log.info(() -> "Created " + name + " (" + kindLowerCased + ") successfully");
+                    return completedStage(response);
                 });
     }
 
