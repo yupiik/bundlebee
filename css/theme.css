@@ -779,10 +779,7 @@ p a > code:hover {
 #footnotes,
 #footer {
     width: 100%;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 0;
-    margin-bottom: 0;
+    margin: 0 auto;
     max-width: 62.5em;
     *zoom: 1;
     position: relative;
@@ -2421,7 +2418,7 @@ div.anchors > div {
     background-color: #fff;
     background-clip: border-box;
     border: 1px solid rgba(0, 0, 0, 0.125);
-    border-radius: 0rem !important;
+    border-radius: 0 !important;
 }
 
 .card-title {
@@ -2525,7 +2522,6 @@ div.anchors > div {
     top: 5px;
     left: -20px;
     border-left: 1px solid #ddd;
-    /*border-top: 1px solid #ddd;*/
     width: 20px;
     height: 100%;
 }
@@ -2659,11 +2655,11 @@ span.theme-icon-holder > i.fas {
 
 /*asciidoctor vs fontawesome 5 compat*/
 .fa.fab {
-    font-family: "Font Awesome 5 Free" !important;
+    font-family: "Font Awesome 5 Free", serif !important;
 }
 .fa.fa-fab {
     font-weight: 400;
-    font-family: "Font Awesome 5 Brands";
+    font-family: "Font Awesome 5 Brands", serif;
 }
 
 
@@ -2847,7 +2843,7 @@ span.theme-icon-holder > i.fas {
 
 div.colist.arabic > ol {
     list-style: none;
-    margin-left: 0rem;
+    margin-left: 0;
     counter-reset: circle-counter;
 }
 div.colist.arabic > ol > li {
@@ -2884,6 +2880,10 @@ div.colist.arabic > ol > li > p {
     color: unset;
 }
 
+a#search-button {
+    color: var(--yupiik-color-white);
+}
+
 #searchModal .modal-dialog {
     margin: auto;
     min-width: 80%;
@@ -2898,6 +2898,7 @@ div.colist.arabic > ol > li > p {
 }
 #searchModal .modal-body div.form-group > input {
     flex: 1;
+    margin-left: 10px;
 }
 #searchModal .search-hits {
     overflow: auto;
@@ -2916,7 +2917,7 @@ div.colist.arabic > ol > li > p {
 
 .blog-links ul {
     list-style-type: none;
-    display: flex;background-color
+    display: flex;
     margin: auto;
 }
 .blog-links ul > li {
@@ -2928,7 +2929,7 @@ div.colist.arabic > ol > li > p {
     font-style: normal;
     font-variant: normal;
     text-rendering: auto;
-    font-family: "Font Awesome 5 Free";
+    font-family: "Font Awesome 5 Free", serif;
     font-weight: 900;
     padding-right: 0.5rem;
 }

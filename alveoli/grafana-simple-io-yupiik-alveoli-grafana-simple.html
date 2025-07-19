@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>io.yupiik.alveoli:grafana-simple:1.0.30-SNAPSHOT</title>
+    <title>io.yupiik.alveoli:grafana-simple:1.0.30</title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.30-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.30">
 </head>
 <body>
     <header class="header fixed-top">
@@ -153,7 +153,7 @@
 
         <div id="alveoli-grafana-simple-io-yupiik-alveoli-grafana-simple-html-container" class="container page-content alveoli-grafana-simple-io-yupiik-alveoli-grafana-simple-html ">
                         <div class="page-header">
-                <h1>io.yupiik.alveoli:grafana-simple:1.0.30-SNAPSHOT</h1>
+                <h1>io.yupiik.alveoli:grafana-simple:1.0.30</h1>
             </div>
             <div class="page-content-body">
                 <div id="preamble">
@@ -174,7 +174,7 @@ Simple Grafana instance, note we preconfigure it with Loki, Prometheus and grafa
  <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;io.yupiik.alveoli&lt;/groupId&gt;
   &lt;artifactId&gt;grafana-simple&lt;/artifactId&gt;
-  &lt;version&gt;1.0.30-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;1.0.30&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
  </div>
  </div>
@@ -316,12 +316,12 @@ on linux and with minikube you can access this service using on your host.    </
       &quot;descriptors&quot;: [],
       &quot;dependencies&quot;: [
         {
-          &quot;name&quot;: &quot;io.yupiik.alveoli:grafana-simple:1.0.30-SNAPSHOT&quot;,
-          &quot;location&quot;: &quot;io.yupiik.alveoli:grafana-simple:1.0.30-SNAPSHOT&quot;,
+          &quot;name&quot;: &quot;io.yupiik.alveoli:grafana-simple:1.0.30&quot;,
+          &quot;location&quot;: &quot;io.yupiik.alveoli:grafana-simple:1.0.30&quot;,
         }
       ],
       &quot;patches&quot;: [{
-        &quot;descriptorName&quot;: &quot;io.yupiik.alveoli:grafana-simple:1.0.30-SNAPSHOT&quot;,
+        &quot;descriptorName&quot;: &quot;io.yupiik.alveoli:grafana-simple:1.0.30&quot;,
         &quot;interpolate&quot;: true
       }]
     }
@@ -400,7 +400,7 @@ on linux and with minikube you can access this service using on your host.    </
               <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
               <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
 	        </ul>
-            <small class="copyright">© 2024 <strong><a href="https://www.yupiik.com">Yupiik</a></strong>. All Rights Reserved</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
+            <small class="copyright">© 2025 <strong><a href="https://www.yupiik.com">Yupiik</a></strong>. All Rights Reserved</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
 	    </div>
     </footer>
 
@@ -442,7 +442,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.30-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.30"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =

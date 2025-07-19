@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.30-SNAPSHOT">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.30">
 </head>
 <body>
     <header class="header fixed-top">
@@ -270,11 +270,18 @@ interpolateAlveoli    </td>
     <td>
 bool    </td>
     <td>
-Enables to consider all alveoli have their `interpolateDescriptors` descriptor set to `true`, you can still set it to `false` if you want to disable it for one.    </td>
+ <div class="paragraph">
+ <p>Enables to consider all alveoli have their <code>interpolateDescriptors</code> descriptor set to <code>true</code>, you can still set it to <code>false</code> if you want to disable it for one.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus">io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>alveoli</code>    </td>
     <td>
@@ -284,27 +291,45 @@ List of described applications/libraries.    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule">io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>ignoredLintingRules</code>    </td>
     <td>
 array of object    </td>
     <td>
-Ignored linting rule names when using `lint` command.    </td>
+ <div class="paragraph">
+ <p>Ignored linting rule names when using <code>lint</code> command.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference">io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>references</code>    </td>
     <td>
 array of object    </td>
     <td>
-List of files referenced as other manifests. They are merged with this (main) manifest by *appending* _requirements_ and _alveoli_. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge `manifest.json` for an easier maintenance.    </td>
+ <div class="paragraph">
+ <p>List of files referenced as other manifests. They are merged with this (main) manifest by <b>appending</b> <i>requirements</i> and <i>alveoli</i>. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge <code>manifest.json</code> for an easier maintenance.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Requirement&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Requirement">io_yupiik_bundlebee_core_descriptor_Manifest_Requirement</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>requirements</code>    </td>
     <td>
@@ -361,7 +386,10 @@ interpolateDescriptors    </td>
     <td>
 bool    </td>
     <td>
-Enables to consider all descriptors have their `interpolate` descriptor set to `true`, you can still set it to `false` if you want to disable it for one. If not set, `interpolateAlveoli` flag from the manifest.    </td>
+ <div class="paragraph">
+ <p>Enables to consider all descriptors have their <code>interpolate</code> descriptor set to <code>true</code>, you can still set it to <code>false</code> if you want to disable it for one. If not set, <code>interpolateAlveoli</code> flag from the manifest.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -371,7 +399,10 @@ name    </td>
     <td>
 string    </td>
     <td>
-Name of the alveolus (recipe). It must be unique accross the whole classpath. Using maven style identifier, it is recommended to name it `&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;` using maven filtering but it is not enforced.    </td>
+ <div class="paragraph">
+ <p>Name of the alveolus (recipe). It must be unique accross the whole classpath. Using maven style identifier, it is recommended to name it <code>&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;</code> using maven filtering but it is not enforced.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -381,11 +412,18 @@ version    </td>
     <td>
 string    </td>
     <td>
-If name does not follow `&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;` naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced).    </td>
+ <div class="paragraph">
+ <p>If name does not follow <code>&lt;groupId&gt;:&lt;artifactId&gt;:&lt;version&gt;</code> naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced).</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency">io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>dependencies</code>    </td>
     <td>
@@ -395,7 +433,11 @@ Dependencies of this alveolus. It is a way to import transitively a set of descr
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor">io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>descriptors</code>    </td>
     <td>
@@ -405,7 +447,11 @@ List of descriptors to install for this alveolus. This is required even if an em
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef">io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>excludedDescriptors</code>    </td>
     <td>
@@ -415,13 +461,20 @@ List of descriptors to ignore for this alveolus (generally coming from dependenc
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Patch&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Patch">io_yupiik_bundlebee_core_descriptor_Manifest_Patch</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>patches</code>    </td>
     <td>
 array of object    </td>
     <td>
-Patches on descriptors. It enables to inject configuration in descriptors by patching (using JSON-Patch or plain interpolation with `${key}` values) their JSON representation. The key is the descriptor name and each time the descriptor is found it will be applied.    </td>
+ <div class="paragraph">
+ <p>Patches on descriptors. It enables to inject configuration in descriptors by patching (using JSON-Patch or plain interpolation with <code>${key}</code> values) their JSON representation. The key is the descriptor name and each time the descriptor is found it will be applied.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -488,13 +541,20 @@ Alveolus name.    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Conditions&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">io_yupiik_bundlebee_core_descriptor_Manifest_Conditions</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>includeIf</code>    </td>
     <td>
 object    </td>
     <td>
-Conditions to include this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)    </td>
+ <div class="paragraph">
+ <p>Conditions to include this dependency. Enables for example to have an environment variable enabling part of the stack (ex: <code>MONITORING=true</code>)</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -537,7 +597,10 @@ await    </td>
     <td>
 bool    </td>
     <td>
-If set to `true`, apply/delete commands will await the actual creation of the resource (`GET /x` returns a HTTP 200) before continuing to process next resources. It is useful for namespaces for example to ensure applications can be created in the newly created namespace. It avoids to run and rerun apply command in practise. For more advanced tests, use `awaitConditions`.    </td>
+ <div class="paragraph">
+ <p>If set to <code>true</code>, apply/delete commands will await the actual creation of the resource (<code>GET /x</code> returns a HTTP 200) before continuing to process next resources. It is useful for namespaces for example to ensure applications can be created in the newly created namespace. It avoids to run and rerun apply command in practise. For more advanced tests, use <code>awaitConditions</code>.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -547,7 +610,10 @@ awaitOnDelete    </td>
     <td>
 bool    </td>
     <td>
-On delete we rarely want to check the resource exists before but in these rare case you can set this toggle to `true`.    </td>
+ <div class="paragraph">
+ <p>On delete we rarely want to check the resource exists before but in these rare case you can set this toggle to <code>true</code>.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -557,7 +623,10 @@ interpolate    </td>
     <td>
 bool    </td>
     <td>
-If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use `--&lt;config-key&gt; &lt;value&gt;` to inject bindings set as `{{config-key:-default value}}`. If not set, `interpolateDescriptors` flag from the alveolus will be used.    </td>
+ <div class="paragraph">
+ <p>If set to <code>true</code>, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use <code>--&lt;config-key&gt; &lt;value&gt;</code> to inject bindings set as <code>{{config-key:-default value}}</code>. If not set, <code>interpolateDescriptors</code> flag from the alveolus will be used.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -577,7 +646,10 @@ name    </td>
     <td>
 string    </td>
     <td>
-Name of the descriptor to install. For kubernetes descriptors you can omit the `.yaml` extension.    </td>
+ <div class="paragraph">
+ <p>Name of the descriptor to install. For kubernetes descriptors you can omit the <code>.yaml</code> extension.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -587,21 +659,35 @@ type    </td>
     <td>
 string    </td>
     <td>
-Type of this descriptor. For now only `kubernetes` is supported. It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name.    </td>
+ <div class="paragraph">
+ <p>Type of this descriptor. For now only <code>kubernetes</code> is supported. It also defines in which folder under <code>bundlebee</code> the descriptor(s) are looked for from its name.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions">io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>awaitConditions</code>    </td>
     <td>
 array of object    </td>
     <td>
-Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. For `apply` and `delete` commands, `descriptorAwaitTimeout` is still applied. Note that if you use multiple array entries for the same command it will be evaluated with an `AND`.    </td>
+ <div class="paragraph">
+ <p>Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. For <code>apply</code> and <code>delete</code> commands, <code>descriptorAwaitTimeout</code> is still applied. Note that if you use multiple array entries for the same command it will be evaluated with an <code>AND</code>.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Conditions&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">io_yupiik_bundlebee_core_descriptor_Manifest_Conditions</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>includeIf</code>    </td>
     <td>
@@ -650,17 +736,27 @@ operator    </td>
     <td>
 string    </td>
     <td>
-Operator to combine the conditions. Potential values: `ANY` (At least one condition must match.),`ALL` (All conditions must match.).    </td>
+ <div class="paragraph">
+ <p>Operator to combine the conditions. Potential values: <code>ANY</code> (At least one condition must match.),<code>ALL</code> (All conditions must match.).</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Condition&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Condition">io_yupiik_bundlebee_core_descriptor_Manifest_Condition</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>conditions</code>    </td>
     <td>
 array of object    </td>
     <td>
-List of condition to match according `operator`.    </td>
+ <div class="paragraph">
+ <p>List of condition to match according <code>operator</code>.</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -721,7 +817,10 @@ type    </td>
     <td>
 string    </td>
     <td>
-Type of condition. Potential values: `ENV` (Key is read is process environment variables.),`SYSTEM_PROPERTY` (Key is read is process system properties.).    </td>
+ <div class="paragraph">
+ <p>Type of condition. Potential values: <code>ENV</code> (Key is read is process environment variables.),<code>SYSTEM_PROPERTY</code> (Key is read is process system properties.).</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -731,7 +830,10 @@ value    </td>
     <td>
 string    </td>
     <td>
-Expected value. If empty/null, `true` is assumed. Note that empty is allowed.    </td>
+ <div class="paragraph">
+ <p>Expected value. If empty/null, <code>true</code> is assumed. Note that empty is allowed.</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -772,7 +874,10 @@ command    </td>
     <td>
 string    </td>
     <td>
-Command to apply these conditions to, if not set it will be applied on `apply` command only. Note that for now only `apply` and `delete` commands are supported, others will be ignored.    </td>
+ <div class="paragraph">
+ <p>Command to apply these conditions to, if not set it will be applied on <code>apply</code> command only. Note that for now only <code>apply</code> and <code>delete</code> commands are supported, others will be ignored.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -782,17 +887,27 @@ operator    </td>
     <td>
 string    </td>
     <td>
-Operator to combine the conditions. Potential values: `ANY` (At least one condition must match.),`ALL` (All conditions must match.).    </td>
+ <div class="paragraph">
+ <p>Operator to combine the conditions. Potential values: <code>ANY</code> (At least one condition must match.),<code>ALL</code> (All conditions must match.).</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition">io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>conditions</code>    </td>
     <td>
 array of object    </td>
     <td>
-List of condition to match according `operator`.    </td>
+ <div class="paragraph">
+ <p>List of condition to match according <code>operator</code>.</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -833,7 +948,10 @@ conditionType    </td>
     <td>
 string    </td>
     <td>
-When condition type is `STATUS_CONDITION` it is the expected type of the condition. This is ignored when condition type is `JSON_POINTER`.    </td>
+ <div class="paragraph">
+ <p>When condition type is <code>STATUS_CONDITION</code> it is the expected type of the condition. This is ignored when condition type is <code>JSON_POINTER</code>.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -843,7 +961,10 @@ operatorType    </td>
     <td>
 string    </td>
     <td>
-The operation to evaluate if this condition is true or not. (for `type=JSON_POINTER`). Potential values: `EXISTS` (JSON Pointer exists model.),`MISSING` (JSON Pointer does not exist in the resource model.),`EQUALS` (JSON Pointer value is equal to (stringified comparison) value.),`NOT_EQUALS` (JSON Pointer is different from the provided value.),`EQUALS_IGNORE_CASE` (JSON Pointer value is equal (ignoring case) to (stringified comparison) value.),`NOT_EQUALS_IGNORE_CASE` (JSON Pointer is different (ignoring case) from the provided value.),`CONTAINS` (JSON Pointer contains the configured value.).    </td>
+ <div class="paragraph">
+ <p>The operation to evaluate if this condition is true or not. (for <code>type=JSON_POINTER</code>). Potential values: <code>EXISTS</code> (JSON Pointer exists model.),<code>MISSING</code> (JSON Pointer does not exist in the resource model.),<code>EQUALS</code> (JSON Pointer value is equal to (stringified comparison) value.),<code>NOT_EQUALS</code> (JSON Pointer is different from the provided value.),<code>EQUALS_IGNORE_CASE</code> (JSON Pointer value is equal (ignoring case) to (stringified comparison) value.),<code>NOT_EQUALS_IGNORE_CASE</code> (JSON Pointer is different (ignoring case) from the provided value.),<code>CONTAINS</code> (JSON Pointer contains the configured value.).</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -853,7 +974,10 @@ pointer    </td>
     <td>
 string    </td>
     <td>
-JSON Pointer to read from the resource. It can for example be on `/status/phase` to await a namespace creation. (for `type=JSON_POINTER`).    </td>
+ <div class="paragraph">
+ <p>JSON Pointer to read from the resource. It can for example be on <code>/status/phase</code> to await a namespace creation. (for <code>type=JSON_POINTER</code>).</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -863,7 +987,10 @@ type    </td>
     <td>
 string    </td>
     <td>
-Type of condition. Potential values: `JSON_POINTER` (JSON Pointer evaluation (fully custom).),`STATUS_CONDITION` (Evaluate items in `/status/conditions`.).    </td>
+ <div class="paragraph">
+ <p>Type of condition. Potential values: <code>JSON_POINTER</code> (JSON Pointer evaluation (fully custom).),<code>STATUS_CONDITION</code> (Evaluate items in <code>/status/conditions</code>.).</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -873,7 +1000,10 @@ value    </td>
     <td>
 string    </td>
     <td>
-When condition type is `JSON_POINTER` and `operatorType` needs a value (`EQUALS` for example), the related value. It can be `Active` if you test namespace `/status/phase` for example. When condition type is `STATUS_CONDITION` it is the expected status.    </td>
+ <div class="paragraph">
+ <p>When condition type is <code>JSON_POINTER</code> and <code>operatorType</code> needs a value (<code>EQUALS</code> for example), the related value. It can be <code>Active</code> if you test namespace <code>/status/phase</code> for example. When condition type is <code>STATUS_CONDITION</code> it is the expected status.</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -967,7 +1097,10 @@ descriptorName    </td>
     <td>
 string    </td>
     <td>
-The descriptor to patch. It can be any descriptor, including transitive ones. It can be `*` to patch all descriptors (`/metadata/label/app` for example) or `regex:&lt;java pattern&gt;` to match descriptor names with a regex.    </td>
+ <div class="paragraph">
+ <p>The descriptor to patch. It can be any descriptor, including transitive ones. It can be <code>*</code> to patch all descriptors (<code>/metadata/label/app</code> for example) or <code>regex:&lt;java pattern&gt;</code> to match descriptor names with a regex.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -977,7 +1110,10 @@ interpolate    </td>
     <td>
 bool    </td>
     <td>
-If set to `true`, it will interpolate the patch from the execution configuration which means you can use `--&lt;config-key&gt; &lt;value&gt;` to inject bindings too. An interesting interpolation is the ability to extract the ip/host of the host machine (`minikube ip` equivalent) using the kubeconfig file. Syntax is the following one: `{{kubeconfig.cluster.minikube.ip}}` or more generally `{{kubeconfig.cluster.&lt;cluster name&gt;.ip}}`. You can also await for some secret with this syntax `{{kubernetes.&lt;namespace&gt;.serviceaccount.&lt;account name&gt;.secrets.&lt;secret name prefix&gt;.data.&lt;entry name&gt;[.&lt;timeout in seconds, default to 2mn&gt;]}}`. This is particular useful to access freshly created service account tokens for example.    </td>
+ <div class="paragraph">
+ <p>If set to <code>true</code>, it will interpolate the patch from the execution configuration which means you can use <code>--&lt;config-key&gt; &lt;value&gt;</code> to inject bindings too. An interesting interpolation is the ability to extract the ip/host of the host machine (<code>minikube ip</code> equivalent) using the kubeconfig file. Syntax is the following one: <code>{{kubeconfig.cluster.minikube.ip}}</code> or more generally <code>{{kubeconfig.cluster.&lt;cluster name&gt;.ip}}</code>. You can also await for some secret with this syntax <code>{{kubernetes.&lt;namespace&gt;.serviceaccount.&lt;account name&gt;.secrets.&lt;secret name prefix&gt;.data.&lt;entry name&gt;[.&lt;timeout in seconds, default to 2mn&gt;]}}</code>. This is particular useful to access freshly created service account tokens for example.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -991,13 +1127,20 @@ JSON-Patch to apply on the JSON representation of the descriptor. It enables to 
    </tr>
    <tr>
     <td>
-&lt;&lt;io_yupiik_bundlebee_core_descriptor_Manifest_Conditions&gt;&gt;    </td>
+ <div class="paragraph">
+ <p> <a href="#io_yupiik_bundlebee_core_descriptor_Manifest_Conditions">io_yupiik_bundlebee_core_descriptor_Manifest_Conditions</a>
+</p>
+ </div>
+    </td>
     <td>
 <code>includeIf</code>    </td>
     <td>
 object    </td>
     <td>
-Conditions to include this patch. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)    </td>
+ <div class="paragraph">
+ <p>Conditions to include this patch. Enables for example to have an environment variable enabling part of the stack (ex: <code>MONITORING=true</code>)</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -1079,7 +1222,10 @@ path    </td>
     <td>
 string    </td>
     <td>
-Relative or absolute - starting by a `/` - location (referenced to the base directory of `manifest.json`). For example `my-manifest.json` will resolve to `/path/to/bundlebee/my-manifest.json` in a folder and `/bundlebee/my-manifest.json` in a jar. Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :`/bundlebee/my-module.sub-manifest.json` or use a dedicated subfolder (`/bundlebee/my-module/sub.json`).    </td>
+ <div class="paragraph">
+ <p>Relative or absolute - starting by a <code>/</code> - location (referenced to the base directory of <code>manifest.json</code>). For example <code>my-manifest.json</code> will resolve to <code>/path/to/bundlebee/my-manifest.json</code> in a folder and <code>/bundlebee/my-manifest.json</code> in a jar. Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :<code>/bundlebee/my-module.sub-manifest.json</code> or use a dedicated subfolder (<code>/bundlebee/my-module/sub.json</code>).</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -1122,7 +1268,10 @@ maxBundlebeeVersion    </td>
     <td>
 string    </td>
     <td>
-Minimum bundlebee version, use `*`to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.    </td>
+ <div class="paragraph">
+ <p>Minimum bundlebee version, use <code>*</code>to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -1132,7 +1281,10 @@ minBundlebeeVersion    </td>
     <td>
 string    </td>
     <td>
-Minimum bundlebee version, use `*` to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.    </td>
+ <div class="paragraph">
+ <p>Minimum bundlebee version, use <code>*</code> to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison.</p>
+ </div>
+    </td>
    </tr>
    <tr>
     <td>
@@ -1142,7 +1294,10 @@ forbiddenVersions    </td>
     <td>
 array of string    </td>
     <td>
-List of forbidden version (due to a bug or equivalent). Here too snapshot suffix is ignored. `*` is usable there too to replace any digit in a segment (ex: `1.*.*`). Note that `1.*` would *NOT* match `1.*.*`, version are always 3 segments.    </td>
+ <div class="paragraph">
+ <p>List of forbidden version (due to a bug or equivalent). Here too snapshot suffix is ignored. <code>*</code> is usable there too to replace any digit in a segment (ex: <code>1.*.*</code>). Note that <code>1.*</code> would <b>NOT</b> match <code>1.*.*</code>, version are always 3 segments.</p>
+ </div>
+    </td>
    </tr>
   </tbody>
  </table>
@@ -2213,7 +2368,7 @@ this dockerfile works as of today because binaries are build on Ubuntu 20.10, yo
               <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
               <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
 	        </ul>
-            <small class="copyright">© 2024 <strong><a href="https://www.yupiik.com">Yupiik</a></strong>. All Rights Reserved</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
+            <small class="copyright">© 2025 <strong><a href="https://www.yupiik.com">Yupiik</a></strong>. All Rights Reserved</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
 	    </div>
     </footer>
 
@@ -2255,7 +2410,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.30-SNAPSHOT"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.30"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
