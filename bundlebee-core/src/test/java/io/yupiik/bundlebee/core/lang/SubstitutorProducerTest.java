@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.core.lang;
 
 import io.yupiik.bundlebee.core.event.OnPlaceholder;
+import io.yupiik.bundlebee.core.kube.DefaultHttpKubeClient;
 import io.yupiik.bundlebee.core.kube.HttpKubeClient;
 import io.yupiik.tools.codec.simple.SimpleCodec;
 import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
@@ -54,9 +55,9 @@ class SubstitutorProducerTest {
     private final Substitutor substitutor;
 
     public SubstitutorProducerTest() {
-        final var client = new HttpKubeClient();
+        final var client = new DefaultHttpKubeClient();
         try {
-            final var namespace = HttpKubeClient.class.getDeclaredField("namespace");
+            final var namespace = DefaultHttpKubeClient.class.getDeclaredField("namespace");
             namespace.setAccessible(true);
             namespace.set(client, "default");
         } catch (final Exception e) {
