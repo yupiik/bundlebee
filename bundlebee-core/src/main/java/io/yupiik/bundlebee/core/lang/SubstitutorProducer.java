@@ -22,6 +22,7 @@ import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.Maven;
 import io.yupiik.tools.codec.simple.SimpleCodec;
 import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
+import lombok.Getter;
 import lombok.extern.java.Log;
 import org.eclipse.microprofile.config.Config;
 
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -99,6 +101,9 @@ public class SubstitutorProducer {
 
     @Deprecated // for backward compat only
     private ThreadLocal<String> idHolder;
+
+    @Getter
+    private final Map<String, Map<String, String>> byIdContextualPlaceholders = new ConcurrentHashMap<>();
 
     @Produces
     public Substitutor substitutor(final Config config) {
@@ -395,6 +400,13 @@ public class SubstitutorProducer {
             final var value = findKubernetesValue(placeholder, "/");
             if (value != null) {
                 return value;
+            }
+        }
+
+        if (id != null) {
+            final var custom = byIdContextualPlaceholders.get(id);
+            if (custom != null) {
+                return custom.get(placeholder);
             }
         }
 
