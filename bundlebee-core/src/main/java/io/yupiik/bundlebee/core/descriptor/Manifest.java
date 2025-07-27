@@ -148,6 +148,10 @@ public class Manifest {
                 "It can be `Active` if you test namespace `/status/phase` for example. " +
                 "When condition type is `STATUS_CONDITION` it is the expected status.")
         private String value;
+
+        @Description("If set and not blank, such a condition will trigger an exception making the deployment stop there and process fail. " +
+                "In other cases this is a success condition which just stops the awaiting.")
+        private String failMessage;
     }
 
     @Data

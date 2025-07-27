@@ -35,6 +35,7 @@ class ListAlveoliCommandTest {
                 "- ApplyCommandTest.apply\n" +
                 "- ApplyCommandTest.applyAwait\n" +
                 "- ApplyCommandTest.applyAwaitCondition\n" +
+                "- ApplyCommandTest.applyAwaitConditionFailure\n" +
                 "- ApplyCommandTest.fromTemplate\n" +
                 "- ApplyCommandTest.includeIfPatch\n" +
                 "- ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate\n" +
