@@ -29,6 +29,7 @@ import java.net.http.HttpResponse;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -41,6 +42,7 @@ import static java.util.concurrent.CompletableFuture.anyOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.logging.Level.FINEST;
+import static java.util.logging.Level.SEVERE;
 import static java.util.stream.Collectors.counting;
 import static java.util.stream.Collectors.toList;
 
@@ -128,7 +130,13 @@ public class ConditionAwaiter {
                 () -> kube.getResources(loadedDescriptor.getContent(), loadedDescriptor.getExtension())
                         .thenApply(it -> isDryRun(it) ||
                                 (it.stream().noneMatch(r -> r.statusCode() != 200) &&
-                                        it.stream().anyMatch(r -> evaluate(condition, r.body())))));
+                                        it.stream().anyMatch(r -> {
+                                            final var evaluated = evaluate(condition, r.body());
+                                            if (evaluated && condition.getFailMessage() != null && !condition.getFailMessage().isBlank()) {
+                                                throw new AwaitingFailException(condition.getFailMessage());
+                                            }
+                                            return evaluated;
+                                        }))));
     }
 
     private boolean isDryRun(final List<HttpResponse<JsonObject>> it) {
@@ -165,6 +173,12 @@ public class ConditionAwaiter {
         final var result = new CancellableRetriableTask();
         result.task = scheduledExecutorService.scheduleAtFixedRate(() -> evaluator.get().whenComplete((ok, ko) -> {
             if (ko != null) {
+                if (ko instanceof CompletionException && ko.getCause() instanceof AwaitingFailException) {
+                    result.completeExceptionally(ko.getCause());
+                    result.cancel();
+                    log.log(SEVERE, ko, () -> "Awaiting hit a failure condition for " + descriptor + ": " + ko.getMessage());
+                    return;
+                }
                 log.log(FINEST, ko, () -> "waiting for " + descriptor + ": " + ko.getMessage());
             } else if (result.isDone() || result.isCompletedExceptionally()) { // we schedule at fixed rate instead of chaining scheduling so can happen
                 result.cancel();
@@ -189,6 +203,12 @@ public class ConditionAwaiter {
 
         public void cancel() {
             task.cancel(true);
+        }
+    }
+
+    private static class AwaitingFailException extends RuntimeException {
+        public AwaitingFailException(final String message) {
+            super(message);
         }
     }
 }

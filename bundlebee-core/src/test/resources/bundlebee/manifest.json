@@ -126,6 +126,29 @@
       ]
     },
     {
+      "name": "ApplyCommandTest.applyAwaitConditionFailure",
+      "descriptors": [
+        {
+          "name": "ApplyCommandTest.d1",
+          "awaitConditions": [
+            {
+              "operator": "ALL",
+              "command": "apply",
+              "conditions": [
+                {
+                  "type": "JSON_POINTER",
+                  "pointer": "/status/phase",
+                  "operatorType": "EQUALS",
+                  "value": "Active",
+                  "failMessage": "this is an expected test failure"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "ApplyCommandTest.withdep",
       "descriptors": [
         {
