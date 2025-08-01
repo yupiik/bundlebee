@@ -107,4 +107,22 @@ class ContainerSanitizerTest {
                                 .build())
                         .toString());
     }
+
+    @Test
+    void nullArgsAndCommand() {
+        assertEquals(
+                "{\"spec\":{\"containers\":[{\"resources\":{\"requests\":{\"memory\":\"512Mi\"}}}]}}",
+                sanitizer.dropCpuResources("pods", json.createObjectBuilder()
+                                .add("spec", json.createObjectBuilder()
+                                        .add("containers", json.createArrayBuilder()
+                                                .add(json.createObjectBuilder()
+                                                        .addNull("command")
+                                                        .addNull("args")
+                                                        .add("resources", json.createObjectBuilder()
+                                                                .add("requests", json.createObjectBuilder()
+                                                                        .addNull("cpu")
+                                                                        .add("memory", "512Mi"))))))
+                                .build())
+                        .toString());
+    }
 }
