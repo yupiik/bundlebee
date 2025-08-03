@@ -421,7 +421,7 @@ public class KubeClient implements ConfigHolder {
                 .thenCompose(ignored -> doApply(originalDontUseDesc, desc, kindLowerCased, 1, skipGet));
     }
 
-    private CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc,
+    protected CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc,
                                                           final String kindLowerCased, final int retry,
                                                           final boolean skipGet) {
         final var metadata = preparedDesc.getJsonObject("metadata");
