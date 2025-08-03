@@ -33,6 +33,7 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import static java.util.logging.Level.FINEST;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 @Log
@@ -71,11 +72,33 @@ public class ContainerSanitizer {
         }
 
         return replaceIfPresent(
-                replaceIfPresent(preparedDesc, containersParentPointer, "initContainers", this::dropNullCpu),
-                containersParentPointer, "containers", this::dropNullCpu);
+                replaceIfPresent(preparedDesc, containersParentPointer, "initContainers", this::dropKnownNulls),
+                containersParentPointer, "containers", this::dropKnownNulls);
     }
 
-    private JsonValue dropNullCpu(final JsonObject container) {
+    private JsonValue dropKnownNulls(final JsonObject container) {
+        return dropIfNull(
+                dropNullsCpu(container),
+                // this is important cause there is no default which can inherit the parent otherwise
+                "args", "command");
+    }
+
+    private JsonObject dropIfNull(final JsonObject container, final String... keys) {
+        final var toRemove = Stream.of(keys).filter(it -> {
+            final var jsonValue = container.get(it);
+            return jsonValue != null && jsonValue.getValueType() == JsonValue.ValueType.NULL;
+        }).collect(toList());
+        if (toRemove.isEmpty()) {
+            return container;
+        }
+        return jsonBuilderFactory
+                .createObjectBuilder(container.entrySet().stream()
+                        .filter(it -> !toRemove.contains(it.getKey()))
+                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
+                .build();
+    }
+
+    private JsonObject dropNullsCpu(final JsonObject container) {
         final var resources = container.get("resources");
         if (resources == null) {
             return container;
@@ -113,11 +136,11 @@ public class ContainerSanitizer {
                 .build();
     }
 
-    private JsonValue dropNullCpu(final JsonValue jsonValue) {
+    private JsonValue dropKnownNulls(final JsonValue jsonValue) {
         try {
             return jsonValue.asJsonArray().stream()
                     .map(JsonValue::asJsonObject)
-                    .map(this::dropNullCpu)
+                    .map(this::dropKnownNulls)
                     .collect(Collector.of(jsonBuilderFactory::createArrayBuilder, JsonArrayBuilder::add, JsonArrayBuilder::addAll))
                     .build();
         } catch (final RuntimeException re) {
