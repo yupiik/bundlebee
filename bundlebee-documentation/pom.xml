@@ -124,7 +124,48 @@
 
   <build>
     <plugins>
-      <plugin> <!-- mvn [compile] yupiik-tools:serve-minisite -e -->
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.15.4</version>
+        <executions>
+          <execution>
+            <id>setup-node</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm-install</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm-build</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+              <environmentVariables>
+                <OUTPUT>${project.basedir}/src/main/minisite/assets/generated/</OUTPUT>
+                <PROJECT_VERSION>${project.version}</PROJECT_VERSION>
+              </environmentVariables>
+            </configuration>
+          </execution>
+        </executions>
+        <configuration>
+          <nodeVersion>v24.11.1</nodeVersion>
+          <npmVersion>11.6.2</npmVersion>
+          <installDirectory>${project.basedir}/.node</installDirectory>
+          <workingDirectory>${project.basedir}/src/main/frontend</workingDirectory>
+        </configuration>
+      </plugin>
+      <plugin> <!-- mvn process-classes yupiik-tools:serve-minisite -e -->
         <groupId>io.yupiik.maven</groupId>
         <artifactId>yupiik-tools-maven-plugin</artifactId>
         <configuration>
@@ -150,6 +191,9 @@
               document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
             &lt;/script&gt;
           </customScripts>
+          <attributes>
+            <partialsdir>${project.basedir}/src/main/minisite/content/_partials</partialsdir>
+          </attributes>
           <preActions>
             <action>
               <type>maven-plugin</type>
