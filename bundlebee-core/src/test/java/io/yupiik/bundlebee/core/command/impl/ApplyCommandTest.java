@@ -166,6 +166,24 @@ class ApplyCommandTest {
     }
 
     @Test
+    void applyWithState(final CommandExecutor executor, final TestInfo info) {
+        final var spyingResponseLocator = newSpyingHandler(info);
+        handler.setResponseLocator(spyingResponseLocator);
+
+        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
+                "apply", "--alveolus", "ApplyCommandTest.apply", "--trackState", "true"));
+        assertEquals("" +
+                "Using previous state\n" + // mock always returns 200 so we seems to have one
+                "Deploying 'ApplyCommandTest.apply'\n" +
+                "Applying 's' (kind=services) for namespace 'default'\n" +
+                "Applying 'ApplyCommandTest.apply-bbs' (kind=secrets) for namespace 'default'\n" +
+                "", logs);
+
+        // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
+        assertEquals(5/*test exists + create*/, spyingResponseLocator.getFound().size());
+    }
+
+    @Test
     void apply(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
