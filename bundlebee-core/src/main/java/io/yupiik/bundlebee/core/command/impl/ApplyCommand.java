@@ -193,8 +193,11 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
                         log.info("Using previous state");
                         try {
                             final var data = jsonb.fromJson(r.body(), JsonObject.class);
-                            final var stateValue = data.getString("state", "{\"version\":1,\"resources\":[]}");
-                            return jsonb.fromJson(stateValue, State.class);
+                            if (!data.containsKey("state")) {
+                                return i;
+                            }
+                            final var stateValue = Base64.getDecoder().decode(data.getString("state"));
+                            return jsonb.fromJson(new String(stateValue, StandardCharsets.UTF_8), State.class);
                         } catch (final RuntimeException re) {
                             log.log(SEVERE, re, () -> "Can't read previous state: " + re.getMessage() + ", ignoring");
                             return i;
