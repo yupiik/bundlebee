@@ -107,7 +107,7 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
 
     @Inject
     @Description("If `true` and `trackState` is `true`, staled resources are not deleted but just logged.")
-    @ConfigProperty(name = "bundlebee.apply.trackState", defaultValue = "false")
+    @ConfigProperty(name = "bundlebee.apply.skipStaledResourceDeletion", defaultValue = "false")
     private boolean skipStaledResourceDeletion;
 
     @Inject
