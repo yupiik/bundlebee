@@ -44,6 +44,8 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -62,6 +64,7 @@ import java.util.zip.GZIPInputStream;
 import static java.net.http.HttpClient.Version.HTTP_1_1;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Map.entry;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.function.Function.identity;
@@ -83,6 +86,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final int[] minVersion;
     private final Path cache;
     private final boolean skipReactView;
+    private final boolean skipPatchVersion;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
         this.skip = !Boolean.parseBoolean(configuration.getOrDefault("minisite.actions.k8s.jsonschema", "false"));
@@ -93,6 +97,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
         this.skipReactView = Boolean.parseBoolean(configuration.get("skipReactView"));
         this.maxThreads = Integer.parseInt(configuration.get("maxThreads"));
         this.minVersion = parseVersion(configuration.get("minVersion"));
+        this.skipPatchVersion = Boolean.parseBoolean(configuration.get("skipPatchVersion"));
         try {
             this.cache = Files.createDirectories(sourceBase.resolve("content/_partials/generated/jsonschema/generated/cache"));
         } catch (final IOException e) {
@@ -131,6 +136,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
         final var errorCapture = new IllegalStateException("An error occurred during generation");
         final var awaited = new CopyOnWriteArrayList<Future<?>>();
+        final var versions = new HashMap<String, Map.Entry<String, int[]>>();
         try {
             final var root = Files.createDirectories(sourceBase.resolve("assets/generated/kubernetes/jsonschema"));
             for (final var version : fetchTags(httpClient, tagsUrl, jsonReaderFactory)) {
@@ -157,7 +163,24 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     continue;
                 }
 
-                final var url = urlTemplate.replace("{{version}}", version);
+                versions.compute(pVersion[0] + "." + (pVersion.length == 1 ? "0" : pVersion[1]), (key, previous) -> {
+                    if (previous == null) {
+                        return entry(version, pVersion);
+                    }
+                    final var previousPatch = previous.getValue().length > 2 ? previous.getValue()[2] : 0;
+                    final var currentPatch = pVersion.length > 2 ? pVersion[2] : 0;
+                    if (currentPatch - previousPatch > 0) {
+                        return entry(version, pVersion);
+                    }
+                    return previous;
+                });
+            }
+            for (final var version : versions.entrySet().stream()
+                    .sorted(Comparator.<Map.Entry<String, Map.Entry<String, int[]>>, Integer>comparing(it -> it.getValue().getValue()[0])
+                            .thenComparing(i -> i.getValue().getValue().length >= 2 ?  i.getValue().getValue()[1] : 0)
+                            .thenComparing(i -> i.getValue().getValue().length >= 3 ?  i.getValue().getValue()[2] : 0))
+                    .collect(toList())) {
+                final var url = urlTemplate.replace("{{version}}", version.getValue().getKey());
                 awaited.add(tasks.submit(() -> {
                     synchronized (errorCapture) {
                         if (errorCapture.getSuppressed().length > 0) {
@@ -167,8 +190,8 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     }
                     try {
                         generate(
-                                Files.createDirectories(root.resolve(version)), url, httpClient,
-                                jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory, version);
+                                Files.createDirectories(root.resolve(version.getKey())), url, httpClient,
+                                jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory, version.getKey());
                     } catch (final IOException | RuntimeException ioe) {
                         log.log(SEVERE, ioe, ioe::getMessage);
                         synchronized (errorCapture) {
@@ -429,17 +452,17 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
                 final var filename = kind + ".jsonschema.json";
                 final var react = kind + ".jsonschema.adoc";
-                final var versionned = Files.createDirectories(root.resolve(version)).resolve(filename);
-                final var versionnedHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName).resolve(version)).resolve(react);
-                final var raw = versionned.getParent().resolve(kind + ".jsonschema.raw.json");
+                final var versioned = Files.createDirectories(root.resolve(version)).resolve(filename);
+                final var versionedHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName).resolve(version)).resolve(react);
+                final var raw = versioned.getParent().resolve(kind + ".jsonschema.raw.json");
                 final var versionless = root.resolve(filename);
                 final var versionlessHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName)).resolve(react);
 
                 String jsonString = null;
-                if (force || !Files.exists(versionned)) {
+                if (force || !Files.exists(versioned)) {
                     jsonString = doResolve(jsonBuilderFactory, jsonWriterFactory, definitions, obj);
-                    Files.writeString(versionned, jsonString);
-                    log.info(() -> "Wrote '" + versionned + "'");
+                    Files.writeString(versioned, jsonString);
+                    log.info(() -> "Wrote '" + versioned + "'");
                 }
                 if (force || !Files.exists(raw)) {
                     Files.writeString(raw, toString(jsonWriterFactory, obj));
@@ -454,15 +477,15 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 }
 
                 String html = null;
-                if (!skipReactView && (force || !Files.exists(versionnedHtml))) {
-                    html = renderForHtml(versionName, kind, version, versionned);
-                    Files.writeString(versionnedHtml, html);
-                    log.info(() -> "Wrote '" + versionnedHtml + "'");
+                if (!skipReactView && (force || !Files.exists(versionedHtml))) {
+                    html = renderForHtml(versionName, kind, version, versioned);
+                    Files.writeString(versionedHtml, html);
+                    log.info(() -> "Wrote '" + versionedHtml + "'");
                 }
 
                 // todo: refine to handle v1/v2 comparison
                 if (!skipReactView &&  ((force || !Files.exists(versionlessHtml)) && !versionName.contains("beta") && !versionName.contains("alpha"))) {
-                    final var content = html == null ? renderForHtml(versionName, kind, version, versionned) : html;
+                    final var content = html == null ? renderForHtml(versionName, kind, version, versioned) : html;
                     Files.writeString(versionlessHtml, content);
                     log.info(() -> "Wrote '" + versionlessHtml + "'");
                 }

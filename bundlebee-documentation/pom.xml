@@ -38,6 +38,8 @@
     <minisite.kubernetes.jsonschema.enabled>false</minisite.kubernetes.jsonschema.enabled>
     <!-- skip versions before this one -->
     <minisite.kubernetes.jsonschema.minVersion>1.20.0</minisite.kubernetes.jsonschema.minVersion>
+    <!-- otherwise we end up with > 6Gi and gh pages limit is 1Gi -->
+    <minisite.kubernetes.jsonschema.skipPatchVersion>true</minisite.kubernetes.jsonschema.skipPatchVersion>
   </properties>
 
   <dependencies>
@@ -279,6 +281,7 @@
                 <force>${minisite.kubernetes.jsonschema.force}</force>
                 <maxThreads>${minisite.kubernetes.jsonschema.maxThreads}</maxThreads>
                 <minVersion>${minisite.kubernetes.jsonschema.minVersion}</minVersion>
+                <skipPatchVersion>${minisite.kubernetes.jsonschema.skipPatchVersion}</skipPatchVersion>
                 <!-- optional but when rate limiting is hit it enables to continue to work -->
                 <githubToken>${minisite.githubToken}</githubToken>
               </configuration>
