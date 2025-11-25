@@ -82,6 +82,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final boolean skip;
     private final int[] minVersion;
     private final Path cache;
+    private final boolean skipReactView;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
         this.skip = !Boolean.parseBoolean(configuration.getOrDefault("minisite.actions.k8s.jsonschema", "false"));
@@ -89,6 +90,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
         this.tagsUrl = requireNonNull(configuration.get("tagsUrl"), () -> "No tagsUrl in " + configuration);
         this.urlTemplate = requireNonNull(configuration.get("specUrlTemplate"), () -> "No specUrlTemplate in " + configuration);
         this.force = Boolean.parseBoolean(configuration.get("force"));
+        this.skipReactView = Boolean.parseBoolean(configuration.get("skipReactView"));
         this.maxThreads = Integer.parseInt(configuration.get("maxThreads"));
         this.minVersion = parseVersion(configuration.get("minVersion"));
         try {
@@ -426,9 +428,12 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 final var kind = currentMeta.getString("kind");
 
                 final var filename = kind + ".jsonschema.json";
+                final var react = kind + ".jsonschema.adoc";
                 final var versionned = Files.createDirectories(root.resolve(version)).resolve(filename);
+                final var versionnedHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName).resolve(version)).resolve(react);
                 final var raw = versionned.getParent().resolve(kind + ".jsonschema.raw.json");
                 final var versionless = root.resolve(filename);
+                final var versionlessHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName)).resolve(react);
 
                 String jsonString = null;
                 if (force || !Files.exists(versionned)) {
@@ -447,8 +452,41 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     Files.writeString(versionless, jsonString);
                     log.info(() -> "Wrote '" + versionless + "'");
                 }
+
+                String html = null;
+                if (!skipReactView && (force || !Files.exists(versionnedHtml))) {
+                    html = renderForHtml(versionName, kind, version, versionned);
+                    Files.writeString(versionnedHtml, html);
+                    log.info(() -> "Wrote '" + versionnedHtml + "'");
+                }
+
+                // todo: refine to handle v1/v2 comparison
+                if (!skipReactView &&  ((force || !Files.exists(versionlessHtml)) && !versionName.contains("beta") && !versionName.contains("alpha"))) {
+                    final var content = html == null ? renderForHtml(versionName, kind, version, versionned) : html;
+                    Files.writeString(versionlessHtml, content);
+                    log.info(() -> "Wrote '" + versionlessHtml + "'");
+                }
             }
         }
+    }
+
+    private String renderForHtml(final String versionName, final String kind, final String version, final Path versionned) throws IOException {
+        return "= " + kind + " " + versionName + "\n" +
+                "\n" +
+                "++++\n" +
+                "<div id=\"main\"></div>\n" +
+                "<script>\n" +
+                "window.jsonSchemaViewerOpts = {\n" +
+                "    expanded: false,\n" +
+                "    hideTopBar: false,\n" +
+                "    defaultExpandedDepth: 0,\n" +
+                "    emptyText: \"Schema can't be rendered\",\n" +
+                "    name: \"Kubernetes " + versionName + " " + kind + " " + version + " Schema\",\n" +
+                "    schema: " + Files.readString(versionned, UTF_8) + ",\n" +
+                "};\n" +
+                "</script>\n" +
+                "<script src=\"/generated/js/kubernetes.schema.js?v=0\"></script>\n" +
+                "++++";
     }
 
     private <T> T retry(final int max, final Supplier<T> supplier) {
