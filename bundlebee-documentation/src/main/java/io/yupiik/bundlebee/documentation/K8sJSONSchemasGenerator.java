@@ -278,7 +278,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                             .map(it -> "    <!-- Version " + it.getKey().getValue() + " -->\n" +
                                     it.getValue().stream()
                                             .map(d -> {
-                                                final var linkBase = "jsonschema/" + it.getKey().getValue() + "/" + d.getVersion() + "/" + d.getKind();
+                                                final var linkBase = it.getKey().getValue() + "/" + d.getVersion() + "/" + d.getKind();
                                                 return "    <li class=\"list-group-item descriptor-item d-flex\" data-version=\"" + it.getKey().getValue() + "\" data-kind=\"" + d.getKind() + "\" style=\"display: block;\">\n" +
                                                         "      <strong class=\"pr-2\">" + d.getKind() + "</strong> " + d.getVersion() + "\n" +
                                                         "      <div class=\"schema-links ml-auto\">\n" +
