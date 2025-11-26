@@ -18,6 +18,7 @@ package io.yupiik.bundlebee.core.command.impl;
 import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.bundlebee.core.kube.HttpKubeClient;
 import io.yupiik.bundlebee.core.kube.KubeClient;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
@@ -29,6 +30,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
+import javax.json.spi.JsonProvider;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -85,6 +87,11 @@ public class DeleteCommand implements CompletingExecutable {
     private long awaitTimeout;
 
     @Inject
+    @Description("If `true` and a secret named based on the alveolus name (`$name-bbs`) exists, then it will be deleted.")
+    @ConfigProperty(name = "bundlebee.apply.trackState", defaultValue = "false")
+    private boolean deleteState;
+
+    @Inject
     @Description("" +
             "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. " +
             "Note that using this setting, location is set to `*` so only the name is matched.")
@@ -115,6 +122,13 @@ public class DeleteCommand implements CompletingExecutable {
 
     @Inject
     private ConditionAwaiter conditionAwaiter;
+
+    @Inject
+    @BundleBee
+    private JsonProvider json;
+
+    @Inject
+    private HttpKubeClient api;
 
     @Override
     public Stream<String> complete(final Map<String, String> options, final String optionName) {
@@ -158,7 +172,32 @@ public class DeleteCommand implements CompletingExecutable {
                         alveoli.stream()
                                 .map(it -> doDelete(cache, it.getManifest(), it.getAlveolus(), gracePeriodSeconds, awaitTimeout))
                                 .collect(toList()), toList(),
-                        true));
+                        true))
+                .thenCompose(r -> deleteState(alveolus, r));
+    }
+
+    private CompletionStage<?> deleteState(final String alveolus, final List<?> r) {
+        if (!deleteState || "auto".equals(alveolus)) {
+            return completedFuture(null);
+        }
+
+        final var secretName = alveolus + "-bbs";
+        final var fakeSecret = json.createObjectBuilder()
+                .add("apiVersion", "v1")
+                .add("kind", "Secret")
+                .add("metadata", json.createObjectBuilder()
+                        .add("namespace", api.getNamespace())
+                        .add("name", secretName))
+                .build();
+        return kube
+                .getResource(fakeSecret)
+                .thenCompose(res -> {
+                    if (res.statusCode() != 200) {
+                        return completedFuture(res);
+                    }
+                    log.info("Cleaning up alveolus state");
+                    return kube.delete("https://kubernetes.api/api/v1/secrets/" + secretName, null);
+                });
     }
 
     public CompletionStage<?> doDelete(final ArchiveReader.Cache cache, final Manifest manifest, final Manifest.Alveolus it,
