@@ -15,6 +15,8 @@
  */
 package io.yupiik.bundlebee.documentation;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.java.Log;
 
 import javax.json.Json;
@@ -44,8 +46,14 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -62,6 +70,7 @@ import java.util.zip.GZIPInputStream;
 import static java.net.http.HttpClient.Version.HTTP_1_1;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Map.entry;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.function.Function.identity;
@@ -83,6 +92,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
     private final int[] minVersion;
     private final Path cache;
     private final boolean skipReactView;
+    private final boolean skipPatchVersion;
 
     public K8sJSONSchemasGenerator(final Path sourceBase, final Map<String, String> configuration) {
         this.skip = !Boolean.parseBoolean(configuration.getOrDefault("minisite.actions.k8s.jsonschema", "false"));
@@ -93,6 +103,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
         this.skipReactView = Boolean.parseBoolean(configuration.get("skipReactView"));
         this.maxThreads = Integer.parseInt(configuration.get("maxThreads"));
         this.minVersion = parseVersion(configuration.get("minVersion"));
+        this.skipPatchVersion = Boolean.parseBoolean(configuration.get("skipPatchVersion"));
         try {
             this.cache = Files.createDirectories(sourceBase.resolve("content/_partials/generated/jsonschema/generated/cache"));
         } catch (final IOException e) {
@@ -131,6 +142,8 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
         final var errorCapture = new IllegalStateException("An error occurred during generation");
         final var awaited = new CopyOnWriteArrayList<Future<?>>();
+        final var versions = new HashMap<String, Map.Entry<String, int[]>>();
+        final var descriptorsPerVersion = new ConcurrentHashMap<String, Collection<Descriptor>>();
         try {
             final var root = Files.createDirectories(sourceBase.resolve("assets/generated/kubernetes/jsonschema"));
             for (final var version : fetchTags(httpClient, tagsUrl, jsonReaderFactory)) {
@@ -157,7 +170,27 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     continue;
                 }
 
-                final var url = urlTemplate.replace("{{version}}", version);
+                versions.compute(
+                        pVersion[0] + "." + (pVersion.length == 1 ? "0" : pVersion[1]) + (skipPatchVersion ? "" : ("." + (pVersion.length > 2 ? pVersion[2] : "0"))),
+                        (key, previous) -> {
+                            if (previous == null) {
+                                return entry(version, pVersion);
+                            }
+                            final var previousPatch = previous.getValue().length > 2 ? previous.getValue()[2] : 0;
+                            final var currentPatch = pVersion.length > 2 ? pVersion[2] : 0;
+                            if (currentPatch - previousPatch > 0) {
+                                return entry(version, pVersion);
+                            }
+                            return previous;
+                        });
+            }
+
+            for (final var version : versions.entrySet().stream()
+                    .sorted(Comparator.<Map.Entry<String, Map.Entry<String, int[]>>, Integer>comparing(it -> it.getValue().getValue()[0])
+                            .thenComparing(i -> i.getValue().getValue().length >= 2 ? i.getValue().getValue()[1] : 0)
+                            .thenComparing(i -> i.getValue().getValue().length >= 3 ? i.getValue().getValue()[2] : 0))
+                    .collect(toList())) {
+                final var url = urlTemplate.replace("{{version}}", version.getValue().getKey());
                 awaited.add(tasks.submit(() -> {
                     synchronized (errorCapture) {
                         if (errorCapture.getSuppressed().length > 0) {
@@ -166,9 +199,9 @@ public class K8sJSONSchemasGenerator implements Runnable {
                         }
                     }
                     try {
-                        generate(
-                                Files.createDirectories(root.resolve(version)), url, httpClient,
-                                jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory, version);
+                        descriptorsPerVersion.put(version.getKey(), generate(
+                                Files.createDirectories(root.resolve(version.getKey())), url, httpClient,
+                                jsonBuilderFactory, jsonReaderFactory, jsonWriterFactory, version.getKey()));
                     } catch (final IOException | RuntimeException ioe) {
                         log.log(SEVERE, ioe, ioe::getMessage);
                         synchronized (errorCapture) {
@@ -207,6 +240,89 @@ public class K8sJSONSchemasGenerator implements Runnable {
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        }
+
+
+        // now generate the index page
+        final var index = sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve("index.adoc");
+        final var sorted = descriptorsPerVersion.entrySet().stream()
+                .map(it -> entry(entry(parseVersion(it.getKey()), it.getKey()), it.getValue()))
+                .sorted(Comparator.<Map.Entry<Map.Entry<int[], String>, Collection<Descriptor>>, Integer>comparing(it -> it.getKey().getKey()[0])
+                        .thenComparing(i -> i.getKey().getKey().length >= 2 ? i.getKey().getKey()[1] : 0)
+                        .thenComparing(i -> i.getKey().getKey().length >= 3 ? i.getKey().getKey()[2] : 0))
+                .collect(toList());
+        try {
+            Files.writeString(index, "= Kubernetes Descriptors Index\n" +
+                    "\n" +
+                    "WARNING: due to Github Pages limitations we have to prune the version from time to time. " +
+                    "We try to always keep up the maintained versions but very old versions can disappear.\n" +
+                    "\n" +
+                    "++++\n" +
+                    "<div class=\"d-flex justify-content-center g-3 mb-4\">\n" +
+                    "    <div class=\"col-md-4\">\n" +
+                    "        <label class=\"form-label fw-semibold\">Filter by Version</label>\n" +
+                    "        <select id=\"versionFilter\" class=\"form-control\">\n" +
+                    "            <option value=\"\">All Versions</option>\n" +
+                    sorted.stream()
+                            .map(it -> "            <option value=\"" + it.getKey().getValue() + "\">Version " + it.getKey().getValue() + "</option>\n")
+                            .collect(joining()) +
+                    "        </select>\n" +
+                    "    </div>\n" +
+                    "    <div class=\"col-md-4\">\n" +
+                    "        <label class=\"form-label fw-semibold\">Search Descriptor</label>\n" +
+                    "        <input type=\"text\" id=\"descriptorFilter\" class=\"form-control\" placeholder=\"type to filter...\">\n" +
+                    "    </div>\n" +
+                    "</div>\n" +
+                    "<ul class=\"list-group\" style=\"margin-left: 0 !important\" id=\"descriptorList\">\n" +
+                    sorted.stream()
+                            .map(it -> "    <!-- Version " + it.getKey().getValue() + " -->\n" +
+                                    it.getValue().stream()
+                                            .map(d -> {
+                                                final var linkBase = "jsonschema/" + it.getKey().getValue() + "/" + d.getVersion() + "/" + d.getKind();
+                                                return "    <li class=\"list-group-item descriptor-item d-flex\" data-version=\"" + it.getKey().getValue() + "\" data-kind=\"" + d.getKind() + "\" style=\"display: block;\">\n" +
+                                                        "      <strong class=\"pr-2\">" + d.getKind() + "</strong> " + d.getVersion() + "\n" +
+                                                        "      <div class=\"schema-links ml-auto\">\n" +
+                                                        "        <a href=\"" + linkBase + ".jsonschema.html\" target=\"_blank\" class=\"pr-1\">\n" +
+                                                        "          <i class=\"fas fa-file-code\"></i> HTML\n" +
+                                                        "        </a>\n" +
+                                                        "        <a href=\"" + linkBase + ".jsonschema.json\" target=\"_blank\" class=\"pr-1\">\n" +
+                                                        "          <i class=\"fas fa-code\"></i> JSON\n" +
+                                                        "        </a>\n" +
+                                                        "        <a href=\"" + linkBase + ".jsonschema.raw.json\" target=\"_blank\" class=\"pr-1\">\n" +
+                                                        "          <i class=\"fas fa-file\"></i> Raw JSON\n" +
+                                                        "        </a>\n" +
+                                                        "      </div>\n" +
+                                                        "    </li>\n";
+                                            })
+                                            .collect(joining()))
+                            .collect(joining()) +
+                    "</ul>\n" +
+                    "\n" +
+                    "<script>\n" +
+                    "    const versionFilter = document.getElementById('versionFilter');\n" +
+                    "    const descriptorFilter = document.getElementById('descriptorFilter');\n" +
+                    "    const items = document.querySelectorAll('.descriptor-item');\n" +
+                    "    function applyFilters() {\n" +
+                    "        const versionValue = versionFilter.value.toLowerCase();\n" +
+                    "        const descValue = descriptorFilter.value.toLowerCase();\n" +
+                    "        items.forEach(item => {\n" +
+                    "            const matchesVersion = versionValue === \"\" || item.dataset.version === versionValue;\n" +
+                    "            const matchesText = item.textContent.toLowerCase().includes(descValue);\n" +
+                    "            if (matchesVersion && matchesText) {\n" +
+                    "              item.classList.remove('d-none');\n" +
+                    "              item.classList.add('d-flex');\n" +
+                    "            } else {\n" +
+                    "              item.classList.add('d-none');\n" +
+                    "              item.classList.remove('d-flex');\n" +
+                    "            }" +
+                    "        });\n" +
+                    "    }\n" +
+                    "    versionFilter.addEventListener('change', applyFilters);\n" +
+                    "    descriptorFilter.addEventListener('input', applyFilters);\n" +
+                    "</script>\n" +
+                    "++++\n");
+        } catch (final IOException e) {
+            errorCapture.addSuppressed(e);
         }
 
         if (errorCapture.getSuppressed().length > 0) {
@@ -339,11 +455,12 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 .orElse(null);
     }
 
-    private void generate(final Path root, final String url, final HttpClient httpClient,
-                          final JsonBuilderFactory jsonBuilderFactory, final JsonReaderFactory jsonReaderFactory,
-                          final JsonWriterFactory jsonWriterFactory, final String versionName) throws IOException, InterruptedException {
+    private Collection<Descriptor> generate(final Path root, final String url, final HttpClient httpClient,
+                                            final JsonBuilderFactory jsonBuilderFactory, final JsonReaderFactory jsonReaderFactory,
+                                            final JsonWriterFactory jsonWriterFactory, final String versionName) throws IOException, InterruptedException {
         log.info(() -> "Fetching '" + url + "'");
         final var cached = cache.resolve(versionName.replace('/', '_') + ".json");
+        final var descriptors = new ArrayList<Descriptor>();
 
         final JsonObject spec;
         if (Files.notExists(cached)) {
@@ -376,7 +493,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     break;
                 case 404:
                     log.info(() -> "No spec for '" + url + "'");
-                    return;
+                    return List.of();
                 case 403:
                     final var reset = rateLimitReset(response);
                     if (reset != null) {
@@ -429,17 +546,19 @@ public class K8sJSONSchemasGenerator implements Runnable {
 
                 final var filename = kind + ".jsonschema.json";
                 final var react = kind + ".jsonschema.adoc";
-                final var versionned = Files.createDirectories(root.resolve(version)).resolve(filename);
-                final var versionnedHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName).resolve(version)).resolve(react);
-                final var raw = versionned.getParent().resolve(kind + ".jsonschema.raw.json");
+                final var versioned = Files.createDirectories(root.resolve(version)).resolve(filename);
+                final var versionedHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName).resolve(version)).resolve(react);
+                final var raw = versioned.getParent().resolve(kind + ".jsonschema.raw.json");
                 final var versionless = root.resolve(filename);
                 final var versionlessHtml = Files.createDirectories(sourceBase.resolve("content/generated/kubernetes/jsonschema").resolve(versionName)).resolve(react);
 
+                descriptors.add(new Descriptor(kind, version));
+
                 String jsonString = null;
-                if (force || !Files.exists(versionned)) {
+                if (force || !Files.exists(versioned)) {
                     jsonString = doResolve(jsonBuilderFactory, jsonWriterFactory, definitions, obj);
-                    Files.writeString(versionned, jsonString);
-                    log.info(() -> "Wrote '" + versionned + "'");
+                    Files.writeString(versioned, jsonString);
+                    log.info(() -> "Wrote '" + versioned + "'");
                 }
                 if (force || !Files.exists(raw)) {
                     Files.writeString(raw, toString(jsonWriterFactory, obj));
@@ -454,20 +573,22 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 }
 
                 String html = null;
-                if (!skipReactView && (force || !Files.exists(versionnedHtml))) {
-                    html = renderForHtml(versionName, kind, version, versionned);
-                    Files.writeString(versionnedHtml, html);
-                    log.info(() -> "Wrote '" + versionnedHtml + "'");
+                if (!skipReactView && (force || !Files.exists(versionedHtml))) {
+                    html = renderForHtml(versionName, kind, version, versioned);
+                    Files.writeString(versionedHtml, html);
+                    log.info(() -> "Wrote '" + versionedHtml + "'");
                 }
 
                 // todo: refine to handle v1/v2 comparison
-                if (!skipReactView &&  ((force || !Files.exists(versionlessHtml)) && !versionName.contains("beta") && !versionName.contains("alpha"))) {
-                    final var content = html == null ? renderForHtml(versionName, kind, version, versionned) : html;
+                if (!skipReactView && ((force || !Files.exists(versionlessHtml)) && !versionName.contains("beta") && !versionName.contains("alpha"))) {
+                    final var content = html == null ? renderForHtml(versionName, kind, version, versioned) : html;
                     Files.writeString(versionlessHtml, content);
                     log.info(() -> "Wrote '" + versionlessHtml + "'");
                 }
             }
         }
+
+        return descriptors;
     }
 
     private String renderForHtml(final String versionName, final String kind, final String version, final Path versionned) throws IOException {
@@ -578,5 +699,12 @@ public class K8sJSONSchemasGenerator implements Runnable {
         }
 
         return requireNonNull(definitions.get(key), () -> "Didn't find ref '" + ref + "'");
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class Descriptor {
+        private final String kind;
+        private final String version;
     }
 }
