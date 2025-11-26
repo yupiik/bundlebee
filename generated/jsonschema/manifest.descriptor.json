@@ -141,6 +141,11 @@
                               "title":"AwaitCondition.conditionType",
                               "description":"When condition type is `STATUS_CONDITION` it is the expected type of the condition. This is ignored when condition type is `JSON_POINTER`."
                             },
+                            "failMessage":{
+                              "type":"string",
+                              "title":"AwaitCondition.failMessage",
+                              "description":"If set and not blank, such a condition will trigger an exception making the deployment stop there and process fail. In other cases this is a success condition which just stops the awaiting."
+                            },
                             "operatorType":{
                               "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_JsonPointerOperator",
                               "type":"string",

@@ -98,7 +98,7 @@
         }
     </style>
     
-    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.30">
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.32-SNAPSHOT">
 </head>
 <body>
     <header class="header fixed-top">
@@ -901,7 +901,7 @@ Use
     &quot;labels&quot;: {
       &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
       &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
-      &quot;app.kubernetes.io/version&quot;: &quot;1.0.30&quot;
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.32-SNAPSHOT&quot;
     }
   },
   &quot;rules&quot;: [
@@ -958,7 +958,7 @@ Use
     &quot;labels&quot;: {
       &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
       &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
-      &quot;app.kubernetes.io/version&quot;: &quot;1.0.30&quot;
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.32-SNAPSHOT&quot;
     }
   },
   &quot;roleRef&quot;: {
@@ -983,7 +983,7 @@ Use
     &quot;labels&quot;: {
       &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
       &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
-      &quot;app.kubernetes.io/version&quot;: &quot;1.0.30&quot;
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.32-SNAPSHOT&quot;
     }
   }
 }
@@ -1007,7 +1007,7 @@ Use
     &quot;labels&quot;: {
       &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
       &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
-      &quot;app.kubernetes.io/version&quot;: &quot;1.0.30&quot;
+      &quot;app.kubernetes.io/version&quot;: &quot;1.0.32-SNAPSHOT&quot;
     }
   },
   &quot;spec&quot;: {
@@ -1026,7 +1026,7 @@ Use
         &quot;labels&quot;: {
           &quot;app.kubernetes.io/component&quot;: &quot;controller&quot;,
           &quot;app.kubernetes.io/name&quot;: &quot;bundlebee-operator&quot;,
-          &quot;app.kubernetes.io/version&quot;: &quot;1.0.30&quot;
+          &quot;app.kubernetes.io/version&quot;: &quot;1.0.32-SNAPSHOT&quot;
         }
       },
       &quot;spec&quot;: {
@@ -1034,7 +1034,7 @@ Use
         &quot;containers&quot;: [
           {
             &quot;name&quot;: &quot;bundlebee-operator&quot;,
-            &quot;image&quot;: &quot;yupiik/bundlebee/operator:1.0.30&quot;,
+            &quot;image&quot;: &quot;yupiik/bundlebee/operator:1.0.32-SNAPSHOT&quot;,
             &quot;env&quot;: [
               {
                 &quot;name&quot;: &quot;BUNDLEBEE_KUBE_DRYRUN&quot;,
@@ -1129,7 +1129,7 @@ function addCopyButtons(clipboard) {
   document.querySelectorAll('pre > code').forEach(function (codeBlock) {
   var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
 if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
-    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.30"></script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.32-SNAPSHOT"></script>
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
