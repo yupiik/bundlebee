@@ -34,7 +34,7 @@ Or use it directly from your Maven project:
 <dependency>
     <groupId>io.yupiik.bundlebee</groupId>
     <artifactId>bundlebee-core</artifactId>
-    <version>1.0.29</version>
+    <version>1.0.31</version>
 </dependency>
 ----
 
