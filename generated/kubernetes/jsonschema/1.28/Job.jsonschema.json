@@ -262,7 +262,8 @@
                   }
                 },
                 "required":[
-                  "action"
+                  "action",
+                  "onPodConditions"
                 ],
                 "type":"object"
               },
