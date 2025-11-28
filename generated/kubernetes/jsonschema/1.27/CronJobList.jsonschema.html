@@ -531,7 +531,7 @@ window.jsonSchemaViewerOpts = {
                         "type":"integer"
                       },
                       "podFailurePolicy":{
-                        "description":"Specifies the policy of handling failed pods. In particular, it allows to specify the set of actions and conditions which need to be satisfied to take the associated action. If empty, the default behaviour applies - the counter of failed pods, represented by the jobs's .status.failed field, is incremented and it is checked against the backoffLimit. This field cannot be used in combination with restartPolicy=OnFailure.\n\nThis field is alpha-level. To use this field, you must enable the `JobPodFailurePolicy` feature gate (disabled by default).",
+                        "description":"Specifies the policy of handling failed pods. In particular, it allows to specify the set of actions and conditions which need to be satisfied to take the associated action. If empty, the default behaviour applies - the counter of failed pods, represented by the jobs's .status.failed field, is incremented and it is checked against the backoffLimit. This field cannot be used in combination with restartPolicy=OnFailure.\n\nThis field is beta-level. It can be used when the `JobPodFailurePolicy` feature gate is enabled (enabled by default).",
                         "properties":{
                           "rules":{
                             "description":"A list of pod failure policy rules. The rules are evaluated in order. Once a rule matches a Pod failure, the remaining of the rules are ignored. When no rule matches the Pod failure, the default handling applies - the counter of pod failures is incremented and it is checked against the backoffLimit. At most 20 elements are allowed.",
@@ -592,8 +592,7 @@ window.jsonSchemaViewerOpts = {
                                 }
                               },
                               "required":[
-                                "action",
-                                "onPodConditions"
+                                "action"
                               ],
                               "type":"object"
                             },
@@ -1670,7 +1669,7 @@ window.jsonSchemaViewerOpts = {
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -1755,7 +1754,7 @@ window.jsonSchemaViewerOpts = {
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -1866,7 +1865,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -2042,7 +2041,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -2364,7 +2363,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -2790,7 +2789,7 @@ window.jsonSchemaViewerOpts = {
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -2875,7 +2874,7 @@ window.jsonSchemaViewerOpts = {
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -2986,7 +2985,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -3162,7 +3161,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -3484,7 +3483,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -3924,7 +3923,7 @@ window.jsonSchemaViewerOpts = {
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -4009,7 +4008,7 @@ window.jsonSchemaViewerOpts = {
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -4120,7 +4119,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -4296,7 +4295,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -4618,7 +4617,7 @@ window.jsonSchemaViewerOpts = {
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{

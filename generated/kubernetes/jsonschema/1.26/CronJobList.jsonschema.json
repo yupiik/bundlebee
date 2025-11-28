@@ -365,7 +365,7 @@
                         "type":"integer"
                       },
                       "podFailurePolicy":{
-                        "description":"Specifies the policy of handling failed pods. In particular, it allows to specify the set of actions and conditions which need to be satisfied to take the associated action. If empty, the default behaviour applies - the counter of failed pods, represented by the jobs's .status.failed field, is incremented and it is checked against the backoffLimit. This field cannot be used in combination with restartPolicy=OnFailure.\n\nThis field is alpha-level. To use this field, you must enable the `JobPodFailurePolicy` feature gate (disabled by default).",
+                        "description":"Specifies the policy of handling failed pods. In particular, it allows to specify the set of actions and conditions which need to be satisfied to take the associated action. If empty, the default behaviour applies - the counter of failed pods, represented by the jobs's .status.failed field, is incremented and it is checked against the backoffLimit. This field cannot be used in combination with restartPolicy=OnFailure.\n\nThis field is beta-level. It can be used when the `JobPodFailurePolicy` feature gate is enabled (enabled by default).",
                         "properties":{
                           "rules":{
                             "description":"A list of pod failure policy rules. The rules are evaluated in order. Once a rule matches a Pod failure, the remaining of the rules are ignored. When no rule matches the Pod failure, the default handling applies - the counter of pod failures is incremented and it is checked against the backoffLimit. At most 20 elements are allowed.",
@@ -426,8 +426,7 @@
                                 }
                               },
                               "required":[
-                                "action",
-                                "onPodConditions"
+                                "action"
                               ],
                               "type":"object"
                             },
@@ -1504,7 +1503,7 @@
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -1589,7 +1588,7 @@
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -1700,7 +1699,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -1876,7 +1875,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -1961,7 +1960,7 @@
                                       "description":"Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                       "properties":{
                                         "claims":{
-                                          "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable.",
+                                          "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
                                           "items":{
                                             "description":"ResourceClaim references one entry in PodSpec.ResourceClaims.",
                                             "properties":{
@@ -1975,7 +1974,10 @@
                                             ],
                                             "type":"object"
                                           },
-                                          "type":"array"
+                                          "type":"array",
+                                          "x-kubernetes-list-map-keys":[
+                                            "name"
+                                          ]
                                         },
                                         "limits":{
                                           "additionalProperties":{
@@ -2173,7 +2175,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -2599,7 +2601,7 @@
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -2684,7 +2686,7 @@
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -2795,7 +2797,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -2971,7 +2973,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -3056,7 +3058,7 @@
                                       "description":"Resources are not allowed for ephemeral containers. Ephemeral containers use spare resources already allocated to the pod.",
                                       "properties":{
                                         "claims":{
-                                          "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable.",
+                                          "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
                                           "items":{
                                             "description":"ResourceClaim references one entry in PodSpec.ResourceClaims.",
                                             "properties":{
@@ -3070,7 +3072,10 @@
                                             ],
                                             "type":"object"
                                           },
-                                          "type":"array"
+                                          "type":"array",
+                                          "x-kubernetes-list-map-keys":[
+                                            "name"
+                                          ]
                                         },
                                         "limits":{
                                           "additionalProperties":{
@@ -3268,7 +3273,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -3708,7 +3713,7 @@
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -3793,7 +3798,7 @@
                                                     "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                     "properties":{
                                                       "name":{
-                                                        "description":"The header field name",
+                                                        "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                         "type":"string"
                                                       },
                                                       "value":{
@@ -3904,7 +3909,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -4080,7 +4085,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -4165,7 +4170,7 @@
                                       "description":"Compute Resources required by this container. Cannot be updated. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                       "properties":{
                                         "claims":{
-                                          "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable.",
+                                          "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
                                           "items":{
                                             "description":"ResourceClaim references one entry in PodSpec.ResourceClaims.",
                                             "properties":{
@@ -4179,7 +4184,10 @@
                                             ],
                                             "type":"object"
                                           },
-                                          "type":"array"
+                                          "type":"array",
+                                          "x-kubernetes-list-map-keys":[
+                                            "name"
+                                          ]
                                         },
                                         "limits":{
                                           "additionalProperties":{
@@ -4377,7 +4385,7 @@
                                                 "description":"HTTPHeader describes a custom header to be used in HTTP probes",
                                                 "properties":{
                                                   "name":{
-                                                    "description":"The header field name",
+                                                    "description":"The header field name. This will be canonicalized upon output, so case-variant names will be understood as the same header.",
                                                     "type":"string"
                                                   },
                                                   "value":{
@@ -5503,7 +5511,7 @@
                                                   "description":"resources represents the minimum resources the volume should have. If RecoverVolumeExpansionFailure feature is enabled users are allowed to specify resource requirements that are lower than previous value but must still be higher than capacity recorded in the status field of the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources",
                                                   "properties":{
                                                     "claims":{
-                                                      "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable.",
+                                                      "description":"Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
                                                       "items":{
                                                         "description":"ResourceClaim references one entry in PodSpec.ResourceClaims.",
                                                         "properties":{
@@ -5517,7 +5525,10 @@
                                                         ],
                                                         "type":"object"
                                                       },
-                                                      "type":"array"
+                                                      "type":"array",
+                                                      "x-kubernetes-list-map-keys":[
+                                                        "name"
+                                                      ]
                                                     },
                                                     "limits":{
                                                       "additionalProperties":{

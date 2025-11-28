@@ -338,7 +338,10 @@
                   ],
                   "type":"object"
                 },
-                "type":"array"
+                "type":"array",
+                "x-kubernetes-list-map-keys":[
+                  "uid"
+                ]
               }
             },
             "type":"object"
