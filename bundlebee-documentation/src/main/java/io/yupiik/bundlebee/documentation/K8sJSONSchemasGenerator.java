@@ -583,7 +583,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 // todo: refine to handle v1/v2 comparison
                 if (!skipReactView && ((force || !Files.exists(versionlessHtml)) && !versionName.contains("beta") && !versionName.contains("alpha"))) {
                     final var content = html == null ? renderForHtml(versionName, kind, version, versioned) : html;
-                    Files.writeString(versionlessHtml, content);
+                    Files.writeString(versionlessHtml, content.replace("\"../../../../", "\"../../../"));
                     log.info(() -> "Wrote '" + versionlessHtml + "'");
                 }
             }
@@ -593,21 +593,18 @@ public class K8sJSONSchemasGenerator implements Runnable {
     }
 
     private String renderForHtml(final String versionName, final String kind, final String version, final Path versionned) throws IOException {
+        final var relative = "../../../../";
         return "= " + kind + " " + versionName + "\n" +
                 "\n" +
                 "++++\n" +
                 "<div id=\"main\"></div>\n" +
                 "<script>\n" +
                 "window.jsonSchemaViewerOpts = {\n" +
-                "    expanded: false,\n" +
-                "    hideTopBar: false,\n" +
-                "    defaultExpandedDepth: 0,\n" +
-                "    emptyText: \"Schema can't be rendered\",\n" +
-                "    name: \"Kubernetes " + versionName + " " + kind + " " + version + " Schema\",\n" +
+                "    base: \"../" + relative + "\",\n" +
                 "    schema: " + Files.readString(versionned, UTF_8) + ",\n" +
                 "};\n" +
                 "</script>\n" +
-                "<script src=\"../../../../js/kubernetes.schema.js?v=0\"></script>\n" +
+                "<script src=\"" + relative + "js/kubernetes.schema.js?v=0\"></script>\n" +
                 "++++";
     }
 

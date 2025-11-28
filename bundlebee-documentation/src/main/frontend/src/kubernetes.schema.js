@@ -14,10 +14,16 @@ import { SchemaVisualEditor } from 'jsonjoy-builder';
   link.href = url;
   link.onerror = (e) => console.error('Failed to load stylesheet:', e);
 
-  document.head ? document.head.appendChild(link) : document.documentElement.appendChild(link);
+  const root = document.head || document.documentElement;
+  root.appendChild(link);
+
+  const inlineStyleOverrides = document.createElement('style');
+  // override optional button style but not required one
+  inlineStyleOverrides.innerHTML = 'button.bg-secondary.text-muted-foreground{background-color:white !important;}';
+  root.appendChild(inlineStyleOverrides);
 })(window.jsonSchemaViewerOpts.base + 'generated/js/kubernetes.schema.css');
 
 createRoot(document.getElementById('main'))
   .render(
-      <SchemaVisualEditor schema={window.jsonSchemaViewerOpts.schema} />
+      <SchemaVisualEditor readOnly={true} schema={window.jsonSchemaViewerOpts.schema} />
   );
