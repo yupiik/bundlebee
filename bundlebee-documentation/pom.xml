@@ -37,7 +37,7 @@
     <!-- skip descriptor synchronization by default -->
     <minisite.kubernetes.jsonschema.enabled>false</minisite.kubernetes.jsonschema.enabled>
     <!-- skip versions before this one -->
-    <minisite.kubernetes.jsonschema.minVersion>1.20.0</minisite.kubernetes.jsonschema.minVersion>
+    <minisite.kubernetes.jsonschema.minVersion>1.28.0</minisite.kubernetes.jsonschema.minVersion>
     <!-- otherwise we end up with > 6Gi and gh pages limit is 1Gi -->
     <minisite.kubernetes.jsonschema.skipPatchVersion>true</minisite.kubernetes.jsonschema.skipPatchVersion>
   </properties>
