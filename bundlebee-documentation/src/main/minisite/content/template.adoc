@@ -1,0 +1,91 @@
+= Create your own templates
+
+IMPORTANT: feature available since Bundlebee 1.0.14.
+
+A template is an alveolus which is not intended to be installed by itself in general - even if it is possible.
+It relies on placeholders to be contextualized and, in general, placeholders are provided in the context if a _contextual alveolus_ which represents the consumer.
+
+But why using templates? Most of the time, the Kubernetes flavor you are using (OpenShift for example or a cloud specific instance or with a particular service mesh stack) is relying on specific metadata/labels etc...
+Your company can also standardize the way to write kubernetes descriptors.
+All that make it quite hard to define generic and maintainable descriptors generally speaking but it also makes it quite repetitive to write it for each microservice in your own context.
+
+To solve that issue, Bundlebee enables you to write a generic contextual alveolus (a deployment, a service etc...) and bind placeholders from another alveolus.
+
+IMPORTANT: the context is the alveolus and not the dependency to ensure the binding is more obvious and not ultra nested. it can require you to split a bit the definition in the `manifest.json` but it is to simplify the maintenance.
+
+== Create your first template
+
+To create a template, just define a standard alveolus with placeholders in descriptors.
+For example:
+
+[source,json]
+manifest.json
+----
+{
+  "alveoli": [
+    {
+      "name": "my-service-template",
+      "descriptors": [
+        {
+          "name": "service.template",
+          "interpolate": true
+        }
+      ]
+    }
+  ]
+}
+----
+
+[source,yaml]
+.service.template.yaml
+----
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{service.name}}
+  labels:
+    app: {{service.app}}
+spec:
+  type: {{service.type}}
+  ports:
+    - port: {{service.port}}
+      targetPort: {{service.port}}
+  selector:
+    app: {{service.app}}
+----
+
+Here we can see we just defined an alveolus requiring the placeholders:
+
+* `service.name`,
+* `service.app`,
+* `service.type`,
+* `service.port`.
+
+NOTE: this is a valid alveolus, if you provide all the placeholders you can install it directly but it is not recommended to ensure it is reproducible.
+
+== Use your first template
+
+To use the template previously defined, just define another alveolus which binds the required placeholders in its definition:
+
+[source,json]
+.manifest.json snippet
+----
+{
+  "name": "my-service-7070",
+  "dependencies": [
+    { <1>
+      "name": "my-service-template"
+    }
+  ],
+  "placeholders": { <2>
+    "service.app": "my-simple-app",
+    "service.name": "simple-port",
+    "service.type": "NodePort",
+    "service.port": "7070"
+  }
+}
+----
+<.> import the template in the alveolus,
+<.> Binds the placeholders of the imported template.
+
+TIP: if your alveolus imports a dependency reimporting the template, the placeholders nesting will be respected which means the context is always the deepest one.

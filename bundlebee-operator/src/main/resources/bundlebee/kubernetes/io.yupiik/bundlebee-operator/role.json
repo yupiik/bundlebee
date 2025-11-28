@@ -1,0 +1,57 @@
+{
+  "apiVersion": "rbac.authorization.k8s.io/v1",
+  "kind": "Role",
+  "metadata": {
+    "name": "bundlebee-operator",
+    "labels": {
+      "app.kubernetes.io/component": "controller",
+      "app.kubernetes.io/name": "bundlebee-operator",
+      "app.kubernetes.io/version": "${project.version}"
+    }
+  },
+  "rules": [
+    {
+      "apiGroups": [
+        "bundlebee.yupiik.io"
+      ],
+      "resources": [
+        "alveoli"
+      ],
+      "verbs": [
+        "*"
+      ]
+    },
+    {
+      "apiGroups": [
+        "apps"
+      ],
+      "resources": [
+        "daemonsets",
+        "statefulsets",
+        "deployments"
+      ],
+      "verbs": [
+        "get",
+        "create",
+        "update",
+        "delete"
+      ]
+    },
+    {
+      "apiGroups": [
+        ""
+      ],
+      "resources": [
+        "configmaps",
+        "secrets",
+        "pods",
+        "persistentvolumes",
+        "persistentvolumeclaims",
+        "services"
+      ],
+      "verbs": [
+        "*"
+      ]
+    }
+  ]
+}

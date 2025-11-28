@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2021 - present - Yupiik SAS - https://www.yupiik.com
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>bundlebee</artifactId>
+    <groupId>io.yupiik</groupId>
+    <version>1.0.32-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>bundlebee-documentation</artifactId>
+  <name>BundleBee :: Documentation</name>
+
+  <properties>
+    <!-- skip jsonschema synchronization - keep the ones already present -->
+    <minisite.kubernetes.jsonschema.skip>false</minisite.kubernetes.jsonschema.skip>
+    <!-- if set to true all descriptors are regenerated else only the ones not locally present -->
+    <minisite.kubernetes.jsonschema.force>false</minisite.kubernetes.jsonschema.force>
+    <!-- can be needed to reduce it to avoid to have too much latency -->
+    <minisite.kubernetes.jsonschema.maxThreads>8</minisite.kubernetes.jsonschema.maxThreads>
+    <!-- skip descriptor synchronization by default -->
+    <minisite.kubernetes.jsonschema.enabled>false</minisite.kubernetes.jsonschema.enabled>
+    <!-- skip versions before this one -->
+    <minisite.kubernetes.jsonschema.minVersion>1.28.0</minisite.kubernetes.jsonschema.minVersion>
+    <!-- otherwise we end up with > 6Gi and gh pages limit is 1Gi -->
+    <minisite.kubernetes.jsonschema.skipPatchVersion>true</minisite.kubernetes.jsonschema.skipPatchVersion>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.xbean</groupId>
+      <artifactId>xbean-finder-shaded</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-operator</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-junit5</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency> <!-- for the reactor -->
+      <groupId>${project.groupId}</groupId>
+      <artifactId>bundlebee-maven-plugin</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+      <optional>true</optional>
+    </dependency>
+
+    <!-- alveoli to ensure reactor is correct -->
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>postgres-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>elasticsearch-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>zipkin-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>prometheus-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>loki-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>grafana-simple</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>monitoring-alveolus</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>minio-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>${project.groupId}.alveoli</groupId>
+      <artifactId>kafka-local</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.github.eirslett</groupId>
+        <artifactId>frontend-maven-plugin</artifactId>
+        <version>1.15.4</version>
+        <executions>
+          <execution>
+            <id>setup-node</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>install-node-and-npm</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm-install</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>npm-build</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>run build</arguments>
+              <environmentVariables>
+                <OUTPUT>${project.basedir}/src/main/minisite/assets/generated/</OUTPUT>
+                <PROJECT_VERSION>${project.version}</PROJECT_VERSION>
+              </environmentVariables>
+            </configuration>
+          </execution>
+        </executions>
+        <configuration>
+          <nodeVersion>v24.11.1</nodeVersion>
+          <npmVersion>11.6.2</npmVersion>
+          <installDirectory>${project.basedir}/.node</installDirectory>
+          <workingDirectory>${project.basedir}/src/main/frontend</workingDirectory>
+        </configuration>
+      </plugin>
+      <plugin> <!-- mvn process-classes yupiik-tools:serve-minisite -e -->
+        <groupId>io.yupiik.maven</groupId>
+        <artifactId>yupiik-tools-maven-plugin</artifactId>
+        <configuration>
+          <preferYupiikAsciidoc>true</preferYupiikAsciidoc>
+          <siteBase>//www.yupiik.io/bundlebee</siteBase>
+          <title>BundleBee documentation</title>
+          <description>BundleBee is a light Java Kubernetes package manager.</description>
+          <indexText>Yupiik BundleBee</indexText>
+          <indexSubTitle>A light Java Kubernetes package manager.</indexSubTitle>
+          <logoText>Bundlebee</logoText>
+          <logoSideText>Documentation</logoSideText>
+          <copyright>© 2025 &lt;strong&gt;&lt;a href="https://www.yupiik.com"&gt;Yupiik&lt;/a&gt;&lt;/strong&gt;. All Rights Reserved</copyright>
+          <templateExtensionPoints>
+            <socialLinks>
+              &lt;li class="list-inline-item"&gt;&lt;a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"&gt;&lt;i class="fab fa-linkedin fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
+              &lt;li class="list-inline-item"&gt;&lt;a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"&gt;&lt;i class="fab fa-twitter fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
+              &lt;li class="list-inline-item"&gt;&lt;a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"&gt;&lt;i class="fab fa-github fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
+            </socialLinks>
+          </templateExtensionPoints>
+          <customScripts>
+            &lt;script&gt;
+            document.querySelector('div.site-logo &gt; a').href =
+              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            &lt;/script&gt;
+          </customScripts>
+          <attributes>
+            <partialsdir>${project.basedir}/src/main/minisite/content/_partials</partialsdir>
+          </attributes>
+          <preActions>
+            <action>
+              <type>maven-plugin</type>
+              <configuration>
+                <pluginXml>${project.parent.basedir}/bundlebee-maven-plugin/target/classes/META-INF/maven/plugin.xml</pluginXml>
+                <toBase>${project.basedir}/src/main/minisite/content/maven</toBase>
+                <description>BundleBee command executable from Maven environment.</description>
+              </configuration>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.ListChecks</type>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.ConfigurationGenerator</type>
+              <configuration>
+                <module>bundlebee-core.*</module>
+                <exclude>io.yupiik.bundlebee.core.command.impl</exclude>
+              </configuration>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.AlveoliConfigurationGenerator</type>
+              <configuration>
+                <version>${project.version}</version>
+              </configuration>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.CommandConfigurationGenerator</type>
+              <configuration>
+                <module>bundlebee-core.*</module>
+              </configuration>
+            </action>
+            <action>
+              <type>jsonschema</type>
+              <configuration>
+                <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
+                <type>JSON</type>
+                <pretty>true</pretty>
+                <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
+                <to>
+                  ${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.json
+                </to>
+                <title>Manifest Descriptor</title>
+                <description>BundleBee manifest descriptor.</description>
+              </configuration>
+            </action>
+            <action>
+              <type>jsonschema</type>
+              <configuration>
+                <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
+                <type>JSON</type>
+                <pretty>true</pretty>
+                <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
+                <to>
+                  ${project.basedir}/src/main/minisite/assets/generated/jsonschema/manifest.descriptor.json
+                </to>
+                <title>Manifest Descriptor</title>
+                <description>BundleBee manifest descriptor.</description>
+              </configuration>
+            </action>
+            <action>
+              <type>jsonschema</type>
+              <configuration>
+                <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
+                <type>ADOC</type>
+                <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
+                <to>
+                  ${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.adoc
+                </to>
+                <title>Manifest Descriptor</title>
+                <description>BundleBee manifest descriptor.</description>
+              </configuration>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.OperatorGenerator</type>
+            </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.K8sJSONSchemasGenerator</type>
+              <configuration>
+                <minisite.actions.k8s.jsonschema>${minisite.kubernetes.jsonschema.enabled}</minisite.actions.k8s.jsonschema>
+                <specUrlTemplate>https://raw.githubusercontent.com/kubernetes/kubernetes/{{version}}/api/openapi-spec/swagger.json</specUrlTemplate>
+                <tagsUrl>https://api.github.com/repos/kubernetes/kubernetes/tags</tagsUrl>
+                <skip>${minisite.kubernetes.jsonschema.skip}</skip>
+                <force>${minisite.kubernetes.jsonschema.force}</force>
+                <maxThreads>${minisite.kubernetes.jsonschema.maxThreads}</maxThreads>
+                <minVersion>${minisite.kubernetes.jsonschema.minVersion}</minVersion>
+                <skipPatchVersion>${minisite.kubernetes.jsonschema.skipPatchVersion}</skipPatchVersion>
+                <!-- optional but when rate limiting is hit it enables to continue to work -->
+                <githubToken>${minisite.githubToken}</githubToken>
+              </configuration>
+            </action>
+          </preActions>
+          <git>
+            <ignore>true</ignore>
+          </git>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile> <!--  by default we want changes we do in the project to be reflected in the doc even without building it  -->
+      <id>generate-content-but-not-site</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.yupiik.maven</groupId>
+            <artifactId>yupiik-tools-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>buildDoc</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>minisite</goal>
+                </goals>
+                <configuration>
+                  <skipRendering>true</skipRendering>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile> <!--  mvn clean package -Pgh-pages -->
+      <id>gh-pages</id>
+      <properties>
+        <minisite.serverId>github.com</minisite.serverId>
+        <minisite.kubernetes.jsonschema.enabled>true</minisite.kubernetes.jsonschema.enabled>
+      </properties>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.yupiik.maven</groupId>
+            <artifactId>yupiik-tools-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>gh-pages</id>
+                <phase>prepare-package</phase>
+                <goals>
+                  <goal>minisite</goal>
+                </goals>
+                <configuration>
+                  <git>
+                    <ignore>false</ignore>
+                    <noJekyll>true</noJekyll>
+                    <serverId>${minisite.serverId}</serverId>
+                    <branch>refs/heads/gh-pages</branch>
+                    <url>https://github.com/yupiik/bundlebee.git</url>
+                  </git>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

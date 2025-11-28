@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2021 - present - Yupiik SAS - https://www.yupiik.com
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>io.yupiik</groupId>
+  <artifactId>bundlebee</artifactId>
+  <version>1.0.32-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>BundleBee</name>
+  <description>A light Kubernetes package manager inheriting from Apache Maven infrastructure.</description>
+  <url>https://github.com/yupiik/bundlebee</url>
+
+  <organization>
+    <name>Yupiik SAS</name>
+    <url>https://www.yupiik.com</url>
+  </organization>
+  <inceptionYear>2021 - present</inceptionYear>
+
+  <properties>
+    <owb.version>2.0.27</owb.version>
+    <xbean.version>4.27</xbean.version>
+    <junit5.version>5.11.4</junit5.version>
+    <arthur.version>1.0.9</arthur.version>
+    <yupiik-logging.version>1.0.8</yupiik-logging.version>
+    <johnzon.version>1.2.21</johnzon.version>
+    <yupiik-tools.version>1.2.12</yupiik-tools.version>
+
+    <!-- deprecated in recent maven releases, we workaround the warnings using the new way (but dont support split repo)
+    <m2.location>${settings.localRepository}</m2.location>
+    -->
+    <m2.location>${session.repositorySession.localRepository.basedir.absolutePath}</m2.location>
+
+    <project.build.outputTimestamp>2025-08-10T19:06:05Z</project.build.outputTimestamp>
+  </properties>
+
+  <modules>
+    <module>bundlebee-core</module>
+    <module>bundlebee-documentation</module>
+    <module>alveolus</module>
+    <module>bundlebee-maven-plugin</module>
+    <module>bundlebee-operator</module>
+    <module>bundlebee-junit5</module>
+  </modules>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>1.18.38</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit5.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.xbean</groupId>
+        <artifactId>xbean-finder-shaded</artifactId>
+        <version>${xbean.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.geronimo.specs</groupId>
+        <artifactId>geronimo-json_1.1_spec</artifactId>
+        <version>1.5</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.geronimo.specs</groupId>
+        <artifactId>geronimo-jsonb_1.0_spec</artifactId>
+        <version>1.4</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.johnzon</groupId>
+        <artifactId>johnzon-jsonb</artifactId>
+        <version>${johnzon.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.talend.sdk.component</groupId>
+        <artifactId>component-runtime-http-junit</artifactId>
+        <version>1.57.0</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency> <!-- for talend mock http server -->
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-jdk14</artifactId>
+        <version>1.7.32</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency> <!-- for http-junit self seigned cert generation on java 17 -->
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcpkix-jdk15on</artifactId>
+        <version>1.70</version>
+        <scope>test</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.geronimo.arthur</groupId>
+        <artifactId>arthur-maven-plugin</artifactId>
+        <version>${arthur.version}</version>
+        <configuration>
+          <graalVersion>21.0.2-graalce</graalVersion>
+          <attach>true</attach>
+          <attachClassifier>${os.name}-${os.arch}</attachClassifier> <!-- Linux-amd64 -->
+          <output>${project.build.directory}/${project.artifactId}</output>
+          <buildStaticImage>false</buildStaticImage>
+          <binarySource>${project.build.directory}/${project.artifactId}</binarySource>
+          <useLDD>true</useLDD>
+          <enableAllSecurityServices>false</enableAllSecurityServices>
+          <allowIncompleteClasspath>false</allowIncompleteClasspath>
+          <graalExtensions>
+            <graalExtension>openwebbeans</graalExtension>
+          </graalExtensions>
+          <labels>
+            <org.opencontainers.image.revision>${git.commit.id}</org.opencontainers.image.revision>
+            <org.opencontainers.image.ref.name>${git.branch}</org.opencontainers.image.ref.name>
+            <org.opencontainers.image.source>${git.remote.origin.url}</org.opencontainers.image.source>
+            <org.opencontainers.image.created>${maven.build.timestamp}</org.opencontainers.image.created>
+            <org.opencontainers.image.authors>Yupiik</org.opencontainers.image.authors>
+            <org.opencontainers.image.vendor>Yupiik</org.opencontainers.image.vendor>
+            <org.opencontainers.image.url>https://yupiik.io</org.opencontainers.image.url>
+            <org.opencontainers.image.documentation>https://yupiik.io/bundlebee/</org.opencontainers.image.documentation>
+            <org.opencontainers.image.title>${project.parent.name}</org.opencontainers.image.title>
+            <org.opencontainers.image.description>${project.parent.description}</org.opencontainers.image.description>
+            <org.opencontainers.image.version>${project.version}</org.opencontainers.image.version>
+            <com.yupiik.maintainer>Yupiik &lt;support@yupiik.com&gt;</com.yupiik.maintainer>
+            <com.yupiik.build-date>${maven.build.timestamp}</com.yupiik.build-date>
+            <com.yupiik.application>${project.artifactId}</com.yupiik.application>
+            <com.yupiik.name>${project.artifactId}</com.yupiik.name>
+            <com.yupiik.description>${project.description}</com.yupiik.description>
+            <com.yupiik.vendor>Yupiik</com.yupiik.vendor>
+            <com.yupiik.params>_JAVA_OPTIONS=...</com.yupiik.params>
+            <com.yupiik.cmd>docker run --user 1000 --detach ${image.name} &lt;args&gt;</com.yupiik.cmd>
+          </labels>
+          <customOptions>
+            <customOption>-J--add-exports=jdk.internal.vm.compiler/org.graalvm.compiler.options=ALL-UNNAMED</customOption>
+            <customOption>-J--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.option=ALL-UNNAMED</customOption>
+            <customOption>-J--add-exports=org.graalvm.nativeimage.builder/com.oracle.svm.core.jdk=ALL-UNNAMED</customOption>
+            <customOption>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</customOption>
+            <customOption>-Djava.net.preferIPv4Stack=true</customOption>
+            <customOption>--enable-http</customOption>
+            <customOption>--enable-https</customOption>
+            <!-- to investigate what is in the native binaries/image(s) https://www.graalvm.org/dashboard/
+            <customOption>-H:DashboardDump=target/dashboard</customOption>
+            <customOption>-H:+DashboardAll</customOption>
+            -->
+          </customOptions>
+          <reflections>
+            <reflection>
+              <name>org.eclipse.microprofile.config.Config</name>
+              <allPublicMethods>true</allPublicMethods>
+            </reflection>
+          </reflections>
+          <extensionProperties>
+            <!-- to keep reflection meta for jsonb models without listing them (manifest + kubeconfig) -->
+            <extension.annotation.custom.annotations.properties>
+              io.yupiik.bundlebee.core.configuration.Description:allDeclaredConstructors=true|allDeclaredMethods=true|allDeclaredFields=true,
+              javax.json.bind.annotation.JsonbProperty:allDeclaredConstructors=true|allDeclaredMethods=true|allDeclaredFields=true
+            </extension.annotation.custom.annotations.properties>
+          </extensionProperties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>io.github.git-commit-id</groupId>
+        <artifactId>git-commit-id-maven-plugin</artifactId>
+        <version>9.0.2</version>
+        <executions>
+          <execution>
+            <id>get-the-git-infos</id>
+            <phase>initialize</phase>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <injectAllReactorProjects>true</injectAllReactorProjects>
+          <generateGitPropertiesFile>false</generateGitPropertiesFile>
+          <dateFormat>yyyy-MM-dd'T'HH:mm:ss'Z'</dateFormat>
+          <dateFormatTimeZone>GMT</dateFormatTimeZone>
+          <includeOnlyProperties>
+            <includeOnlyProperty>^git.branch$</includeOnlyProperty>
+            <includeOnlyProperty>^git.remote.origin.url$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.id$</includeOnlyProperty>
+            <includeOnlyProperty>^git.commit.time$</includeOnlyProperty>
+          </includeOnlyProperties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.3.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>3.3.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>3.1.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.3.1</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.11.0</version>
+        <configuration>
+          <source>11</source>
+          <target>11</target>
+          <release>11</release>
+          <encoding>UTF-8</encoding>
+          <proc>full</proc>
+          <compilerArgs>
+            <compilerArg>-parameters</compilerArg>
+          </compilerArgs>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <environmentVariables>
+            <TEST_ENV_VAR>set</TEST_ENV_VAR>
+          </environmentVariables>
+          <systemPropertyVariables>
+            <bundlebee.maven.repositories.downloads.enabled>false</bundlebee.maven.repositories.downloads.enabled>
+            <bundlebee.kube.api>https://kubernetes.bundlebee.yupiik.test</bundlebee.kube.api>
+            <bundlebee.kube.validateSSL>false</bundlebee.kube.validateSSL>
+            <m2.location>${m2.location}</m2.location>
+            <jdk.internal.httpclient.disableHostnameVerification>true
+            </jdk.internal.httpclient.disableHostnameVerification>
+            <kubeconfig>explicit</kubeconfig>
+            <java.util.logging.manager>io.yupiik.logging.jul.YupiikLogManager</java.util.logging.manager>
+            <org.talend.__shade__.io.netty.noUnsafe>true</org.talend.__shade__.io.netty.noUnsafe>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>4.1</version>
+        <executions>
+          <execution>
+            <id>check-license</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
+        <inherited>false</inherited>
+        <configuration>
+          <aggregate>true</aggregate>
+          <mapping>
+            <adoc>DOUBLESLASH_STYLE</adoc>
+          </mapping>
+          <licenseSets>
+            <licenseSet>
+              <inlineHeader><![CDATA[Copyright (c) ${project.inceptionYear} - ${project.organization.name} - ${project.organization.url}
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+]]></inlineHeader>
+              <includes>
+                <include>**/*.properties</include>
+                <include>**/*.java</include>
+                <include>**/*.xml</include>
+                <include>**/*.yaml</include>
+              </includes>
+              <excludes>
+                <exclude>LICENSE</exclude>
+                <exclude>**/*.adoc</exclude>
+                <exclude>**/*.idea</exclude>
+                <exclude>**/target/**</exclude>
+                <exclude>**/generated/**</exclude>
+                <exclude>**/minisite/**</exclude>
+                <exclude>**/file</exclude>
+                <exclude>**/.m2/**</exclude>
+              </excludes>
+            </licenseSet>
+          </licenseSets>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.4.2</version>
+      </plugin>
+      <plugin>
+        <groupId>net.nicoulaj.maven.plugins</groupId>
+        <artifactId>checksum-maven-plugin</artifactId>
+        <version>1.11</version>
+      </plugin>
+      <plugin>
+        <groupId>org.honton.chas</groupId>
+        <artifactId>readfiles-maven-plugin</artifactId>
+        <version>0.0.1</version>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.6.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+          <autoPublish>true</autoPublish>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <source>11</source>
+          <doclint>none</doclint>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>3.0.0-M1</version>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <releaseProfiles>release,native</releaseProfiles>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>io.yupiik.maven</groupId>
+        <artifactId>yupiik-tools-maven-plugin</artifactId>
+        <version>${yupiik-tools.version}</version>
+        <dependencies>
+          <dependency>
+            <groupId>io.yupiik.maven</groupId>
+            <artifactId>asciidoc-java</artifactId>
+            <version>${yupiik-tools.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.4.0</version>
+      </plugin>
+      <plugin><!--  mvn ossindex:audit -->
+        <groupId>org.sonatype.ossindex.maven</groupId>
+        <artifactId>ossindex-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>audit-dependencies</id>
+            <phase />
+            <goals>
+              <goal>audit</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <scope>compile,runtime</scope>
+          <excludeVulnerabilityIds>
+            <!-- snakeyaml: CWE-121: Stack-based Buffer Overflow -->
+            <excludeVulnerabilityId>CVE-2022-38752</excludeVulnerabilityId>
+            <!-- Deserialization of Untrusted Data: here data are considered safe -->
+            <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
+          </excludeVulnerabilityIds>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.4</version>
+            <configuration>
+              <gpgArguments>
+                <arg>--digest-algo=SHA512</arg>
+              </gpgArguments>
+            </configuration>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>net.nicoulaj.maven.plugins</groupId>
+            <artifactId>checksum-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>source-release-checksum</id>
+                <goals>
+                  <goal>artifacts</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <algorithms>
+                <algorithm>SHA-512</algorithm>
+              </algorithms>
+              <csvSummary>false</csvSummary>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://github.com/yupiik/yupiik-logging/blob/master/LICENSE</url>
+      <distribution>may be downloaded from the Maven repository</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>Romain Manni-Bucau</name>
+      <id>rmannibucau</id>
+      <roles>
+        <role>Contributor</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+    <developer>
+      <name>Francois Papon</name>
+      <id>fpapon</id>
+      <roles>
+        <role>Contributor</role>
+      </roles>
+      <timezone>+1</timezone>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/yupiik/bundlebee.git</connection>
+    <developerConnection>scm:git:https://github.com/yupiik/bundlebee.git</developerConnection>
+    <url>https://github.com/yupiik/bundlebee.git</url>
+    <tag>bundlebee-1.0.28</tag>
+  </scm>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
+</project>

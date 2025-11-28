@@ -1,0 +1,63 @@
+= Linting
+
+Linting is the process of running validations on descriptors.
+
+Bundlebee is able to read common "pre-rendered" descriptors (from Helm for example) as long as a `manifest.json` is properly formatted so you can run the linter on any descriptor even if it is working out of the box for Bundlebee alveoli (where you just run `bundlebee lint ...` command without pre-processing).
+
+== Configure
+
+The main configuration of the linter are the inclusions or exclusions (see `lint` command details).
+
+You can also exclude rules in `ignoredLintingRules` of the `manifest.json` (per manifest not global) or in the descriptors directly using virtual `$bundlebeeIgnoredLintingRules` attribute which is equivalent.
+
+TIP: while in the manifest the list is a list of object with a `name` attribute, manifest and descriptor lists are list of rule names to keep it simple.
+
+Indeed the `lint` command enables to exclude alveoli and descriptors but it is generally more convenient to create a `my-project:lint` alveolus which will disable (using placeholders or `includeIf` conditions) undesired external dependencies and descriptors during the linting process.
+This makes it quite easy and efficient to control what you deploy and avoid to trigger rules you don't want.
+
+== Rules
+
+Here is the available rules (built-in).
+
+include::content/_partials/generated/documentation/lint.checks.adoc[leveloffset=+2]
+
+== Write your own rule
+
+To write your own rule you have to implement and add to bundlebee (core) classpath a CDI bean implementing `LintingCheck` - or `SynchronousLintingCheck` which can be easier to implement.
+
+=== Synchronous or not
+
+The generic `LintingCheck` uses `CompletionStage` because it is possible to use validation rules which connect to a cluster (the bundlebee configured one) and using `KubeClient` - or any other logic - you can do checks against a particular cluster (does role exists for example).
+`CompletionStage` enable to run validations in parallel easily.
+
+When not needed, just go with the `SynchronousLintingCheck` base interface or one of its children.
+
+=== Anatomy of a check
+
+A check is composed of:
+
+* A `name` which enables to disable/force the check to run,
+* A `remediation` string which explains how to fix the violation when it happens,
+* A `decription` explaining the validation,
+* A `validate` (or sync flavor) method doing validation when a descriptor is visited,
+* Sometimes an `afterAll` method doing validations after all descriptors were seen (for joins accross desriptors for example).
+
+=== JSON, JSON, JSON
+
+Yaml descriptors are converted to `JsonObject` and descriptors containing a list are flattened.
+
+What does it means is that you always validate a single descriptor which is an object in check code which makes it easier to work with.
+
+== Going further
+
+It is not yet possible to define custom rules, it is not very complicated to do it technically but the language (must be JSON based) is challenging.
+Here are the current evaluated options:
+
+* Custom DSL: likely the most powerful and consistent option since we could define it in `manifest.json` but requires to learn yet another language,
+* JSON-Logic: a very good option but requires a lot of operators and resulting DSL is not that friendly/simple,
+* Template based: idea there is to define a few options ("check this value at this JSON pointer", "check this chain of json pointer", ...) but this becomes quite hard to have a relevant dictionary set without making it overcomplex,
+* Scripting based: we can run jruby/jython/js engine rules but they all required to embed a script manager runtime and they tend to be fatty for this need and not all are graalvm friendly to convert bundlebee to native mode.
+
+So as of today, since we didn't find a compromise making us happy we didn't enable to define JSON DSL based rules.
+Since it is easy to add custom rules in Java (and using the maven plugin), this is not blocking but we'd like to tackle it if we can come up with a better idea.
+Don't hesistate to propose something on bundlebee github project if you have an idea or a common need.

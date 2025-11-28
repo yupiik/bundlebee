@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Linting</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BundleBee is a light Java Kubernetes package manager.">
+    <meta name="author" content="Yupiik Minisite Generator">
+    <meta name="generator" content="Yupiik Minisite Generator">
+    
+    <link rel="shortcut icon" href="//www.yupiik.io/bundlebee/images/favicon.png">
+
+    <link href="//fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i|Montserrat:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/atom-one-dark.min.css" integrity="sha512-Fcqyubi5qOvl+yCwSJ+r7lli+CO1eHXMaugsZrnxuU4DVpLYWXTVoHy55+mCb4VZpMgy7PBhV7IiymC0yu9tkQ==" crossorigin="anonymous" />
+    <style>
+        :root {
+            /* YUPIIK colors (from dark to light) */
+            --yupiik-site-green: #46F72F;
+            --yupiik-site-purple: #D858FF;
+            --yupiik-site-blue-light: #02ABEA;
+            --yupiik-site-blue-dark: #056EBB;
+            --yupiik-site-grey-light: #F4F4F4;
+            --yupiik-site-grey-dark: #212121;
+
+            --yupiik-blue1: var(--yupiik-site-blue-dark);
+            --yupiik-blue2: var(--yupiik-site-blue-dark);
+            --yupiik-blue3: var(--yupiik-site-blue-dark);
+
+            --yupiik-color-white: #fff;
+            --yupiik-color-black: #000;
+
+            --yupiik-color-gray-0: var(--yupiik-color-white);
+            --yupiik-color-gray-100: #f5f6f7;
+            --yupiik-color-gray-200: #ebedf0;
+            --yupiik-color-gray-300: #dadde1;
+            --yupiik-color-gray-400: #ccd0d5;
+            --yupiik-color-gray-500: #bec3c9;
+            --yupiik-color-gray-600: #8d949e;
+            --yupiik-color-gray-700: #606770;
+            --yupiik-color-gray-800: #444950;
+            --yupiik-color-gray-900: #1c1e21;
+            --yupiik-color-gray-1000: var(--yupiik-color-black);
+
+            --yupiik-color-emphasis-0: var(--yupiik-color-gray-0);
+            --yupiik-color-emphasis-100: var(--yupiik-color-gray-100);
+            --yupiik-color-emphasis-200: var(--yupiik-color-gray-200);
+            --yupiik-color-emphasis-300: var(--yupiik-color-gray-300);
+            --yupiik-color-emphasis-400: var(--yupiik-color-gray-400);
+            --yupiik-color-emphasis-500: var(--yupiik-color-gray-500);
+            --yupiik-color-emphasis-600: var(--yupiik-color-gray-600);
+            --yupiik-color-emphasis-700: var(--yupiik-color-gray-700);
+            --yupiik-color-emphasis-800: var(--yupiik-color-gray-800);
+            --yupiik-color-emphasis-900: var(--yupiik-color-gray-900);
+            --yupiik-color-emphasis-1000: var(--yupiik-color-gray-1000);
+            --yupiik-color-content: var(--yupiik-color-emphasis-900);
+
+            --yupiik-font-family-base: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            --yupiik-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            --yupiik-font-size-base: 100%;
+
+            --yupiik-font-weight-light: 300;
+            --yupiik-font-weight-normal: 400;
+            --yupiik-font-weight-semibold: 500;
+            --yupiik-font-weight-bold: 700;
+
+            --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
+            --yupiik-line-height-base: 1.65;
+            --yupiik-font-weight-light: 300;
+            --yupiik-font-weight-normal: 400;
+            --yupiik-font-weight-semibold: 500;
+            --yupiik-font-weight-bold: 700;
+
+            --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
+            --yupiik-line-height-base: 1.65;
+
+            --yupiik-global-spacing: 1rem;
+            --yupiik-spacing-vertical: var(--yupiik-global-spacing);
+            --yupiik-spacing-horizontal: var(--yupiik-global-spacing);
+
+            --yupiik-h1-font-size: 2rem;
+            --yupiik-h2-font-size: 1.5rem;
+            --yupiik-h3-font-size: 1.25rem;
+            --yupiik-h4-font-size: 1rem;
+            --yupiik-h5-font-size: 0.875rem;
+            --yupiik-h6-font-size: 0.85rem;
+
+            --yupiik-heading-color: var(--yupiik-blue1);
+            --yupiik-heading-margin-top: 0;
+            --yupiik-heading-margin-bottom: var(--yupiik-spacing-vertical);
+            --yupiik-heading-font-family: var(--yupiik-font-family-base);
+            --yupiik-heading-font-weight: var(--yupiik-font-weight-bold);
+            --yupiik-heading-line-height: 1.25;
+        }
+    </style>
+    
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.32-SNAPSHOT">
+</head>
+<body>
+    <header class="header fixed-top">
+        <div class="branding docs-branding">
+            <div class="container-fluid position-relative py-2">
+                <div class="docs-logo-wrapper">
+	                <div class="site-logo"><a title="Home" class="navbar-brand" href="//www.yupiik.io/bundlebee/index.html">
+	                <img class="logo-icon mr-2" src="//www.yupiik.io/bundlebee/images/logo.svg" alt="logo">
+	                <span class="logo-text">Bundlebee <span class="text-alt">Documentation</span></span></a></div>
+                </div>
+	            <div class="docs-top-utilities d-flex justify-content-end align-items-center">
+					
+					<li class="list-inline-item"><a title="Search" id="search-button" href="#" data-toggle="modal" data-target="#searchModal"><i data-toggle="tooltip" data-placement="top" title="Search" class="fas fa-search"></i></a></li>
+
+					<ul class="social-list list-inline mx-md-3 mx-lg-5 mb-0 d-none d-lg-flex">
+						
+						<li class="list-inline-item"><a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
+		            </ul>
+	            </div>
+            </div>
+        </div>
+    </header>
+	<div class="page">
+        <div class="page-navigation-left">
+            <h3>Menu</h3>
+            <ul>
+                <li>
+                    <a title="Getting Started" href="//www.yupiik.io/bundlebee/getting-started.html">
+                        <i class="fas fa-play"></i>Getting Started
+                    </a>
+                </li>                <li>
+                    <a title="How it works" href="//www.yupiik.io/bundlebee/how-it-works.html">
+                        <i class="fas fa-car-battery"></i>How it works
+                    </a>
+                </li>                <li>
+                    <a title="Available commands" href="//www.yupiik.io/bundlebee/commands.html">
+                        <i class="fas fa-terminal"></i>Commands
+                    </a>
+                </li>                <li>
+                    <a title="Available Alveoli" href="//www.yupiik.io/bundlebee/alveoli.html">
+                        <i class="fas fa-puzzle-piece"></i>Alveoli
+                    </a>
+                </li>                <li>
+                    <a title="BundleBee Maven Plugin" href="//www.yupiik.io/bundlebee/maven-plugin.html">
+                        <i class="fas fa-building"></i>Maven Plugin
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div id="linting-html-container" class="container page-content linting-html ">
+                        <div class="page-header">
+                <h1>Linting</h1>
+            </div>
+            <div class="page-content-body">
+                <div id="preamble">
+ <div class="sectionbody">
+ <p> <div class="paragraph">
+ <p>
+Linting is the process of running validations on descriptors.
+ </p>
+ </div>
+</p>
+ </div>
+ </div>
+ <div class="paragraph">
+ <p>Bundlebee is able to read common &quot;pre-rendered&quot; descriptors (from Helm for example) as long as a <code>manifest.json</code> is properly formatted so you can run the linter on any descriptor even if it is working out of the box for Bundlebee alveoli (where you just run <code>bundlebee lint ...</code> command without pre-processing).</p>
+ </div>
+ <div class="sect1" id="_configure">
+  <h2>Configure</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>The main configuration of the linter are the inclusions or exclusions (see <code>lint</code> command details).</p>
+ </div>
+ <div class="paragraph">
+ <p>You can also exclude rules in <code>ignoredLintingRules</code> of the <code>manifest.json</code> (per manifest not global) or in the descriptors directly using virtual <code>$bundlebeeIgnoredLintingRules</code> attribute which is equivalent.</p>
+ </div>
+ <div class="admonitionblock tip">
+  <table>
+    <tbody>
+     <tr>
+      <td class="icon">
+     <div class="title">TIP</div>
+       </td>
+      <td class="content">
+ <div class="paragraph">
+ <p>while in the manifest the list is a list of object with a <code>name</code> attribute, manifest and descriptor lists are list of rule names to keep it simple.</p>
+ </div>
+    </td>
+   </tr>
+      </tbody>
+  </table>
+ </div>
+ <div class="paragraph">
+ <p>Indeed the <code>lint</code> command enables to exclude alveoli and descriptors but it is generally more convenient to create a <code>my-project:lint</code> alveolus which will disable (using placeholders or <code>includeIf</code> conditions) undesired external dependencies and descriptors during the linting process. This makes it quite easy and efficient to control what you deploy and avoid to trigger rules you don't want.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_rules">
+  <h2>Rules</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Here is the available rules (built-in).
+ </p>
+ </div>
+ <div class="sect2" id="_linting_checks">
+  <h3>Linting Checks</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Here is the list of available checks by defaults.
+ </p>
+ </div>
+ <div class="sect3" id="_accesstocreatepods">
+  <h4>access-to-create-pods</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>access-to-create-pods</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a subject (Group/User/ServiceAccount) has create access to Pods. CIS Benchmark 5.1.4: The ability to create pods in a cluster opens up possibilities for privilege escalation and should be restricted, where possible.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible, remove create access to pod objects in the cluster.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_accesstosecrets">
+  <h4>access-to-secrets</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>access-to-secrets</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a subject (Group/User/ServiceAccount) has access to Secrets. CIS Benchmark 5.1.2: Access to secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible, remove get, list and watch access to secret objects in the cluster.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_cpulimits">
+  <h4>cpu-limits</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>cpu-limits</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.limits.cpu is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.limits.cpu.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_cpurequests">
+  <h4>cpu-requests</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>cpu-requests</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.requests.cpu is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.requests.cpu.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_defaultserviceaccount">
+  <h4>default-service-account</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>default-service-account</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when pods use the default service account.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Create a dedicated service account for your pod. Refer to  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/">https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_deprecatedserviceaccountfield">
+  <h4>deprecated-service-account-field</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>deprecated-service-account-field</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployments use the deprecated serviceAccount field.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Use the serviceAccountName field instead. If you must specify serviceAccount, ensure values for serviceAccount and serviceAccountName match.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_dnsconfigoptions">
+  <h4>dnsconfig-options</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>dnsconfig-options</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments that have no specified dnsConfig options
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod. Refer to  <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config">https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_dockersock">
+  <h4>docker-sock</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>docker-sock</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with docker.sock mounted in containers.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the Docker socket is not mounted inside any containers by removing the associated Volume and VolumeMount in deployment yaml specification. If the Docker socket is mounted inside a container it could allow processes running within the container to execute Docker commands which would effectively allow for full control of the host.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_dropnetrawcapability">
+  <h4>drop-net-raw-capability</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>drop-net-raw-capability</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers do not drop NET_RAW capability
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p><code>NET_RAW</code> makes it so that an application within the container is able to craft raw packets, use raw sockets, and bind to any address. Remove this capability in the containers under containers security contexts.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_duplicateenvvar">
+  <h4>duplicate-env-var</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>duplicate-env-var</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Check that duplicate named env vars aren't passed to a deployment like.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Confirm that your DeploymentLike doesn't have duplicate env vars names.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hostipc">
+  <h4>host-ipc</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-ipc</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's IPC namespace
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's IPC namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hostnetwork">
+  <h4>host-network</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-network</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's network namespace
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's network namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hostpid">
+  <h4>host-pid</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>host-pid</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on pods/deployment-likes with sharing host's process namespace
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure the host's process namespace is not shared.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_hpaminimumthreereplicas">
+  <h4>hpa-minimum-three-replicas</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>hpa-minimum-three-replicas</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a HorizontalPodAutoscaler specifies less than three minReplicas
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Increase the number of replicas in the HorizontalPodAutoscaler to at least three to increase fault tolerance.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_memorylimits">
+  <h4>memory-limits</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>memory-limits</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.limits.memory is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.limits.memory.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_memoryrequests">
+  <h4>memory-requests</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>memory-requests</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures resources.requests.memory is set.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set resources.requests.memory.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_minimumthreereplicas">
+  <h4>minimum-three-replicas</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>minimum-three-replicas</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a deployment uses less than three replicas
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Increase the number of replicas in the deployment to at least three to increase the fault tolerance of the deployment.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_mismatchingselector">
+  <h4>mismatching-selector</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>mismatching-selector</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployment selectors fail to match the pod template labels.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Confirm that your deployment selector correctly matches the labels in its pod template.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_missingantiaffinity">
+  <h4>missing-anti-affinity</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>missing-anti-affinity</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>When replicas &gt; 1 setting an anti-affinity enables to distribute the load accross machines setting 'topologyKey: &quot;kubernetes.io/hostname&quot;', see  <a href="https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity.">https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity.</a>
+</p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Add podAntiAffinity in your deployment descriptor.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_noextensionsv1beta">
+  <h4>no-extensions-v1beta</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-extensions-v1beta</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when objects use deprecated API versions under extensions/v1beta.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Migrate using the apps/v1 API versions for the objects. Refer to  <a href="https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/">https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_nolatest">
+  <h4>no-latest</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-latest</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures no latest image is used.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure to tag any image you use and use an immutable tag if possible or at least versionned flavor.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_nolivenessprobe">
+  <h4>no-liveness-probe</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-liveness-probe</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures a liveness probe is defined.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Any container (from containers array) should have a liveness probe.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_noreadonlyrootfs">
+  <h4>no-read-only-root-fs</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-read-only-root-fs</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers are running without a read-only root filesystem.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set readOnlyRootFilesystem to true in the container securityContext.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_noreadinessprobe">
+  <h4>no-readiness-probe</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>no-readiness-probe</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Ensures a readinessProbe probe is defined.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Any container (from containers array) should have a readinessProbe probe.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_privilegeescalationcontainer">
+  <h4>privilege-escalation-container</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privilege-escalation-container</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on containers of allowing privilege escalation that could gain more privileges than its parent process.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure containers do not allow privilege escalation by setting allowPrivilegeEscalation=false, privileged=false and removing CAP<i>SYS</i>ADMIN capability. See  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a>
+ for more details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_privilegedcontainer">
+  <h4>privileged-container</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privileged-container</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when deployments have containers running in privileged mode.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Do not run your container as privileged unless it is required.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_privilegedports">
+  <h4>privileged-ports</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>privileged-ports</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with privileged ports mapped in containers
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure privileged ports [0, 1024] are not mapped within containers.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_readsecretfromenvvar">
+  <h4>read-secret-from-env-var</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>read-secret-from-env-var</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a deployment reads secret from environment variables. CIS Benchmark 5.4.1: &quot;Prefer using secrets as files over secrets as environment variables. &quot;
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>If possible, rewrite application code to read secrets from mounted secret files, rather than from environment variables. Refer to  <a href="https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets">https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_runasnonroot">
+  <h4>run-as-non-root</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>run-as-non-root</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers are not set to runAsNonRoot.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to  <a href="https://kubernetes.io/docs/tasks/configure-pod-container/security-context/">https://kubernetes.io/docs/tasks/configure-pod-container/security-context/</a>
+ for details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_sensitivehostmounts">
+  <h4>sensitive-host-mounts</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>sensitive-host-mounts</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with sensitive host system directories mounted in containers.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Ensure sensitive host system directories are not mounted in containers by removing those Volumes and VolumeMounts.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_unsafeprocmount">
+  <h4>unsafe-proc-mount</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>unsafe-proc-mount</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments with unsafe /proc mount (procMount=Unmasked) that will bypass the default masking behavior of the container runtime
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure container does not unsafely exposes parts of /proc by setting procMount=Default. Unmasked ProcMount bypasses the default masking behavior of the container runtime. See  <a href="https://kubernetes.io/docs/concepts/security/pod-security-standards/">https://kubernetes.io/docs/concepts/security/pod-security-standards/</a>
+ for more details.</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_unsafesysctls">
+  <h4>unsafe-sysctls</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>unsafe-sysctls</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Alert on deployments specifying unsafe sysctls that may lead to severe problems like wrong behavior of containers
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Ensure container does not allow unsafe allocation of system resources by removing unsafe sysctls configurations. For more details see  <a href="https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/">https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/</a>
+ <a href="https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.">https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.</a>
+</p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_usenamespace">
+  <h4>use-namespace</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>use-namespace</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when a resource is deployed to the default namespace. CIS Benchmark 5.7.1: Create administrative boundaries between resources using namespaces. CIS Benchmark 5.7.4: The default namespace should not be used.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Create namespaces for objects in your deployment.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_wildcardinrules">
+  <h4>wildcard-in-rules</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>wildcard-in-rules</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicate when a wildcard is used in Role or ClusterRole rules. CIS Benchmark 5.1.3 Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Where possible replace any use of wildcards in clusterroles and roles with specific objects or actions.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect3" id="_writablehostmount">
+  <h4>writable-host-mount</h4>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Name: <b>writable-host-mount</b>.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+Indicates when containers mount a host path as writable.
+ </p>
+ </div>
+ <div class="sect4" id="_remediation">
+  <h5>Remediation</h5>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+Set containers to mount host paths as readOnly, if you need to access files on the host.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_write_your_own_rule">
+  <h2>Write your own rule</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>To write your own rule you have to implement and add to bundlebee (core) classpath a CDI bean implementing <code>LintingCheck</code> - or <code>SynchronousLintingCheck</code> which can be easier to implement.</p>
+ </div>
+ <div class="sect2" id="_synchronous_or_not">
+  <h3>Synchronous or not</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>The generic <code>LintingCheck</code> uses <code>CompletionStage</code> because it is possible to use validation rules which connect to a cluster (the bundlebee configured one) and using <code>KubeClient</code> - or any other logic - you can do checks against a particular cluster (does role exists for example).<code>CompletionStage</code> enable to run validations in parallel easily.</p>
+ </div>
+ <div class="paragraph">
+ <p>When not needed, just go with the <code>SynchronousLintingCheck</code> base interface or one of its children.</p>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_anatomy_of_a_check">
+  <h3>Anatomy of a check</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+A check is composed of:
+ </p>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+ <p>A <code>name</code> which enables to disable/force the check to run,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>A <code>remediation</code> string which explains how to fix the violation when it happens,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>A <code>decription</code> explaining the validation,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>A <code>validate</code> (or sync flavor) method doing validation when a descriptor is visited,</p>
+ </div>
+  </li>
+  <li>
+ <div class="paragraph">
+ <p>Sometimes an <code>afterAll</code> method doing validations after all descriptors were seen (for joins accross desriptors for example).</p>
+ </div>
+  </li>
+ </ul>
+ </div>
+ </div>
+ </div>
+ <div class="sect2" id="_json_json_json">
+  <h3>JSON, JSON, JSON</h3>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>Yaml descriptors are converted to <code>JsonObject</code> and descriptors containing a list are flattened.</p>
+ </div>
+ <div class="paragraph">
+ <p>
+What does it means is that you always validate a single descriptor which is an object in check code which makes it easier to work with.
+ </p>
+ </div>
+ </div>
+ </div>
+ </div>
+ </div>
+ <div class="sect1" id="_going_further">
+  <h2>Going further</h2>
+ <div class="sectionbody">
+ <div class="paragraph">
+ <p>
+It is not yet possible to define custom rules, it is not very complicated to do it technically but the language (must be JSON based) is challenging. Here are the current evaluated options:
+ </p>
+ </div>
+ <div class="ulist">
+ <ul>
+  <li>
+ <div class="paragraph">
+ <p>Custom DSL: likely the most powerful and consistent option since we could define it in <code>manifest.json</code> but requires to learn yet another language,</p>
+ </div>
+  </li>
+  <li>
+ <p>
+JSON-Logic: a very good option but requires a lot of operators and resulting DSL is not that friendly/simple,
+ </p>
+  </li>
+  <li>
+ <p>
+Template based: idea there is to define a few options (&quot;check this value at this JSON pointer&quot;, &quot;check this chain of json pointer&quot;, ...) but this becomes quite hard to have a relevant dictionary set without making it overcomplex,
+ </p>
+  </li>
+  <li>
+ <p>
+Scripting based: we can run jruby/jython/js engine rules but they all required to embed a script manager runtime and they tend to be fatty for this need and not all are graalvm friendly to convert bundlebee to native mode.
+ </p>
+  </li>
+ </ul>
+ </div>
+ <div class="paragraph">
+ <p>
+So as of today, since we didn't find a compromise making us happy we didn't enable to define JSON DSL based rules. Since it is easy to add custom rules in Java (and using the maven plugin), this is not blocking but we'd like to tackle it if we can come up with a better idea. Don't hesistate to propose something on bundlebee github project if you have an idea or a common need.
+ </p>
+ </div>
+ </div>
+ </div>
+                
+                
+            </div>
+        </div>
+    <div class="page-navigation-right">
+        <h3>Navigation</h3>
+        <nav class="generated-nav-menu"></nav>
+    </div>
+    </div>
+    <footer class="footer pb-5">
+	    <div class="text-center">
+		    <ul class="social-list list-unstyled">
+                <li class="list-inline-item"><a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
+	        </ul>
+            <small class="copyright">© 2025 <strong><a href="https://www.yupiik.com">Yupiik</a></strong>. All Rights Reserved</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
+	    </div>
+    </footer>
+
+    <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="searchModalLabel">Search</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="return false;" class="form-inline">
+          <div class="form-group">
+            <label for="searchInput"><b>Search: </b></label>
+            <input class="form-control" id="searchInput" placeholder="Enter search text and hit enter...">
+          </div>
+        </form>
+        <div class="search-hits"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" ></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/js/bootstrap.min.js" integrity="sha512-8qmis31OQi6hIRgvkht0s6mCOittjMa9GMqtK9hes5iEQBQE/Ca6yGE5FsW36vyipGoWQswBj/QBm2JR086Rkw==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/highlight.min.js" integrity="sha512-d00ajEME7cZhepRqSIVsQVGDJBdZlfHyQLNC6tZXYKTG7iwcF8nhlFuppanz8hYgXr8VvlfKh4gLC25ud3c90A==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/bash.min.js" integrity="sha512-Hg0ufGEvn0AuzKMU0psJ1iH238iUN6THh7EI0CfA0n1sd3yu6PYet4SaDMpgzN9L1yQHxfB3yc5ezw3PwolIfA==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/bash.min.js" integrity="sha512-Hg0ufGEvn0AuzKMU0psJ1iH238iUN6THh7EI0CfA0n1sd3yu6PYet4SaDMpgzN9L1yQHxfB3yc5ezw3PwolIfA==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
+    <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.highlightAll();
+function addCopyButtons(clipboard) {
+  document.querySelectorAll('pre > code').forEach(function (codeBlock) {
+  var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
+if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.32-SNAPSHOT"></script>
+    <script>$('.page-content-body').generatedNavMenu();</script>
+    <script>
+            document.querySelector('div.site-logo > a').href =
+              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.3/fuse.min.js" integrity="sha512-neoBxVNv0UMXjoilAYGxfWrSsW6iAVclx7vQKdPJ9Peet1bM5YQjU0aIB8LtH8iNPa+pAyMZprBBw2ZQ/Q1LjQ==" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>NetworkPolicy 1.25</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BundleBee is a light Java Kubernetes package manager.">
+    <meta name="author" content="Yupiik Minisite Generator">
+    <meta name="generator" content="Yupiik Minisite Generator">
+    
+    <link rel="shortcut icon" href="//www.yupiik.io/bundlebee/images/favicon.png">
+
+    <link href="//fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,700,700i|Montserrat:300,400,500,700" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/asciidoctor.js/1.5.5-5/css/asciidoctor.min.css" integrity="sha512-kI7tn5cuEg16kMeXnYmg8rEJPxbxzEM7Gsr191iQdLDevFBLXPCSU9aZWSVuP61tMZWU3nBAR1cJ7SmXnOGLZw==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/css/bootstrap.min.css" integrity="sha512-oc9+XSs1H243/FRN9Rw62Fn8EtxjEYWHXRvjS43YtueEewbS6ObfXcJNyohjHqVKFPoXXUxwc+q1K7Dee6vv9g==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/styles/atom-one-dark.min.css" integrity="sha512-Fcqyubi5qOvl+yCwSJ+r7lli+CO1eHXMaugsZrnxuU4DVpLYWXTVoHy55+mCb4VZpMgy7PBhV7IiymC0yu9tkQ==" crossorigin="anonymous" />
+    <style>
+        :root {
+            /* YUPIIK colors (from dark to light) */
+            --yupiik-site-green: #46F72F;
+            --yupiik-site-purple: #D858FF;
+            --yupiik-site-blue-light: #02ABEA;
+            --yupiik-site-blue-dark: #056EBB;
+            --yupiik-site-grey-light: #F4F4F4;
+            --yupiik-site-grey-dark: #212121;
+
+            --yupiik-blue1: var(--yupiik-site-blue-dark);
+            --yupiik-blue2: var(--yupiik-site-blue-dark);
+            --yupiik-blue3: var(--yupiik-site-blue-dark);
+
+            --yupiik-color-white: #fff;
+            --yupiik-color-black: #000;
+
+            --yupiik-color-gray-0: var(--yupiik-color-white);
+            --yupiik-color-gray-100: #f5f6f7;
+            --yupiik-color-gray-200: #ebedf0;
+            --yupiik-color-gray-300: #dadde1;
+            --yupiik-color-gray-400: #ccd0d5;
+            --yupiik-color-gray-500: #bec3c9;
+            --yupiik-color-gray-600: #8d949e;
+            --yupiik-color-gray-700: #606770;
+            --yupiik-color-gray-800: #444950;
+            --yupiik-color-gray-900: #1c1e21;
+            --yupiik-color-gray-1000: var(--yupiik-color-black);
+
+            --yupiik-color-emphasis-0: var(--yupiik-color-gray-0);
+            --yupiik-color-emphasis-100: var(--yupiik-color-gray-100);
+            --yupiik-color-emphasis-200: var(--yupiik-color-gray-200);
+            --yupiik-color-emphasis-300: var(--yupiik-color-gray-300);
+            --yupiik-color-emphasis-400: var(--yupiik-color-gray-400);
+            --yupiik-color-emphasis-500: var(--yupiik-color-gray-500);
+            --yupiik-color-emphasis-600: var(--yupiik-color-gray-600);
+            --yupiik-color-emphasis-700: var(--yupiik-color-gray-700);
+            --yupiik-color-emphasis-800: var(--yupiik-color-gray-800);
+            --yupiik-color-emphasis-900: var(--yupiik-color-gray-900);
+            --yupiik-color-emphasis-1000: var(--yupiik-color-gray-1000);
+            --yupiik-color-content: var(--yupiik-color-emphasis-900);
+
+            --yupiik-font-family-base: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, sans-serif, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+            --yupiik-font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            --yupiik-font-size-base: 100%;
+
+            --yupiik-font-weight-light: 300;
+            --yupiik-font-weight-normal: 400;
+            --yupiik-font-weight-semibold: 500;
+            --yupiik-font-weight-bold: 700;
+
+            --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
+            --yupiik-line-height-base: 1.65;
+            --yupiik-font-weight-light: 300;
+            --yupiik-font-weight-normal: 400;
+            --yupiik-font-weight-semibold: 500;
+            --yupiik-font-weight-bold: 700;
+
+            --yupiik-font-weight-base: var(--yupiik-font-weight-normal);
+            --yupiik-line-height-base: 1.65;
+
+            --yupiik-global-spacing: 1rem;
+            --yupiik-spacing-vertical: var(--yupiik-global-spacing);
+            --yupiik-spacing-horizontal: var(--yupiik-global-spacing);
+
+            --yupiik-h1-font-size: 2rem;
+            --yupiik-h2-font-size: 1.5rem;
+            --yupiik-h3-font-size: 1.25rem;
+            --yupiik-h4-font-size: 1rem;
+            --yupiik-h5-font-size: 0.875rem;
+            --yupiik-h6-font-size: 0.85rem;
+
+            --yupiik-heading-color: var(--yupiik-blue1);
+            --yupiik-heading-margin-top: 0;
+            --yupiik-heading-margin-bottom: var(--yupiik-spacing-vertical);
+            --yupiik-heading-font-family: var(--yupiik-font-family-base);
+            --yupiik-heading-font-weight: var(--yupiik-font-weight-bold);
+            --yupiik-heading-line-height: 1.25;
+        }
+    </style>
+    
+    <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.32-SNAPSHOT">
+</head>
+<body>
+    <header class="header fixed-top">
+        <div class="branding docs-branding">
+            <div class="container-fluid position-relative py-2">
+                <div class="docs-logo-wrapper">
+	                <div class="site-logo"><a title="Home" class="navbar-brand" href="//www.yupiik.io/bundlebee/index.html">
+	                <img class="logo-icon mr-2" src="//www.yupiik.io/bundlebee/images/logo.svg" alt="logo">
+	                <span class="logo-text">Bundlebee <span class="text-alt">Documentation</span></span></a></div>
+                </div>
+	            <div class="docs-top-utilities d-flex justify-content-end align-items-center">
+					
+					<li class="list-inline-item"><a title="Search" id="search-button" href="#" data-toggle="modal" data-target="#searchModal"><i data-toggle="tooltip" data-placement="top" title="Search" class="fas fa-search"></i></a></li>
+
+					<ul class="social-list list-inline mx-md-3 mx-lg-5 mb-0 d-none d-lg-flex">
+						
+						<li class="list-inline-item"><a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
+		            </ul>
+	            </div>
+            </div>
+        </div>
+    </header>
+	<div class="page">
+        <div class="page-navigation-left">
+            <h3>Menu</h3>
+            <ul>
+                <li>
+                    <a title="Getting Started" href="//www.yupiik.io/bundlebee/getting-started.html">
+                        <i class="fas fa-play"></i>Getting Started
+                    </a>
+                </li>                <li>
+                    <a title="How it works" href="//www.yupiik.io/bundlebee/how-it-works.html">
+                        <i class="fas fa-car-battery"></i>How it works
+                    </a>
+                </li>                <li>
+                    <a title="Available commands" href="//www.yupiik.io/bundlebee/commands.html">
+                        <i class="fas fa-terminal"></i>Commands
+                    </a>
+                </li>                <li>
+                    <a title="Available Alveoli" href="//www.yupiik.io/bundlebee/alveoli.html">
+                        <i class="fas fa-puzzle-piece"></i>Alveoli
+                    </a>
+                </li>                <li>
+                    <a title="BundleBee Maven Plugin" href="//www.yupiik.io/bundlebee/maven-plugin.html">
+                        <i class="fas fa-building"></i>Maven Plugin
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div id="generated-kubernetes-jsonschema-1-25-network-policy-jsonschema-html-container" class="container page-content generated-kubernetes-jsonschema-1-25-network-policy-jsonschema-html ">
+                        <div class="page-header">
+                <h1>NetworkPolicy 1.25</h1>
+            </div>
+            <div class="page-content-body">
+                <div id="main"></div>
+<script>
+window.jsonSchemaViewerOpts = {
+    expanded: false,
+    hideTopBar: false,
+    defaultExpandedDepth: 0,
+    emptyText: "Schema can't be rendered",
+    name: "Kubernetes 1.25 NetworkPolicy v1 Schema",
+    schema: {
+  "description":"NetworkPolicy describes what network traffic is allowed for a set of Pods",
+  "properties":{
+    "apiVersion":{
+      "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+      "type":"string"
+    },
+    "kind":{
+      "description":"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type":"string"
+    },
+    "metadata":{
+      "description":"Standard object's metadata. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+      "properties":{
+        "annotations":{
+          "additionalProperties":{
+            "type":"string"
+          },
+          "description":"Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: http://kubernetes.io/docs/user-guide/annotations",
+          "type":"object"
+        },
+        "creationTimestamp":{
+          "description":"CreationTimestamp is a timestamp representing the server time when this object was created. It is not guaranteed to be set in happens-before order across separate operations. Clients may not set this value. It is represented in RFC3339 form and is in UTC.\n\nPopulated by the system. Read-only. Null for lists. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+          "format":"date-time",
+          "type":"string"
+        },
+        "deletionGracePeriodSeconds":{
+          "description":"Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
+          "format":"int64",
+          "type":"integer"
+        },
+        "deletionTimestamp":{
+          "description":"DeletionTimestamp is RFC 3339 date and time at which this resource will be deleted. This field is set by the server when a graceful deletion is requested by the user, and is not directly settable by a client. The resource is expected to be deleted (no longer visible from resource lists, and not reachable by name) after the time in this field, once the finalizers list is empty. As long as the finalizers list contains items, deletion is blocked. Once the deletionTimestamp is set, this value may not be unset or be set further into the future, although it may be shortened or the resource may be deleted prior to this time. For example, a user may request that a pod is deleted in 30 seconds. The Kubelet will react by sending a graceful termination signal to the containers in the pod. After that 30 seconds, the Kubelet will send a hard termination signal (SIGKILL) to the container and after cleanup, remove the pod from the API. In the presence of network partitions, this object may still exist after this timestamp, until an administrator or automated process can determine the resource is fully terminated. If not set, graceful deletion of the object has not been requested.\n\nPopulated by the system when a graceful deletion is requested. Read-only. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata",
+          "format":"date-time",
+          "type":"string"
+        },
+        "finalizers":{
+          "description":"Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
+          "items":{
+            "type":"string"
+          },
+          "type":"array"
+        },
+        "generateName":{
+          "description":"GenerateName is an optional prefix, used by the server, to generate a unique name ONLY IF the Name field has not been provided. If this field is used, the name returned to the client will be different than the name passed. This value will also be combined with a unique suffix. The provided value has the same validation rules as the Name field, and may be truncated by the length of the suffix required to make the value unique on the server.\n\nIf this field is specified and the generated name exists, the server will return a 409.\n\nApplied only if Name is not specified. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#idempotency",
+          "type":"string"
+        },
+        "generation":{
+          "description":"A sequence number representing a specific generation of the desired state. Populated by the system. Read-only.",
+          "format":"int64",
+          "type":"integer"
+        },
+        "labels":{
+          "additionalProperties":{
+            "type":"string"
+          },
+          "description":"Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+          "type":"object"
+        },
+        "managedFields":{
+          "description":"ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like \"ci-cd\". The set of fields is always in the version that the workflow used when modifying the object.",
+          "items":{
+            "description":"ManagedFieldsEntry is a workflow-id, a FieldSet and the group version of the resource that the fieldset applies to.",
+            "properties":{
+              "apiVersion":{
+                "description":"APIVersion defines the version of this resource that this field set applies to. The format is \"group/version\" just like the top-level APIVersion field. It is necessary to track the version of a field set because it cannot be automatically converted.",
+                "type":"string"
+              },
+              "fieldsType":{
+                "description":"FieldsType is the discriminator for the different fields format and version. There is currently only one possible value: \"FieldsV1\"",
+                "type":"string"
+              },
+              "fieldsV1":{
+                "description":"FieldsV1 holds the first JSON version format as described in the \"FieldsV1\" type.",
+                "type":"object"
+              },
+              "manager":{
+                "description":"Manager is an identifier of the workflow managing these fields.",
+                "type":"string"
+              },
+              "operation":{
+                "description":"Operation is the type of operation which lead to this ManagedFieldsEntry being created. The only valid values for this field are 'Apply' and 'Update'.",
+                "type":"string"
+              },
+              "subresource":{
+                "description":"Subresource is the name of the subresource used to update that object, or empty string if the object was updated through the main resource. The value of this field is used to distinguish between managers, even if they share the same name. For example, a status update will be distinct from a regular update using the same manager name. Note that the APIVersion field is not related to the Subresource field and it always corresponds to the version of the main resource.",
+                "type":"string"
+              },
+              "time":{
+                "description":"Time is the timestamp of when the ManagedFields entry was added. The timestamp will also be updated if a field is added, the manager changes any of the owned fields value or removes a field. The timestamp does not update when a field is removed from the entry because another manager took it over.",
+                "format":"date-time",
+                "type":"string"
+              }
+            },
+            "type":"object"
+          },
+          "type":"array"
+        },
+        "name":{
+          "description":"Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+          "type":"string"
+        },
+        "namespace":{
+          "description":"Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: http://kubernetes.io/docs/user-guide/namespaces",
+          "type":"string"
+        },
+        "ownerReferences":{
+          "description":"List of objects depended by this object. If ALL objects in the list have been deleted, this object will be garbage collected. If this object is managed by a controller, then an entry in this list will point to this controller, with the controller field set to true. There cannot be more than one managing controller.",
+          "items":{
+            "description":"OwnerReference contains enough information to let you identify an owning object. An owning object must be in the same namespace as the dependent, or be cluster-scoped, so there is no namespace field.",
+            "properties":{
+              "apiVersion":{
+                "description":"API version of the referent.",
+                "type":"string"
+              },
+              "blockOwnerDeletion":{
+                "description":"If true, AND if the owner has the \"foregroundDeletion\" finalizer, then the owner cannot be deleted from the key-value store until this reference is removed. See https://kubernetes.io/docs/concepts/architecture/garbage-collection/#foreground-deletion for how the garbage collector interacts with this field and enforces the foreground deletion. Defaults to false. To set this field, a user needs \"delete\" permission of the owner, otherwise 422 (Unprocessable Entity) will be returned.",
+                "type":"boolean"
+              },
+              "controller":{
+                "description":"If true, this reference points to the managing controller.",
+                "type":"boolean"
+              },
+              "kind":{
+                "description":"Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+                "type":"string"
+              },
+              "name":{
+                "description":"Name of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#names",
+                "type":"string"
+              },
+              "uid":{
+                "description":"UID of the referent. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+                "type":"string"
+              }
+            },
+            "required":[
+              "apiVersion",
+              "kind",
+              "name",
+              "uid"
+            ],
+            "type":"object"
+          },
+          "type":"array"
+        },
+        "resourceVersion":{
+          "description":"An opaque value that represents the internal version of this object that can be used by clients to determine when objects have changed. May be used for optimistic concurrency, change detection, and the watch operation on a resource or set of resources. Clients must treat these values as opaque and passed unmodified back to the server. They may only be valid for a particular resource or set of resources.\n\nPopulated by the system. Read-only. Value must be treated as opaque by clients and . More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
+          "type":"string"
+        },
+        "selfLink":{
+          "description":"Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.",
+          "type":"string"
+        },
+        "uid":{
+          "description":"UID is the unique in time and space value for this object. It is typically generated by the server on successful creation of a resource and is not allowed to change on PUT operations.\n\nPopulated by the system. Read-only. More info: http://kubernetes.io/docs/user-guide/identifiers#uids",
+          "type":"string"
+        }
+      },
+      "type":"object"
+    },
+    "spec":{
+      "description":"Specification of the desired behavior for this NetworkPolicy.",
+      "properties":{
+        "egress":{
+          "description":"List of egress rules to be applied to the selected pods. Outgoing traffic is allowed if there are no NetworkPolicies selecting the pod (and cluster policy otherwise allows the traffic), OR if the traffic matches at least one egress rule across all of the NetworkPolicy objects whose podSelector matches the pod. If this field is empty then this NetworkPolicy limits all outgoing traffic (and serves solely to ensure that the pods it selects are isolated by default). This field is beta-level in 1.8",
+          "items":{
+            "description":"NetworkPolicyEgressRule describes a particular set of traffic that is allowed out of pods matched by a NetworkPolicySpec's podSelector. The traffic must match both ports and to. This type is beta-level in 1.8",
+            "properties":{
+              "ports":{
+                "description":"List of destination ports for outgoing traffic. Each item in this list is combined using a logical OR. If this field is empty or missing, this rule matches all ports (traffic not restricted by port). If this field is present and contains at least one item, then this rule allows traffic only if the traffic matches at least one port in the list.",
+                "items":{
+                  "description":"NetworkPolicyPort describes a port to allow traffic on",
+                  "properties":{
+                    "endPort":{
+                      "description":"If set, indicates that the range of ports from port to endPort, inclusive, should be allowed by the policy. This field cannot be defined if the port field is not defined or if the port field is defined as a named (string) port. The endPort must be equal or greater than port.",
+                      "format":"int32",
+                      "type":"integer"
+                    },
+                    "port":{
+                      "description":"The port on the given protocol. This can either be a numerical or named port on a pod. If this field is not provided, this matches all port names and numbers. If present, only traffic on the specified protocol AND port will be matched.",
+                      "format":"int-or-string",
+                      "type":"string"
+                    },
+                    "protocol":{
+                      "description":"The protocol (TCP, UDP, or SCTP) which traffic must match. If not specified, this field defaults to TCP.",
+                      "type":"string"
+                    }
+                  },
+                  "type":"object"
+                },
+                "type":"array"
+              },
+              "to":{
+                "description":"List of destinations for outgoing traffic of pods selected for this rule. Items in this list are combined using a logical OR operation. If this field is empty or missing, this rule matches all destinations (traffic not restricted by destination). If this field is present and contains at least one item, this rule allows traffic only if the traffic matches at least one item in the to list.",
+                "items":{
+                  "description":"NetworkPolicyPeer describes a peer to allow traffic to/from. Only certain combinations of fields are allowed",
+                  "properties":{
+                    "ipBlock":{
+                      "description":"IPBlock defines policy on a particular IPBlock. If this field is set then neither of the other fields can be.",
+                      "properties":{
+                        "cidr":{
+                          "description":"CIDR is a string representing the IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\"",
+                          "type":"string"
+                        },
+                        "except":{
+                          "description":"Except is a slice of CIDRs that should not be included within an IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\" Except values will be rejected if they are outside the CIDR range",
+                          "items":{
+                            "type":"string"
+                          },
+                          "type":"array"
+                        }
+                      },
+                      "required":[
+                        "cidr"
+                      ],
+                      "type":"object"
+                    },
+                    "namespaceSelector":{
+                      "description":"Selects Namespaces using cluster-scoped labels. This field follows standard label selector semantics; if present but empty, it selects all namespaces.\n\nIf PodSelector is also set, then the NetworkPolicyPeer as a whole selects the Pods matching PodSelector in the Namespaces selected by NamespaceSelector. Otherwise it selects all Pods in the Namespaces selected by NamespaceSelector.",
+                      "properties":{
+                        "matchExpressions":{
+                          "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                          "items":{
+                            "description":"A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                            "properties":{
+                              "key":{
+                                "description":"key is the label key that the selector applies to.",
+                                "type":"string"
+                              },
+                              "operator":{
+                                "description":"operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                                "type":"string"
+                              },
+                              "values":{
+                                "description":"values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                                "items":{
+                                  "type":"string"
+                                },
+                                "type":"array"
+                              }
+                            },
+                            "required":[
+                              "key",
+                              "operator"
+                            ],
+                            "type":"object"
+                          },
+                          "type":"array"
+                        },
+                        "matchLabels":{
+                          "additionalProperties":{
+                            "type":"string"
+                          },
+                          "description":"matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                          "type":"object"
+                        }
+                      },
+                      "type":"object"
+                    },
+                    "podSelector":{
+                      "description":"This is a label selector which selects Pods. This field follows standard label selector semantics; if present but empty, it selects all pods.\n\nIf NamespaceSelector is also set, then the NetworkPolicyPeer as a whole selects the Pods matching PodSelector in the Namespaces selected by NamespaceSelector. Otherwise it selects the Pods matching PodSelector in the policy's own Namespace.",
+                      "properties":{
+                        "matchExpressions":{
+                          "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                          "items":{
+                            "description":"A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                            "properties":{
+                              "key":{
+                                "description":"key is the label key that the selector applies to.",
+                                "type":"string"
+                              },
+                              "operator":{
+                                "description":"operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                                "type":"string"
+                              },
+                              "values":{
+                                "description":"values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                                "items":{
+                                  "type":"string"
+                                },
+                                "type":"array"
+                              }
+                            },
+                            "required":[
+                              "key",
+                              "operator"
+                            ],
+                            "type":"object"
+                          },
+                          "type":"array"
+                        },
+                        "matchLabels":{
+                          "additionalProperties":{
+                            "type":"string"
+                          },
+                          "description":"matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                          "type":"object"
+                        }
+                      },
+                      "type":"object"
+                    }
+                  },
+                  "type":"object"
+                },
+                "type":"array"
+              }
+            },
+            "type":"object"
+          },
+          "type":"array"
+        },
+        "ingress":{
+          "description":"List of ingress rules to be applied to the selected pods. Traffic is allowed to a pod if there are no NetworkPolicies selecting the pod (and cluster policy otherwise allows the traffic), OR if the traffic source is the pod's local node, OR if the traffic matches at least one ingress rule across all of the NetworkPolicy objects whose podSelector matches the pod. If this field is empty then this NetworkPolicy does not allow any traffic (and serves solely to ensure that the pods it selects are isolated by default)",
+          "items":{
+            "description":"NetworkPolicyIngressRule describes a particular set of traffic that is allowed to the pods matched by a NetworkPolicySpec's podSelector. The traffic must match both ports and from.",
+            "properties":{
+              "from":{
+                "description":"List of sources which should be able to access the pods selected for this rule. Items in this list are combined using a logical OR operation. If this field is empty or missing, this rule matches all sources (traffic not restricted by source). If this field is present and contains at least one item, this rule allows traffic only if the traffic matches at least one item in the from list.",
+                "items":{
+                  "description":"NetworkPolicyPeer describes a peer to allow traffic to/from. Only certain combinations of fields are allowed",
+                  "properties":{
+                    "ipBlock":{
+                      "description":"IPBlock defines policy on a particular IPBlock. If this field is set then neither of the other fields can be.",
+                      "properties":{
+                        "cidr":{
+                          "description":"CIDR is a string representing the IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\"",
+                          "type":"string"
+                        },
+                        "except":{
+                          "description":"Except is a slice of CIDRs that should not be included within an IP Block Valid examples are \"192.168.1.1/24\" or \"2001:db9::/64\" Except values will be rejected if they are outside the CIDR range",
+                          "items":{
+                            "type":"string"
+                          },
+                          "type":"array"
+                        }
+                      },
+                      "required":[
+                        "cidr"
+                      ],
+                      "type":"object"
+                    },
+                    "namespaceSelector":{
+                      "description":"Selects Namespaces using cluster-scoped labels. This field follows standard label selector semantics; if present but empty, it selects all namespaces.\n\nIf PodSelector is also set, then the NetworkPolicyPeer as a whole selects the Pods matching PodSelector in the Namespaces selected by NamespaceSelector. Otherwise it selects all Pods in the Namespaces selected by NamespaceSelector.",
+                      "properties":{
+                        "matchExpressions":{
+                          "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                          "items":{
+                            "description":"A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                            "properties":{
+                              "key":{
+                                "description":"key is the label key that the selector applies to.",
+                                "type":"string"
+                              },
+                              "operator":{
+                                "description":"operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                                "type":"string"
+                              },
+                              "values":{
+                                "description":"values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                                "items":{
+                                  "type":"string"
+                                },
+                                "type":"array"
+                              }
+                            },
+                            "required":[
+                              "key",
+                              "operator"
+                            ],
+                            "type":"object"
+                          },
+                          "type":"array"
+                        },
+                        "matchLabels":{
+                          "additionalProperties":{
+                            "type":"string"
+                          },
+                          "description":"matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                          "type":"object"
+                        }
+                      },
+                      "type":"object"
+                    },
+                    "podSelector":{
+                      "description":"This is a label selector which selects Pods. This field follows standard label selector semantics; if present but empty, it selects all pods.\n\nIf NamespaceSelector is also set, then the NetworkPolicyPeer as a whole selects the Pods matching PodSelector in the Namespaces selected by NamespaceSelector. Otherwise it selects the Pods matching PodSelector in the policy's own Namespace.",
+                      "properties":{
+                        "matchExpressions":{
+                          "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                          "items":{
+                            "description":"A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                            "properties":{
+                              "key":{
+                                "description":"key is the label key that the selector applies to.",
+                                "type":"string"
+                              },
+                              "operator":{
+                                "description":"operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                                "type":"string"
+                              },
+                              "values":{
+                                "description":"values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                                "items":{
+                                  "type":"string"
+                                },
+                                "type":"array"
+                              }
+                            },
+                            "required":[
+                              "key",
+                              "operator"
+                            ],
+                            "type":"object"
+                          },
+                          "type":"array"
+                        },
+                        "matchLabels":{
+                          "additionalProperties":{
+                            "type":"string"
+                          },
+                          "description":"matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                          "type":"object"
+                        }
+                      },
+                      "type":"object"
+                    }
+                  },
+                  "type":"object"
+                },
+                "type":"array"
+              },
+              "ports":{
+                "description":"List of ports which should be made accessible on the pods selected for this rule. Each item in this list is combined using a logical OR. If this field is empty or missing, this rule matches all ports (traffic not restricted by port). If this field is present and contains at least one item, then this rule allows traffic only if the traffic matches at least one port in the list.",
+                "items":{
+                  "description":"NetworkPolicyPort describes a port to allow traffic on",
+                  "properties":{
+                    "endPort":{
+                      "description":"If set, indicates that the range of ports from port to endPort, inclusive, should be allowed by the policy. This field cannot be defined if the port field is not defined or if the port field is defined as a named (string) port. The endPort must be equal or greater than port.",
+                      "format":"int32",
+                      "type":"integer"
+                    },
+                    "port":{
+                      "description":"The port on the given protocol. This can either be a numerical or named port on a pod. If this field is not provided, this matches all port names and numbers. If present, only traffic on the specified protocol AND port will be matched.",
+                      "format":"int-or-string",
+                      "type":"string"
+                    },
+                    "protocol":{
+                      "description":"The protocol (TCP, UDP, or SCTP) which traffic must match. If not specified, this field defaults to TCP.",
+                      "type":"string"
+                    }
+                  },
+                  "type":"object"
+                },
+                "type":"array"
+              }
+            },
+            "type":"object"
+          },
+          "type":"array"
+        },
+        "podSelector":{
+          "description":"Selects the pods to which this NetworkPolicy object applies. The array of ingress rules is applied to any pods selected by this field. Multiple network policies can select the same set of pods. In this case, the ingress rules for each are combined additively. This field is NOT optional and follows standard label selector semantics. An empty podSelector matches all pods in this namespace.",
+          "properties":{
+            "matchExpressions":{
+              "description":"matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items":{
+                "description":"A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties":{
+                  "key":{
+                    "description":"key is the label key that the selector applies to.",
+                    "type":"string"
+                  },
+                  "operator":{
+                    "description":"operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type":"string"
+                  },
+                  "values":{
+                    "description":"values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items":{
+                      "type":"string"
+                    },
+                    "type":"array"
+                  }
+                },
+                "required":[
+                  "key",
+                  "operator"
+                ],
+                "type":"object"
+              },
+              "type":"array"
+            },
+            "matchLabels":{
+              "additionalProperties":{
+                "type":"string"
+              },
+              "description":"matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type":"object"
+            }
+          },
+          "type":"object"
+        },
+        "policyTypes":{
+          "description":"List of rule types that the NetworkPolicy relates to. Valid options are [\"Ingress\"], [\"Egress\"], or [\"Ingress\", \"Egress\"]. If this field is not specified, it will default based on the existence of Ingress or Egress rules; policies that contain an Egress section are assumed to affect Egress, and all policies (whether or not they contain an Ingress section) are assumed to affect Ingress. If you want to write an egress-only policy, you must explicitly specify policyTypes [ \"Egress\" ]. Likewise, if you want to write a policy that specifies that no egress is allowed, you must specify a policyTypes value that include \"Egress\" (since such a policy would not include an Egress section and would otherwise default to just [ \"Ingress\" ]). This field is beta-level in 1.8",
+          "items":{
+            "type":"string"
+          },
+          "type":"array"
+        }
+      },
+      "required":[
+        "podSelector"
+      ],
+      "type":"object"
+    },
+    "status":{
+      "description":"Status is the current state of the NetworkPolicy. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status",
+      "properties":{
+        "conditions":{
+          "description":"Conditions holds an array of metav1.Condition that describe the state of the NetworkPolicy. Current service state",
+          "items":{
+            "description":"Condition contains details for one aspect of the current state of this API Resource.",
+            "properties":{
+              "lastTransitionTime":{
+                "description":"lastTransitionTime is the last time the condition transitioned from one status to another. This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.",
+                "format":"date-time",
+                "type":"string"
+              },
+              "message":{
+                "description":"message is a human readable message indicating details about the transition. This may be an empty string.",
+                "type":"string"
+              },
+              "observedGeneration":{
+                "description":"observedGeneration represents the .metadata.generation that the condition was set based upon. For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date with respect to the current state of the instance.",
+                "format":"int64",
+                "type":"integer"
+              },
+              "reason":{
+                "description":"reason contains a programmatic identifier indicating the reason for the condition's last transition. Producers of specific condition types may define expected values and meanings for this field, and whether the values are considered a guaranteed API. The value should be a CamelCase string. This field may not be empty.",
+                "type":"string"
+              },
+              "status":{
+                "description":"status of the condition, one of True, False, Unknown.",
+                "type":"string"
+              },
+              "type":{
+                "description":"type of condition in CamelCase or in foo.example.com/CamelCase.",
+                "type":"string"
+              }
+            },
+            "required":[
+              "type",
+              "status",
+              "lastTransitionTime",
+              "reason",
+              "message"
+            ],
+            "type":"object"
+          },
+          "type":"array",
+          "x-kubernetes-list-map-keys":[
+            "type"
+          ]
+        }
+      },
+      "type":"object"
+    }
+  },
+  "type":"object",
+  "x-kubernetes-group-version-kind":[
+    {
+      "group":"networking.k8s.io",
+      "kind":"NetworkPolicy",
+      "version":"v1"
+    }
+  ]
+},
+};
+</script>
+<script src="/generated/js/kubernetes.schema.js?v=0"></script>
+                
+                
+            </div>
+        </div>
+    <div class="page-navigation-right">
+        <h3>Navigation</h3>
+        <nav class="generated-nav-menu"></nav>
+    </div>
+    </div>
+    <footer class="footer pb-5">
+	    <div class="text-center">
+		    <ul class="social-list list-unstyled">
+                <li class="list-inline-item"><a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"><i class="fab fa-linkedin fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"><i class="fab fa-twitter fa-fw"></i></a></li>
+              <li class="list-inline-item"><a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"><i class="fab fa-github fa-fw"></i></a></li>
+	        </ul>
+            <small class="copyright">© 2025 <strong><a href="https://www.yupiik.com">Yupiik</a></strong>. All Rights Reserved</small> | <a href="https://www.yupiik.com/terms-of-use/">Terms of use</a> | <a href="https://www.yupiik.com/privacy-policy/">Privacy policy</a>
+	    </div>
+    </footer>
+
+    <div class="modal fade" id="searchModal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="searchModalLabel">Search</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form onsubmit="return false;" class="form-inline">
+          <div class="form-group">
+            <label for="searchInput"><b>Search: </b></label>
+            <input class="form-control" id="searchInput" placeholder="Enter search text and hit enter...">
+          </div>
+        </form>
+        <div class="search-hits"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" ></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.3/js/bootstrap.min.js" integrity="sha512-8qmis31OQi6hIRgvkht0s6mCOittjMa9GMqtK9hes5iEQBQE/Ca6yGE5FsW36vyipGoWQswBj/QBm2JR086Rkw==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/highlight.min.js" integrity="sha512-d00ajEME7cZhepRqSIVsQVGDJBdZlfHyQLNC6tZXYKTG7iwcF8nhlFuppanz8hYgXr8VvlfKh4gLC25ud3c90A==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/bash.min.js" integrity="sha512-Hg0ufGEvn0AuzKMU0psJ1iH238iUN6THh7EI0CfA0n1sd3yu6PYet4SaDMpgzN9L1yQHxfB3yc5ezw3PwolIfA==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/bash.min.js" integrity="sha512-Hg0ufGEvn0AuzKMU0psJ1iH238iUN6THh7EI0CfA0n1sd3yu6PYet4SaDMpgzN9L1yQHxfB3yc5ezw3PwolIfA==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/json.min.js" integrity="sha512-37sW1XqaJmseHAGNg4N4Y01u6g2do6LZL8tsziiL5CMXGy04Th65OXROw2jeDeXLo5+4Fsx7pmhEJJw77htBFg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.7.1/languages/dockerfile.min.js" integrity="sha512-eRNl3ty7GOJPBN53nxLgtSSj2rkYj5/W0Vg0MFQBw8xAoILeT6byOogENHHCRRvHil4pKQ/HbgeJ5DOwQK3SJA==" crossorigin="anonymous"></script>
+    <script>if (!(window.minisite || {}).skipHighlightJs) { hljs.highlightAll();
+function addCopyButtons(clipboard) {
+  document.querySelectorAll('pre > code').forEach(function (codeBlock) {
+  var button = document.createElement('button');  button.className = 'copy-code-button';  button.type = 'button';  button.innerText = 'Copy';  button.addEventListener('click', function () {   clipboard.writeText(codeBlock.innerText).then(function () {   button.blur();   button.innerText = 'Copied!';   setTimeout(function () { button.innerText = 'Copy'; }, 2000); }, function (error) { button.innerText = 'Error'; });  });  var pre = codeBlock.parentNode;  if (pre.parentNode.classList.contains('highlight')) {   var highlight = pre.parentNode; highlight.parentNode.insertBefore(button, highlight);  } else { pre.parentNode.insertBefore(button, pre); } });}
+if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} else { var script = document.createElement('script'); script.src = '//cdnjs.cloudflare.com/ajax/libs/clipboard-polyfill/2.7.0/clipboard-polyfill.promise.js'; script.integrity = 'sha256-waClS2re9NUbXRsryKoof+F9qc1gjjIhc2eT7ZbIv94='; script.crossOrigin = 'anonymous'; script.onload = function() {addCopyButtons(clipboard);}; document.body.appendChild(script);} }</script>
+    <script src="//www.yupiik.io/bundlebee/js/minisite.js?v=1.0.32-SNAPSHOT"></script>
+    <script>$('.page-content-body').generatedNavMenu();</script>
+    <script>
+            document.querySelector('div.site-logo > a').href =
+              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.3/fuse.min.js" integrity="sha512-neoBxVNv0UMXjoilAYGxfWrSsW6iAVclx7vQKdPJ9Peet1bM5YQjU0aIB8LtH8iNPa+pAyMZprBBw2ZQ/Q1LjQ==" crossorigin="anonymous"></script>
+
+</body>
+</html>

@@ -1,0 +1,442 @@
+{
+  "$id":"io_yupiik_bundlebee_core_descriptor_Manifest",
+  "type":"object",
+  "title":"Manifest Descriptor",
+  "description":"BundleBee manifest descriptor.",
+  "definitions":{
+    "io_yupiik_bundlebee_core_descriptor_Manifest_Conditions":{
+      "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+      "type":"object",
+      "title":"Descriptor.includeIf",
+      "description":"Conditions to include this descriptor.",
+      "properties":{
+        "conditions":{
+          "type":"array",
+          "title":"Conditions.conditions",
+          "description":"List of condition to match according `operator`.",
+          "items":{
+            "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Condition",
+            "type":"object",
+            "properties":{
+              "key":{
+                "type":"string",
+                "title":"Condition.key",
+                "description":"Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string."
+              },
+              "negate":{
+                "type":"boolean",
+                "title":"Condition.negate",
+                "description":"Should the condition be reversed (ie \"not in this case\")."
+              },
+              "type":{
+                "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionType",
+                "type":"string",
+                "title":"Condition.type",
+                "description":"Type of condition.",
+                "enum":[
+                  "ENV",
+                  "SYSTEM_PROPERTY"
+                ],
+                "nullable":true
+              },
+              "value":{
+                "type":"string",
+                "title":"Condition.value",
+                "description":"Expected value. If empty/null, `true` is assumed. Note that empty is allowed."
+              }
+            }
+          }
+        },
+        "operator":{
+          "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+          "type":"string",
+          "title":"Conditions.operator",
+          "description":"Operator to combine the conditions.",
+          "enum":[
+            "ANY",
+            "ALL"
+          ],
+          "nullable":true
+        }
+      }
+    }
+  },
+  "properties":{
+    "alveoli":{
+      "type":"array",
+      "title":"Manifest.alveoli",
+      "description":"List of described applications/libraries.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Alveolus",
+        "type":"object",
+        "properties":{
+          "chainDependencies":{
+            "type":"boolean",
+            "title":"Alveolus.chainDependencies",
+            "description":"Should dependencies be installed one after the other or in parallel (default). It is useful when you install a namespace for example which must be awaited before next dependencies are installed."
+          },
+          "dependencies":{
+            "type":"array",
+            "title":"Alveolus.dependencies",
+            "description":"Dependencies of this alveolus. It is a way to import transitively a set of descriptors.",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AlveolusDependency",
+              "type":"object",
+              "properties":{
+                "includeIf":{
+                  "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"AlveolusDependency.includeIf",
+                  "description":"Conditions to include this dependency. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
+                },
+                "location":{
+                  "type":"string",
+                  "title":"AlveolusDependency.location",
+                  "description":"Where to find the alveolus. Note it will ensure the jar is present on the local maven repository."
+                },
+                "name":{
+                  "type":"string",
+                  "title":"AlveolusDependency.name",
+                  "description":"Alveolus name."
+                }
+              }
+            }
+          },
+          "descriptors":{
+            "type":"array",
+            "title":"Alveolus.descriptors",
+            "description":"List of descriptors to install for this alveolus. This is required even if an empty array.",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Descriptor",
+              "type":"object",
+              "properties":{
+                "await":{
+                  "type":"boolean",
+                  "title":"Descriptor.await",
+                  "description":"If set to `true`, apply/delete commands will await the actual creation of the resource (`GET /x` returns a HTTP 200) before continuing to process next resources. It is useful for namespaces for example to ensure applications can be created in the newly created namespace. It avoids to run and rerun apply command in practise. For more advanced tests, use `awaitConditions`."
+                },
+                "awaitConditions":{
+                  "type":"array",
+                  "title":"Descriptor.awaitConditions",
+                  "description":"Test to do on created/destroyed resources, enables to synchronize and await kubernetes actually starts some resource. For `apply` and `delete` commands, `descriptorAwaitTimeout` is still applied. Note that if you use multiple array entries for the same command it will be evaluated with an `AND`.",
+                  "items":{
+                    "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditions",
+                    "type":"object",
+                    "properties":{
+                      "command":{
+                        "type":"string",
+                        "title":"AwaitConditions.command",
+                        "description":"Command to apply these conditions to, if not set it will be applied on `apply` command only. Note that for now only `apply` and `delete` commands are supported, others will be ignored."
+                      },
+                      "conditions":{
+                        "type":"array",
+                        "title":"AwaitConditions.conditions",
+                        "description":"List of condition to match according `operator`.",
+                        "items":{
+                          "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitCondition",
+                          "type":"object",
+                          "properties":{
+                            "conditionType":{
+                              "type":"string",
+                              "title":"AwaitCondition.conditionType",
+                              "description":"When condition type is `STATUS_CONDITION` it is the expected type of the condition. This is ignored when condition type is `JSON_POINTER`."
+                            },
+                            "failMessage":{
+                              "type":"string",
+                              "title":"AwaitCondition.failMessage",
+                              "description":"If set and not blank, such a condition will trigger an exception making the deployment stop there and process fail. In other cases this is a success condition which just stops the awaiting."
+                            },
+                            "operatorType":{
+                              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_JsonPointerOperator",
+                              "type":"string",
+                              "title":"AwaitCondition.operatorType",
+                              "description":"The operation to evaluate if this condition is true or not. (for `type=JSON_POINTER`).",
+                              "enum":[
+                                "EXISTS",
+                                "MISSING",
+                                "EQUALS",
+                                "NOT_EQUALS",
+                                "EQUALS_IGNORE_CASE",
+                                "NOT_EQUALS_IGNORE_CASE",
+                                "CONTAINS"
+                              ],
+                              "nullable":true
+                            },
+                            "pointer":{
+                              "type":"string",
+                              "title":"AwaitCondition.pointer",
+                              "description":"JSON Pointer to read from the resource. It can for example be on `/status/phase` to await a namespace creation. (for `type=JSON_POINTER`)."
+                            },
+                            "type":{
+                              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_AwaitConditionType",
+                              "type":"string",
+                              "title":"AwaitCondition.type",
+                              "description":"Type of condition.",
+                              "enum":[
+                                "JSON_POINTER",
+                                "STATUS_CONDITION"
+                              ],
+                              "nullable":true
+                            },
+                            "value":{
+                              "type":"string",
+                              "title":"AwaitCondition.value",
+                              "description":"When condition type is `JSON_POINTER` and `operatorType` needs a value (`EQUALS` for example), the related value. It can be `Active` if you test namespace `/status/phase` for example. When condition type is `STATUS_CONDITION` it is the expected status."
+                            }
+                          }
+                        }
+                      },
+                      "operator":{
+                        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+                        "type":"string",
+                        "title":"AwaitConditions.operator",
+                        "description":"Operator to combine the conditions.",
+                        "enum":[
+                          "ANY",
+                          "ALL"
+                        ],
+                        "nullable":true
+                      }
+                    }
+                  }
+                },
+                "awaitOnDelete":{
+                  "type":"boolean",
+                  "title":"Descriptor.awaitOnDelete",
+                  "description":"On delete we rarely want to check the resource exists before but in these rare case you can set this toggle to `true`."
+                },
+                "includeIf":{
+                  "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"Descriptor.includeIf",
+                  "description":"Conditions to include this descriptor.",
+                  "properties":{
+                    "conditions":{
+                      "type":"array",
+                      "title":"Conditions.conditions",
+                      "description":"List of condition to match according `operator`.",
+                      "items":{
+                        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Condition",
+                        "type":"object",
+                        "properties":{
+                          "key":{
+                            "type":"string",
+                            "title":"Condition.key",
+                            "description":"Expected key. If empty/null condition is ignored. If read value is null it defaults to an empty string."
+                          },
+                          "negate":{
+                            "type":"boolean",
+                            "title":"Condition.negate",
+                            "description":"Should the condition be reversed (ie \"not in this case\")."
+                          },
+                          "type":{
+                            "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionType",
+                            "type":"string",
+                            "title":"Condition.type",
+                            "description":"Type of condition.",
+                            "enum":[
+                              "ENV",
+                              "SYSTEM_PROPERTY"
+                            ],
+                            "nullable":true
+                          },
+                          "value":{
+                            "type":"string",
+                            "title":"Condition.value",
+                            "description":"Expected value. If empty/null, `true` is assumed. Note that empty is allowed."
+                          }
+                        }
+                      }
+                    },
+                    "operator":{
+                      "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ConditionOperator",
+                      "type":"string",
+                      "title":"Conditions.operator",
+                      "description":"Operator to combine the conditions.",
+                      "enum":[
+                        "ANY",
+                        "ALL"
+                      ],
+                      "nullable":true
+                    }
+                  }
+                },
+                "interpolate":{
+                  "type":"boolean",
+                  "title":"Descriptor.interpolate",
+                  "description":"If set to `true`, it will interpolate the descriptor just before applying it - i.e. after it had been patched if needed. You can use `--<config-key> <value>` to inject bindings set as `{{config-key:-default value}}`. If not set, `interpolateDescriptors` flag from the alveolus will be used.",
+                  "nullable":true
+                },
+                "location":{
+                  "type":"string",
+                  "title":"Descriptor.location",
+                  "description":"Optional, if coming from another manifest, the dependency to download to get the alveolus."
+                },
+                "name":{
+                  "type":"string",
+                  "title":"Descriptor.name",
+                  "description":"Name of the descriptor to install. For kubernetes descriptors you can omit the `.yaml` extension."
+                },
+                "type":{
+                  "type":"string",
+                  "title":"Descriptor.type",
+                  "description":"Type of this descriptor. For now only `kubernetes` is supported. It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name."
+                }
+              }
+            }
+          },
+          "excludedDescriptors":{
+            "type":"array",
+            "title":"Alveolus.excludedDescriptors",
+            "description":"List of descriptors to ignore for this alveolus (generally coming from dependencies).",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_DescriptorRef",
+              "type":"object",
+              "properties":{
+                "location":{
+                  "type":"string",
+                  "title":"DescriptorRef.location",
+                  "description":"The container of the descriptor (maven coordinates generally)."
+                },
+                "name":{
+                  "type":"string",
+                  "title":"DescriptorRef.name",
+                  "description":"Name of the descriptor (as declared, ie potentially without the extension)."
+                }
+              }
+            }
+          },
+          "interpolateDescriptors":{
+            "type":"boolean",
+            "title":"Alveolus.interpolateDescriptors",
+            "description":"Enables to consider all descriptors have their `interpolate` descriptor set to `true`, you can still set it to `false` if you want to disable it for one. If not set, `interpolateAlveoli` flag from the manifest.",
+            "nullable":true
+          },
+          "name":{
+            "type":"string",
+            "title":"Alveolus.name",
+            "description":"Name of the alveolus (recipe). It must be unique accross the whole classpath. Using maven style identifier, it is recommended to name it `<groupId>:<artifactId>:<version>` using maven filtering but it is not enforced."
+          },
+          "patches":{
+            "type":"array",
+            "title":"Alveolus.patches",
+            "description":"Patches on descriptors. It enables to inject configuration in descriptors by patching (using JSON-Patch or plain interpolation with `${key}` values) their JSON representation. The key is the descriptor name and each time the descriptor is found it will be applied.",
+            "items":{
+              "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Patch",
+              "type":"object",
+              "properties":{
+                "descriptorName":{
+                  "type":"string",
+                  "title":"Patch.descriptorName",
+                  "description":"The descriptor to patch. It can be any descriptor, including transitive ones. It can be `*` to patch all descriptors (`/metadata/label/app` for example) or `regex:<java pattern>` to match descriptor names with a regex."
+                },
+                "includeIf":{
+                  "$ref":"#/definitions/io_yupiik_bundlebee_core_descriptor_Manifest_Conditions",
+                  "type":"object",
+                  "title":"Patch.includeIf",
+                  "description":"Conditions to include this patch. Enables for example to have an environment variable enabling part of the stack (ex: `MONITORING=true`)"
+                },
+                "interpolate":{
+                  "type":"boolean",
+                  "title":"Patch.interpolate",
+                  "description":"If set to `true`, it will interpolate the patch from the execution configuration which means you can use `--<config-key> <value>` to inject bindings too. An interesting interpolation is the ability to extract the ip/host of the host machine (`minikube ip` equivalent) using the kubeconfig file. Syntax is the following one: `{{kubeconfig.cluster.minikube.ip}}` or more generally `{{kubeconfig.cluster.<cluster name>.ip}}`. You can also await for some secret with this syntax `{{kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds, default to 2mn>]}}`. This is particular useful to access freshly created service account tokens for example."
+                },
+                "patch":{
+                  "type":"array",
+                  "title":"Patch.patch",
+                  "description":"JSON-Patch to apply on the JSON representation of the descriptor. It enables to inject configuration in descriptors for example, or changing some name/application.",
+                  "items":{
+                    "type":"object",
+                    "properties":{
+
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "placeholders":{
+            "type":"object",
+            "title":"Alveolus.placeholders",
+            "description":"Local placeholders for this particular alveolus and its dependencies. It is primarly intended to be able to create a template alveolus and inject the placeholders inline.",
+            "properties":{
+
+            }
+          },
+          "version":{
+            "type":"string",
+            "title":"Alveolus.version",
+            "description":"If name does not follow `<groupId>:<artifactId>:<version>` naming (i.e. version can't be extracted from the name) then you can specify the version there. Note that if set, this is used in priority (explicit versus deduced)."
+          }
+        }
+      }
+    },
+    "ignoredLintingRules":{
+      "type":"array",
+      "title":"Manifest.ignoredLintingRules",
+      "description":"Ignored linting rule names when using `lint` command.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_IgnoredLintingRule",
+        "type":"object",
+        "properties":{
+          "name":{
+            "type":"string",
+            "title":"IgnoredLintingRule.name",
+            "description":"Name of the rule to ignore."
+          }
+        }
+      }
+    },
+    "interpolateAlveoli":{
+      "type":"boolean",
+      "title":"Manifest.interpolateAlveoli",
+      "description":"Enables to consider all alveoli have their `interpolateDescriptors` descriptor set to `true`, you can still set it to `false` if you want to disable it for one.",
+      "nullable":true
+    },
+    "references":{
+      "type":"array",
+      "title":"Manifest.references",
+      "description":"List of files referenced as other manifests. They are merged with this (main) manifest by *appending* _requirements_ and _alveoli_. It is relative to this manifest location. Important: it is only about the same module references, external references are dependencies in an alveoli. It enables to split a huge `manifest.json` for an easier maintenance.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_ManifestReference",
+        "type":"object",
+        "properties":{
+          "path":{
+            "type":"string",
+            "title":"ManifestReference.path",
+            "description":"Relative or absolute - starting by a `/` - location (referenced to the base directory of `manifest.json`). For example `my-manifest.json` will resolve to `/path/to/bundlebee/my-manifest.json` in a folder and `/bundlebee/my-manifest.json` in a jar. Important: for resources (jar/classpath), the classloader is used so ensure your name is unique accross your classpath (we recommend you to prefix it with the module name, ex :`/bundlebee/my-module.sub-manifest.json` or use a dedicated subfolder (`/bundlebee/my-module/sub.json`)."
+          }
+        }
+      }
+    },
+    "requirements":{
+      "type":"array",
+      "title":"Manifest.requirements",
+      "description":"Pre manifest execution checks (bundlebee version typically). Avoids to install using a bundlebee version not compatible with the alveoli. Can be fully omitted.",
+      "items":{
+        "$id":"io_yupiik_bundlebee_core_descriptor_Manifest_Requirement",
+        "type":"object",
+        "properties":{
+          "forbiddenVersions":{
+            "type":"array",
+            "title":"Requirement.forbiddenVersions",
+            "description":"List of forbidden version (due to a bug or equivalent). Here too snapshot suffix is ignored. `*` is usable there too to replace any digit in a segment (ex: `1.*.*`). Note that `1.*` would *NOT* match `1.*.*`, version are always 3 segments.",
+            "items":{
+              "type":"string"
+            }
+          },
+          "maxBundlebeeVersion":{
+            "type":"string",
+            "title":"Requirement.maxBundlebeeVersion",
+            "description":"Minimum bundlebee version, use `*`to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison."
+          },
+          "minBundlebeeVersion":{
+            "type":"string",
+            "title":"Requirement.minBundlebeeVersion",
+            "description":"Minimum bundlebee version, use `*` to replace any digit in a segment. Note that snapshot is ignored in the comparison for convenience. It is an inclusive comparison."
+          }
+        }
+      }
+    }
+  }
+}

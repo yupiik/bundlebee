@@ -1,0 +1,10 @@
+{
+  "auths": {
+    "{{domain}}": {
+      "username": "{{username}}",
+      "password": "{{password}}",
+      "email": "{{username}}@test.com",
+      "auth": "{{bundlebee-base64:{{username}}:{{password}}}}"
+    }
+  }
+}
