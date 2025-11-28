@@ -264,6 +264,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     "        <select id=\"versionFilter\" class=\"form-control\">\n" +
                     "            <option value=\"\">All Versions</option>\n" +
                     sorted.stream()
+                            .sorted(Comparator.<Map.Entry<Map.Entry<int[], String>, Collection<Descriptor>>, String>comparing(e -> e.getKey().getValue()).reversed())
                             .map(it -> "            <option value=\"" + it.getKey().getValue() + "\">Version " + it.getKey().getValue() + "</option>\n")
                             .collect(joining()) +
                     "        </select>\n" +
