@@ -1,3 +1,0 @@
-this
-another
-file = 2
