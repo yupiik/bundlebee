@@ -607,7 +607,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                 "    schema: " + Files.readString(versionned, UTF_8) + ",\n" +
                 "};\n" +
                 "</script>\n" +
-                "<script src=\"/generated/js/kubernetes.schema.js?v=0\"></script>\n" +
+                "<script src=\"../../../../js/kubernetes.schema.js?v=0\"></script>\n" +
                 "++++";
     }
 
