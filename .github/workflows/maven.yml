@@ -16,11 +16,13 @@
 
 name: Github CI
 
-on: 
+on:
   push:
-    branches: [ master]
+    branches-ignore:
+      - gh-pages
   pull_request:
-    branches: [ master]
+    branches-ignore:
+      - gh-pages
 
 env:
   MAVEN_OPTS: -Dmaven.repo.local=/home/runner/work/bundlebee/bundlebee/.m2 -Dmaven.artifact.threads=256 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
