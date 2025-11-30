@@ -159,11 +159,7 @@
                 <div id="main"></div>
 <script>
 window.jsonSchemaViewerOpts = {
-    expanded: false,
-    hideTopBar: false,
-    defaultExpandedDepth: 0,
-    emptyText: "Schema can't be rendered",
-    name: "Kubernetes 1.31 ResourceSliceList v1alpha3 Schema",
+    base: "../../../../../",
     schema: {
   "description":"ResourceSliceList is a collection of ResourceSlices.",
   "properties":{
@@ -538,7 +534,7 @@ window.jsonSchemaViewerOpts = {
       "description":"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
       "type":"string"
     },
-    "listMeta":{
+    "metadata":{
       "description":"Standard list metadata",
       "properties":{
         "continue":{
@@ -639,7 +635,7 @@ if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} el
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
-              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
             </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.3/fuse.min.js" integrity="sha512-neoBxVNv0UMXjoilAYGxfWrSsW6iAVclx7vQKdPJ9Peet1bM5YQjU0aIB8LtH8iNPa+pAyMZprBBw2ZQ/Q1LjQ==" crossorigin="anonymous"></script>
 

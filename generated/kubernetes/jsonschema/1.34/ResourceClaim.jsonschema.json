@@ -830,7 +830,7 @@
     {
       "group":"resource.k8s.io",
       "kind":"ResourceClaim",
-      "version":"v1"
+      "version":"v1beta2"
     }
   ]
 }

@@ -159,11 +159,7 @@
                 <div id="main"></div>
 <script>
 window.jsonSchemaViewerOpts = {
-    expanded: false,
-    hideTopBar: false,
-    defaultExpandedDepth: 0,
-    emptyText: "Schema can't be rendered",
-    name: "Kubernetes 1.28 SelfSubjectRulesReview v1 Schema",
+    base: "../../../../../",
     schema: {
   "description":"SelfSubjectRulesReview enumerates the set of actions the current user can perform within a namespace. The returned list of actions may be incomplete depending on the server's authorization mode, and any errors experienced during the evaluation. SelfSubjectRulesReview should be used by UIs to show/hide actions, or to quickly let an end user reason about their permissions. It should NOT Be used by external systems to drive authorization decisions as this raises confused deputy, cache lifetime/revocation, and correctness concerns. SubjectAccessReview, and LocalAccessReview are the correct way to defer authorization decisions to the API server.",
   "properties":{
@@ -500,7 +496,7 @@ if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} el
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
-              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
             </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.3/fuse.min.js" integrity="sha512-neoBxVNv0UMXjoilAYGxfWrSsW6iAVclx7vQKdPJ9Peet1bM5YQjU0aIB8LtH8iNPa+pAyMZprBBw2ZQ/Q1LjQ==" crossorigin="anonymous"></script>
 

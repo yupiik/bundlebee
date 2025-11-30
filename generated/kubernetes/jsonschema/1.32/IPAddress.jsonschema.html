@@ -159,11 +159,7 @@
                 <div id="main"></div>
 <script>
 window.jsonSchemaViewerOpts = {
-    expanded: false,
-    hideTopBar: false,
-    defaultExpandedDepth: 0,
-    emptyText: "Schema can't be rendered",
-    name: "Kubernetes 1.32 IPAddress v1beta1 Schema",
+    base: "../../../../",
     schema: {
   "description":"IPAddress represents a single IP of a single IP Family. The object is designed to be used by APIs that operate on IP addresses. The object is used by the Service core API for allocation of IP addresses. An IP address can be represented in different formats, to guarantee the uniqueness of the IP, the name of the object is the IP address in canonical format, four decimal digits separated by dots suppressing leading zeros for IPv4 and the representation defined by RFC 5952 for IPv6. Valid: 192.168.1.5 or 2001:db8::1 or 2001:db8:aaaa:bbbb:cccc:dddd:eeee:1 Invalid: 10.01.2.3 or 2001:db8:0:0:0::1",
   "properties":{
@@ -375,7 +371,7 @@ window.jsonSchemaViewerOpts = {
 },
 };
 </script>
-<script src="../../../../js/kubernetes.schema.js?v=0"></script>
+<script src="../../../js/kubernetes.schema.js?v=0"></script>
                 
                 
             </div>
@@ -438,7 +434,7 @@ if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} el
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
-              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
             </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.3/fuse.min.js" integrity="sha512-neoBxVNv0UMXjoilAYGxfWrSsW6iAVclx7vQKdPJ9Peet1bM5YQjU0aIB8LtH8iNPa+pAyMZprBBw2ZQ/Q1LjQ==" crossorigin="anonymous"></script>
 

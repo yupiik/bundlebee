@@ -159,58 +159,78 @@
                 <div id="main"></div>
 <script>
 window.jsonSchemaViewerOpts = {
-    expanded: false,
-    hideTopBar: false,
-    defaultExpandedDepth: 0,
-    emptyText: "Schema can't be rendered",
-    name: "Kubernetes 1.30 Event v1 Schema",
+    base: "../../../../",
     schema: {
-  "description":"Event is a report of an event somewhere in the cluster. It generally denotes some state change in the system. Events have a limited retention time and triggers and messages may evolve with time.  Event consumers should not rely on the timing of an event with a given Reason reflecting a consistent underlying trigger, or the continued existence of events with that Reason.  Events should be treated as informative, best-effort, supplemental data.",
+  "description":"Event is a report of an event somewhere in the cluster.  Events have a limited retention time and triggers and messages may evolve with time.  Event consumers should not rely on the timing of an event with a given Reason reflecting a consistent underlying trigger, or the continued existence of events with that Reason.  Events should be treated as informative, best-effort, supplemental data.",
   "properties":{
     "action":{
-      "description":"action is what action was taken/failed regarding to the regarding object. It is machine-readable. This field cannot be empty for new Events and it can have at most 128 characters.",
+      "description":"What action was taken/failed regarding to the Regarding object.",
       "type":"string"
     },
     "apiVersion":{
       "description":"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
       "type":"string"
     },
-    "deprecatedCount":{
-      "description":"deprecatedCount is the deprecated field assuring backward compatibility with core.v1 Event type.",
+    "count":{
+      "description":"The number of times this event has occurred.",
       "format":"int32",
       "type":"integer"
     },
-    "deprecatedFirstTimestamp":{
-      "description":"deprecatedFirstTimestamp is the deprecated field assuring backward compatibility with core.v1 Event type.",
+    "eventTime":{
+      "description":"Time when this Event was first observed.",
       "format":"date-time",
       "type":"string"
     },
-    "deprecatedLastTimestamp":{
-      "description":"deprecatedLastTimestamp is the deprecated field assuring backward compatibility with core.v1 Event type.",
+    "firstTimestamp":{
+      "description":"The time at which the event was first recorded. (Time of server receipt is in TypeMeta.)",
       "format":"date-time",
       "type":"string"
     },
-    "deprecatedSource":{
-      "description":"deprecatedSource is the deprecated field assuring backward compatibility with core.v1 Event type.",
+    "involvedObject":{
+      "description":"The object that this event is about.",
       "properties":{
-        "component":{
-          "description":"Component from which the event is generated.",
+        "apiVersion":{
+          "description":"API version of the referent.",
           "type":"string"
         },
-        "host":{
-          "description":"Node name on which the event is generated.",
+        "fieldPath":{
+          "description":"If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
+          "type":"string"
+        },
+        "kind":{
+          "description":"Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "type":"string"
+        },
+        "name":{
+          "description":"Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type":"string"
+        },
+        "namespace":{
+          "description":"Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
+          "type":"string"
+        },
+        "resourceVersion":{
+          "description":"Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
+          "type":"string"
+        },
+        "uid":{
+          "description":"UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
           "type":"string"
         }
       },
       "type":"object"
     },
-    "eventTime":{
-      "description":"eventTime is the time when this Event was first observed. It is required.",
+    "kind":{
+      "description":"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+      "type":"string"
+    },
+    "lastTimestamp":{
+      "description":"The time at which the most recent occurrence of this event was recorded.",
       "format":"date-time",
       "type":"string"
     },
-    "kind":{
-      "description":"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+    "message":{
+      "description":"A human-readable description of the status of this operation.",
       "type":"string"
     },
     "metadata":{
@@ -366,50 +386,12 @@ window.jsonSchemaViewerOpts = {
       },
       "type":"object"
     },
-    "note":{
-      "description":"note is a human-readable description of the status of this operation. Maximal length of the note is 1kB, but libraries should be prepared to handle values up to 64kB.",
-      "type":"string"
-    },
     "reason":{
-      "description":"reason is why the action was taken. It is human-readable. This field cannot be empty for new Events and it can have at most 128 characters.",
+      "description":"This should be a short, machine understandable string that gives the reason for the transition into the object's current status.",
       "type":"string"
-    },
-    "regarding":{
-      "description":"regarding contains the object this Event is about. In most cases it's an Object reporting controller implements, e.g. ReplicaSetController implements ReplicaSets and this event is emitted because it acts on some changes in a ReplicaSet object.",
-      "properties":{
-        "apiVersion":{
-          "description":"API version of the referent.",
-          "type":"string"
-        },
-        "fieldPath":{
-          "description":"If referring to a piece of an object instead of an entire object, this string should contain a valid JSON/Go field access statement, such as desiredState.manifest.containers[2]. For example, if the object reference is to a container within a pod, this would take on a value like: \"spec.containers{name}\" (where \"name\" refers to the name of the container that triggered the event) or if no container name is specified \"spec.containers[2]\" (container with index 2 in this pod). This syntax is chosen only to have some well-defined way of referencing a part of an object.",
-          "type":"string"
-        },
-        "kind":{
-          "description":"Kind of the referent. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-          "type":"string"
-        },
-        "name":{
-          "description":"Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type":"string"
-        },
-        "namespace":{
-          "description":"Namespace of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/",
-          "type":"string"
-        },
-        "resourceVersion":{
-          "description":"Specific resourceVersion to which this reference is made, if any. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#concurrency-control-and-consistency",
-          "type":"string"
-        },
-        "uid":{
-          "description":"UID of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#uids",
-          "type":"string"
-        }
-      },
-      "type":"object"
     },
     "related":{
-      "description":"related is the optional secondary object for more complex actions. E.g. when regarding object triggers a creation or deletion of related object.",
+      "description":"Optional secondary object for more complex actions.",
       "properties":{
         "apiVersion":{
           "description":"API version of the referent.",
@@ -442,46 +424,57 @@ window.jsonSchemaViewerOpts = {
       },
       "type":"object"
     },
-    "reportingController":{
-      "description":"reportingController is the name of the controller that emitted this Event, e.g. `kubernetes.io/kubelet`. This field cannot be empty for new Events.",
+    "reportingComponent":{
+      "description":"Name of the controller that emitted this Event, e.g. `kubernetes.io/kubelet`.",
       "type":"string"
     },
     "reportingInstance":{
-      "description":"reportingInstance is the ID of the controller instance, e.g. `kubelet-xyzf`. This field cannot be empty for new Events and it can have at most 128 characters.",
+      "description":"ID of the controller instance, e.g. `kubelet-xyzf`.",
       "type":"string"
     },
     "series":{
-      "description":"series is data about the Event series this event represents or nil if it's a singleton Event.",
+      "description":"Data about the Event series this event represents or nil if it's a singleton Event.",
       "properties":{
         "count":{
-          "description":"count is the number of occurrences in this series up to the last heartbeat time.",
+          "description":"Number of occurrences in this series up to the last heartbeat time",
           "format":"int32",
           "type":"integer"
         },
         "lastObservedTime":{
-          "description":"lastObservedTime is the time when last Event from the series was seen before last heartbeat.",
+          "description":"Time of the last occurrence observed",
           "format":"date-time",
           "type":"string"
         }
       },
-      "required":[
-        "count",
-        "lastObservedTime"
-      ],
+      "type":"object"
+    },
+    "source":{
+      "description":"The component reporting this event. Should be a short machine understandable string.",
+      "properties":{
+        "component":{
+          "description":"Component from which the event is generated.",
+          "type":"string"
+        },
+        "host":{
+          "description":"Node name on which the event is generated.",
+          "type":"string"
+        }
+      },
       "type":"object"
     },
     "type":{
-      "description":"type is the type of this event (Normal, Warning), new types could be added in the future. It is machine-readable. This field cannot be empty for new Events.",
+      "description":"Type of this event (Normal, Warning), new types could be added in the future",
       "type":"string"
     }
   },
   "required":[
-    "eventTime"
+    "metadata",
+    "involvedObject"
   ],
   "type":"object",
   "x-kubernetes-group-version-kind":[
     {
-      "group":"events.k8s.io",
+      "group":"",
       "kind":"Event",
       "version":"v1"
     }
@@ -489,7 +482,7 @@ window.jsonSchemaViewerOpts = {
 },
 };
 </script>
-<script src="../../../../js/kubernetes.schema.js?v=0"></script>
+<script src="../../../js/kubernetes.schema.js?v=0"></script>
                 
                 
             </div>
@@ -552,7 +545,7 @@ if (navigator && navigator.clipboard) { addCopyButtons(navigator.clipboard);} el
     <script>$('.page-content-body').generatedNavMenu();</script>
     <script>
             document.querySelector('div.site-logo > a').href =
-              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
             </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/6.4.3/fuse.min.js" integrity="sha512-neoBxVNv0UMXjoilAYGxfWrSsW6iAVclx7vQKdPJ9Peet1bM5YQjU0aIB8LtH8iNPa+pAyMZprBBw2ZQ/Q1LjQ==" crossorigin="anonymous"></script>
 
