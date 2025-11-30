@@ -190,7 +190,7 @@
           <customScripts>
             &lt;script&gt;
             document.querySelector('div.site-logo &gt; a').href =
-              document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
+            document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
             &lt;/script&gt;
           </customScripts>
           <attributes>

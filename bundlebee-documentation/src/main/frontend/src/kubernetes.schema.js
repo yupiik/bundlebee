@@ -1,47 +1,29 @@
+import 'jsonjoy-builder/styles.css';
 import { createRoot } from 'react-dom/client';
-import { JsonSchemaViewer } from '@stoplight/json-schema-viewer';
-import { Provider, injectStyles } from '@stoplight/mosaic';
+import { SchemaVisualEditor } from 'jsonjoy-builder';
 
-function prefixCSS(cssText, containerId) {
-  return cssText.replace(/(^|})([^{]+)/g, (_, closeBrace, selectorGroup) => {
-    const prefixed = selectorGroup
-      .split(',')
-      .map(sel => {
-        sel = sel.trim();
-        if (!sel) {
-          return '';
-        }
-        if (sel.startsWith(`#${containerId}`)) {
-          return sel;
-        }
-        return `#${containerId} ${sel}`;
-      })
-      .join(',');
-    return closeBrace + prefixed;
-  });
-}
-
-function withScopedDocument(fn) {
-  const originalAppendChild = document.head.appendChild;
-  document.head.appendChild = function (node) {
-    if (node.tagName === 'STYLE') {
-      node.textContent = prefixCSS(node.textContent, 'main');
-    }
-    originalAppendChild.call(this, node);
-  };
-
-  try {
-    fn();
-  } finally {
-    document.head.appendChild = originalAppendChild;
+(function injectCssLink(url) {
+  const id = 'kubernetes-schema-css';
+  if (document.getElementById(id)) {
+    return;
   }
-}
 
-withScopedDocument(() => injectStyles({ mode: 'system' }));
+  const link = document.createElement('link');
+  link.id = id;
+  link.rel = 'stylesheet';
+  link.href = url;
+  link.onerror = (e) => console.error('Failed to load stylesheet:', e);
+
+  const root = document.head || document.documentElement;
+  root.appendChild(link);
+
+  const inlineStyleOverrides = document.createElement('style');
+  // override optional button style but not required one
+  inlineStyleOverrides.innerHTML = 'button.bg-secondary.text-muted-foreground{background-color:white !important;}';
+  root.appendChild(inlineStyleOverrides);
+})(window.jsonSchemaViewerOpts.base + 'generated/js/kubernetes.schema.css');
 
 createRoot(document.getElementById('main'))
   .render(
-    <Provider>
-      <JsonSchemaViewer {...window.jsonSchemaViewerOpts} />
-    </Provider>
+      <SchemaVisualEditor readOnly={true} schema={window.jsonSchemaViewerOpts.schema} />
   );
