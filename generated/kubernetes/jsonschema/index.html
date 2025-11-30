@@ -97,7 +97,9 @@
             --yupiik-heading-line-height: 1.25;
         }
     </style>
-    
+    <style>
+            .first-version {border-top-width:1px !important;}
+            </style>
     <link id="theme-style" rel="stylesheet" href="//www.yupiik.io/bundlebee/css/theme.css?v=1.0.32-SNAPSHOT">
 </head>
 <body>
@@ -17706,15 +17708,19 @@ due to Github Pages limitations we have to prune the version from time to time. 
     function applyFilters() {
         const versionValue = versionFilter.value.toLowerCase();
         const descValue = descriptorFilter.value.toLowerCase();
+        let first = true;
         items.forEach(item => {
             const matchesVersion = versionValue === "" || item.dataset.version === versionValue;
             const matchesText = item.textContent.toLowerCase().includes(descValue);
             if (matchesVersion && matchesText) {
               item.classList.remove('d-none');
               item.classList.add('d-flex');
+              if (first) { item.classList.add('first-version'); }
+              first = false;
             } else {
               item.classList.add('d-none');
               item.classList.remove('d-flex');
+              item.classList.remove('first-version');
             }
         });
     }
