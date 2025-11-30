@@ -197,7 +197,7 @@
           {
             "group":"certificates.k8s.io",
             "kind":"ClusterTrustBundle",
-            "version":"v1beta1"
+            "version":"v1alpha1"
           }
         ]
       },
@@ -239,7 +239,7 @@
     {
       "group":"certificates.k8s.io",
       "kind":"ClusterTrustBundleList",
-      "version":"v1beta1"
+      "version":"v1alpha1"
     }
   ]
 }

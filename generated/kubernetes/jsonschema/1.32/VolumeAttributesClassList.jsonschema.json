@@ -191,7 +191,7 @@
           {
             "group":"storage.k8s.io",
             "kind":"VolumeAttributesClass",
-            "version":"v1alpha1"
+            "version":"v1beta1"
           }
         ]
       },
@@ -233,7 +233,7 @@
     {
       "group":"storage.k8s.io",
       "kind":"VolumeAttributesClassList",
-      "version":"v1alpha1"
+      "version":"v1beta1"
     }
   ]
 }
