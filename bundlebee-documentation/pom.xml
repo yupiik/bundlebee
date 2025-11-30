@@ -187,6 +187,11 @@
               &lt;li class="list-inline-item"&gt;&lt;a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"&gt;&lt;i class="fab fa-github fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
             </socialLinks>
           </templateExtensionPoints>
+          <customHead>
+            &lt;style&gt;
+            .first-version {border-top-width:1px !important;}
+            &lt;/style&gt;
+          </customHead>
           <customScripts>
             &lt;script&gt;
             document.querySelector('div.site-logo &gt; a').href =

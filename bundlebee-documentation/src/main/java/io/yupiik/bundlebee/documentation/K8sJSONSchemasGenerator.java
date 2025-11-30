@@ -46,10 +46,10 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -278,6 +278,11 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     sorted.stream()
                             .map(it -> "    <!-- Version " + it.getKey().getValue() + " -->\n" +
                                     it.getValue().stream()
+                                            .sorted(Comparator.comparing(Descriptor::getKind)
+                                                    .thenComparing(i -> {
+                                                        // latest first
+                                                        return -versionWeight(i);
+                                                    }))
                                             .map(d -> {
                                                 final var linkBase = it.getKey().getValue() + "/" + d.getVersion() + "/" + d.getKind();
                                                 return "    <li class=\"list-group-item descriptor-item d-flex\" data-version=\"" + it.getKey().getValue() + "\" data-kind=\"" + d.getKind() + "\" style=\"display: block;\">\n" +
@@ -303,22 +308,48 @@ public class K8sJSONSchemasGenerator implements Runnable {
                     "    const versionFilter = document.getElementById('versionFilter');\n" +
                     "    const descriptorFilter = document.getElementById('descriptorFilter');\n" +
                     "    const items = document.querySelectorAll('.descriptor-item');\n" +
+                    "    function getQueryParam(name) {\n" +
+                    "        const params = new URLSearchParams(window.location.search);\n" +
+                    "        return params.get(name);\n" +
+                    "    }\n" +
+                    "    function setQueryParam(name, value) {\n" +
+                    "        const params = new URLSearchParams(window.location.search);\n" +
+                    "        if (value === \"\" || value == null) {\n" +
+                    "            params.delete(name);\n" +
+                    "        } else {\n" +
+                    "            params.set(name, value);\n" +
+                    "        }\n" +
+                    "        const newUrl = window.location.pathname + \"?\" + params.toString();\n" +
+                    "        window.history.replaceState({}, \"\", newUrl);\n" +
+                    "    }\n" +
                     "    function applyFilters() {\n" +
                     "        const versionValue = versionFilter.value.toLowerCase();\n" +
                     "        const descValue = descriptorFilter.value.toLowerCase();\n" +
+                    "        let first = true;\n" +
                     "        items.forEach(item => {\n" +
                     "            const matchesVersion = versionValue === \"\" || item.dataset.version === versionValue;\n" +
                     "            const matchesText = item.textContent.toLowerCase().includes(descValue);\n" +
                     "            if (matchesVersion && matchesText) {\n" +
                     "              item.classList.remove('d-none');\n" +
                     "              item.classList.add('d-flex');\n" +
+                    "              if (first) { item.classList.add('first-version'); }\n" +
+                    "              first = false;\n" +
                     "            } else {\n" +
                     "              item.classList.add('d-none');\n" +
                     "              item.classList.remove('d-flex');\n" +
-                    "            }" +
+                    "              item.classList.remove('first-version');\n" +
+                    "            }\n" +
                     "        });\n" +
                     "    }\n" +
-                    "    versionFilter.addEventListener('change', applyFilters);\n" +
+                    "    const qpVersion = getQueryParam(\"v\");\n" +
+                    "    if (qpVersion && versionFilter.querySelector(`option[value=\"${qpVersion}\"]`)) {\n" +
+                    "        versionFilter.value = qpVersion;\n" +
+                    "        setTimeout(applyFilters);\n" +
+                    "    }\n" +
+                    "    versionFilter.addEventListener('change', () => {\n" +
+                    "        setQueryParam(\"v\", versionFilter.value);\n" +
+                    "        applyFilters();\n" +
+                    "    });\n" +
                     "    descriptorFilter.addEventListener('input', applyFilters);\n" +
                     "</script>\n" +
                     "++++\n");
@@ -336,6 +367,28 @@ public class K8sJSONSchemasGenerator implements Runnable {
                         return out.toString(StandardCharsets.UTF_8);
                     })
                     .collect(joining("\n- ", "\n- ", "")));
+        }
+    }
+
+    private int versionWeight(Descriptor i) {
+        try {
+            var version = i.getVersion();
+            if (version.startsWith("v")) {
+                version = version.substring(1);
+            }
+
+            final var bIdx = version.indexOf("beta");
+            if (version.contains("beta")) {
+                return Integer.parseInt(version.substring(0, bIdx)) * 1_000_000 + 1_000 * Integer.parseInt(version.substring(bIdx + "beta".length()));
+            }
+
+            final var aIdx = version.indexOf("alpha");
+            if (version.contains("alpha")) {
+                return Integer.parseInt(version.substring(0, aIdx)) * 1_000_000 + Integer.parseInt(version.substring(aIdx + "alpha".length()));
+            }
+            return Integer.parseInt(version) * 1_000_000;
+        } catch (final NumberFormatException nfe) {
+            return 0;
         }
     }
 
@@ -461,7 +514,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
                                             final JsonWriterFactory jsonWriterFactory, final String versionName) throws IOException, InterruptedException {
         log.info(() -> "Fetching '" + url + "'");
         final var cached = cache.resolve(versionName.replace('/', '_') + ".json");
-        final var descriptors = new ArrayList<Descriptor>();
+        final var descriptors = new HashSet<Descriptor>();
 
         final JsonObject spec;
         if (Files.notExists(cached)) {
