@@ -525,7 +525,7 @@ window.jsonSchemaViewerOpts = {
           "description":"paramRef specifies the parameter resource used to configure the admission control policy. It should point to a resource of the type specified in ParamKind of the bound ValidatingAdmissionPolicy. If the policy specifies a ParamKind and the resource referred to by ParamRef does not exist, this binding is considered mis-configured and the FailurePolicy of the ValidatingAdmissionPolicy applied. If the policy does not specify a ParamKind then this field is ignored, and the rules are evaluated without a param.",
           "properties":{
             "name":{
-              "description":"`name` is the name of the resource being referenced.\n\n`name` and `selector` are mutually exclusive properties. If one is set, the other must be unset.",
+              "description":"name is the name of the resource being referenced.\n\nOne of `name` or `selector` must be set, but `name` and `selector` are mutually exclusive properties. If one is set, the other must be unset.\n\nA single parameter used for all admission requests can be configured by setting the `name` field, leaving `selector` blank, and setting namespace if `paramKind` is namespace-scoped.",
               "type":"string"
             },
             "namespace":{
@@ -533,7 +533,7 @@ window.jsonSchemaViewerOpts = {
               "type":"string"
             },
             "parameterNotFoundAction":{
-              "description":"`parameterNotFoundAction` controls the behavior of the binding when the resource exists, and name or selector is valid, but there are no parameters matched by the binding. If the value is set to `Allow`, then no matched parameters will be treated as successful validation by the binding. If set to `Deny`, then no matched parameters will be subject to the `failurePolicy` of the policy.\n\nAllowed values are `Allow` or `Deny` Default to `Deny`",
+              "description":"`parameterNotFoundAction` controls the behavior of the binding when the resource exists, and name or selector is valid, but there are no parameters matched by the binding. If the value is set to `Allow`, then no matched parameters will be treated as successful validation by the binding. If set to `Deny`, then no matched parameters will be subject to the `failurePolicy` of the policy.\n\nAllowed values are `Allow` or `Deny`\n\nRequired",
               "type":"string"
             },
             "selector":{
@@ -601,7 +601,7 @@ window.jsonSchemaViewerOpts = {
     {
       "group":"admissionregistration.k8s.io",
       "kind":"ValidatingAdmissionPolicyBinding",
-      "version":"v1alpha1"
+      "version":"v1"
     }
   ]
 },

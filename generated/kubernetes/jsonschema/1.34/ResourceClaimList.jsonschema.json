@@ -839,7 +839,7 @@
           {
             "group":"resource.k8s.io",
             "kind":"ResourceClaim",
-            "version":"v1beta2"
+            "version":"v1"
           }
         ]
       },
@@ -881,7 +881,7 @@
     {
       "group":"resource.k8s.io",
       "kind":"ResourceClaimList",
-      "version":"v1beta2"
+      "version":"v1"
     }
   ]
 }

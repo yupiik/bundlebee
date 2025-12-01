@@ -468,7 +468,7 @@
           {
             "group":"resource.k8s.io",
             "kind":"ResourceClaimTemplate",
-            "version":"v1beta1"
+            "version":"v1alpha3"
           }
         ]
       },
@@ -510,7 +510,7 @@
     {
       "group":"resource.k8s.io",
       "kind":"ResourceClaimTemplateList",
-      "version":"v1beta1"
+      "version":"v1alpha3"
     }
   ]
 }
