@@ -373,6 +373,12 @@ public class KubeClient implements ConfigHolder {
                 (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
 
         final var uri = toBaseUri(desc, kindLowerCased, namespace) + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
+        return delete(uri, metadata.containsKey("bundlebee.delete.propagationPolicy") ?
+                metadata.getString("bundlebee.delete.propagationPolicy") :
+                defaultPropagationPolicy);
+    }
+
+    public CompletionStage<HttpResponse<String>> delete(final String uri, final String propagationPolicy) {
         return api.execute(
                         HttpRequest.newBuilder()
                                 .method("DELETE", HttpRequest.BodyPublishers.ofString(jsonBuilderFactory.createObjectBuilder()
@@ -380,9 +386,7 @@ public class KubeClient implements ConfigHolder {
                                         .add("apiVersion", "v1")
                                         // todo: .add("gracePeriodSeconds", config)
                                         // .add("orphanDependents", true) // this one is deprecated, this is why we use propagationPolicy too
-                                        .add("propagationPolicy", metadata.containsKey("bundlebee.delete.propagationPolicy") ?
-                                                metadata.getString("bundlebee.delete.propagationPolicy") :
-                                                defaultPropagationPolicy)
+                                        .add("propagationPolicy", propagationPolicy == null ? defaultPropagationPolicy : propagationPolicy)
                                         .build()
                                         .toString(), StandardCharsets.UTF_8))
                                 .header("Content-Type", "application/json")
@@ -396,7 +400,7 @@ public class KubeClient implements ConfigHolder {
                 });
     }
 
-    private CompletionStage<?> doApply(final JsonObject originalDontUseDesc, final JsonObject rawDesc, final Map<String, String> customLabels, final boolean skipGet) {
+    public CompletionStage<?> doApply(final JsonObject originalDontUseDesc, final JsonObject rawDesc, final Map<String, String> customLabels, final boolean skipGet) {
         // apply logic is a "create or replace" one
         // so first thing we have to do is to test if the resource exists, and if not create it
         // for that we will need to extract the resource "kind" and "name" (id):
@@ -763,7 +767,7 @@ public class KubeClient implements ConfigHolder {
         }
     }
 
-    private String toBaseUri(final JsonObject desc, final String kindLowerCased, final String namespace) {
+    public String toBaseUri(final JsonObject desc, final String kindLowerCased, final String namespace) {
         return ofNullable(resourceMapping.get(kindLowerCased))
                 .map(mapped -> !mapped.startsWith("http") ? api.getBaseApi() + mapped : mapped)
                 .or(() -> ofNullable(apiPreloader.getBaseUrls().get(kindLowerCased))
