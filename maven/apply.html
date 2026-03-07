@@ -847,6 +847,28 @@ To bind this goal in the build you can use:
  </dl>
  <dl>
   <dt> <div class="paragraph">
+ <p>skipStaledResourceDeletion (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code> and <code>trackState</code> is <code>true</code>, staled resources are not deleted but just logged. Default value: <code>false</code>. Property: <code>${bundlebee.apply.skipStaledResourceDeletion}</code>.</p>
+ </div>
+</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
+ <p>trackState (<code>boolean</code>)</p>
+ </div>
+</dt>
+  <dd>
+ <div class="paragraph">
+ <p>If <code>true</code>, a secret named based on the alveolus name (<code>$name-bbs</code>) is stored and is used by the client to track the internal state of the installation. Note that it requires the client to have the permission to create a <code>Secret</code> even if the alveolus doesn't have any. Note that it doesn't work with <code>alveolus=auto</code> mode. The secret is stored in the globally configured namespace (default one if you do use a <code>kubeconfig</code> file). Default value: <code>false</code>. Property: <code>${bundlebee.apply.trackState}</code>.</p>
+ </div>
+</dd>
+ </dl>
+ <dl>
+  <dt> <div class="paragraph">
  <p>useChainInsteadOfAll (<code>boolean</code>)</p>
  </div>
 </dt>
