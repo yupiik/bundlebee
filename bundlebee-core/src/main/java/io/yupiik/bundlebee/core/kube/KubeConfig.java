@@ -80,6 +80,26 @@ public class KubeConfig {
 
         @JsonbProperty("client-key-data")
         private String clientKeyData;
+
+        // exec part
+        private Exec exec;
+
+        @Data
+        public static class Exec {
+            private String apiVersion; // client.authentication.k8s.io/v
+            private String command;
+            private List<EnvItem> env;
+            private List<String> args;
+            private boolean provideClusterInfo;
+            private String interactiveMode;
+            private String installHint;
+
+            @Data
+            public static class EnvItem {
+                private String name;
+                private String value;
+            }
+        }
     }
 
     @Data
