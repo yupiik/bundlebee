@@ -36,6 +36,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import javax.json.JsonException;
+import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbException;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -79,8 +80,11 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -88,6 +92,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -95,20 +101,27 @@ import java.util.stream.Stream;
 import static io.yupiik.bundlebee.core.command.Executable.UNSET;
 import static java.net.Authenticator.RequestorType.PROXY;
 import static java.net.Proxy.Type.HTTP;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.Clock.systemUTC;
 import static java.util.Objects.requireNonNull;
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
 import static lombok.AccessLevel.PRIVATE;
 
 @ApplicationScoped
 public class DefaultHttpKubeClient implements HttpKubeClient, ConfigHolder {
-    private final Logger log = Logger.getLogger(HttpKubeClient.class.getName());
+    private final Logger log = Logger.getLogger(DefaultHttpKubeClient.class.getName());
 
     @Inject
     @BundleBee // just here to inherit from client config - for now the pool
     private HttpClient dontUseAtRuntime;
+
+    @Inject
+    @BundleBee
+    private Jsonb jsonb;
 
     @Inject
     private Yaml2JsonConverter yaml2json;
@@ -481,8 +494,13 @@ public class DefaultHttpKubeClient implements HttpKubeClient, ConfigHolder {
                 throw new IllegalStateException(e);
             }
             setAuth = identity(); // only SSL
+        } else if (user.getExec() != null &&
+                user.getExec().getCommand() != null &&
+                (user.getExec().getApiVersion() == null || user.getExec().getApiVersion().startsWith("client.authentication.k8s.io/v"))) {
+            log.info(() -> "Using exec authentication for user '" + context.getUser() + "'");
+            setAuth = buildExecAuthentication(user.getExec(), cluster);
         } else { // shouldn't happen
-            log.info("No security found for Kuber client, this is an unusual setup");
+            log.info("No security found for Kube client, this is an unusual setup");
             setAuth = identity();
         }
 
@@ -507,6 +525,106 @@ public class DefaultHttpKubeClient implements HttpKubeClient, ConfigHolder {
         } catch (final IOException | GeneralSecurityException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private Function<HttpRequest.Builder, HttpRequest.Builder> buildExecAuthentication(final KubeConfig.User.Exec exec,
+                                                                                       final KubeConfig.Cluster cluster) {
+        final var configuredEnv = exec.getEnv()!=null ?
+                exec.getEnv().stream()
+                .collect(toMap(KubeConfig.User.Exec.EnvItem::getName, KubeConfig.User.Exec.EnvItem::getValue)):
+                Map.<String, String>of();
+
+        final var prepareEnv = new HashMap<String, String>(configuredEnv.size() + 1);
+        prepareEnv.putAll(configuredEnv);
+
+        final var spec = new HashMap<String, Object>(2);
+        spec.put("interactive", !"Never".equals(exec.getInteractiveMode()));
+        if (exec.isProvideClusterInfo()) {
+            final var server = new HashMap<>(2);
+            server.put("server", cluster.getServer());
+            if (cluster.getCertificateAuthorityData() != null) {
+                server.put("certificate-authority-data", cluster.getCertificateAuthorityData());
+            } else if (cluster.getCertificateAuthority() != null) {
+                try {
+                    server.put("certificate-authority-data", Base64.getMimeEncoder().encodeToString(Files.readAllBytes(Paths.get(cluster.getCertificateAuthority()))));
+                } catch (final IOException e) {
+                    throw new IllegalStateException(e);
+                }
+            }
+            spec.put("cluster", server);
+        }
+        prepareEnv.put("KUBERNETES_EXEC_INFO", jsonb.toJson(Map.<String, Object>of(
+                "apiVersion", "client.authentication.k8s.io/v1",
+                "kind", "ExecCredential",
+                "spec", spec)));
+
+        final var fullCommand = Stream.concat(
+                        Stream.of(exec.getCommand()),
+                        exec.getArgs() == null ? Stream.empty() : exec.getArgs().stream())
+                .collect(toList());
+        final var clock = systemUTC();
+        return new Function<>() {
+            private volatile LastToken last;
+            private final Lock lock = new ReentrantLock();
+
+            @Override
+            public HttpRequest.Builder apply(final HttpRequest.Builder builder) {
+                return builder.header("authorization", "Bearer " + next());
+            }
+
+            private String next() {
+                final var now = clock.instant();
+                final var previous = last;
+                if (previous != null && previous.getExpiry().isAfter(now)) {
+                    return previous.getValue();
+                }
+
+                lock.lock();
+                try {
+                    if (last != previous) { // it was updated
+                        return last.getValue();
+                    }
+
+                    final var builder = new ProcessBuilder();
+                    builder.command(fullCommand);
+                    if (!prepareEnv.isEmpty()){
+                        builder.environment().putAll(prepareEnv);
+                    }
+
+                    final var process = builder.start();
+                    final int exitCode = process.waitFor();
+                    if (exitCode != 0) {
+                        try (final var s = process.getErrorStream()) {
+                            throw new IllegalStateException("Can't obtain a token with '" + fullCommand + "': exitCode=" + exitCode + "\n" + new String(s.readAllBytes(), UTF_8));
+                        }
+                    }
+
+                    ExecCredentials output;
+                    try (final var response = process.getInputStream()) {
+                        output = jsonb.fromJson(response, ExecCredentials.class);
+                    }
+                    if (!"ExecCredential".equals(output.getKind()) ||
+                            output.getStatus() == null ||
+                            output.getStatus().getToken() == null) {
+                        throw new IllegalStateException("Invalid response: " + output);
+                    }
+
+                    last = new LastToken(
+                            output.getStatus().getToken(),
+                            output.getStatus().getExpirationTimestamp() == null ? now : output.getStatus().getExpirationTimestamp().minusSeconds(30).toInstant());
+
+                    return output.getStatus().getToken();
+                } catch (final IOException e) {
+                    throw new IllegalStateException("Can't obtain a token with '" + fullCommand + "'" +
+                            ofNullable(exec.getInstallHint()).map(v -> "\n" + v).orElse(""), e);
+                } catch (final InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(e);
+                } finally {
+                    lock.unlock();
+                }
+            }
+        };
     }
 
     private TrustManager[] findTrustManager(final KubeConfig.Cluster cluster, final byte[] certificateBytes)
@@ -807,6 +925,26 @@ public class DefaultHttpKubeClient implements HttpKubeClient, ConfigHolder {
                         .findFirst()
                         .orElse(null);
             }
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class LastToken {
+        private String value;
+        private Instant expiry;
+    }
+
+    @Data
+    public static class ExecCredentials {
+        private String kind;
+        private String apiVersion;
+        private Status status;
+
+        @Data
+        public static class Status {
+            private String token;
+            private OffsetDateTime expirationTimestamp;
         }
     }
 }

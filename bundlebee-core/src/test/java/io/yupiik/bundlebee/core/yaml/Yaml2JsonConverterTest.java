@@ -72,7 +72,8 @@ class Yaml2JsonConverterTest {
                 " clientCertificate=minikube/profiles/minikube/client.crt\n" +
                 " clientCertificateData=null\n" +
                 " clientKey=minikube/profiles/minikube/client.key\n" +
-                " clientKeyData=null))])")
+                " clientKeyData=null\n" +
+                " exec=null))])")
                 .split(","));
         final var expected = String.join("\n", loaded.toString().split(","));
         assertEquals(actual, expected);
