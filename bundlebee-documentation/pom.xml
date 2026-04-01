@@ -291,6 +291,12 @@
                 <githubToken>${minisite.githubToken}</githubToken>
               </configuration>
             </action>
+            <action>
+              <type>io.yupiik.bundlebee.documentation.K8sPublishMavenProjectGenerator</type>
+              <configuration>
+                <version>${project.version}</version>
+              </configuration>
+            </action>
           </preActions>
           <git>
             <ignore>true</ignore>
