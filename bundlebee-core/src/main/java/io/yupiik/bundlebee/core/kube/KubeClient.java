@@ -40,8 +40,10 @@ import javax.json.JsonValue;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbException;
 import javax.json.spi.JsonProvider;
+import javax.json.stream.JsonGenerator;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -218,7 +220,7 @@ public class KubeClient implements ConfigHolder {
         return api.execute(HttpRequest.newBuilder().GET(), "/api/v1/namespaces/" + namespace + "/secrets/" + name)
                 .thenApply(r -> {
                     if (r.statusCode() != 200) {
-                        throw new IllegalArgumentException("Can't read secret '" + namespace + "'/'" + name + "': " + r.body());
+                        throw new IllegalArgumentException("Can't read secret '" + namespace + "'/'" + name + "': " + tryFormat(r.body()));
                     }
                     return jsonb.fromJson(r.body().trim(), JsonObject.class);
                 });
@@ -228,7 +230,7 @@ public class KubeClient implements ConfigHolder {
         return api.execute(HttpRequest.newBuilder().GET(), "/api/v1/namespaces/" + namespace + "/serviceaccounts/" + name)
                 .thenApply(r -> {
                     if (r.statusCode() != 200) {
-                        throw new IllegalArgumentException("Can't read account '" + namespace + "'/'" + name + "': " + r.body());
+                        throw new IllegalArgumentException("Can't read account '" + namespace + "'/'" + name + "': " + tryFormat(r.body()));
                     }
                     return jsonb.fromJson(r.body().trim(), JsonObject.class);
                 });
@@ -483,7 +485,7 @@ public class KubeClient implements ConfigHolder {
 
                                         final var errorMessage = "" +
                                                 "Can't update " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                                response.body();
+                                                tryFormat(response.body());
                                         if (response.statusCode() == 422) { // try to get then update to forward the existing id
                                             return injectResourceVersionInDescriptor(desc, name, baseUri, errorMessage)
                                                     .thenCompose(descWithResourceVersion -> doUpdate(rawDesc, descWithResourceVersion, name, fieldManager, baseUri)
@@ -555,11 +557,27 @@ public class KubeClient implements ConfigHolder {
                     if (response.statusCode() != 201) {
                         throw new IllegalStateException(
                                 "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                        response.body());
+                                        tryFormat(response.body()));
                     }
                     log.info(() -> "Created " + name + " (" + kindLowerCased + ") successfully");
                     return completedStage(response);
                 });
+    }
+
+    private String tryFormat(final String body) {
+        JsonObject obj = null;
+        try {
+            obj = jsonb.fromJson(body, JsonObject.class);
+            final var mem = new StringWriter();
+            try (final var writer = jsonProvider.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true))
+                    .createWriter(mem))  {
+                writer.write(obj);
+            }
+            return mem.toString();
+        } catch (final RuntimeException re) {
+            // no-op
+        }
+        return body;
     }
 
     private JsonObject filterForApply(final String ref, final JsonObject desc, final String kind) {
