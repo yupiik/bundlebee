@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static io.yupiik.bundlebee.core.command.Executable.UNSET;
+import static java.util.Optional.ofNullable;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toMap;
@@ -111,7 +112,9 @@ public final class MojoGenerator {
                                             final var configProperty = it.getValue().getAnnotation(ConfigProperty.class);
                                             final var key = configProperty.name();
                                             final var defaultValue = configProperty.defaultValue();
-                                            final var desc = it.getValue().getAnnotation(Description.class).value();
+                                            final var desc = ofNullable(it.getValue().getAnnotation(Description.class))
+                                                    .map(Description::value)
+                                                    .orElseThrow(() -> new IllegalStateException("No @Description on " + it.getValue()));
                                             final var paramName = fromParameterToFieldName(prefix.matcher(key).replaceAll(""));
                                             return "" +
                                                     "    /**\n" +
@@ -166,7 +169,7 @@ public final class MojoGenerator {
                         Files.writeString(
                                 mojo,
                                 "/*\n" +
-                                        " * Copyright (c) 2021, 2022 - Yupiik SAS - https://www.yupiik.com\n" +
+                                        " * Copyright (c) 2021 - present - Yupiik SAS - https://www.yupiik.com\n" +
                                         " * Licensed under the Apache License, Version 2.0 (the \"License\");\n" +
                                         " * you may not use this file except in compliance\n" +
                                         " * with the License.  You may obtain a copy of the License at\n" +

@@ -21,8 +21,11 @@ import io.yupiik.bundlebee.core.test.CommandExecutor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
+import java.util.List;
+
 import static java.util.logging.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlaceholderExtractorCommandTest {
     @RegisterExtension
@@ -64,5 +67,39 @@ class PlaceholderExtractorCommandTest {
                 "Default: `with defaultvalue 2`.\n" +
                 "\n" +
                 "", logs);
+    }
+
+    @Test
+    void extractHelmValues(final CommandExecutor executor) {
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
+                "placeholder-extract", "--alveolus", "ApplyCommandTest.helm"));
+        assertTrue(logs.contains("\"name\":\"replicaCount\""), logs);
+        assertTrue(logs.contains("\"defaultValue\":\"1\""), logs);
+        assertTrue(logs.contains("\"name\":\"image.repository\""), logs);
+        assertTrue(logs.contains("\"defaultValue\":\"nginx\""), logs);
+        assertTrue(logs.contains("\"name\":\"image.tag\""), logs);
+        assertTrue(logs.contains("\"name\":\"image.pullPolicy\""), logs);
+        assertTrue(logs.contains("\"defaultValue\":\"IfNotPresent\""), logs);
+    }
+
+    @Test
+    void helmValuesSeenByObserver(final CommandExecutor executor) {
+        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
+                "placeholder-extract", "--alveolus", "ApplyCommandTest.helm"));
+
+        // The OnPlaceholder event is fired via CDI Event<OnPlaceholder>.fire() for each helm value.yaml leaf.
+        // The PlaceholderSpy (CDI @Observes) receives all events and forwards to registered consumers.
+        // The command's JSON output is produced from the collector that consumes spy-forwarded events,
+        // so its presence proves the CDI observer saw the helm leaf values.
+        final var expectedLeafValues = List.of(
+                "replicaCount", "image.repository", "image.tag", "image.pullPolicy");
+        for (final var name : expectedLeafValues) {
+            assertTrue(logs.contains("\"name\":\"" + name + "\""),
+                    "CDI observer should see '" + name + "' in: " + logs);
+        }
+        assertTrue(logs.contains("\"defaultValue\":\"1\""), "replicaCount default=1");
+        assertTrue(logs.contains("\"defaultValue\":\"nginx\""), "image.repository default=nginx");
+        assertTrue(logs.contains("\"defaultValue\":\"1.19\""), "image.tag default=1.19");
+        assertTrue(logs.contains("\"defaultValue\":\"IfNotPresent\""), "image.pullPolicy default=IfNotPresent");
     }
 }

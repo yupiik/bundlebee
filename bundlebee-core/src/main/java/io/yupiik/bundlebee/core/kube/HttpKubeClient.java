@@ -15,13 +15,14 @@
  */
 package io.yupiik.bundlebee.core.kube;
 
+import io.yupiik.bundlebee.lang.spi.NamespaceProvider;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.CompletionStage;
 
 // just an indirection to enable to override default client
-public interface HttpKubeClient {
+public interface HttpKubeClient extends NamespaceProvider {
     //
     // config
     //
@@ -32,7 +33,7 @@ public interface HttpKubeClient {
 
     String getBaseApi();
 
-    String getNamespace();
+    String namespace();
 
     KubeConfig getLoadedKubeConfig();
 

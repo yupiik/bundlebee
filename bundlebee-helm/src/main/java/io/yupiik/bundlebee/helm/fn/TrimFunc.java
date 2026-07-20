@@ -13,20 +13,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.yupiik.bundlebee.core.qualifier;
+package io.yupiik.bundlebee.helm.fn;
 
-import javax.inject.Qualifier;
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import io.yupiik.bundlebee.helm.HelmFunction;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.ElementType.METHOD;
-import static java.lang.annotation.ElementType.PARAMETER;
-import static java.lang.annotation.ElementType.TYPE;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.enterprise.context.Dependent;
 
-@Qualifier
-@Retention(RUNTIME)
-@Target({PARAMETER, TYPE, FIELD, METHOD})
-public @interface BundleBee {
+import io.yupiik.bundlebee.core.configuration.Description;
+
+@Dependent
+//metadata:start
+// category = String
+//metadata:end
+@Description("Trims whitespace from both sides of a string")
+public class TrimFunc implements HelmFunction {
+    @Override
+    public String name() {
+        return "trim";
+    }
+
+    @Override
+    public Object execute(final Object... args) {
+        if (args.length == 0 || args[0] == null) {
+            return "";
+        }
+        return args[0].toString().strip();
+    }
 }

@@ -40,7 +40,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.joining;

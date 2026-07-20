@@ -266,8 +266,9 @@ public class Manifest {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Descriptor {
-        @Description("Type of this descriptor. For now only `kubernetes` is supported. " +
-                "It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name.")
+        @Description("Type of this descriptor. For now only `kubernetes` and `helm` are supported. " +
+                "It also defines in which folder under `bundlebee` the descriptor(s) are looked for from its name. " +
+                "For `helm`, see xref:helm.adoc[Helm Support].")
         private String type = "kubernetes";
 
         @Description("Name of the descriptor to install. For kubernetes descriptors you can omit the `.yaml` extension.")
@@ -275,6 +276,10 @@ public class Manifest {
 
         @Description("Optional, if coming from another manifest, the dependency to download to get the alveolus.")
         private String location;
+
+        @Description("Helm chart configuration. Only used when `type` is `helm`. " +
+                "Points to a local Helm chart directory path. See xref:helm.adoc[Helm Support] for details.")
+        private HelmConfig helm;
 
         @Description("" +
                 "If set to `true`, apply/delete commands will await the actual creation of the resource (`GET /x` returns a HTTP 200) before continuing to process next resources. " +
@@ -350,5 +355,29 @@ public class Manifest {
     public static class IgnoredLintingRule {
         @Description("Name of the rule to ignore.")
         private String name;
+    }
+
+    @Data
+    public static class HelmConfig {
+        @Description("Path or URI to the Helm chart. Can be a local path, http/https URI to a tgz, or oci:// URI.")
+        private String chart;
+
+        @Description("Release name for the Helm context. Defaults to the alveolus name if not set.")
+        private String releaseName;
+
+        @Description("Release namespace for the Helm context. Defaults to the current kubernetes namespace.")
+        private String releaseNamespace;
+
+        @Description("Username for remote chart authentication. Password can use maven:serverId syntax.")
+        private String username;
+
+        @Description("Password for remote chart authentication. Can start with maven:xxxx to use Maven server credentials.")
+        private String password;
+
+        @Description("Whether to resolve Chart.yaml dependencies. Defaults to true.")
+        private Boolean resolveDependencies = true;
+
+        @Description("List of template relative paths to ignore (e.g. NOTES.txt).")
+        private List<String> ignoredDescriptors;
     }
 }

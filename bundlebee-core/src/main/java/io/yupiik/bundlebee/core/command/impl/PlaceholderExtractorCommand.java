@@ -17,7 +17,9 @@ package io.yupiik.bundlebee.core.command.impl;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.event.OnPlaceholder;
+import io.yupiik.bundlebee.helm.HelmChartLoader;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.java.Log;
@@ -25,6 +27,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.Dependent;
+import javax.enterprise.event.Event;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 import javax.json.JsonArrayBuilder;
@@ -36,7 +39,9 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.UUID;
@@ -138,6 +143,12 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
     @Inject
     private PlaceholderSpy placeholderSpy;
 
+    @Inject
+    private HelmChartLoader helmChartLoader;
+
+    @Inject
+    private Event<OnPlaceholder> onPlaceholderEvent;
+
     @Override
     public String name() {
         return "placeholder-extract";
@@ -192,6 +203,13 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
         placeholderSpy.getListener().add(consumer);
         return doExecute(from, manifest, alveolus, descriptor, id)
                 .thenAccept(data -> {
+                    // Extract placeholders from helm chart values.yaml for helm descriptors
+                    data.getDescriptors().values().stream()
+                            .flatMap(List::stream)
+                            .filter(desc -> "helm".equals(desc.getConfiguration().getType()))
+                            .filter(desc -> desc.getConfiguration().getHelm() != null)
+                            .forEach(desc -> extractHelmPlaceholders(desc, id));
+
                     final var placeholders = collector.stream()
                             .collect(groupingBy(OnPlaceholder::getName)).entrySet().stream()
                             .map(e -> {
@@ -345,6 +363,37 @@ public class PlaceholderExtractorCommand extends VisitorCommand {
             return defaultValue.replace("\n", "\\\n");
         }
         return defaultValue;
+    }
+
+    private void extractHelmPlaceholders(final AlveolusHandler.LoadedDescriptor desc, final String id) {
+        final var helmConfig = desc.getConfiguration().getHelm();
+        final var rawPath = Path.of(helmConfig.getChart());
+        final var chartPath = rawPath.isAbsolute() ? rawPath : Path.of("").toAbsolutePath().resolve(helmConfig.getChart());
+        helmChartLoader.load(chartPath)
+                .whenComplete((chart, error) -> {
+                    if (error != null) {
+                        log.warning(() -> "Failed to load helm chart values from '" + chartPath + "': " + error.getMessage());
+                        return;
+                    }
+                    final var values = chart.getValues();
+                    if (values != null) {
+                        flattenValues(values, "", id);
+                    }
+                });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void flattenValues(final Map<String, Object> values, final String prefix, final String id) {
+        for (final var entry : values.entrySet()) {
+            final var key = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+            final var value = entry.getValue();
+            if (value instanceof Map) {
+                flattenValues((Map<String, Object>) value, key, id);
+            } else {
+                final var stringValue = value == null ? null : value.toString();
+                onPlaceholderEvent.fire(new OnPlaceholder(key, stringValue, stringValue, id));
+            }
+        }
     }
 
     private void doWrite(final String what, final Supplier<Path> location, final Supplier<String> contentProvider) {

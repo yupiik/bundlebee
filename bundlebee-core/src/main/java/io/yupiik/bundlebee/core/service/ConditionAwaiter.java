@@ -36,7 +36,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.anyOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;

@@ -65,7 +65,7 @@ import java.util.logging.Level;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
 import static java.util.Locale.ROOT;
 import static java.util.Optional.empty;
 import static java.util.Optional.ofNullable;
@@ -264,7 +264,7 @@ public class KubeClient implements ConfigHolder {
     private CompletionStage<HttpResponse<String>> doGet(final JsonObject desc, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.namespace();
         final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
         return api.execute(HttpRequest.newBuilder().GET().header("Accept", "application/json"), baseUri + "/" + name);
     }
@@ -370,7 +370,7 @@ public class KubeClient implements ConfigHolder {
     private CompletionStage<?> doDelete(final JsonObject desc, final int gracePeriod, final String kindLowerCased) {
         final var metadata = desc.getJsonObject("metadata");
         final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.namespace();
         log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ")" +
                 (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
 
@@ -432,7 +432,7 @@ public class KubeClient implements ConfigHolder {
                                                           final boolean skipGet) {
         final var metadata = preparedDesc.getJsonObject("metadata");
         final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.getNamespace();
+        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.namespace();
         log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ")" +
                 (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
 

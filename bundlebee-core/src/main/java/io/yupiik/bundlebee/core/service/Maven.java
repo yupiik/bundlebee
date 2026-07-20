@@ -16,8 +16,9 @@
 package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import io.yupiik.bundlebee.lang.spi.PasswordResolver;
+import io.yupiik.bundlebee.core.lang.ConfigHolder;
 import io.yupiik.tools.codec.simple.SimpleCodec;
 import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
 import lombok.Data;
@@ -79,7 +80,7 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Log
 @ApplicationScoped
-public class Maven implements ConfigHolder {
+public class Maven implements ConfigHolder, PasswordResolver {
     private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
     @Inject
@@ -211,6 +212,11 @@ public class Maven implements ConfigHolder {
         }
 
         return ofNullable(extractor.server);
+    }
+
+    @Override
+    public Optional<String> resolveServerPassword(final String serverId) {
+        return findServerPassword(serverId).map(Server::getPassword);
     }
 
     public CompletionStage<Path> findOrDownload(final String url) {

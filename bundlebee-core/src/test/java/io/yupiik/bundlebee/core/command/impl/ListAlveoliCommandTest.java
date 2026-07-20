@@ -37,6 +37,7 @@ class ListAlveoliCommandTest {
                 "- ApplyCommandTest.applyAwaitCondition\n" +
                 "- ApplyCommandTest.applyAwaitConditionFailure\n" +
                 "- ApplyCommandTest.fromTemplate\n" +
+                "- ApplyCommandTest.helm\n" +
                 "- ApplyCommandTest.includeIfPatch\n" +
                 "- ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate\n" +
                 "- ApplyCommandTest.template\n" +
@@ -44,6 +45,7 @@ class ListAlveoliCommandTest {
                 "- ApplyCommandTest.withexclude\n" +
                 "- ApplyCommandTest.withsamedep\n" +
                 "- DeleteCommandTest.deleteMaven\n" +
+                "- DeleteCommandTest.helm\n" +
                 "- RollbackCommandTest.first\n" +
                 "- RollbackCommandTest.second\n" +
                 "- customContentType\n" +

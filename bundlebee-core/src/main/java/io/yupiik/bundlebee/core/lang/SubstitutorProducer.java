@@ -206,7 +206,7 @@ public class SubstitutorProducer {
                                   final String placeholder, final String id) {
         try {
             if (placeholder.equals("bundlebee-kubernetes-namespace")) {
-                return httpKubeClient.getNamespace();
+                return httpKubeClient.namespace();
             }
             if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs-content:")) {
                 final var delegate = doSubstitute(

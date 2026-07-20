@@ -38,6 +38,17 @@
 
   <dependencies>
     <dependency>
+      <groupId>io.yupiik</groupId>
+      <artifactId>bundlebee-lang</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik</groupId>
+      <artifactId>bundlebee-helm</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.apache.geronimo.arthur</groupId>
       <artifactId>arthur-api</artifactId>
       <version>${arthur.version}</version>
@@ -45,25 +56,27 @@
     </dependency>
 
     <dependency> <!-- todo: replace it by something lighter without the mapping feature? -->
+      <groupId>org.openjdk.nashorn</groupId>
+      <artifactId>nashorn-core</artifactId>
+      <version>15.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>2.0</version>
     </dependency>
 
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-jcdi_2.0_spec</artifactId>
-      <version>1.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-annotation_1.3_spec</artifactId>
-      <version>1.3</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
       <artifactId>geronimo-atinject_1.0_spec</artifactId>
-      <version>1.2</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
@@ -73,7 +86,6 @@
     <dependency>
       <groupId>org.eclipse.microprofile.config</groupId>
       <artifactId>microprofile-config-api</artifactId>
-      <version>1.4</version>
     </dependency>
     <dependency>
       <groupId>org.apache.geronimo.specs</groupId>
@@ -109,19 +121,6 @@
       <version>${yupiik-tools.version}</version>
     </dependency>
 
-    <dependency> <!-- for now experimental (we bridged the plain placeholder to hb) -->
-      <groupId>io.yupiik.fusion</groupId>
-      <artifactId>fusion-handlebars</artifactId>
-      <version>1.0.16</version>
-      <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>io.yupiik.fusion</groupId>
-          <artifactId>fusion-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.openwebbeans</groupId>
       <artifactId>openwebbeans-junit5</artifactId>
@@ -129,10 +128,16 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.openjdk.nashorn</groupId>
-      <artifactId>nashorn-core</artifactId>
-      <version>15.4</version>
-      <scope>test</scope>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-handlebars</artifactId>
+      <version>1.0.16</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>io.yupiik.fusion</groupId>
+          <artifactId>fusion-json</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.talend.sdk.component</groupId>

@@ -18,6 +18,8 @@ package io.yupiik.bundlebee.core.service;
 import io.yupiik.bundlebee.core.configuration.ThreadLocalConfigSource;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.event.OnPrepareDescriptor;
+import io.yupiik.bundlebee.helm.HelmChartDownloader;
+import io.yupiik.bundlebee.helm.HelmRenderer;
 import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
@@ -61,9 +63,9 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.handled;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
+import static io.yupiik.bundlebee.lang.CompletionFutures.handled;
 import static java.util.Collections.list;
 import static java.util.Locale.ROOT;
 import static java.util.Objects.requireNonNull;
@@ -107,6 +109,12 @@ public class AlveolusHandler {
 
     @Inject
     private RequirementService requirementService;
+
+    @Inject
+    private HelmRenderer helmRenderer;
+
+    @Inject
+    private HelmChartDownloader helmChartDownloader;
 
     @Inject
     private Event<OnPrepareDescriptor> onPrepareDescriptorEvent;
@@ -490,9 +498,12 @@ public class AlveolusHandler {
     }
 
     private CompletionStage<LoadedDescriptor> findDescriptor(final Manifest.Descriptor desc,
-                                                             final ArchiveReader.Cache cache,
-                                                             final String id) {
+                                                              final ArchiveReader.Cache cache,
+                                                              final String id) {
         final var type = ofNullable(desc.getType()).orElse("kubernetes");
+        if ("helm".equals(type)) {
+            return handleHelmDescriptor(desc, id);
+        }
         final var resource = String.join("/", "bundlebee", type, desc.getName() + findExtension(desc.getName(), type));
         return handled(() -> ofNullable(Thread.currentThread().getContextClassLoader().getResource(resource))
                 .map(url -> {
@@ -524,8 +535,47 @@ public class AlveolusHandler {
                 }));
     }
 
+    private CompletionStage<LoadedDescriptor> handleHelmDescriptor(final Manifest.Descriptor desc, final String id) {
+        final var helmConfig = desc.getHelm();
+        if (helmConfig == null || helmConfig.getChart() == null) {
+            throw new IllegalArgumentException("Helm descriptor '" + desc.getName() + "' requires a 'helm.chart' path");
+        }
+
+        final var chart = helmConfig.getChart();
+
+        // Check if chart is a URI
+        if (chart.startsWith("http://") || chart.startsWith("https://") || chart.startsWith("oci://") || chart.startsWith("file://")) {
+            return helmChartDownloader.resolve(chart, helmConfig.getUsername(), helmConfig.getPassword())
+                    .thenCompose(chartPath -> renderHelm(desc, helmConfig, chartPath));
+        }
+
+        // Local path - resolve relative to working directory
+        final var localPath = Path.of(chart);
+        final var chartPath = localPath.isAbsolute() ? localPath : Path.of("").toAbsolutePath().resolve(chart);
+        return renderHelm(desc, helmConfig, chartPath);
+    }
+
+    private CompletionStage<LoadedDescriptor> renderHelm(final Manifest.Descriptor desc,
+                                                          final Manifest.HelmConfig helmConfig,
+                                                          final Path chartPath) {
+        return helmRenderer.render(
+                        chartPath.toString(),
+                        Map.of(),
+                        helmConfig.getReleaseName(),
+                        helmConfig.getReleaseNamespace(),
+                        helmConfig.getResolveDependencies(),
+                        helmConfig.getIgnoredDescriptors())
+                .thenApply(rendered -> {
+                    final var content = String.join("\n---\n", rendered);
+                    return new LoadedDescriptor(
+                            desc, content, "yaml",
+                            chartPath.toUri().toASCIIString(),
+                            "helm:" + helmConfig.getChart());
+                });
+    }
+
     private Map<Predicate<String>, Manifest.Patch> mergePatches(final Map<Predicate<String>, Manifest.Patch> patches,
-                                                                final List<Manifest.Patch> newPatches) {
+                                                                 final List<Manifest.Patch> newPatches) {
         final var result = new HashMap<>(patches);
         newPatches.forEach(p -> result.put(toPredicate(p.getDescriptorName()), p));
         return result;
@@ -641,6 +691,9 @@ public class AlveolusHandler {
             }
             // yaml is the most common even if we would like json....
             return ".yaml";
+        }
+        if ("helm".equals(type)) {
+            return ""; // helm descriptors don't use file extensions
         }
         throw new IllegalArgumentException("Unsupported type: '" + type + "'");
     }
