@@ -42,8 +42,8 @@ import java.util.concurrent.CompletionStage;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 

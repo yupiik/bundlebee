@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2021 - present - Yupiik SAS - https://www.yupiik.com
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+    KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>io.yupiik</groupId>
+    <artifactId>bundlebee</artifactId>
+    <version>1.0.33-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>bundlebee-helm</artifactId>
+  <name>BundleBee :: Helm</name>
+  <description>Helm chart loading, rendering, and Go template engine for BundleBee.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.yupiik</groupId>
+      <artifactId>bundlebee-lang</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jcdi_2.0_spec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-atinject_1.0_spec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-annotation_1.3_spec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.microprofile.config</groupId>
+      <artifactId>microprofile-config-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-json_1.1_spec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.geronimo.specs</groupId>
+      <artifactId>geronimo-jsonb_1.0_spec</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>io.yupiik.logging</groupId>
+      <artifactId>yupiik-logging-jul</artifactId>
+      <version>${yupiik-logging.version}</version>
+    </dependency>
+
+    <dependency> <!-- optional for remote helm chart support (tar.gz extraction) -->
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
+      <optional>true</optional>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.talend.sdk.component</groupId>
+      <artifactId>component-runtime-http-junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-jdk14</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.johnzon</groupId>
+      <artifactId>johnzon-jsonb</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

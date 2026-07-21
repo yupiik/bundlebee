@@ -82,7 +82,7 @@ public class OperatorLoop {
 
                     final var request = client.prepareRequest(
                             HttpRequest.newBuilder().header("Accept", "application/json"),
-                            "/apis/bundlebee.yupiik.io/v1/namespaces/" + client.getNamespace() + "/alveoli?" +
+                            "/apis/bundlebee.yupiik.io/v1/namespaces/" + client.namespace() + "/alveoli?" +
                                     "watch=true&" +
                                     "includeUninitialized=false&" +
                                     "allowWatchBookmarks=true&" +
@@ -204,7 +204,7 @@ public class OperatorLoop {
         try {
             if (client.execute(
                             HttpRequest.newBuilder().header("Accept", "application/json"),
-                            "/apis/bundlebee.yupiik.io/v1/namespaces/" + client.getNamespace() + "/alveoli?limit=1")
+                            "/apis/bundlebee.yupiik.io/v1/namespaces/" + client.namespace() + "/alveoli?limit=1")
                     .toCompletableFuture()
                     .get()
                     .statusCode() != 200) {

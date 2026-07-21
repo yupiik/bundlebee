@@ -25,7 +25,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
+import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;

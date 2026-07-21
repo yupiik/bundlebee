@@ -458,7 +458,7 @@ public class DiffCommand extends VisitorCommand {
                             .orElse(EMPTY_JSON_OBJECT);
                     return new Item(
                             obj.getString("kind", "unknown"),
-                            metadata.getString("namespace", httpK8s.getNamespace()),
+                            metadata.getString("namespace", httpK8s.namespace()),
                             metadata.getString("name"),
                             obj, collected.getAlveoli().get(desc.getKey()), desc.getValue());
                 });

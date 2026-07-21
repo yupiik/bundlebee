@@ -60,7 +60,7 @@ import java.util.stream.Collector;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
 import static java.util.Comparator.comparing;
 import static java.util.Optional.ofNullable;
 import static java.util.concurrent.CompletableFuture.completedFuture;

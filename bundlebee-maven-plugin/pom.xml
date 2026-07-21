@@ -29,7 +29,7 @@
   <name>BundleBee :: Maven Plugin</name>
 
   <properties>
-    <mvn.version>3.9.9</mvn.version>
+    <mvn.version>3.9.15</mvn.version>
     <mvn-plugin.version>3.15.1</mvn-plugin.version>
   </properties>
 
@@ -67,6 +67,10 @@
       <groupId>${project.groupId}</groupId>
       <artifactId>bundlebee-core</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-compress</artifactId>
     </dependency>
   </dependencies>
 

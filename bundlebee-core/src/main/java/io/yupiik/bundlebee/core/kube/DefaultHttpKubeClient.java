@@ -305,6 +305,11 @@ public class DefaultHttpKubeClient implements HttpKubeClient, ConfigHolder {
     }
 
     @Override
+    public String namespace() {
+        return getNamespace();
+    }
+
+    @Override
     public CompletionStage<HttpResponse<String>> execute(final HttpRequest.Builder builder, final String urlOrPath) {
         return client.sendAsync(
                 prepareRequest(builder, urlOrPath),

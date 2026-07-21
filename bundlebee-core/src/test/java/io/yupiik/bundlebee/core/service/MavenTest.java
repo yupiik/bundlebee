@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SetSystemProperty implements BeforeAllCallback, AfterAllCallback {
     @Override
-    public void beforeAll(ExtensionContext context) {
+    public void beforeAll(final ExtensionContext context) {
         System.setProperty("bundlebee.maven.cache", System.getProperty("m2.location", "auto"));
         System.setProperty("bundlebee.maven.repositories.downloads.enabled", "true");
         System.setProperty("bundlebee.maven.repositories.snapshot", "https://oss.sonatype.org/content/repositories/snapshots/");

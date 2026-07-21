@@ -43,8 +43,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.toList;
 
@@ -186,7 +186,7 @@ public class DeleteCommand implements CompletingExecutable {
                 .add("apiVersion", "v1")
                 .add("kind", "Secret")
                 .add("metadata", json.createObjectBuilder()
-                        .add("namespace", api.getNamespace())
+                        .add("namespace", api.namespace())
                         .add("name", secretName))
                 .build();
         return kube

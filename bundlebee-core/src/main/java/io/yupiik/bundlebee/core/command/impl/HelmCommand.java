@@ -51,7 +51,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
+import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;

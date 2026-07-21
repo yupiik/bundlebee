@@ -218,6 +218,39 @@
       ]
     },
     {
+      "name": "ApplyCommandTest.helm",
+      "descriptors": [
+        {
+          "type": "helm",
+          "name": "helm-test-chart",
+          "helm": {
+            "chart": "src/test/resources/helm/test-chart",
+            "releaseName": "e2e-release",
+            "releaseNamespace": "default"
+          }
+        }
+      ]
+    },
+    {
+      "name": "DeleteCommandTest.helm",
+      "descriptors": [
+        {
+          "type": "helm",
+          "name": "helm-test-chart",
+          "helm": {
+            "chart": "src/test/resources/helm/test-chart",
+            "releaseName": "e2e-delete",
+            "releaseNamespace": "default"
+          }
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "ApplyCommandTest.helm"
+        }
+      ]
+    },
+    {
       "name": "RollbackCommandTest.second",
       "version":"1.2.4",
       "descriptors": [

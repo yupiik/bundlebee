@@ -13,16 +13,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package io.yupiik.bundlebee.core.configuration;
+package io.yupiik.bundlebee.helm.fn;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
+import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
 
-import static java.lang.annotation.ElementType.FIELD;
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import javax.enterprise.context.Dependent;
 
-@Target(FIELD)
-@Retention(RUNTIME)
-public @interface Description {
-    String value();
+@Dependent
+//metadata:start
+// category = Other
+//metadata:end
+@Description("Prints a value as a string")
+public class PrintFunc implements HelmFunction {
+    @Override
+    public String name() {
+        return "print";
+    }
+
+    @Override
+    public Object execute(final Object... args) {
+        if (args == null || args.length < 1 || args[0] == null) {
+            return "";
+        }
+        return args[0].toString();
+    }
 }

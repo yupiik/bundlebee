@@ -44,8 +44,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.all;
-import static io.yupiik.bundlebee.core.lang.CompletionFutures.chain;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
+import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
 import static java.util.Locale.ROOT;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.logging.Level.SEVERE;
@@ -181,7 +181,7 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
                             .add("apiVersion", "v1")
                             .add("kind", "Secret")
                             .add("metadata", json.createObjectBuilder()
-                                    .add("namespace", api.getNamespace())
+                                    .add("namespace", api.namespace())
                                     .add("name", stateName))
                             .build())
                     .thenApply(r -> {
@@ -232,7 +232,7 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
                                     .add("apiVersion", "v1")
                                     .add("kind", "Secret")
                                     .add("metadata", json.createObjectBuilder()
-                                            .add("namespace", api.getNamespace())
+                                            .add("namespace", api.namespace())
                                             .add("name", stateName))
                                     .add("data", json.createObjectBuilder()
                                             .add("state", Base64.getEncoder().encodeToString(jsonb.toJson(state).getBytes(StandardCharsets.UTF_8))))
@@ -293,7 +293,7 @@ public class ApplyCommand extends BaseLabelEnricherCommand implements Completing
                                         final var metadata = json.getJsonObject("metadata");
                                         final var name = metadata.getString("name");
                                         final var namespace = metadata.containsKey("namespace") ?
-                                                metadata.getString("namespace") : api.getNamespace();
+                                                metadata.getString("namespace") : api.namespace();
                                         final var kindLowerCased = json.getString("kind").toLowerCase(ROOT) + 's';
                                         state.getResources().add(new State.Resource(kube.toBaseUri(json, kindLowerCased, namespace) + '/' + name));
                                     }

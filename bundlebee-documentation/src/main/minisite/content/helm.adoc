@@ -1,0 +1,144 @@
+= Helm Support
+:minisite-index: 350
+:minisite-index-title: Helm
+:minisite-index-description: Using Helm charts with Bundlebee.
+:minisite-index-icon: cube
+
+Bundlebee supports consuming local Helm charts as descriptors, rendering them with a Java-native Go template engine and deploying the resulting Kubernetes resources.
+
+== Quick Start
+
+=== Define a Helm descriptor in your manifest
+
+[source,json]
+----
+{
+  "alveoli": [
+    {
+      "name": "my-app",
+      "descriptors": [
+        {
+          "type": "helm",
+          "name": "my-chart",
+          "helm": {
+            "chart": "path/to/chart",
+            "releaseName": "my-release",
+            "releaseNamespace": "default"
+          }
+        }
+      ]
+    }
+  ]
+}
+----
+
+=== Apply it
+
+[source,bash]
+----
+bundlebee apply --alveolus my-app
+----
+
+The Helm chart is rendered locally using the Java Go template engine and the resulting YAML documents are applied to Kubernetes as regular descriptors.
+
+== Configuration
+
+[cols="1,1,3", options="header"]
+|===
+| Field | Type | Description
+
+| `type`
+| string
+| Must be set to `helm`.
+
+| `name`
+| string
+| Name of this descriptor (used for tracking and logging).
+
+| `helm.chart`
+| string
+| Path to the Helm chart directory (relative to manifest or absolute), or an HTTP/HTTPS URI to a `.tgz` archive.
+
+| `helm.releaseName`
+| string
+| Release name for the Helm context. Defaults to the alveolus name if not set.
+
+| `helm.releaseNamespace`
+| string
+| Release namespace for the Helm context. Defaults to the current Kubernetes namespace.
+
+| `helm.username`
+| string
+| Username for remote chart authentication.
+
+| `helm.password`
+| string
+| Password for remote chart authentication. Can use `maven:serverId` syntax to read from Maven `settings.xml`.
+
+| `helm.resolveDependencies`
+| boolean
+| Whether to resolve `Chart.yaml` dependencies. Defaults to `true`. Downloads sub-charts from their configured repositories.
+
+| `helm.ignoredDescriptors`
+| string[]
+| List of template file names or relative paths to skip during rendering (e.g. `NOTES.txt`).
+|===
+
+== How It Works
+
+1. Bundlebee reads the chart's `Chart.yaml`, `values.yaml`, and template files.
+2. If `Chart.yaml` declares `dependencies`, they are resolved from their configured repositories and downloaded into the `charts/` subdirectory.
+3. Subchart templates and helpers are loaded and available for `include` calls.
+4. The Java-native Go template engine renders each template with the provided release context and any value overrides.
+5. Defines in `_helpers.tpl` (main chart and subcharts) are extracted and available for `include` calls.
+6. The rendered YAML documents are applied to Kubernetes using the standard apply flow.
+
+== Supported Go Template Features
+
+* Variable resolution: `.Values.*`, `.Chart.*`, `.Release.*`, `.Capabilities.*`
+* Pipeline syntax: `{{ .val | func arg }}`
+* Conditional blocks: `{{ if }}`, `{{ else }}`, `{{ end }}`
+* Loop constructs: `{{ range }}`, `{{ with }}`
+* Template defines: `{{ define "name" }}`, `{{ template "name" }}`, `{{ include "name" }}`
+* Whitespace trimming: `{{-` and `-}}`
+* Comments: `{{/* ... */}}`
+
+== Built-in Functions
+
+include::{partialsdir}/generated/documentation/helm.functions.adoc[]
+
+== Placeholder Overrides
+
+You can override Helm values using the standard Bundlebee placeholder mechanism:
+
+[source,json]
+----
+{
+  "alveoli": [
+    {
+      "name": "my-app",
+      "placeholders": {
+        "service.type": "LoadBalancer",
+        "service.port": "8080"
+      },
+      "descriptors": [
+        {
+          "type": "helm",
+          "name": "my-chart",
+          "helm": {
+            "chart": "path/to/chart",
+            "releaseName": "my-release"
+          }
+        }
+      ]
+    }
+  ]
+}
+----
+
+== Limitations
+
+* The Java Go template engine is a reimplementation; some edge cases may differ from the official `helm` CLI.
+* OCI registry (`oci://`) is not yet supported as a remote chart source.
+* Recursive dependency resolution (nested dependencies in subcharts) is not supported; dependencies must be declared in the root `Chart.yaml`.
+
