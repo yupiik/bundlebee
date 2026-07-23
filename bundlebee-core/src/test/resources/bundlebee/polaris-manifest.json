@@ -1,0 +1,19 @@
+{
+  "alveoli": [
+    {
+      "name": "polaris-test",
+      "descriptors": [
+        {
+          "type": "helm",
+          "name": "polaris",
+          "helm": {
+            "chart": "https://archive.apache.org/dist/polaris/helm-chart/1.6.0/polaris-1.6.0.tgz",
+            "releaseName": "polaris",
+            "releaseNamespace": "polaris",
+            "resolveDependencies": false
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -21,6 +21,7 @@ import javax.enterprise.context.Dependent;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 @Dependent
@@ -29,6 +30,8 @@ import org.yaml.snakeyaml.Yaml;
 //metadata:end
 @Description("Encodes a value to YAML")
 public class ToYamlFunc implements HelmFunction {
+    private volatile Yaml yaml;
+
     @Override
     public String name() {
         return "toYaml";
@@ -39,6 +42,22 @@ public class ToYamlFunc implements HelmFunction {
         if (args == null || args.length < 1 || args[0] == null) {
             return "null";
         }
-        return new Yaml().dump(args[0]);
+        return yaml().dump(args[0]);
+    }
+
+    private Yaml yaml() {
+        if (yaml == null) {
+            synchronized (this) {
+                if (yaml == null) {
+                    final var options = new DumperOptions();
+                    options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+                    options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
+                    options.setIndent(2);
+                    options.setProcessComments(false);
+                    yaml = new Yaml(options);
+                }
+            }
+        }
+        return yaml;
     }
 }

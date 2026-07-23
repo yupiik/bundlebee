@@ -16,6 +16,8 @@
 package io.yupiik.bundlebee.helm;
 
 import io.yupiik.bundlebee.helm.test.http.SpyingResponseLocator;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.talend.sdk.component.junit.http.api.HttpApiHandler;
@@ -205,44 +207,25 @@ class HelmChartDownloaderTest {
         final var baos = new ByteArrayOutputStream();
         final var gzos = new GZIPOutputStream(baos);
 
-        // Use commons-compress via reflection
-        final var tarArchiveOutputStreamClass = Class.forName(
-                "org.apache.commons.compress.archivers.tar.TarArchiveOutputStream");
-        final var tarEntryClass = Class.forName("org.apache.commons.compress.archivers.tar.TarArchiveEntry");
-        final var setSizeMethod = tarEntryClass.getMethod("setSize", long.class);
+        try (final var tarOutput = new TarArchiveOutputStream(gzos)) {
+            // Add Chart.yaml
+            final var chartYamlBytes = chartYaml.getBytes(StandardCharsets.UTF_8);
+            final var chartYamlEntry = new TarArchiveEntry(chartName + "/Chart.yaml");
+            chartYamlEntry.setSize(chartYamlBytes.length);
+            tarOutput.putArchiveEntry(chartYamlEntry);
+            tarOutput.write(chartYamlBytes);
+            tarOutput.closeArchiveEntry();
 
-        final var tarOutput = tarArchiveOutputStreamClass
-                .getConstructor(java.io.OutputStream.class)
-                .newInstance(gzos);
+            // Add deployment.yaml
+            final var deploymentBytes = deploymentYaml.getBytes(StandardCharsets.UTF_8);
+            final var deploymentEntry = new TarArchiveEntry(chartName + "/templates/deployment.yaml");
+            deploymentEntry.setSize(deploymentBytes.length);
+            tarOutput.putArchiveEntry(deploymentEntry);
+            tarOutput.write(deploymentBytes);
+            tarOutput.closeArchiveEntry();
 
-        // Add Chart.yaml
-        final var chartYamlBytes = chartYaml.getBytes(StandardCharsets.UTF_8);
-        final var chartYamlEntry = tarEntryClass.getConstructor(String.class)
-                .newInstance(chartName + "/Chart.yaml");
-        setSizeMethod.invoke(chartYamlEntry, (long) chartYamlBytes.length);
-        tarArchiveOutputStreamClass.getMethod("putArchiveEntry", tarEntryClass)
-                .invoke(tarOutput, chartYamlEntry);
-        tarArchiveOutputStreamClass.getMethod("write", byte[].class)
-                .invoke(tarOutput, chartYamlBytes);
-        tarArchiveOutputStreamClass.getMethod("closeArchiveEntry")
-                .invoke(tarOutput);
-
-        // Add deployment.yaml
-        final var deploymentBytes = deploymentYaml.getBytes(StandardCharsets.UTF_8);
-        final var deploymentEntry = tarEntryClass.getConstructor(String.class)
-                .newInstance(chartName + "/templates/deployment.yaml");
-        setSizeMethod.invoke(deploymentEntry, (long) deploymentBytes.length);
-        tarArchiveOutputStreamClass.getMethod("putArchiveEntry", tarEntryClass)
-                .invoke(tarOutput, deploymentEntry);
-        tarArchiveOutputStreamClass.getMethod("write", byte[].class)
-                .invoke(tarOutput, deploymentBytes);
-        tarArchiveOutputStreamClass.getMethod("closeArchiveEntry")
-                .invoke(tarOutput);
-
-        tarArchiveOutputStreamClass.getMethod("finish")
-                .invoke(tarOutput);
-        tarArchiveOutputStreamClass.getMethod("close")
-                .invoke(tarOutput);
+            tarOutput.finish();
+        }
 
         return baos.toByteArray();
     }

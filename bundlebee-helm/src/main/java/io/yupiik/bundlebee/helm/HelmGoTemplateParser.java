@@ -22,6 +22,7 @@ import io.yupiik.bundlebee.helm.HelmGoTemplateNode.BlockNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.BoolNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.DefineNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.FunctionCallNode;
+import io.yupiik.bundlebee.helm.HelmGoTemplateNode.IdentifierNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.IfNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.IndexNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.ListNode;
@@ -38,11 +39,27 @@ import io.yupiik.bundlebee.helm.HelmGoTemplateNode.WithNode;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.stream.Collectors.toList;
-
 /**
- * Recursive-descent parser for Go template syntax.
- * Produces an AST from a list of tokens.
+ * Recursive-descent parser for Go template syntax, aligned with Go's text/template/parse/parse.go.
+ *
+ * Grammar (from Go source):
+ * <pre>
+ * Body = { action } .
+ * Action = "{{" -? Pipeline -? "}}" .
+ * Pipeline = VarDecl? Command { "|" Command } .
+ * VarDecl = "$" identifier (":=" | "=") .
+ * Command = Operand { Space Operand } .
+ * Operand = Field | Variable | dot | term { Field } .
+ * Term = Number | String | nil | Boolean | '.' | '(' Pipeline ')' | Function .
+ * Field = "." identifier .
+ * Function = identifier .
+ * </pre>
+ *
+ * Key alignment with Go:
+ * - RIGHT_DELIM terminates pipelines (Go: itemRightDelim is the end token)
+ * - SPACE tokens separate command arguments (Go: command() checks for itemSpace)
+ * - FIELD tokens for .field access (Go: itemField)
+ * - DECLARE (:=) vs ASSIGN (=) (Go: itemDeclare vs itemAssign)
  */
 public class HelmGoTemplateParser {
 
@@ -55,10 +72,17 @@ public class HelmGoTemplateParser {
     }
 
     public List<HelmGoTemplateNode> parse() {
-        return parseBody(List.of());
+        return parseBody();
     }
 
-    private List<HelmGoTemplateNode> parseBody(final List<TokenType> stopTokens) {
+    // Body = { action } .
+    // Actions are delimited by LEFT_DELIM/RIGHT_DELIM.
+    // Between actions, we have TEXT tokens.
+    private List<HelmGoTemplateNode> parseBody() {
+        return parseBodyUntil(null);
+    }
+
+    private List<HelmGoTemplateNode> parseBodyUntil(final TokenType stopToken) {
         final var nodes = new ArrayList<HelmGoTemplateNode>();
         while (pos < tokens.size()) {
             final var token = tokens.get(pos);
@@ -69,276 +93,512 @@ public class HelmGoTemplateParser {
                 pos++;
                 continue;
             }
-            if (stopTokens.contains(token.getType())) {
-                break;
+            if (token.getType() == TokenType.LEFT_DELIM) {
+                pos++;
+                if (parseActionBody(nodes, stopToken)) {
+                    return nodes;
+                }
+                continue;
             }
-            if (token.getType() == TokenType.IF) {
-                nodes.add(parseIf());
-            } else if (token.getType() == TokenType.RANGE) {
-                nodes.add(parseRange());
-            } else if (token.getType() == TokenType.WITH) {
-                nodes.add(parseWith());
-            } else if (token.getType() == TokenType.DEFINE) {
-                nodes.add(parseDefine());
-            } else if (token.getType() == TokenType.BLOCK) {
-                nodes.add(parseBlock());
-            } else if (token.getType() == TokenType.TEMPLATE) {
-                nodes.add(parseTemplate());
-            } else if (token.getType() == TokenType.VARIABLE && pos + 1 < tokens.size()
-                    && tokens.get(pos + 1).getType() == TokenType.ASSIGN) {
-                nodes.add(parseAssign());
-            } else {
-                nodes.add(parsePipeline());
-            }
+            // Unknown token at body level - skip
+            pos++;
         }
         return nodes;
     }
 
-    private IfNode parseIf() {
-        consume(TokenType.IF);
-        final var condition = parsePipeline();
-        final var body = parseBody(List.of(TokenType.ELSE, TokenType.END));
-        List<HelmGoTemplateNode> elseBody = List.of();
-        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.ELSE) {
-            consume(TokenType.ELSE);
-            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.IF) {
-                elseBody = List.of(parseIf());
+    /**
+     * Parse action body between LEFT_DELIM and RIGHT_DELIM.
+     * Returns true if END token was encountered (signaling body termination).
+     * Go: action() calls pipeline("command", itemRightDelim).
+     */
+    private boolean parseActionBody(final List<HelmGoTemplateNode> nodes, final TokenType stopToken) {
+        if (pos >= tokens.size()) {
+            return false;
+        }
+        skipSpaces();
+
+        if (pos >= tokens.size()) {
+            return false;
+        }
+        final var first = tokens.get(pos);
+
+        if (first.getType() == TokenType.RIGHT_DELIM) {
+            pos++; // consume RIGHT_DELIM
+            return false;
+        }
+
+        // Check for END keyword when stopToken is END
+        if (first.getType() == TokenType.END && stopToken == TokenType.END) {
+            pos++; // consume END
+            skipSpaces();
+            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+                pos++; // consume RIGHT_DELIM
+            }
+            return true;
+        }
+
+        // Check for ELSE keyword - signals end of if-body
+        if (first.getType() == TokenType.ELSE) {
+            // Don't consume - let parseIf handle it
+            return true;
+        }
+
+        // Check for control flow keywords
+        if (first.getType() == TokenType.IF) {
+            nodes.add(parseIf());
+        } else if (first.getType() == TokenType.RANGE) {
+            nodes.add(parseRange());
+        } else if (first.getType() == TokenType.WITH) {
+            nodes.add(parseWith());
+        } else if (first.getType() == TokenType.DEFINE) {
+            nodes.add(parseDefine());
+        } else if (first.getType() == TokenType.BLOCK) {
+            nodes.add(parseBlock());
+        } else if (first.getType() == TokenType.TEMPLATE) {
+            nodes.add(parseTemplate());
+        } else if (first.getType() == TokenType.VARIABLE
+                && findNextNonSpace(pos + 1) < tokens.size()
+                && isAssign(tokens.get(findNextNonSpace(pos + 1)))) {
+            nodes.add(parseAssign());
+        } else {
+            nodes.add(parsePipeline());
+        }
+
+        // Consume RIGHT_DELIM
+        skipSpaces();
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+            pos++;
+        }
+        return false;
+    }
+
+    /**
+     * Parse pipeline: VarDecl? Command { "|" Command } .
+     * Go: pipeline(context, end) until end token (RIGHT_DELIM for top-level actions).
+     */
+    private PipelineNode parsePipeline() {
+        final var commands = new ArrayList<HelmGoTemplateNode>();
+
+        // Check for variable declaration prefix: $var := or $var =
+        // Go handles this in pipeline() before parsing commands
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.VARIABLE
+                && pos + 1 < tokens.size() && isAssign(tokens.get(pos + 1))) {
+            // Don't consume - let the caller handle it via parseAssign
+        }
+
+        commands.add(parseCommand());
+
+        // Pipeline: command { "|" command }
+        while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.PIPE) {
+            pos++; // consume PIPE
+            skipSpaces();
+            commands.add(parseCommand());
+        }
+
+        return new PipelineNode(commands);
+    }
+
+    /**
+     * Parse command: Operand { Space Operand } .
+     * Go: command() loops: operand, then checks for SPACE (continue), RIGHT_DELIM/RIGHT_PAREN (stop), PIPE (stop).
+     */
+    private HelmGoTemplateNode parseCommand() {
+        skipSpaces();
+        final var operands = new ArrayList<HelmGoTemplateNode>();
+
+        // First operand
+        final var first = parseOperand();
+        if (first == null) {
+            return new StringNode("");
+        }
+        operands.add(first);
+
+        // Subsequent operands separated by SPACE
+        while (pos < tokens.size()) {
+            final var peek = tokens.get(pos);
+            if (peek.getType() == TokenType.SPACE) {
+                pos++; // consume SPACE
+                skipSpaces();
+                final var next = parseOperand();
+                if (next == null) {
+                    break;
+                }
+                operands.add(next);
             } else {
-                elseBody = parseBody(List.of(TokenType.END));
+                break;
             }
         }
-        consume(TokenType.END);
-        return new IfNode(condition, body, elseBody);
-    }
 
-    private RangeNode parseRange() {
-        consume(TokenType.RANGE);
-        final var over = parsePipeline();
-        final var body = parseBody(List.of(TokenType.END));
-        consume(TokenType.END);
-        return new RangeNode(over, body);
-    }
-
-    private WithNode parseWith() {
-        consume(TokenType.WITH);
-        final var target = parsePipeline();
-        final var body = parseBody(List.of(TokenType.END));
-        consume(TokenType.END);
-        return new WithNode(target, body);
-    }
-
-    private DefineNode parseDefine() {
-        consume(TokenType.DEFINE);
-        final var name = expectString();
-        final var body = parseBody(List.of(TokenType.END));
-        consume(TokenType.END);
-        return new DefineNode(name, body);
-    }
-
-    private BlockNode parseBlock() {
-        consume(TokenType.BLOCK);
-        final var name = expectString();
-        final var body = parseBody(List.of(TokenType.END));
-        consume(TokenType.END);
-        return new BlockNode(name, body);
-    }
-
-    private TemplateNode parseTemplate() {
-        consume(TokenType.TEMPLATE);
-        final var name = expectString();
-        PipelineNode pipeline = null;
-        if (pos < tokens.size() && tokens.get(pos).getType() != TokenType.END
-                && tokens.get(pos).getType() != TokenType.TEXT) {
-            pipeline = parsePipeline();
+        if (operands.size() == 1) {
+            return operands.get(0);
         }
-        return new TemplateNode(name, pipeline);
+
+        // Multiple operands: first is function name, rest are args
+        final var funcName = coerceString(operands.get(0));
+        final var args = new ArrayList<HelmGoTemplateNode>(operands.subList(1, operands.size()));
+        return new FunctionCallNode(funcName, args);
+    }
+
+    /**
+     * Parse operand: term { Field } .
+     * Go: operand() calls term(), then chains .Field accesses.
+     */
+    private HelmGoTemplateNode parseOperand() {
+        skipSpaces();
+        if (pos >= tokens.size()) {
+            return null;
+        }
+
+        final var token = tokens.get(pos);
+        final var type = token.getType();
+
+        // These tokens are NOT operands - return null to stop command parsing
+        if (type == TokenType.PIPE || type == TokenType.RIGHT_DELIM || type == TokenType.DECLARE
+                || type == TokenType.ASSIGN || type == TokenType.COMMA || type == TokenType.RPAREN
+                || type == TokenType.RBRACK) {
+            return null;
+        }
+
+        // Variable: $var
+        if (type == TokenType.VARIABLE) {
+            pos++;
+            final var node = parseVariableRest(token.getValue());
+            return node;
+        }
+
+        // Field: .field - chain consecutive FIELD tokens into a single path
+        if (token.getType() == TokenType.FIELD) {
+            pos++;
+            final var path = new ArrayList<String>();
+            path.add(""); // root context
+            path.add(token.getValue().substring(1)); // strip leading dot
+            // Chain consecutive FIELD tokens (Go: field() chains itemField tokens)
+            while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.FIELD) {
+                path.add(tokens.get(pos).getValue().substring(1));
+                pos++;
+            }
+            return new VariableNode(path);
+        }
+
+        // Dot
+        if (token.getType() == TokenType.DOT) {
+            pos++;
+            final var path = new ArrayList<String>();
+            path.add(""); // root
+            // Chain consecutive FIELD tokens
+            while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.FIELD) {
+                path.add(tokens.get(pos).getValue().substring(1));
+                pos++;
+            }
+            return new VariableNode(path);
+        }
+
+        // Term: number, string, bool, nil, (pipeline), function call
+        return parseTerm();
+    }
+
+    /**
+     * Parse term: Number | String | nil | Boolean | '(' Pipeline ')' | identifier .
+     * Go: term() handles the atomic values.
+     */
+    private HelmGoTemplateNode parseTerm() {
+        skipSpaces();
+        if (pos >= tokens.size()) {
+            return new StringNode("");
+        }
+
+        final var token = tokens.get(pos);
+
+        if (token.getType() == TokenType.STRING) {
+            pos++;
+            return new StringNode(unquote(token.getValue()));
+        }
+        if (token.getType() == TokenType.NUMBER) {
+            pos++;
+            return new NumberNode(token.getValue());
+        }
+        if (token.getType() == TokenType.BOOL) {
+            pos++;
+            return new BoolNode("true".equals(token.getValue()));
+        }
+        if (token.getType() == TokenType.NIL) {
+            pos++;
+            return new HelmGoTemplateNode.NilNode();
+        }
+        if (token.getType() == TokenType.LPAREN) {
+            pos++; // consume (
+            skipSpaces();
+            final var expr = parsePipeline();
+            skipSpaces();
+            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RPAREN) {
+                pos++; // consume )
+            }
+            return expr;
+        }
+        if (token.getType() == TokenType.LBRACK) {
+            // List literal: [elem1, elem2, ...]
+            pos++; // consume [
+            final var elements = new ArrayList<HelmGoTemplateNode>();
+            skipSpaces();
+            if (pos < tokens.size() && tokens.get(pos).getType() != TokenType.RBRACK) {
+                elements.add(parsePipeline());
+                while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.COMMA) {
+                    pos++; // consume ,
+                    skipSpaces();
+                    elements.add(parsePipeline());
+                }
+            }
+            skipSpaces();
+            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RBRACK) {
+                pos++; // consume ]
+            }
+            return new ListNode(elements);
+        }
+        if (token.getType() == TokenType.IDENT) {
+            pos++;
+            final var name = token.getValue();
+            return new IdentifierNode(name);
+        }
+        // Unknown - skip
+        pos++;
+        return new StringNode(token.getValue());
     }
 
     private AssignNode parseAssign() {
         final var varName = tokens.get(pos).getValue();
-        consume(TokenType.VARIABLE);
-        consume(TokenType.ASSIGN);
+        pos++; // consume VARIABLE
+        skipSpaces();
+        final var isDeclare = tokens.get(pos).getType() == TokenType.DECLARE;
+        pos++; // consume ASSIGN or DECLARE
+        skipSpaces();
         final var value = parsePipeline();
-        return new AssignNode(varName, value);
+        return new AssignNode(varName, value, isDeclare);
     }
 
-    private PipelineNode parsePipeline() {
-        final var functions = new ArrayList<HelmGoTemplateNode>();
-        functions.add(parseExpression());
-        while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.PIPE) {
-            consume(TokenType.PIPE);
-            functions.add(parseExpression());
-        }
-        return new PipelineNode(functions);
-    }
+    private IfNode parseIf() {
+        pos++; // consume IF
+        skipSpaces();
+        final var condition = parsePipeline();
+        skipSpaces();
 
-    private HelmGoTemplateNode parseExpression() {
-        var left = parsePrimary();
-        while (pos < tokens.size() && isOperator(tokens.get(pos).getType())) {
-            final var op = tokens.get(pos);
-            consume(op.getType());
-            final var right = parsePrimary();
-            left = new FunctionCallNode(op.getValue(), List.of(left, right));
-        }
-        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.LBRACK) {
-            consume(TokenType.LBRACK);
-            HelmGoTemplateNode index = null;
-            HelmGoTemplateNode high = null;
-            if (tokens.get(pos).getType() != TokenType.RBRACK) {
-                index = parsePipeline();
-                if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.COMMA) {
-                    consume(TokenType.COMMA);
-                    high = parsePipeline();
+        // Body until {{else}} or {{end}}
+        var body = parseBodyUntil(TokenType.END);
+
+        // Check for else/else-if chain - iterative like Go's parser
+        final var elseBody = new ArrayList<HelmGoTemplateNode>();
+        skipSpaces();
+        while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.ELSE) {
+            pos++; // consume ELSE
+            skipSpaces();
+            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+                pos++; // consume RIGHT_DELIM
+            }
+            skipSpaces();
+            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.IF) {
+                // else if: parse as nested if (Go handles this iteratively)
+                pos++; // consume IF
+                skipSpaces();
+                final var elseIfCondition = parsePipeline();
+                skipSpaces();
+                // Consume RIGHT_DELIM after the else-if action
+                if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+                    pos++;
                 }
+                final var elseIfBody = parseBodyUntil(TokenType.END);
+                final var elseIfNode = new IfNode(elseIfCondition, elseIfBody, List.of());
+                elseBody.add(elseIfNode);
+                // Continue loop to check for more else/else-if
+            } else {
+                // plain else
+                final var elseNodes = parseBodyUntil(TokenType.END);
+                elseBody.addAll(elseNodes);
+                break; // plain else ends the chain
             }
-            consume(TokenType.RBRACK);
-            if (high != null) {
-                return new SliceNode(left, index, high);
-            }
-            return new IndexNode(left, index);
         }
-        return left;
+
+        // Consume RIGHT_DELIM after END (if parseBodyUntil stopped at END)
+        skipSpaces();
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+            pos++;
+        }
+
+        return new IfNode(condition, body, elseBody);
     }
 
-    private HelmGoTemplateNode parsePrimary() {
-        if (pos >= tokens.size()) {
-            return new StringNode("");
+    private RangeNode parseRange() {
+        pos++; // consume RANGE
+        skipSpaces();
+
+        // Check for $k, $v := pattern or $v := pattern
+        String keyVar = null;
+        String valueVar = null;
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.VARIABLE) {
+            if (pos + 2 < tokens.size()
+                    && tokens.get(pos + 1).getType() == TokenType.COMMA) {
+                // $k, $v :=
+                keyVar = tokens.get(pos).getValue();
+                pos += 2; // consume VAR and COMMA
+                skipSpaces();
+                valueVar = tokens.get(pos).getValue();
+                pos++; // consume VAR
+                skipSpaces();
+                if (pos < tokens.size() && (tokens.get(pos).getType() == TokenType.DECLARE
+                        || tokens.get(pos).getType() == TokenType.ASSIGN)) {
+                    pos++; // consume := or =
+                }
+            } else if (pos + 1 < tokens.size() && isAssign(tokens.get(pos + 1))) {
+                // $v :=
+                valueVar = tokens.get(pos).getValue();
+                pos += 2; // consume VAR and := / =
+            }
         }
-        final var token = tokens.get(pos);
-        if (token.getType() == TokenType.DOT) {
-            consume(TokenType.DOT);
-            return new VariableNode(List.of(""));
+
+        skipSpaces();
+        final var over = parsePipeline();
+        skipSpaces();
+
+        final var body = parseBodyUntil(TokenType.END);
+
+        // Consume RIGHT_DELIM after END
+        skipSpaces();
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+            pos++;
         }
-        if (token.getType() == TokenType.VARIABLE) {
-            consume(TokenType.VARIABLE);
-            return parseVariableRest(token.getValue());
+
+        return new RangeNode(over, body, keyVar, valueVar);
+    }
+
+    private WithNode parseWith() {
+        pos++; // consume WITH
+        skipSpaces();
+        final var target = parsePipeline();
+        skipSpaces();
+
+        final var body = parseBodyUntil(TokenType.END);
+
+        // Consume RIGHT_DELIM after END
+        skipSpaces();
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+            pos++;
         }
-        if (token.getType() == TokenType.STRING) {
-            consume(TokenType.STRING);
-            return new StringNode(unquote(token.getValue()));
+
+        return new WithNode(target, body);
+    }
+
+    private DefineNode parseDefine() {
+        pos++; // consume DEFINE
+        skipSpaces();
+        final var name = expectString();
+        skipSpaces();
+
+        final var body = parseBodyUntil(TokenType.END);
+
+        // Consume RIGHT_DELIM after END
+        skipSpaces();
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+            pos++;
         }
-        if (token.getType() == TokenType.NUMBER) {
-            consume(TokenType.NUMBER);
-            return new NumberNode(token.getValue());
+
+        return new DefineNode(name, body);
+    }
+
+    private BlockNode parseBlock() {
+        pos++; // consume BLOCK
+        skipSpaces();
+        final var name = expectString();
+        skipSpaces();
+
+        // Optional pipeline after name
+        if (pos < tokens.size() && tokens.get(pos).getType() != TokenType.RIGHT_DELIM) {
+            parsePipeline();
         }
-        if (token.getType() == TokenType.BOOL) {
-            consume(TokenType.BOOL);
-            return new BoolNode("true".equals(token.getValue()));
+
+        final var body = parseBodyUntil(TokenType.END);
+
+        // Consume RIGHT_DELIM after END
+        skipSpaces();
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+            pos++;
         }
-        if (token.getType() == TokenType.NIL) {
-            consume(TokenType.NIL);
-            return new StringNode("");
+
+        return new BlockNode(name, body);
+    }
+
+    private TemplateNode parseTemplate() {
+        pos++; // consume TEMPLATE
+        skipSpaces();
+        final var name = expectString();
+        skipSpaces();
+
+        PipelineNode pipeline = null;
+        if (pos < tokens.size() && tokens.get(pos).getType() != TokenType.RIGHT_DELIM
+                && tokens.get(pos).getType() != TokenType.TEXT) {
+            pipeline = parsePipeline();
         }
-        if (token.getType() == TokenType.LPAREN) {
-            consume(TokenType.LPAREN);
-            final var expr = parsePipeline();
-            consume(TokenType.RPAREN);
-            return expr;
+
+        // Consume RIGHT_DELIM
+        skipSpaces();
+        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+            pos++;
         }
-        if (token.getType() == TokenType.NOT) {
-            consume(TokenType.NOT);
-            final var expr = parsePrimary();
-            return new FunctionCallNode("not", List.of(expr));
-        }
-        if (token.getType() == TokenType.IDENT) {
-            consume(TokenType.IDENT);
-            final var name = token.getValue();
-            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.LPAREN) {
-                consume(TokenType.LPAREN);
-                final var args = new ArrayList<HelmGoTemplateNode>();
-                if (pos < tokens.size() && tokens.get(pos).getType() != TokenType.RPAREN) {
-                    args.add(parsePipeline());
-                    while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.COMMA) {
-                        consume(TokenType.COMMA);
-                        args.add(parsePipeline());
+
+        return new TemplateNode(name, pipeline);
+    }
+
+    private void parseBodyUntilEnd() {
+        // Parse body until END keyword
+        while (pos < tokens.size()) {
+            final var token = tokens.get(pos);
+            if (token.getType() == TokenType.TEXT) {
+                pos++;
+                continue;
+            }
+            if (token.getType() == TokenType.LEFT_DELIM) {
+                pos++; // consume LEFT_DELIM
+                skipSpaces();
+                if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.END) {
+                    pos++; // consume END
+                    skipSpaces();
+                    if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.RIGHT_DELIM) {
+                        pos++; // consume RIGHT_DELIM
                     }
+                    return;
                 }
-                consume(TokenType.RPAREN);
-                return new FunctionCallNode(name, args);
+                // Not END - parse as action
+                pos--; // back up to LEFT_DELIM
+                parseActionBody(new ArrayList<>(), null);
+                continue;
             }
-            if (!isStopToken(pos < tokens.size() ? tokens.get(pos).getType() : null)) {
-                final var args = new ArrayList<HelmGoTemplateNode>();
-                while (pos < tokens.size() && !isStopToken(tokens.get(pos).getType())) {
-                    args.add(parsePrimary());
-                }
-                return new FunctionCallNode(name, args);
-            }
-            return new FunctionCallNode(name, List.of());
+            pos++;
         }
-        if (token.getType() == TokenType.LBRACK) {
-            consume(TokenType.LBRACK);
-            final var elements = new ArrayList<HelmGoTemplateNode>();
-            if (pos < tokens.size() && tokens.get(pos).getType() != TokenType.RBRACK) {
-                elements.add(parsePipeline());
-                while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.COMMA) {
-                    consume(TokenType.COMMA);
-                    elements.add(parsePipeline());
-                }
-            }
-            consume(TokenType.RBRACK);
-            return new ListNode(elements);
-        }
-        consume(token.getType());
-        return new StringNode(token.getValue());
     }
 
-    private HelmGoTemplateNode parseVariableRest(final String prefix) {
-        final var path = new ArrayList<String>();
-        if (prefix.startsWith(".")) {
-            path.add("");
-            final var parts = prefix.substring(1).split("\\.", -1);
-            for (final var part : parts) {
-                if (!part.isEmpty()) {
-                    path.add(part);
-                }
-            }
-        } else if (prefix.startsWith("$")) {
-            path.add("$");
-            if (prefix.length() > 1) {
-                path.add(prefix.substring(1));
-            }
-        } else {
-            path.add(prefix);
+    private void skipSpaces() {
+        while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.SPACE) {
+            pos++;
         }
-        while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.DOT) {
-            consume(TokenType.DOT);
-            if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.IDENT) {
-                path.add(tokens.get(pos).getValue());
-                consume(TokenType.IDENT);
-            }
-        }
-        return new VariableNode(path);
     }
 
-    private boolean isOperator(final TokenType type) {
-        return type == TokenType.EQ || type == TokenType.NEQ
-                || type == TokenType.GT || type == TokenType.GTE
-                || type == TokenType.LT || type == TokenType.LTE
-                || type == TokenType.AND || type == TokenType.OR;
+    private int findNextNonSpace(int from) {
+        while (from < tokens.size() && tokens.get(from).getType() == TokenType.SPACE) {
+            from++;
+        }
+        return from;
     }
 
-    private boolean isStopToken(final TokenType type) {
-        if (type == null) {
-            return true;
+    private void skipTextTokens() {
+        while (pos < tokens.size() && (tokens.get(pos).getType() == TokenType.TEXT
+                || tokens.get(pos).getType() == TokenType.SPACE)) {
+            pos++;
         }
-        return type == TokenType.TEXT || type == TokenType.PIPE || type == TokenType.IF || type == TokenType.ELSE
-                || type == TokenType.END || type == TokenType.RANGE || type == TokenType.WITH
-                || type == TokenType.DEFINE || type == TokenType.BLOCK || type == TokenType.TEMPLATE
-                || type == TokenType.CALL || type == TokenType.ASSIGN || type == TokenType.RPAREN
-                || type == TokenType.RBRACK || type == TokenType.COMMA;
     }
 
-    private void consume(final TokenType expected) {
-        if (pos >= tokens.size() || tokens.get(pos).getType() != expected) {
-            final var found = pos < tokens.size() ? tokens.get(pos) : null;
-            throw new IllegalStateException("Expected " + expected + " but got "
-                    + (found == null ? "EOF" : found.getType() + " '" + found.getValue() + "'")
-                    + " at position " + pos);
-        }
-        pos++;
+    private boolean isAssign(final Token token) {
+        return token.getType() == TokenType.ASSIGN || token.getType() == TokenType.DECLARE;
     }
 
     private String expectString() {
+        skipSpaces();
         if (pos >= tokens.size() || tokens.get(pos).getType() != TokenType.STRING) {
             final var found = pos < tokens.size() ? tokens.get(pos) : null;
             throw new IllegalStateException("Expected STRING but got "
@@ -348,6 +608,54 @@ public class HelmGoTemplateParser {
         final var value = unquote(tokens.get(pos).getValue());
         pos++;
         return value;
+    }
+
+    private HelmGoTemplateNode parseVariableRest(final String name) {
+        final var path = new ArrayList<String>();
+        if (name.startsWith(".")) {
+            path.add("");
+            final var parts = name.substring(1).split("\\.", -1);
+            for (final var part : parts) {
+                if (!part.isEmpty()) {
+                    path.add(part);
+                }
+            }
+        } else if (name.startsWith("$")) {
+            path.add(name);
+        } else {
+            path.add(name);
+        }
+        // Chain .field accesses via FIELD tokens
+        while (pos < tokens.size() && tokens.get(pos).getType() == TokenType.FIELD) {
+            path.add(tokens.get(pos).getValue().substring(1));
+            pos++;
+        }
+        return new VariableNode(path);
+    }
+
+    private String coerceString(final HelmGoTemplateNode node) {
+        if (node instanceof IdentifierNode) {
+            return ((IdentifierNode) node).getName();
+        }
+        if (node instanceof VariableNode) {
+            final var path = ((VariableNode) node).getPath();
+            if (path.size() == 1) {
+                return path.get(0);
+            }
+            final var sb = new StringBuilder();
+            for (int i = 0; i < path.size(); i++) {
+                if (i == 0) {
+                    sb.append(path.get(i));
+                } else {
+                    sb.append(".").append(path.get(i));
+                }
+            }
+            return sb.toString();
+        }
+        if (node instanceof StringNode) {
+            return ((StringNode) node).getValue();
+        }
+        return node.toString();
     }
 
     private String unquote(final String s) {

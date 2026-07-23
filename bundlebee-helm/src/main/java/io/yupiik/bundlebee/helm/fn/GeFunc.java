@@ -15,40 +15,43 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
+import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
 
 import javax.enterprise.context.Dependent;
 
-import io.yupiik.bundlebee.core.configuration.Description;
-
 @Dependent
 //metadata:start
-// category = Math
+// category = Comparison
 //metadata:end
-@Description("Subtracts numbers")
-public class SubFunc implements HelmFunction {
+@Description("Tests whether a value is greater than or equal to another")
+public class GeFunc implements HelmFunction {
     @Override
     public String name() {
-        return "sub";
+        return "ge";
     }
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length < 2) {
-            throw new IllegalArgumentException("sub requires two arguments");
+        if (args.length < 2) {
+            return false;
         }
-        final var left = toDouble(args[0]);
-        final var right = toDouble(args[1]);
-        if (args[0] instanceof Integer && args[1] instanceof Integer) {
-            return ((Number) args[0]).intValue() - ((Number) args[1]).intValue();
-        }
-        return left - right;
+        return compareTo(args[0], args[1]) >= 0;
     }
 
-    private static double toDouble(final Object arg) {
-        if (arg == null) {
+    static int compareTo(final Object a, final Object b) {
+        if (a == null && b == null) {
             return 0;
         }
-        return arg instanceof Number ? ((Number) arg).doubleValue() : Double.parseDouble(arg.toString());
+        if (a == null) {
+            return -1;
+        }
+        if (b == null) {
+            return 1;
+        }
+        if (a instanceof Number && b instanceof Number) {
+            return Double.compare(((Number) a).doubleValue(), ((Number) b).doubleValue());
+        }
+        return a.toString().compareTo(b.toString());
     }
 }

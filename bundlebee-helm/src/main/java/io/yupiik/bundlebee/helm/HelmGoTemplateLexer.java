@@ -22,8 +22,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Tokenizer for Go template syntax.
- * Produces a flat list of tokens from a template string.
+ * Tokenizer for Go template syntax, aligned with Go's text/template/parse/lex.go.
+ *
+ * Token types correspond to Go's item types:
+ * - TEXT        = itemText (plain text between actions)
+ * - LEFT_DELIM  = itemLeftDelim ({{ or {{-)
+ * - RIGHT_DELIM = itemRightDelim (}} or -}})
+ * - SPACE       = itemSpace (run of spaces separating arguments)
+ * - VARIABLE    = itemVariable ($var)
+ * - FIELD       = itemField (.field)
+ * - IDENT       = itemIdentifier
+ * - STRING      = itemString ("quoted")
+ * - NUMBER      = itemNumber
+ * - BOOL        = itemBool (true/false)
+ * - PIPE        = itemPipe (|)
+ * - ASSIGN       = itemAssign (=)
+ * - DECLARE      = itemDeclare (:=)
+ * - LPAREN      = itemLeftParen
+ * - RPAREN      = itemRightParen
+ * - LBRACK      = [ for index/slice
+ * - RBRACK      = ] for index/slice
+ * - COMMA       = ,
+ * - DOT         = itemDot (bare .)
+ * - IF/ELSE/END/RANGE/WITH/DEFINE/BLOCK/TEMPLATE/Nil = keywords
  */
 public class HelmGoTemplateLexer {
 
@@ -38,28 +59,24 @@ public class HelmGoTemplateLexer {
 
     public enum TokenType {
         TEXT,
+        LEFT_DELIM,
+        RIGHT_DELIM,
+        SPACE,
         VARIABLE,
+        FIELD,
+        IDENT,
         STRING,
         NUMBER,
         BOOL,
-        IDENT,
         PIPE,
+        ASSIGN,      // = (itemAssign)
+        DECLARE,     // := (itemDeclare)
         LPAREN,
         RPAREN,
         LBRACK,
         RBRACK,
         COMMA,
-        DOT,
-        ASSIGN,
-        EQ,
-        NEQ,
-        GT,
-        GTE,
-        LT,
-        LTE,
-        AND,
-        OR,
-        NOT,
+        DOT,         // bare . (itemDot)
         IF,
         ELSE,
         END,
@@ -68,7 +85,6 @@ public class HelmGoTemplateLexer {
         DEFINE,
         BLOCK,
         TEMPLATE,
-        CALL,
         NIL
     }
 
@@ -79,9 +95,13 @@ public class HelmGoTemplateLexer {
         while (pos < template.length()) {
             final int openIdx = template.indexOf("{{", pos);
             if (openIdx < 0) {
-                tokens.add(new Token(TokenType.TEXT, template.substring(pos), nextTextTrimLeft, false));
+                // No more actions - emit remaining text
+                if (pos < template.length()) {
+                    tokens.add(new Token(TokenType.TEXT, template.substring(pos), nextTextTrimLeft, false));
+                }
                 break;
             }
+            // Emit text before the action
             if (openIdx > pos) {
                 tokens.add(new Token(TokenType.TEXT, template.substring(pos, openIdx), nextTextTrimLeft, false));
                 nextTextTrimLeft = false;
@@ -111,8 +131,13 @@ public class HelmGoTemplateLexer {
                     tokens.set(tokens.size() - 1, new Token(TokenType.TEXT, last.getValue(), last.isTrimLeft(), true));
                 }
             }
-            final var actionBody = template.substring(actionStart, actionEnd).strip();
-            tokenizeAction(actionBody, trimLeft, closesWithDash, tokens);
+            // Emit LEFT_DELIM (like Go's itemLeftDelim)
+            tokens.add(new Token(TokenType.LEFT_DELIM, trimLeft ? "{{-" : "{{", trimLeft, false));
+            // Tokenize action body - emit SPACE tokens between arguments
+            final var actionBody = template.substring(actionStart, actionEnd);
+            tokenizeAction(actionBody, tokens);
+            // Emit RIGHT_DELIM (like Go's itemRightDelim)
+            tokens.add(new Token(TokenType.RIGHT_DELIM, closesWithDash ? "-}}" : "}}", false, closesWithDash));
             nextTextTrimLeft = closesWithDash;
             pos = closeIdx + 2;
         }
@@ -136,159 +161,189 @@ public class HelmGoTemplateLexer {
         return -1;
     }
 
-    private void tokenizeAction(final String action, final boolean trimLeft, final boolean trimRight,
-                                final List<Token> tokens) {
-        if (action.isEmpty()) {
-            return;
-        }
-        // Go template comments: {{/* ... */}}
-        if (action.startsWith("/*") && action.endsWith("*/")) {
-            return;
-        }
+    /**
+     * Tokenize an action body (content between left and right delimiters).
+     * Emits SPACE tokens between arguments (like Go's itemSpace).
+     * Go template comments are silently skipped.
+     */
+    private void tokenizeAction(final String action, final List<Token> tokens) {
         int pos = 0;
         while (pos < action.length()) {
-            pos = skipWhitespace(action, pos);
-            if (pos >= action.length()) {
-                break;
+            // Skip leading whitespace but emit SPACE tokens
+            if (Character.isWhitespace(action.charAt(pos))) {
+                final var spaceStart = pos;
+                while (pos < action.length() && Character.isWhitespace(action.charAt(pos))) {
+                    pos++;
+                }
+                // Emit a single SPACE token for the run (like Go)
+                if (!tokens.isEmpty()) {
+                    tokens.add(new Token(TokenType.SPACE, action.substring(spaceStart, pos), false, false));
+                }
+                continue;
             }
             final char ch = action.charAt(pos);
             switch (ch) {
-                case '|': {
-                    if (pos + 1 < action.length() && action.charAt(pos + 1) == '|') {
-                        tokens.add(new Token(TokenType.OR, "||", trimLeft, trimRight));
+                case '/': {
+                    // Check for comment: /*
+                    if (pos + 1 < action.length() && action.charAt(pos + 1) == '*') {
+                        // Skip comment until */
                         pos += 2;
-                    } else {
-                        tokens.add(new Token(TokenType.PIPE, "|", trimLeft, trimRight));
-                        pos++;
+                        final var commentEnd = action.indexOf("*/", pos);
+                        if (commentEnd >= 0) {
+                            pos = commentEnd + 2;
+                        } else {
+                            pos = action.length();
+                        }
+                        continue;
                     }
+                    tokens.add(new Token(TokenType.IDENT, String.valueOf(ch), false, false));
+                    pos++;
+                    break;
+                }
+                case '|': {
+                    tokens.add(new Token(TokenType.PIPE, "|", false, false));
+                    pos++;
                     break;
                 }
                 case '(': {
-                    tokens.add(new Token(TokenType.LPAREN, "(", trimLeft, trimRight));
+                    tokens.add(new Token(TokenType.LPAREN, "(", false, false));
                     pos++;
                     break;
                 }
                 case ')': {
-                    tokens.add(new Token(TokenType.RPAREN, ")", trimLeft, trimRight));
+                    tokens.add(new Token(TokenType.RPAREN, ")", false, false));
                     pos++;
                     break;
                 }
                 case '[': {
-                    tokens.add(new Token(TokenType.LBRACK, "[", trimLeft, trimRight));
+                    tokens.add(new Token(TokenType.LBRACK, "[", false, false));
                     pos++;
                     break;
                 }
                 case ']': {
-                    tokens.add(new Token(TokenType.RBRACK, "]", trimLeft, trimRight));
+                    tokens.add(new Token(TokenType.RBRACK, "]", false, false));
                     pos++;
                     break;
                 }
                 case ',': {
-                    tokens.add(new Token(TokenType.COMMA, ",", trimLeft, trimRight));
+                    tokens.add(new Token(TokenType.COMMA, ",", false, false));
                     pos++;
                     break;
                 }
                 case '.': {
-                    if (pos + 1 < action.length() && Character.isLetter(action.charAt(pos + 1))) {
+                    // Go's lexField: .Field starts with letter
+                    if (pos + 1 < action.length() && isAlphaNum(action.charAt(pos + 1))) {
+                        // Read .Field chain like .Values.name
+                        pos++; // skip the dot
                         final var ident = readIdent(action, pos);
-                        tokens.add(new Token(TokenType.VARIABLE, ident, trimLeft, trimRight));
+                        tokens.add(new Token(TokenType.FIELD, "." + ident, false, false));
                         pos += ident.length();
+                        // Continue chaining .Field
+                        while (pos < action.length() && action.charAt(pos) == '.'
+                                && pos + 1 < action.length() && isAlphaNum(action.charAt(pos + 1))) {
+                            pos++; // skip dot
+                            final var field = readIdent(action, pos);
+                            tokens.add(new Token(TokenType.FIELD, "." + field, false, false));
+                            pos += field.length();
+                        }
                     } else {
-                        tokens.add(new Token(TokenType.DOT, ".", trimLeft, trimRight));
+                        // Bare dot
+                        tokens.add(new Token(TokenType.DOT, ".", false, false));
                         pos++;
                     }
                     break;
                 }
                 case '$': {
-                    final var ident = readIdent(action, pos);
-                    tokens.add(new Token(TokenType.VARIABLE, ident, trimLeft, trimRight));
-                    pos += ident.length();
+                    pos++;
+                    if (pos < action.length() && (isAlphaNum(action.charAt(pos)) || action.charAt(pos) == '_')) {
+                        final var ident = readIdent(action, pos);
+                        tokens.add(new Token(TokenType.VARIABLE, "$" + ident, false, false));
+                        pos += ident.length();
+                        // Continue chaining .field after variable
+                        while (pos < action.length() && action.charAt(pos) == '.'
+                                && pos + 1 < action.length() && isAlphaNum(action.charAt(pos + 1))) {
+                            pos++; // skip dot
+                            final var field = readIdent(action, pos);
+                            tokens.add(new Token(TokenType.FIELD, "." + field, false, false));
+                            pos += field.length();
+                        }
+                    } else {
+                        tokens.add(new Token(TokenType.VARIABLE, "$", false, false));
+                    }
                     break;
                 }
                 case ':': {
                     if (pos + 1 < action.length() && action.charAt(pos + 1) == '=') {
-                        tokens.add(new Token(TokenType.ASSIGN, ":=", trimLeft, trimRight));
+                        tokens.add(new Token(TokenType.DECLARE, ":=", false, false));
                         pos += 2;
                     } else {
-                        tokens.add(new Token(TokenType.IDENT, ":", trimLeft, trimRight));
+                        tokens.add(new Token(TokenType.IDENT, ":", false, false));
                         pos++;
                     }
                     break;
                 }
                 case '=': {
-                    if (pos + 1 < action.length() && action.charAt(pos + 1) == '=') {
-                        tokens.add(new Token(TokenType.EQ, "==", trimLeft, trimRight));
-                        pos += 2;
-                    } else {
-                        tokens.add(new Token(TokenType.EQ, "=", trimLeft, trimRight));
-                        pos++;
-                    }
+                    tokens.add(new Token(TokenType.ASSIGN, "=", false, false));
+                    pos++;
                     break;
                 }
                 case '!': {
                     if (pos + 1 < action.length() && action.charAt(pos + 1) == '=') {
-                        tokens.add(new Token(TokenType.NEQ, "!=", trimLeft, trimRight));
+                        // != is not a token in Go - it's parsed as ! =
+                        // But we keep it for convenience
+                        tokens.add(new Token(TokenType.IDENT, "!=", false, false));
                         pos += 2;
                     } else {
-                        tokens.add(new Token(TokenType.NOT, "!", trimLeft, trimRight));
+                        tokens.add(new Token(TokenType.IDENT, "!", false, false));
                         pos++;
                     }
                     break;
                 }
                 case '>': {
-                    if (pos + 1 < action.length() && action.charAt(pos + 1) == '=') {
-                        tokens.add(new Token(TokenType.GTE, ">=", trimLeft, trimRight));
-                        pos += 2;
-                    } else {
-                        tokens.add(new Token(TokenType.GT, ">", trimLeft, trimRight));
-                        pos++;
-                    }
+                    tokens.add(new Token(TokenType.IDENT, ">", false, false));
+                    pos++;
                     break;
                 }
                 case '<': {
-                    if (pos + 1 < action.length() && action.charAt(pos + 1) == '=') {
-                        tokens.add(new Token(TokenType.LTE, "<=", trimLeft, trimRight));
-                        pos += 2;
-                    } else {
-                        tokens.add(new Token(TokenType.LT, "<", trimLeft, trimRight));
-                        pos++;
-                    }
+                    tokens.add(new Token(TokenType.IDENT, "<", false, false));
+                    pos++;
                     break;
                 }
                 case '&': {
                     if (pos + 1 < action.length() && action.charAt(pos + 1) == '&') {
-                        tokens.add(new Token(TokenType.AND, "&&", trimLeft, trimRight));
+                        tokens.add(new Token(TokenType.IDENT, "&&", false, false));
                         pos += 2;
                     } else {
-                        tokens.add(new Token(TokenType.IDENT, "&", trimLeft, trimRight));
+                        tokens.add(new Token(TokenType.IDENT, "&", false, false));
                         pos++;
                     }
                     break;
                 }
                 case '"': {
                     final var str = readString(action, pos);
-                    tokens.add(new Token(TokenType.STRING, str, trimLeft, trimRight));
+                    tokens.add(new Token(TokenType.STRING, str, false, false));
                     pos += str.length();
                     break;
                 }
                 case '\'': {
                     final var str = readSingleQuotedString(action, pos);
-                    tokens.add(new Token(TokenType.STRING, str, trimLeft, trimRight));
+                    tokens.add(new Token(TokenType.STRING, str, false, false));
                     pos += str.length();
                     break;
                 }
                 default: {
                     if (Character.isDigit(ch) || (ch == '-' && pos + 1 < action.length() && Character.isDigit(action.charAt(pos + 1)))) {
                         final var num = readNumber(action, pos);
-                        tokens.add(new Token(TokenType.NUMBER, num, trimLeft, trimRight));
+                        tokens.add(new Token(TokenType.NUMBER, num, false, false));
                         pos += num.length();
-                    } else if (Character.isLetter(ch) || ch == '_') {
+                    } else if (isAlphaNum(ch)) {
                         final var ident = readIdent(action, pos);
                         final var type = keywordType(ident);
-                        tokens.add(new Token(type, ident, trimLeft, trimRight));
+                        tokens.add(new Token(type, ident, false, false));
                         pos += ident.length();
                     } else {
-                        tokens.add(new Token(TokenType.IDENT, String.valueOf(ch), trimLeft, trimRight));
+                        // Unknown character - emit as IDENT (like Go's itemChar)
+                        tokens.add(new Token(TokenType.IDENT, String.valueOf(ch), false, false));
                         pos++;
                     }
                     break;
@@ -307,7 +362,6 @@ public class HelmGoTemplateLexer {
             case "define": return TokenType.DEFINE;
             case "block": return TokenType.BLOCK;
             case "template": return TokenType.TEMPLATE;
-            case "call": return TokenType.CALL;
             case "nil": return TokenType.NIL;
             case "true":
             case "false": return TokenType.BOOL;
@@ -315,16 +369,13 @@ public class HelmGoTemplateLexer {
         }
     }
 
-    private int skipWhitespace(final String s, int pos) {
-        while (pos < s.length() && Character.isWhitespace(s.charAt(pos))) {
-            pos++;
-        }
-        return pos;
+    private boolean isAlphaNum(final char ch) {
+        return Character.isLetterOrDigit(ch) || ch == '_';
     }
 
     private String readIdent(final String s, int pos) {
         int end = pos;
-        while (end < s.length() && (Character.isLetterOrDigit(s.charAt(end)) || s.charAt(end) == '_' || s.charAt(end) == '.')) {
+        while (end < s.length() && (Character.isLetterOrDigit(s.charAt(end)) || s.charAt(end) == '_')) {
             end++;
         }
         return s.substring(pos, end);

@@ -15,40 +15,36 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
+import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
 
 import javax.enterprise.context.Dependent;
-
-import io.yupiik.bundlebee.core.configuration.Description;
+import java.util.List;
 
 @Dependent
 //metadata:start
-// category = Math
+// category = Defaults
 //metadata:end
-@Description("Subtracts numbers")
-public class SubFunc implements HelmFunction {
+@Description("Returns true if a string contains a substring or a list contains an element")
+public class HasFunc implements HelmFunction {
     @Override
     public String name() {
-        return "sub";
+        return "has";
     }
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length < 2) {
-            throw new IllegalArgumentException("sub requires two arguments");
+        if (args.length < 2 || args[0] == null || args[1] == null) {
+            return false;
         }
-        final var left = toDouble(args[0]);
-        final var right = toDouble(args[1]);
-        if (args[0] instanceof Integer && args[1] instanceof Integer) {
-            return ((Number) args[0]).intValue() - ((Number) args[1]).intValue();
+        final var needle = args[0];
+        final var haystack = args[1];
+        if (haystack instanceof List) {
+            return ((List<?>) haystack).contains(needle);
         }
-        return left - right;
-    }
-
-    private static double toDouble(final Object arg) {
-        if (arg == null) {
-            return 0;
+        if (haystack instanceof String) {
+            return ((String) haystack).contains(needle.toString());
         }
-        return arg instanceof Number ? ((Number) arg).doubleValue() : Double.parseDouble(arg.toString());
+        return false;
     }
 }
