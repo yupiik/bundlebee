@@ -15,40 +15,35 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
+import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
 
 import javax.enterprise.context.Dependent;
 
-import io.yupiik.bundlebee.core.configuration.Description;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 @Dependent
 //metadata:start
-// category = Math
+// category = URL
 //metadata:end
-@Description("Subtracts numbers")
-public class SubFunc implements HelmFunction {
+@Description("Returns the URL-encoded form of the input string")
+public class UrlqueryFunc implements HelmFunction {
     @Override
     public String name() {
-        return "sub";
+        return "urlquery";
     }
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length < 2) {
-            throw new IllegalArgumentException("sub requires two arguments");
+        if (args == null || args.length < 1 || args[0] == null) {
+            return "";
         }
-        final var left = toDouble(args[0]);
-        final var right = toDouble(args[1]);
-        if (args[0] instanceof Integer && args[1] instanceof Integer) {
-            return ((Number) args[0]).intValue() - ((Number) args[1]).intValue();
+        try {
+            return URLEncoder.encode(args[0].toString(), "UTF-8")
+                    .replace("+", "%20");
+        } catch (final UnsupportedEncodingException e) {
+            return args[0].toString();
         }
-        return left - right;
-    }
-
-    private static double toDouble(final Object arg) {
-        if (arg == null) {
-            return 0;
-        }
-        return arg instanceof Number ? ((Number) arg).doubleValue() : Double.parseDouble(arg.toString());
     }
 }

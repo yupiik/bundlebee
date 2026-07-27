@@ -15,40 +15,43 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
+import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
 
 import javax.enterprise.context.Dependent;
-
-import io.yupiik.bundlebee.core.configuration.Description;
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Map;
 
 @Dependent
 //metadata:start
-// category = Math
+// category = Generic
 //metadata:end
-@Description("Subtracts numbers")
-public class SubFunc implements HelmFunction {
+@Description("Returns the integer length of a given value")
+public class LenFunc implements HelmFunction {
     @Override
     public String name() {
-        return "sub";
+        return "len";
     }
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length < 2) {
-            throw new IllegalArgumentException("sub requires two arguments");
-        }
-        final var left = toDouble(args[0]);
-        final var right = toDouble(args[1]);
-        if (args[0] instanceof Integer && args[1] instanceof Integer) {
-            return ((Number) args[0]).intValue() - ((Number) args[1]).intValue();
-        }
-        return left - right;
-    }
-
-    private static double toDouble(final Object arg) {
-        if (arg == null) {
+        if (args == null || args.length < 1 || args[0] == null) {
             return 0;
         }
-        return arg instanceof Number ? ((Number) arg).doubleValue() : Double.parseDouble(arg.toString());
+        final var value = args[0];
+        if (value instanceof String) {
+            return ((String) value).length();
+        }
+        if (value instanceof Collection) {
+            return ((Collection<?>) value).size();
+        }
+        if (value instanceof Map) {
+            return ((Map<?, ?>) value).size();
+        }
+        if (value.getClass().isArray()) {
+            return Array.getLength(value);
+        }
+        return value.toString().length();
     }
 }

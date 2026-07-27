@@ -32,7 +32,7 @@ import static java.util.stream.Collectors.toMap;
 
 public final class BundlebeeOperator {
     private BundlebeeOperator() {
-        // -no-op
+        // no-op
     }
 
     public static void main(final String... args) {

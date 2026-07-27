@@ -22,24 +22,43 @@ import javax.enterprise.context.Dependent;
 
 @Dependent
 //metadata:start
-// category = Other
+// category = Defaults
 //metadata:end
-@Description("Prints a value as a string")
-public class PrintFunc implements HelmFunction {
+@Description("Returns the logical OR of two values, returning the first truthy value or the last falsy one")
+public class OrFunc implements HelmFunction {
     @Override
     public String name() {
-        return "print";
+        return "or";
     }
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length < 1) {
-            return "";
+        if (args.length < 2) {
+            return args.length == 1 ? args[0] : null;
         }
-        final var sb = new StringBuilder();
-        for (final var arg : args) {
-            sb.append(arg == null ? "<nil>" : arg);
+        var result = args[0];
+        for (int i = 1; i < args.length; i++) {
+            if (isTruthy(result)) {
+                return result;
+            }
+            result = args[i];
         }
-        return sb.toString();
+        return result;
+    }
+
+    private boolean isTruthy(final Object value) {
+        if (value == null) {
+            return false;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue() != 0;
+        }
+        if (value instanceof String) {
+            return !((String) value).isEmpty();
+        }
+        return true;
     }
 }

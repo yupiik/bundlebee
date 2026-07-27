@@ -16,6 +16,7 @@
 package io.yupiik.bundlebee.helm;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ import java.util.List;
 public abstract class HelmGoTemplateNode {
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class TextNode extends HelmGoTemplateNode {
         private final String text;
         private final boolean trimLeft;
@@ -32,22 +34,26 @@ public abstract class HelmGoTemplateNode {
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class VariableNode extends HelmGoTemplateNode {
         private final List<String> path;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class FunctionCallNode extends HelmGoTemplateNode {
         private final String name;
         private final List<HelmGoTemplateNode> args;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class PipelineNode extends HelmGoTemplateNode {
         private final List<HelmGoTemplateNode> functions;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class IfNode extends HelmGoTemplateNode {
         private final HelmGoTemplateNode condition;
         private final List<HelmGoTemplateNode> body;
@@ -55,48 +61,59 @@ public abstract class HelmGoTemplateNode {
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class RangeNode extends HelmGoTemplateNode {
         private final HelmGoTemplateNode over;
         private final List<HelmGoTemplateNode> body;
+        private final String keyVar;
+        private final String valueVar;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class WithNode extends HelmGoTemplateNode {
         private final HelmGoTemplateNode target;
         private final List<HelmGoTemplateNode> body;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class AssignNode extends HelmGoTemplateNode {
         private final String variable;
         private final HelmGoTemplateNode value;
+        private final boolean declare; // true for :=, false for =
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class DefineNode extends HelmGoTemplateNode {
         private final String name;
         private final List<HelmGoTemplateNode> body;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class BlockNode extends HelmGoTemplateNode {
         private final String name;
         private final List<HelmGoTemplateNode> body;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class TemplateNode extends HelmGoTemplateNode {
         private final String name;
         private final HelmGoTemplateNode pipeline;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class IndexNode extends HelmGoTemplateNode {
         private final HelmGoTemplateNode target;
         private final HelmGoTemplateNode index;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class SliceNode extends HelmGoTemplateNode {
         private final HelmGoTemplateNode target;
         private final HelmGoTemplateNode low;
@@ -104,22 +121,37 @@ public abstract class HelmGoTemplateNode {
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class ListNode extends HelmGoTemplateNode {
         private final List<HelmGoTemplateNode> elements;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class StringNode extends HelmGoTemplateNode {
         private final String value;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class NumberNode extends HelmGoTemplateNode {
         private final String value;
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class BoolNode extends HelmGoTemplateNode {
         private final boolean value;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class IdentifierNode extends HelmGoTemplateNode {
+        private final String name;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class NilNode extends HelmGoTemplateNode {
     }
 }

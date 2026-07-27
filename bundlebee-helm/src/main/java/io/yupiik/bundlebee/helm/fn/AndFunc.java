@@ -15,52 +15,54 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
+import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
 
 import javax.enterprise.context.Dependent;
-
-import io.yupiik.bundlebee.core.configuration.Description;
 
 @Dependent
 //metadata:start
 // category = Defaults
 //metadata:end
-@Description("Returns the first non-empty value")
-public class CoalesceFunc implements HelmFunction {
+@Description("Returns the logical AND of two values, returning the last truthy value or the first falsy one")
+public class AndFunc implements HelmFunction {
     @Override
     public String name() {
-        return "coalesce";
+        return "and";
     }
 
     @Override
     public Object execute(final Object... args) {
-        for (final var arg : args) {
-            if (!isEmpty(arg)) {
-                return arg;
-            }
+        if (args.length < 2) {
+            return args.length == 1 ? args[0] : null;
         }
-        return null;
+        var result = args[0];
+        for (int i = 1; i < args.length; i++) {
+            if (!isTruthy(result)) {
+                return result;
+            }
+            result = args[i];
+        }
+        return result;
     }
 
-    private boolean isEmpty(final Object value) {
+    private boolean isTruthy(final Object value) {
         if (value == null) {
-            return true;
-        }
-        if (value instanceof Number) {
-            return ((Number) value).doubleValue() == 0;
+            return false;
         }
         if (value instanceof Boolean) {
-            return !(Boolean) value;
+            return (Boolean) value;
+        }
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue() != 0;
         }
         if (value instanceof String) {
-            return ((String) value).isEmpty();
+            return !((String) value).isEmpty();
         }
-        if (value instanceof java.util.Map) {
-            return ((java.util.Map<?, ?>) value).isEmpty();
-        }
-        if (value instanceof java.util.Collection) {
-            return ((java.util.Collection<?>) value).isEmpty();
-        }
-        return false;
+        return true;
+    }
+
+    private boolean isTruthyAllowNull(final Object value) {
+        return value != null && isTruthy(value);
     }
 }

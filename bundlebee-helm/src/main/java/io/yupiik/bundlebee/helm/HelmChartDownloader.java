@@ -18,10 +18,13 @@ package io.yupiik.bundlebee.helm;
 import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.lang.spi.PasswordResolver;
 import lombok.extern.java.Log;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 import javax.enterprise.context.Dependent;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -156,41 +159,16 @@ public class HelmChartDownloader {
 
     private Path extractWithCommonsCompress(final Path tgzFile, final Path targetDir) {
         try {
-            // Verify commons-compress is available with explicit error
-            try {
-                Class.forName("org.apache.commons.compress.archivers.tar.TarArchiveInputStream");
-            } catch (final ClassNotFoundException e) {
-                throw new IllegalStateException(
-                        "commons-compress is required to extract remote Helm charts. " +
-                        "Add org.apache.commons:commons-compress as a dependency to your project.", e);
-            }
-
             final var chartDir = targetDir.resolve("chart");
             Files.createDirectories(chartDir);
 
-            // Use reflection to avoid hard dependency
-            final var tarStream = new java.io.FileInputStream(tgzFile.toFile());
-            final var gzipStream = Class.forName("org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream")
-                    .getConstructor(java.io.InputStream.class)
-                    .newInstance(tarStream);
-            final var gzipStreamTyped = (java.io.InputStream) gzipStream;
-
-            final var tarInput = Class.forName("org.apache.commons.compress.archivers.tar.TarArchiveInputStream")
-                    .getConstructor(java.io.InputStream.class)
-                    .newInstance(gzipStreamTyped);
-
-            final var getNextTarEntry = tarInput.getClass().getMethod("getNextTarEntry");
-            final var isDirectory = Class.forName("org.apache.commons.compress.archivers.tar.TarArchiveEntry")
-                    .getMethod("isDirectory");
-            final var getName = Class.forName("org.apache.commons.compress.archivers.tar.TarArchiveEntry")
-                    .getMethod("getName");
-            final var closeMethod = tarInput.getClass().getMethod("close");
-
-            try {
-                Object entry;
-                while ((entry = getNextTarEntry.invoke(tarInput)) != null) {
-                    final var name = (String) getName.invoke(entry);
-                    final var isDir = (boolean) isDirectory.invoke(entry);
+            // Use Java's built-in GZIPInputStream for decompression (commons-compress 1.28.0
+            // strict extra field parsing rejects some valid gzip headers)
+            try (final var tarInput = new TarArchiveInputStream(
+                    new java.util.zip.GZIPInputStream(new java.io.FileInputStream(tgzFile.toFile())))) {
+                TarArchiveEntry entry;
+                while ((entry = tarInput.getNextTarEntry()) != null) {
+                    final var name = entry.getName();
 
                     // Skip root directory and normalize path
                     final var normalName = name.startsWith("./") ? name.substring(2) : name;
@@ -206,23 +184,19 @@ public class HelmChartDownloader {
                         continue;
                     }
 
-                    if (isDir) {
+                    if (entry.isDirectory()) {
                         Files.createDirectories(entryPath);
                     } else {
                         Files.createDirectories(entryPath.getParent());
                         try (final var out = Files.newOutputStream(entryPath)) {
                             final var buffer = new byte[8192];
                             int bytesRead;
-                            final var readMethod = tarInput.getClass()
-                                    .getMethod("read", byte[].class, int.class, int.class);
-                            while ((bytesRead = (int) readMethod.invoke(tarInput, buffer, 0, buffer.length)) != -1) {
+                            while ((bytesRead = tarInput.read(buffer, 0, buffer.length)) != -1) {
                                 out.write(buffer, 0, bytesRead);
                             }
                         }
                     }
                 }
-            } finally {
-                closeMethod.invoke(tarInput);
             }
 
             // If the tgz contains a single directory, use that as the chart dir
@@ -241,8 +215,7 @@ public class HelmChartDownloader {
             return chartDir;
         } catch (final Exception e) {
             throw new IllegalStateException(
-                    "Failed to extract chart archive '" + tgzFile + "'. " +
-                            "If commons-compress is missing, add org.apache.commons:commons-compress to your dependencies.", e);
+                    "Failed to extract chart archive '" + tgzFile + "'.", e);
         }
     }
 }

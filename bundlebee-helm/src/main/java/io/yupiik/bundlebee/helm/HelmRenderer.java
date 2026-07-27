@@ -91,7 +91,9 @@ public class HelmRenderer {
                             "Name", releaseName != null ? releaseName : (chart.getName() != null ? chart.getName() : "RELEASE-NAME"),
                             "Namespace", releaseNamespace != null ? releaseNamespace : namespaceProvider.namespace(),
                             "IsInstall", true,
-                            "IsUpgrade", false));
+                            "IsUpgrade", false,
+                            "Service", "Helm",
+                            "Revision", "1"));
                     context.put("Chart", Map.of(
                             "Name", chart.getName(),
                             "Version", chart.getVersion(),
@@ -99,6 +101,8 @@ public class HelmRenderer {
                     context.put("Capabilities", Map.of(
                             "KubeVersion", Map.of(
                                     "Version", "v1.28.0",
+                                    "Major", "1",
+                                    "Minor", "28",
                                     "GitCommit", "unknown",
                                     "GitTreeState", "clean")));
                     context.put("Template", Map.of(
@@ -114,11 +118,9 @@ public class HelmRenderer {
                     }
 
                     // Register defines from _helpers.tpl (main chart and subcharts)
-                    for (final var entry : chart.getTemplates().entrySet()) {
+                    for (final var entry : allNodes.entrySet()) {
                         if (entry.getKey().endsWith("_helpers.tpl")) {
-                            final var helperTokens = new HelmGoTemplateLexer().tokenize(entry.getValue());
-                            final var helperNodes = new HelmGoTemplateParser(helperTokens).parse();
-                            renderer.registerDefines(helperNodes);
+                            renderer.registerDefines(entry.getValue());
                         }
                     }
 
@@ -135,8 +137,7 @@ public class HelmRenderer {
                                 results.add(trimmed);
                             }
                         } catch (final Exception e) {
-                            log.log(Level.WARNING, "Failed to render template '" + entry.getKey() + "': " + e.getMessage(), e);
-                            log.log(Level.WARNING, "Stack trace:", e);
+                            throw new RuntimeException("Failed to render template '" + entry.getKey() + "': " + e.getMessage(), e);
                         }
                     }
 

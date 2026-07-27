@@ -15,40 +15,36 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
+import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
 
 import javax.enterprise.context.Dependent;
 
-import io.yupiik.bundlebee.core.configuration.Description;
-
 @Dependent
 //metadata:start
-// category = Math
+// category = Type
 //metadata:end
-@Description("Subtracts numbers")
-public class SubFunc implements HelmFunction {
+@Description("Converts a value to an int")
+public class IntFunc implements HelmFunction {
     @Override
     public String name() {
-        return "sub";
+        return "int";
     }
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length < 2) {
-            throw new IllegalArgumentException("sub requires two arguments");
-        }
-        final var left = toDouble(args[0]);
-        final var right = toDouble(args[1]);
-        if (args[0] instanceof Integer && args[1] instanceof Integer) {
-            return ((Number) args[0]).intValue() - ((Number) args[1]).intValue();
-        }
-        return left - right;
-    }
-
-    private static double toDouble(final Object arg) {
-        if (arg == null) {
+        if (args == null || args.length < 1 || args[0] == null) {
             return 0;
         }
-        return arg instanceof Number ? ((Number) arg).doubleValue() : Double.parseDouble(arg.toString());
+        final var s = args[0].toString();
+        try {
+            return Long.parseLong(s);
+        } catch (final NumberFormatException e) {
+            try {
+                return (long) Double.parseDouble(s);
+            } catch (final NumberFormatException e2) {
+                return 0L;
+            }
+        }
     }
 }

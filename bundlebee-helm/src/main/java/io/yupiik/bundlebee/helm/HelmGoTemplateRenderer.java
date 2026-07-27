@@ -47,6 +47,7 @@ public class HelmGoTemplateRenderer {
         scopeStack.push(new HashMap<>());
         final var scope = new HashMap<>(context);
         scope.put(".", context);
+        scope.put("$", context);
         scopeStack.push(scope);
         final var sb = new StringBuilder();
         renderNodes(nodes, sb);
@@ -71,7 +72,7 @@ public class HelmGoTemplateRenderer {
                 if (textNode.isTrimLeft()) {
                     text = text.stripLeading();
                 }
-                if (textNode.isTrimRight() && i + 1 < nodes.size()) {
+                if (textNode.isTrimRight()) {
                     text = text.stripTrailing();
                 }
                 sb.append(text);
@@ -84,7 +85,13 @@ public class HelmGoTemplateRenderer {
             } else if (node instanceof HelmGoTemplateNode.AssignNode) {
                 final var assignNode = (HelmGoTemplateNode.AssignNode) node;
                 final var value = evalPipeline(assignNode.getValue());
-                currentScope().put(assignNode.getVariable(), value);
+                if (assignNode.isDeclare()) {
+                    currentScope().put(assignNode.getVariable(), value);
+                } else {
+                    setVariableInEnclosingScope(assignNode.getVariable(), value);
+                }
+            } else if (node instanceof HelmGoTemplateNode.DefineNode) {
+                // DefineNodes are handled by registerDefines() - they don't produce output
             } else if (node instanceof HelmGoTemplateNode.TemplateNode) {
                 renderTemplate((HelmGoTemplateNode.TemplateNode) node, sb);
             } else if (node instanceof HelmGoTemplateNode.BlockNode) {
@@ -104,14 +111,20 @@ public class HelmGoTemplateRenderer {
     private void renderIf(final HelmGoTemplateNode.IfNode ifNode, final StringBuilder sb) {
         final var condition = evalPipeline(ifNode.getCondition());
         if (isTruthy(condition)) {
-            scopeStack.push(new HashMap<>(currentScope()));
+            final var blockScope = new HashMap<String, Object>();
+            blockScope.put(".", currentScope().get("."));
+            blockScope.put("$", scopeStack.peek().get("$"));
+            scopeStack.push(blockScope);
             try {
                 renderNodes(ifNode.getBody(), sb);
             } finally {
                 scopeStack.pop();
             }
         } else if (!ifNode.getElseBody().isEmpty()) {
-            scopeStack.push(new HashMap<>(currentScope()));
+            final var blockScope = new HashMap<String, Object>();
+            blockScope.put(".", currentScope().get("."));
+            blockScope.put("$", scopeStack.peek().get("$"));
+            scopeStack.push(blockScope);
             try {
                 renderNodes(ifNode.getElseBody(), sb);
             } finally {
@@ -126,13 +139,49 @@ public class HelmGoTemplateRenderer {
         if (items == null) {
             return;
         }
+
+        // Check if we have key-value destructuring
+        final var keyVar = rangeNode.getKeyVar();
+        final var valueVar = rangeNode.getValueVar();
+
+        if (iterable instanceof Map && (keyVar != null || valueVar != null)) {
+            // Map iteration with key-value destructuring
+            final var map = (Map<?, ?>) iterable;
+            int idx = 0;
+            for (final var entry : map.entrySet()) {
+                final var rangeScope = new HashMap<String, Object>();
+                rangeScope.put(".", entry.getValue());
+                rangeScope.put("$", scopeStack.peek().get("$"));
+                rangeScope.put("$idx", idx);
+                rangeScope.put("$length", map.size());
+                if (keyVar != null) {
+                    rangeScope.put(keyVar, entry.getKey());
+                }
+                if (valueVar != null) {
+                    rangeScope.put(valueVar, entry.getValue());
+                }
+                scopeStack.push(rangeScope);
+                try {
+                    renderNodes(rangeNode.getBody(), sb);
+                } finally {
+                    scopeStack.pop();
+                }
+                idx++;
+            }
+            return;
+        }
+
+        // Single value or list iteration
         int idx = 0;
         for (final var item : items) {
-            final var rangeScope = new HashMap<>(currentScope());
+            final var rangeScope = new HashMap<String, Object>();
             rangeScope.put(".", item);
             rangeScope.put("$", scopeStack.peek().get("$"));
             rangeScope.put("$idx", idx);
             rangeScope.put("$length", items.size());
+            if (valueVar != null) {
+                rangeScope.put(valueVar, item);
+            }
             scopeStack.push(rangeScope);
             try {
                 renderNodes(rangeNode.getBody(), sb);
@@ -148,8 +197,9 @@ public class HelmGoTemplateRenderer {
         if (!isTruthy(target)) {
             return;
         }
-        final var withScope = new HashMap<>(currentScope());
+        final var withScope = new HashMap<String, Object>();
         withScope.put(".", target);
+        withScope.put("$", scopeStack.peek().get("$"));
         scopeStack.push(withScope);
         try {
             renderNodes(withNode.getBody(), sb);
@@ -167,8 +217,9 @@ public class HelmGoTemplateRenderer {
         }
         if (templateNode.getPipeline() != null) {
             final var data = evalPipeline(templateNode.getPipeline());
-            final var templateScope = new HashMap<>(currentScope());
+            final var templateScope = new HashMap<String, Object>();
             templateScope.put(".", data);
+            templateScope.put("$", scopeStack.peek().get("$"));
             scopeStack.push(templateScope);
             try {
                 renderNodes(body, sb);
@@ -192,7 +243,7 @@ public class HelmGoTemplateRenderer {
                 final var funcNode = functions.get(i);
                 if (funcNode instanceof HelmGoTemplateNode.FunctionCallNode) {
                     final var fn = (HelmGoTemplateNode.FunctionCallNode) funcNode;
-                    final var helmFunc = functionsMap.get(fn.getName());
+                    final var helmFunc = functionsMap.get(resolveOperatorName(fn.getName()));
                     if (helmFunc != null) {
                         final var args = new ArrayList<Object>();
                         for (final var arg : fn.getArgs()) {
@@ -200,6 +251,22 @@ public class HelmGoTemplateRenderer {
                         }
                         args.add(result);
                         result = helmFunc.execute(args.toArray());
+                    } else if ("include".equals(fn.getName())) {
+                        result = evalIncludeWithPipe(fn, result);
+                    } else if ("tpl".equals(fn.getName())) {
+                        result = evalTplWithPipe(fn, result);
+                    } else {
+                        result = evalNode(funcNode);
+                    }
+                } else if (funcNode instanceof HelmGoTemplateNode.IdentifierNode) {
+                    final var ident = (HelmGoTemplateNode.IdentifierNode) funcNode;
+                    final var identFunc = functionsMap.get(resolveOperatorName(ident.getName()));
+                    if (identFunc != null) {
+                        result = identFunc.execute(result);
+                    } else if ("include".equals(ident.getName())) {
+                        result = evalIncludeByName(ident.getName(), result);
+                    } else if ("tpl".equals(ident.getName())) {
+                        result = evalTplByName(result);
                     } else {
                         result = evalNode(funcNode);
                     }
@@ -221,6 +288,9 @@ public class HelmGoTemplateRenderer {
         }
         if (node instanceof HelmGoTemplateNode.BoolNode) {
             return ((HelmGoTemplateNode.BoolNode) node).isValue();
+        }
+        if (node instanceof HelmGoTemplateNode.NilNode) {
+            return null;
         }
         if (node instanceof HelmGoTemplateNode.VariableNode) {
             return resolveVariable(((HelmGoTemplateNode.VariableNode) node).getPath());
@@ -252,6 +322,19 @@ public class HelmGoTemplateRenderer {
         if (node instanceof HelmGoTemplateNode.PipelineNode) {
             return evalPipeline((HelmGoTemplateNode.PipelineNode) node);
         }
+        if (node instanceof HelmGoTemplateNode.IdentifierNode) {
+            final var name = ((HelmGoTemplateNode.IdentifierNode) node).getName();
+            // Check if it's a known function
+            final var helmFunc = functionsMap.get(resolveOperatorName(name));
+            if (helmFunc != null) {
+                return helmFunc.execute();
+            }
+            // Treat as field access on current context: .name
+            final var path = new ArrayList<String>();
+            path.add("");
+            path.add(name);
+            return resolveVariable(path);
+        }
         return null;
     }
 
@@ -262,7 +345,7 @@ public class HelmGoTemplateRenderer {
         if ("tpl".equals(fn.getName())) {
             return evalTpl(fn);
         }
-        final var helmFunc = functionsMap.get(fn.getName());
+        final var helmFunc = functionsMap.get(resolveOperatorName(fn.getName()));
         if (helmFunc == null) {
             log.fine(() -> "Unknown helm function: " + fn.getName());
             return null;
@@ -272,6 +355,28 @@ public class HelmGoTemplateRenderer {
             args[i] = evalNode(fn.getArgs().get(i));
         }
         return helmFunc.execute(args);
+    }
+
+    private String resolveOperatorName(final String name) {
+        if ("==".equals(name)) {
+            return "eq";
+        }
+        if ("!=".equals(name)) {
+            return "ne";
+        }
+        if (">".equals(name)) {
+            return "gt";
+        }
+        if (">=".equals(name)) {
+            return "ge";
+        }
+        if ("<".equals(name)) {
+            return "lt";
+        }
+        if ("<=".equals(name)) {
+            return "le";
+        }
+        return name;
     }
 
     private Object evalInclude(final HelmGoTemplateNode.FunctionCallNode fn) {
@@ -285,7 +390,8 @@ public class HelmGoTemplateRenderer {
             return "";
         }
         final var data = fn.getArgs().size() > 1 ? evalNode(fn.getArgs().get(1)) : null;
-        final var includeScope = new HashMap<>(currentScope());
+        final var includeScope = new HashMap<String, Object>();
+        includeScope.put("$", scopeStack.peek().get("$"));
         if (data != null) {
             includeScope.put(".", data);
         }
@@ -308,8 +414,104 @@ public class HelmGoTemplateRenderer {
             return "";
         }
         final var data = fn.getArgs().size() > 1 ? evalNode(fn.getArgs().get(1)) : currentScope().get(".");
-        final var tplScope = new HashMap<>(currentScope());
+        final var tplScope = new HashMap<String, Object>();
         tplScope.put(".", data);
+        tplScope.put("$", scopeStack.peek().get("$"));
+        scopeStack.push(tplScope);
+        try {
+            final var lexer = new HelmGoTemplateLexer();
+            final var tokens = lexer.tokenize(templateStr);
+            final var parser = new HelmGoTemplateParser(tokens);
+            final var nodes = parser.parse();
+            final var sb = new StringBuilder();
+            renderNodes(nodes, sb);
+            return sb.toString();
+        } finally {
+            scopeStack.pop();
+        }
+    }
+
+    private Object evalIncludeByName(final String templateName, final Object pipedValue) {
+        final var body = defines.get(templateName);
+        if (body == null) {
+            log.fine(() -> "Include template '" + templateName + "' not found");
+            return "";
+        }
+        final var includeScope = new HashMap<String, Object>();
+        includeScope.put("$", scopeStack.peek().get("$"));
+        if (pipedValue != null) {
+            includeScope.put(".", pipedValue);
+        }
+        scopeStack.push(includeScope);
+        try {
+            final var sb = new StringBuilder();
+            renderNodes(body, sb);
+            return sb.toString();
+        } finally {
+            scopeStack.pop();
+        }
+    }
+
+    private Object evalTplByName(final Object pipedValue) {
+        final var templateStr = coerceString(pipedValue);
+        if (templateStr.isEmpty()) {
+            return "";
+        }
+        final var tplScope = new HashMap<String, Object>();
+        tplScope.put(".", pipedValue);
+        tplScope.put("$", scopeStack.peek().get("$"));
+        scopeStack.push(tplScope);
+        try {
+            final var lexer = new HelmGoTemplateLexer();
+            final var tokens = lexer.tokenize(templateStr);
+            final var parser = new HelmGoTemplateParser(tokens);
+            final var nodes = parser.parse();
+            final var sb = new StringBuilder();
+            renderNodes(nodes, sb);
+            return sb.toString();
+        } finally {
+            scopeStack.pop();
+        }
+    }
+
+    private Object evalIncludeWithPipe(final HelmGoTemplateNode.FunctionCallNode fn, final Object pipedValue) {
+        if (fn.getArgs().isEmpty()) {
+            return "";
+        }
+        final var name = coerceString(evalNode(fn.getArgs().get(0)));
+        final var body = defines.get(name);
+        if (body == null) {
+            log.fine(() -> "Include template '" + name + "' not found");
+            return "";
+        }
+        final var data = fn.getArgs().size() > 1 ? evalNode(fn.getArgs().get(1)) : pipedValue;
+        final var includeScope = new HashMap<String, Object>();
+        includeScope.put("$", scopeStack.peek().get("$"));
+        if (data != null) {
+            includeScope.put(".", data);
+        }
+        scopeStack.push(includeScope);
+        try {
+            final var sb = new StringBuilder();
+            renderNodes(body, sb);
+            return sb.toString();
+        } finally {
+            scopeStack.pop();
+        }
+    }
+
+    private Object evalTplWithPipe(final HelmGoTemplateNode.FunctionCallNode fn, final Object pipedValue) {
+        if (fn.getArgs().isEmpty()) {
+            return "";
+        }
+        final var templateStr = coerceString(evalNode(fn.getArgs().get(0)));
+        if (templateStr.isEmpty()) {
+            return "";
+        }
+        final var data = fn.getArgs().size() > 1 ? evalNode(fn.getArgs().get(1)) : pipedValue;
+        final var tplScope = new HashMap<String, Object>();
+        tplScope.put(".", data);
+        tplScope.put("$", scopeStack.peek().get("$"));
         scopeStack.push(tplScope);
         try {
             final var lexer = new HelmGoTemplateLexer();
@@ -331,12 +533,30 @@ public class HelmGoTemplateRenderer {
         }
         Object current;
         if ("$".equals(path.get(0))) {
+            // Bare $ - the root context variable
             current = currentScope().get("$");
             if (current == null) {
                 current = currentScope().get(".");
             }
             if (path.size() == 1) {
                 return current;
+            }
+            for (int i = 1; i < path.size(); i++) {
+                if (current == null) {
+                    return null;
+                }
+                current = resolveField(current, path.get(i));
+            }
+            return current;
+        }
+        if (path.get(0).startsWith("$")) {
+            // Named variable like $name, $idx, etc. - look up by full key in scope stack
+            current = null;
+            for (final var scope : scopeStack) {
+                if (scope.containsKey(path.get(0))) {
+                    current = scope.get(path.get(0));
+                    break;
+                }
             }
             for (int i = 1; i < path.size(); i++) {
                 if (current == null) {
@@ -452,6 +672,16 @@ public class HelmGoTemplateRenderer {
             return ((String) obj).chars().mapToObj(c -> String.valueOf((char) c)).collect(java.util.stream.Collectors.toList());
         }
         return null;
+    }
+
+    private void setVariableInEnclosingScope(final String name, final Object value) {
+        for (final var scope : scopeStack) {
+            if (scope.containsKey(name)) {
+                scope.put(name, value);
+                return;
+            }
+        }
+        currentScope().put(name, value);
     }
 
     private String coerceString(final Object obj) {
