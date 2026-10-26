@@ -63,7 +63,7 @@
     <dependency> <!-- todo: replace it by something lighter without the mapping feature? -->
       <groupId>org.openjdk.nashorn</groupId>
       <artifactId>nashorn-core</artifactId>
-      <version>15.4</version>
+      <version>15.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -135,7 +135,7 @@
     <dependency>
       <groupId>io.yupiik.fusion</groupId>
       <artifactId>fusion-handlebars</artifactId>
-      <version>1.0.16</version>
+      <version>1.0.37</version>
       <scope>provided</scope>
       <exclusions>
         <exclusion>
