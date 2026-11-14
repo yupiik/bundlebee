@@ -1,0 +1,19 @@
+name: OWASP Dependency-Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '43 5 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-check:
+    uses: yupiik/owasp-nvd-cache/.github/workflows/dependency-check.yml@main
+    with:
+      java-version: '25'
+      fail-cvss: '7'
