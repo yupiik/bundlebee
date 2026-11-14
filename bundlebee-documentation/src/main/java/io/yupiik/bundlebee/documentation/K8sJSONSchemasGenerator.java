@@ -110,7 +110,7 @@ public class K8sJSONSchemasGenerator implements Runnable {
             throw new IllegalStateException(e);
         }
 
-        final var token = configuration.get("githubToken");
+        final var token = configuration.getOrDefault("githubToken", System.getProperty("minisite.githubToken"));
         if (token != null && !token.isBlank()) {
             setAuth = b -> b.header("Authorization", "Bearer " + token);
         } else {

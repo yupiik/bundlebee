@@ -287,8 +287,8 @@
                 <maxThreads>${minisite.kubernetes.jsonschema.maxThreads}</maxThreads>
                 <minVersion>${minisite.kubernetes.jsonschema.minVersion}</minVersion>
                 <skipPatchVersion>${minisite.kubernetes.jsonschema.skipPatchVersion}</skipPatchVersion>
-                <!-- optional but when rate limiting is hit it enables to continue to work -->
-                <githubToken>${minisite.githubToken}</githubToken>
+                <!-- Optional authentication is read from -Dminisite.githubToken by the generator.
+                     An unset property here creates a null value rejected by Minisite. -->
               </configuration>
             </action>
             <action>
