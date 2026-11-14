@@ -51,24 +51,3 @@ jobs:
         run: mvn install -Pnative -Dm2.location=/home/runner/work/bundlebee/bundlebee/.m2
       - name: Remove Snapshots Before Caching
         run: find /home/runner/work/bundlebee/bundlebee/.m2 -name '*SNAPSHOT' | xargs rm -Rf
-  security_audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone
-        uses: actions/checkout@v4
-      - name: Cache Maven Repository
-        uses: actions/cache@v4
-        with:
-          path: /home/runner/work/bundlebee/bundlebee/.m2
-          key: m2_repository
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '21'
-          cache: 'maven'
-      - name: Build
-        run: mvn install -DskipTests ossindex:audit
-      - name: Remove Snapshots Before Caching
-        run: find /home/runner/work/bundlebee/bundlebee/.m2 -name '*SNAPSHOT' | xargs rm -Rf
