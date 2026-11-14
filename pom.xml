@@ -37,7 +37,7 @@
     <owb.version>2.0.27</owb.version>
     <xbean.version>4.27</xbean.version>
     <junit5.version>5.11.4</junit5.version>
-    <arthur.version>1.0.9</arthur.version>
+    <arthur.version>1.0.10</arthur.version>
     <yupiik-logging.version>1.0.8</yupiik-logging.version>
     <johnzon.version>1.2.21</johnzon.version>
     <yupiik-tools.version>1.3.1</yupiik-tools.version>
