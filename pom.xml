@@ -447,29 +447,6 @@ under the License.
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>3.4.0</version>
       </plugin>
-      <plugin><!--  mvn ossindex:audit -->
-        <groupId>org.sonatype.ossindex.maven</groupId>
-        <artifactId>ossindex-maven-plugin</artifactId>
-        <version>3.1.0</version>
-        <executions>
-          <execution>
-            <id>audit-dependencies</id>
-            <phase />
-            <goals>
-              <goal>audit</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <scope>compile,runtime</scope>
-          <excludeVulnerabilityIds>
-            <!-- snakeyaml: CWE-121: Stack-based Buffer Overflow -->
-            <excludeVulnerabilityId>CVE-2022-38752</excludeVulnerabilityId>
-            <!-- Deserialization of Untrusted Data: here data are considered safe -->
-            <excludeVulnerabilityId>CVE-2022-1471</excludeVulnerabilityId>
-          </excludeVulnerabilityIds>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 
