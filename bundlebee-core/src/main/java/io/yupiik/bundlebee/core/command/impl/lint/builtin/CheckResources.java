@@ -16,13 +16,13 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
+import java.util.Map;
 import java.util.stream.Stream;
 
 public abstract class CheckResources extends ContainerValueValidator {
+
     private final String resource;
+
     private final String type;
 
     public CheckResources(final String type, final String resource) {
@@ -46,28 +46,28 @@ public abstract class CheckResources extends ContainerValueValidator {
     }
 
     @Override
-    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
-        final var resources = container.getJsonObject("resources");
-        if (resources == null) {
-            return Stream.of(new LintError(LintError.LintLevel.ERROR, "No resources element in container so no " + resource + " " + type + "."));
+    protected Stream<LintError> validate(final Map<?, ?> container, final LintableDescriptor descriptor) {
+        if (!(container.get("resources") instanceof Map<?, ?> resources)) {
+            return Stream.of(new LintError(
+                    LintError.LintLevel.ERROR,
+                    "No resources element in container so no " + resource + " " + type + "."));
         }
-        final var type = resources.getJsonObject(this.type);
-        if (type == null) {
-            return Stream.of(new LintError(LintError.LintLevel.ERROR, "No " + this.type + " element in container resources"));
+        if (!(resources.get(this.type) instanceof Map<?, ?> type)) {
+            return Stream.of(
+                    new LintError(LintError.LintLevel.ERROR, "No " + this.type + " element in container resources"));
         }
         final var resource = type.get(this.resource);
         if (resource == null) {
-            return Stream.of(new LintError(LintError.LintLevel.ERROR, "No " + this.resource + " resource in container " + this.type + " resources"));
+            return Stream.of(new LintError(
+                    LintError.LintLevel.ERROR,
+                    "No " + this.resource + " resource in container " + this.type + " resources"));
         }
-        switch (resource.getValueType()) {
-            case NUMBER:
-                if (((JsonNumber) resource).intValue() <= 0) {
-                    return Stream.of(new LintError(LintError.LintLevel.ERROR, "Zero set as " + this.resource + " resource in container " + type + "s resources"));
-                }
-                return Stream.empty();
-            // todo: string parsing to avoid <=0
-            default:
-                return Stream.empty();
+        if (resource instanceof Number number && number.intValue() <= 0) {
+            return Stream.of(new LintError(
+                    LintError.LintLevel.ERROR,
+                    "Zero set as " + this.resource + " resource in container " + type + "s resources"));
         }
+        // todo: string parsing to avoid <=0
+        return Stream.empty();
     }
 }

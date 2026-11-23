@@ -15,114 +15,81 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import org.apache.openwebbeans.junit5.Cdi;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-
-import javax.inject.Inject;
-import javax.json.JsonBuilderFactory;
-
-import static javax.json.JsonValue.EMPTY_JSON_OBJECT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
 
-@Cdi
-@TestInstance(PER_CLASS)
+import io.yupiik.fusion.json.JsonMapper;
+import io.yupiik.fusion.testing.Fusion;
+import io.yupiik.fusion.testing.FusionSupport;
+import java.util.Map;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+@FusionSupport
 class ContainerSanitizerTest {
-    @Inject
+    @Fusion
     private ContainerSanitizer sanitizer;
 
-    @Inject
-    @BundleBee
-    private JsonBuilderFactory json;
+    @Fusion
+    private JsonMapper mapper;
 
-    @Test
-    void noResources() {
+    @ParameterizedTest
+    @CsvSource({
+        "'{}','{}'",
+        "'{\"resources\":{}}','{\"resources\":{}}'",
+        "'{\"resources\":{\"requests\":{\"cpu\":1}}}','{\"resources\":{\"requests\":{\"cpu\":1}}}'",
+        "'{\"resources\":{\"requests\":{\"cpu\":null}}}','{\"resources\":{}}'",
+        "'{\"resources\":{\"requests\":{\"cpu\":null,\"memory\":\"512Mi\"}}}','{\"resources\":{\"requests\":{\"memory\":\"512Mi\"}}}'",
+        "'{\"args\":null,\"command\":null,\"resources\":{\"requests\":{\"cpu\":null,\"memory\":\"512Mi\"}}}','{\"resources\":{\"requests\":{\"memory\":\"512Mi\"}}}'",
+        "'{\"resources\":{\"limits\":{\"cpu\":null},\"other\":null}}','{\"resources\":{\"other\":null}}'",
+        "'{\"args\":[],\"command\":[\"run\"]}','{\"args\":[],\"command\":[\"run\"]}'"
+    })
+    void sanitizesContainersWithoutMutatingInput(final String container, final String expected) {
+        final var input = "{\"spec\":{\"containers\":[" + container + "]}}";
+        final var source = mapper.fromString(Map.class, input);
+        final var result = sanitizer.dropCpuResources("pods", source);
+        assertEquals(mapper.fromString(Object.class, "{\"spec\":{\"containers\":[" + expected + "]}}"), result);
+        assertEquals(mapper.fromString(Object.class, input), source);
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "null",
+                "true",
+                "1",
+                "\"invalid\"",
+                "{}",
+                "[null,1,\"invalid\"]",
+                "[{\"resources\":true}]",
+                "[{\"resources\":{\"requests\":null,\"limits\":42}}]"
+            })
+    void toleratesMalformedContainers(final String containers) {
+        final var source = mapper.fromString(Map.class, "{\"spec\":{\"containers\":" + containers + "}}");
+        assertEquals(source, sanitizer.dropCpuResources("pods", source));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"deployments", "daemonsets", "jobs", "cronjobs"})
+    void sanitizesPodTemplatesAndInitContainers(final String kind) {
+        final var spec =
+                "{\"containers\":[{\"resources\":{\"limits\":{\"cpu\":null}}}],\"initContainers\":[{\"args\":null}]}";
+        final var expectedSpec = "{\"containers\":[{\"resources\":{}}],\"initContainers\":[{}]}";
+        final var template = "{\"spec\":{\"template\":{\"spec\":" + spec + "}}}";
+        final var expectedTemplate = "{\"spec\":{\"template\":{\"spec\":" + expectedSpec + "}}}";
+        final var input = "cronjobs".equals(kind) ? "{\"spec\":{\"jobTemplate\":" + template + "}}" : template;
+        final var expected =
+                "cronjobs".equals(kind) ? "{\"spec\":{\"jobTemplate\":" + expectedTemplate + "}}" : expectedTemplate;
         assertEquals(
-                "{\"spec\":{\"containers\":[{}]}}",
-                sanitizer.dropCpuResources("pods", json.createObjectBuilder()
-                                .add("spec", json.createObjectBuilder()
-                                        .add("containers", json.createArrayBuilder()
-                                                .add(json.createObjectBuilder())))
-                                .build())
-                        .toString());
+                mapper.fromString(Object.class, expected),
+                sanitizer.dropCpuResources(kind, mapper.fromString(Map.class, input)));
     }
 
     @Test
-    void emptyResources() {
-        assertEquals(
-                "{\"spec\":{\"containers\":[{\"resources\":{}}]}}",
-                sanitizer.dropCpuResources("pods", json.createObjectBuilder()
-                                .add("spec", json.createObjectBuilder()
-                                        .add("containers", json.createArrayBuilder()
-                                                .add(json.createObjectBuilder()
-                                                        .add("resources", EMPTY_JSON_OBJECT))))
-                                .build())
-                        .toString());
-    }
-
-    @Test
-    void cpuOk() {
-        assertEquals(
-                "{\"spec\":{\"containers\":[{\"resources\":{\"requests\":{\"cpu\":1}}}]}}",
-                sanitizer.dropCpuResources("pods", json.createObjectBuilder()
-                                .add("spec", json.createObjectBuilder()
-                                        .add("containers", json.createArrayBuilder()
-                                                .add(json.createObjectBuilder()
-                                                        .add("resources", json.createObjectBuilder()
-                                                                .add("requests", json.createObjectBuilder()
-                                                                        .add("cpu", 1))))))
-                                .build())
-                        .toString());
-    }
-
-    @Test
-    void cpuNull() {
-        assertEquals(
-                "{\"spec\":{\"containers\":[{\"resources\":{}}]}}",
-                sanitizer.dropCpuResources("pods", json.createObjectBuilder()
-                                .add("spec", json.createObjectBuilder()
-                                        .add("containers", json.createArrayBuilder()
-                                                .add(json.createObjectBuilder()
-                                                        .add("resources", json.createObjectBuilder()
-                                                                .add("requests", json.createObjectBuilder()
-                                                                        .addNull("cpu"))))))
-                                .build())
-                        .toString());
-    }
-
-    @Test
-    void cpuNullWithMemory() {
-        assertEquals(
-                "{\"spec\":{\"containers\":[{\"resources\":{\"requests\":{\"memory\":\"512Mi\"}}}]}}",
-                sanitizer.dropCpuResources("pods", json.createObjectBuilder()
-                                .add("spec", json.createObjectBuilder()
-                                        .add("containers", json.createArrayBuilder()
-                                                .add(json.createObjectBuilder()
-                                                        .add("resources", json.createObjectBuilder()
-                                                                .add("requests", json.createObjectBuilder()
-                                                                        .addNull("cpu")
-                                                                        .add("memory", "512Mi"))))))
-                                .build())
-                        .toString());
-    }
-
-    @Test
-    void nullArgsAndCommand() {
-        assertEquals(
-                "{\"spec\":{\"containers\":[{\"resources\":{\"requests\":{\"memory\":\"512Mi\"}}}]}}",
-                sanitizer.dropCpuResources("pods", json.createObjectBuilder()
-                                .add("spec", json.createObjectBuilder()
-                                        .add("containers", json.createArrayBuilder()
-                                                .add(json.createObjectBuilder()
-                                                        .addNull("command")
-                                                        .addNull("args")
-                                                        .add("resources", json.createObjectBuilder()
-                                                                .add("requests", json.createObjectBuilder()
-                                                                        .addNull("cpu")
-                                                                        .add("memory", "512Mi"))))))
-                                .build())
-                        .toString());
+    void leavesUnsupportedKindsAndMissingPathsUnchanged() {
+        final var source = Map.<String, Object>of("data", Map.of("key", "value"));
+        assertEquals(source, sanitizer.dropCpuResources("configmaps", source));
+        assertEquals(source, sanitizer.dropCpuResources("pods", source));
     }
 }

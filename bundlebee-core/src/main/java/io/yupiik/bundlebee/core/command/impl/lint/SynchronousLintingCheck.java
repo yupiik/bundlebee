@@ -15,13 +15,14 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint;
 
+import static java.util.concurrent.CompletableFuture.completedStage;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
 
-import static java.util.concurrent.CompletableFuture.completedStage;
-
 public interface SynchronousLintingCheck extends LintingCheck {
+
     boolean accept(LintableDescriptor descriptor);
 
     @Override

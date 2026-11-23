@@ -17,16 +17,14 @@ package io.yupiik.bundlebee.helm.fn;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = URL
-//metadata:end
+// metadata:end
 @Description("Returns the URL-encoded form of the input string")
 public class UrlqueryFunc implements HelmFunction {
     @Override
@@ -40,8 +38,7 @@ public class UrlqueryFunc implements HelmFunction {
             return "";
         }
         try {
-            return URLEncoder.encode(args[0].toString(), "UTF-8")
-                    .replace("+", "%20");
+            return URLEncoder.encode(args[0].toString(), "UTF-8").replace("+", "%20");
         } catch (final UnsupportedEncodingException e) {
             return args[0].toString();
         }

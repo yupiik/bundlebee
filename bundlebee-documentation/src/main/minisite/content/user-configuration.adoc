@@ -20,3 +20,15 @@ This enables to run a command with a custom set of configuration:
 ----
 bundlebee --config-file mysetup.properties command --myarg value
 ----
+
+Both `--config-file path` and `--config-file=path` are supported.
+Precedence is command-line options, embedding overrides, ArgoCD parameters, the explicit configuration file, JVM system properties, environment variables, then `~/.bundlebeerc` (highest first).
+This intentionally changes the legacy ordering: CLI options now override every other source, and `.bundlebeerc` supplies defaults below system properties and environment variables.
+Fusion resolves registered configuration sources in ascending bean priority before its built-in sources; BundleBee registers CLI, embedding, Argo and the explicit file in that order, followed by Fusion's system and environment sources and the independent rc source.
+The relative ordering of embedding, Argo and the explicit file is a launcher policy using Fusion's ordered-source API, not a precedence rule inferred from source names.
+Files are invocation-local rather than copied into JVM-wide system properties, so values do not leak between launches.
+ArgoCD's `ARGOCD_APP_PARAMETERS` is decoded as typed parameters before command execution; decoded values are immutable for that invocation.
+The same precedence applies to command options, shared typed settings and arbitrary lazy embedding configuration keys.
+File and embedding keys retain dotted names, such as `bundlebee.kube.dryRun`; canonical CLI names replace dots with hyphens, such as `--bundlebee-kube-dryRun true`.
+Command-relative aliases such as `apply --alveolus my-app` remain supported.
+See xref:migration-2.adoc[Migrating to BundleBee 2] for extension and embedding changes.

@@ -15,13 +15,14 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import javax.enterprise.context.ApplicationScoped;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import java.util.regex.Pattern;
 
 @ApplicationScoped
 public class LabelSanitizerService {
-    public String sanitize(final String string) {
-        return string.replaceAll("[^\\w\\-\\.]+", "_")
-                .replace("__", "_");
-    }
+    private static final Pattern INVALID_LABEL_CHARACTERS = Pattern.compile("[^\\w\\-\\.]+");
 
+    public String sanitize(final String string) {
+        return INVALID_LABEL_CHARACTERS.matcher(string).replaceAll("_").replace("__", "_");
+    }
 }

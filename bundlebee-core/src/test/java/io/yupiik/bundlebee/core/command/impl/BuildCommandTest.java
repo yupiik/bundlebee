@@ -15,47 +15,68 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.BundleBee;
-import io.yupiik.bundlebee.core.test.BundleBeeExtension;
-import io.yupiik.bundlebee.core.test.CommandExecutor;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-
 import static java.util.Collections.list;
 import static java.util.logging.Level.INFO;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.yupiik.bundlebee.core.BundleBee;
+import io.yupiik.bundlebee.core.test.BundleBeeExtension;
+import io.yupiik.bundlebee.core.test.CommandExecutor;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+
 class BuildCommandTest {
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
     @Test
     void buildAndInstall(final CommandExecutor executor, @TempDir final Path dir) throws IOException {
         // create a bundle
-        new BundleBee().launch("new", "--dir", dir.toString(), "--group", "com.company", "--artifact", "foo");
-
+        new BundleBee()
+                .launch(
+                        "new",
+                        "--bundlebee-new-dir",
+                        dir.toString(),
+                        "--bundlebee-new-group",
+                        "com.company",
+                        "--bundlebee-new-artifact",
+                        "foo");
         final var dirString = dir.toString().replace('\\', '/');
-        assertEquals("" +
-                "Including bundlebee/manifest.json\n" +
-                "Including bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml\n" +
-                "Built " + dirString + "/target/foo-1.0.0.jar\n" +
-                "Installed " + dirString + "/m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar\n" +
-                "Project successfully built.\n" +
-                "", executor.wrap(null, INFO, () -> new BundleBee().launch(
-                "build", "--dir", dirString, "--bundlebee-maven-cache", dir.resolve("m2/repository").toString())));
-
-        try (final JarFile file = new JarFile(dir.resolve("m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar").toFile())) {
+        assertEquals(
+                "Including bundlebee/manifest.json\n"
+                        + "Including bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml\n" + "Built "
+                        + dirString + "/target/foo-1.0.0.jar\n" + "Installed " + dirString
+                        + "/m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar\n" + "Project successfully built.\n" + "",
+                executor.wrap(
+                        null,
+                        INFO,
+                        () -> new BundleBee()
+                                .launch(
+                                        "build",
+                                        "--bundlebee-build-dir",
+                                        dirString,
+                                        "--bundlebee-maven-cache",
+                                        dir.resolve("m2/repository").toString())));
+        try (final JarFile file = new JarFile(
+                dir.resolve("m2/repository/com/company/foo/1.0.0/foo-1.0.0.jar").toFile())) {
             assertEquals(
-                    List.of("META-INF/MANIFEST.MF", "bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml", "bundlebee/manifest.json"),
-                    list(file.entries()).stream().filter(it -> !it.isDirectory()).map(JarEntry::getName).sorted().collect(toList()));
+                    List.of(
+                            "META-INF/MANIFEST.MF",
+                            "bundlebee/kubernetes/com.company_foo_my-alveolus.configmap.yaml",
+                            "bundlebee/manifest.json"),
+                    list(file.entries()).stream()
+                            .filter(it -> !it.isDirectory())
+                            .map(JarEntry::getName)
+                            .sorted()
+                            .collect(toList()));
         }
     }
 }

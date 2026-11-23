@@ -15,16 +15,14 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Date
-//metadata:end
+// metadata:end
 @Description("Formats seconds as a duration string")
 public class DurationFunc implements HelmFunction {
     @Override

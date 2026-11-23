@@ -15,19 +15,16 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Regex
-//metadata:end
+// metadata:end
 @Description("Replaces regex matches, throws on error")
 public class MustRegexReplaceAllFunc implements HelmFunction {
     @Override
@@ -41,7 +38,9 @@ public class MustRegexReplaceAllFunc implements HelmFunction {
             throw new IllegalArgumentException("mustRegexReplaceAll requires three arguments");
         }
         try {
-            return Pattern.compile(args[0].toString()).matcher(args[1].toString()).replaceAll(args[2].toString());
+            return Pattern.compile(args[0].toString())
+                    .matcher(args[1].toString())
+                    .replaceAll(args[2].toString());
         } catch (final PatternSyntaxException e) {
             throw new RuntimeException("invalid regex pattern: " + args[0], e);
         }

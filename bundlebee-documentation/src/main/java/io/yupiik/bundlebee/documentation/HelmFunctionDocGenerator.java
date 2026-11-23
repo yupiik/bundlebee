@@ -15,18 +15,15 @@
  */
 package io.yupiik.bundlebee.documentation;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
+
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
-import lombok.extern.java.Log;
-import org.apache.xbean.finder.AnnotationFinder;
-import org.apache.xbean.finder.ClassLoaders;
-import org.apache.xbean.finder.UrlSet;
-import org.apache.xbean.finder.archive.ClasspathArchive;
-
-import java.io.File;
+import io.yupiik.fusion.framework.api.ConfiguringContainer;
 import java.io.IOException;
 import java.io.StringReader;
-import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,14 +31,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static java.util.Objects.requireNonNull;
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.joining;
-
 /**
- * Scans all {@link HelmFunction} implementations using xbean-finder and generates
+ * Loads the generated Fusion {@link HelmFunction} registry and generates
  * an AsciiDoc fragment documenting each function with its description.
  * The generated file is included by {@code helm.adoc}.
  * <p>
@@ -53,13 +48,18 @@ import static java.util.stream.Collectors.joining;
  * </pre>
  * The actual description comes from the {@code @Description} annotation.
  */
-@Log
 public class HelmFunctionDocGenerator implements Runnable {
+    private static final Pattern NEWLINE = Pattern.compile("\r?\n");
+    private static final Pattern METADATA_MARKER =
+            Pattern.compile("^\\h*//\\h*metadata\\h*:\\h*(start|end)\\h*\\r?$", Pattern.MULTILINE);
+    private final Logger log = Logger.getLogger(HelmFunctionDocGenerator.class.getName());
     private final Path sourceBase;
     private final Path helmModule;
 
     public HelmFunctionDocGenerator(final Path sourceBase) {
-        this(sourceBase, sourceBase.getParent().getParent().getParent().getParent().resolve("bundlebee-helm"));
+        this(
+                sourceBase,
+                sourceBase.getParent().getParent().getParent().getParent().resolve("bundlebee-helm"));
     }
 
     protected HelmFunctionDocGenerator(final Path sourceBase, final Path helmModule) {
@@ -69,38 +69,28 @@ public class HelmFunctionDocGenerator implements Runnable {
 
     @Override
     public void run() {
-        final var finder = createFinder();
         final var functions = new LinkedHashMap<String, FunctionInfo>();
-        for (final var desc : finder.findImplementations(HelmFunction.class)) {
-            final Class<?> clazz;
-            try {
-                clazz = Class.forName(desc.getName(), false, Thread.currentThread().getContextClassLoader());
-            } catch (final ClassNotFoundException e) {
-                continue;
+        try (var container = ConfiguringContainer.of().start();
+                var instances = container.lookups(HelmFunction.class)) {
+            for (final var function : instances.instance()) {
+                final var name = function.name();
+                final var info = resolveFunctionInfo(function.getClass(), name);
+                if (functions.putIfAbsent(name, info) != null) {
+                    throw new IllegalStateException("Duplicate Helm function: " + name);
+                }
             }
-            if (Modifier.isAbstract(clazz.getModifiers())) {
-                continue;
-            }
-
-            final var name = resolveFunctionNameViaReflection(clazz);
-            if (name == null) {
-                continue;
-            }
-
-            final var info = resolveFunctionInfo(clazz, name);
-            functions.put(name, info);
         }
-
+        if (functions.isEmpty()) {
+            throw new IllegalStateException("No Helm functions registered; check Fusion generated modules");
+        }
         final var sorted = new ArrayList<>(functions.entrySet());
         sorted.sort(Map.Entry.comparingByKey());
-
         // Group by category
         final var grouped = new LinkedHashMap<String, List<Map.Entry<String, FunctionInfo>>>();
         for (final var entry : sorted) {
             final var cat = entry.getValue().category();
             grouped.computeIfAbsent(cat, k -> new ArrayList<>()).add(entry);
         }
-
         final var sb = new StringBuilder();
         sb.append("Bundlebee provides ").append(functions.size()).append(" built-in template functions.\n");
         sb.append("These are compatible with the Sprig function library used by Helm.\n\n");
@@ -111,16 +101,18 @@ public class HelmFunctionDocGenerator implements Runnable {
             sb.append("| Function | Description\n\n");
             for (final var fn : catEntry.getValue()) {
                 sb.append("| `").append(escapeAdoc(fn.getKey())).append("`");
-                sb.append("\n| ").append(escapeAdoc(fn.getValue().description())).append("\n\n");
+                sb.append("\n| ")
+                        .append(escapeAdoc(fn.getValue().description()))
+                        .append("\n\n");
             }
             sb.append("|===\n\n");
         }
-
         try {
-            final var output = Files.createDirectories(
-                    sourceBase.resolve("content/_partials/generated/documentation"))
+            final var output = Files.createDirectories(sourceBase.resolve("content/_partials/generated/documentation"))
                     .resolve("helm.functions.adoc");
-            Files.writeString(output, sb.toString(),
+            Files.writeString(
+                    output,
+                    sb.toString(),
                     java.nio.file.StandardOpenOption.CREATE,
                     java.nio.file.StandardOpenOption.TRUNCATE_EXISTING);
             log.info("Created " + output);
@@ -129,34 +121,16 @@ public class HelmFunctionDocGenerator implements Runnable {
         }
     }
 
-    private String resolveFunctionNameViaReflection(final Class<?> clazz) {
-        try {
-            final var nameMethod = clazz.getMethod("name");
-            final Object instance;
-            try {
-                instance = clazz.getDeclaredConstructor().newInstance();
-            } catch (final Exception e) {
-                final var simpleName = clazz.getSimpleName();
-                if (simpleName.endsWith("Func")) {
-                    return simpleName.substring(0, simpleName.length() - 4).toLowerCase();
-                }
-                throw new IllegalStateException(e);
-            }
-            return (String) nameMethod.invoke(instance);
-        } catch (final Exception e) {
-            throw e instanceof RuntimeException ? (RuntimeException) e : new IllegalStateException(e);
-        }
-    }
-
     private FunctionInfo resolveFunctionInfo(final Class<?> clazz, final String name) {
         final var sourceFile = findSourceFile(clazz);
         if (sourceFile == null || Files.notExists(sourceFile)) {
-            throw new IllegalStateException("Missing source for '" + name + "' (" + sourceFile + ")");
+            throw new IllegalStateException("Missing source for \'" + name + "\' (" + sourceFile + ")");
         }
         try {
             final var content = Files.readString(sourceFile);
             final var metadata = parseMetadata(content);
-            final var description = requireNonNull(clazz.getAnnotation(Description.class), clazz.getName()).value();
+            final var description = requireNonNull(clazz.getAnnotation(Description.class), clazz.getName())
+                    .value();
             final var category = ofNullable(metadata.getProperty("category")).orElseThrow(() -> fail(name));
             return new FunctionInfo(description, category);
         } catch (final IOException e) {
@@ -174,26 +148,32 @@ public class HelmFunctionDocGenerator implements Runnable {
 
     private Properties parseMetadata(final String content) {
         final var props = new Properties();
-        final var start = content.indexOf("//metadata:start\n");
-        final var end = content.indexOf("//metadata:end\n", start+1);
-        if (end < 0 || start < 0) {
-            throw new IllegalStateException("No //metadata:start/end in\n" + content);
+        final var markers = METADATA_MARKER.matcher(content);
+        if (!markers.find() || !"start".equals(markers.group(1))) {
+            throw new IllegalStateException("Expected // metadata:start marker line before // metadata:end");
         }
-
-        try (final var reader = new StringReader(
-                Stream.of(content.substring(content.indexOf('\n', start + 1), end).trim().split("\n"))
-                        .map(it -> it.startsWith("//") ? it.substring("//".length()).trim() + "\n" : "")
-                        .collect(joining("")))) {
+        final var start = markers.end();
+        if (!markers.find() || !"end".equals(markers.group(1))) {
+            throw new IllegalStateException("Expected exactly one // metadata:end marker line after // metadata:start");
+        }
+        final var end = markers.start();
+        if (markers.find()) {
+            throw new IllegalStateException("Expected exactly one pair of // metadata:start/end marker lines");
+        }
+        try (var reader = new StringReader(Stream.of(
+                        NEWLINE.split(content.substring(start, end).trim()))
+                .map(String::trim)
+                .map(it -> it.startsWith("//") ? it.substring("//".length()).trim() + "\n" : "")
+                .collect(joining("")))) {
             props.load(reader);
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
-
         return props;
     }
 
     private RuntimeException fail(final String name) {
-        return new IllegalStateException("'" + name + "' helm function misses category metadata");
+        return new IllegalStateException("\'" + name + "\' helm function misses category metadata");
     }
 
     private String escapeAdoc(final String text) {
@@ -201,24 +181,6 @@ public class HelmFunctionDocGenerator implements Runnable {
             return "";
         }
         return text.replace("|", "\\|");
-    }
-
-    private AnnotationFinder createFinder() {
-        try {
-            final var loader = Thread.currentThread().getContextClassLoader();
-            final var urls = new UrlSet(ClassLoaders.findUrls(loader))
-                    .excludeJvm()
-                    .getUrls();
-            final var targetJar = urls.stream()
-                    .map(org.apache.xbean.finder.util.Files::toFile)
-                    .filter(f -> "classes".equals(f.getName()) && new File(f, "io/yupiik/bundlebee/helm").isDirectory() ||
-                            f.getName().contains("bundlebee-helm"))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("bundlebee-helm not found on classpath"));
-            return new AnnotationFinder(ClasspathArchive.archive(loader, targetJar.toURI().toURL()));
-        } catch (final IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     private static final class FunctionInfo {
@@ -230,7 +192,12 @@ public class HelmFunctionDocGenerator implements Runnable {
             this.category = category;
         }
 
-        String description() { return description; }
-        String category() { return category; }
+        String description() {
+            return description;
+        }
+
+        String category() {
+            return category;
+        }
     }
 }

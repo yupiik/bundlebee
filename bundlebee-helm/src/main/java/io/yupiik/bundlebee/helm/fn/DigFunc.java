@@ -15,16 +15,14 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-import java.util.List;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Dictionary
-//metadata:end
+// metadata:end
 @Description("Traverses nested dicts with a default value")
 public class DigFunc implements io.yupiik.bundlebee.helm.HelmFunction {
     @Override

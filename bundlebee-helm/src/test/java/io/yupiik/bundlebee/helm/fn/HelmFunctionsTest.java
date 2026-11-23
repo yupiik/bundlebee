@@ -15,17 +15,40 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.yupiik.fusion.framework.api.ConfiguringContainer;
+import io.yupiik.fusion.framework.api.RuntimeContainer;
+import io.yupiik.fusion.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 class HelmFunctionsTest {
+    private static final Pattern ALPHANUMERIC = Pattern.compile("[a-zA-Z0-9]+");
+    private static final Pattern ALPHABETIC = Pattern.compile("[a-zA-Z]+");
+    private static final Pattern NUMERIC = Pattern.compile("[0-9]+");
+    private static final Pattern DATE = Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+    private static final Pattern HEX = Pattern.compile("[0-9a-f]+");
+    private static final Pattern BASE64 = Pattern.compile("[A-Za-z0-9+/=]+");
+    private static final Pattern UUID = Pattern.compile("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}");
+
+    private final RuntimeContainer container = ConfiguringContainer.of().start();
+    private final JsonMapper mapper = container.lookup(JsonMapper.class).instance();
+
+    @AfterEach
+    void closeMapper() {
+        container.close();
+    }
+
     @Test
     void upper() {
         assertEquals("HELLO", new UpperFunc().execute("hello"));
@@ -92,8 +115,15 @@ class HelmFunctionsTest {
     void shuffle() {
         final var result = new ShuffleFunc().execute("abcdef").toString();
         assertEquals(6, result.length());
-        final var sorted1 = "abcdef".chars().sorted().collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
-        final var sorted2 = result.chars().sorted().collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
+        final var sorted1 = "abcdef"
+                .chars()
+                .sorted()
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
+        final var sorted2 = result.chars()
+                .sorted()
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString();
         assertEquals(sorted1, sorted2);
     }
 
@@ -118,7 +148,7 @@ class HelmFunctionsTest {
     void randAlphaNum() {
         final var result = new RandAlphaNumFunc().execute(10).toString();
         assertEquals(10, result.length());
-        assertTrue(result.matches("[a-zA-Z0-9]+"));
+        assertTrue(ALPHANUMERIC.matcher(result).matches());
     }
 
     @Test
@@ -130,7 +160,7 @@ class HelmFunctionsTest {
     void randAlpha() {
         final var result = new RandAlphaFunc().execute(10).toString();
         assertEquals(10, result.length());
-        assertTrue(result.matches("[a-zA-Z]+"));
+        assertTrue(ALPHABETIC.matcher(result).matches());
     }
 
     @Test
@@ -142,7 +172,7 @@ class HelmFunctionsTest {
     void randNumeric() {
         final var result = new RandNumericFunc().execute(5).toString();
         assertEquals(5, result.length());
-        assertTrue(result.matches("[0-9]+"));
+        assertTrue(NUMERIC.matcher(result).matches());
     }
 
     @Test
@@ -234,7 +264,9 @@ class HelmFunctionsTest {
     @Test
     void regexReplaceAllLiteral() {
         // Pattern.quote wraps replacement in \Q...\E; Matcher.replaceAll processes \Q->Q, \E->E
-        final var result = new RegexReplaceAllLiteralFunc().execute("a(x*)b", "-ab-axxb-", "REPLACED").toString();
+        final var result = new RegexReplaceAllLiteralFunc()
+                .execute("a(x*)b", "-ab-axxb-", "REPLACED")
+                .toString();
         assertEquals("-QREPLACEDE-QREPLACEDE-", result);
     }
 
@@ -246,13 +278,16 @@ class HelmFunctionsTest {
     @Test
     void mustRegexReplaceAllLiteral() {
         // Same as regexReplaceAllLiteral - Pattern.quote wraps in \Q...\E
-        final var result = new MustRegexReplaceAllLiteralFunc().execute("a(x*)b", "-ab-axxb-", "REPLACED").toString();
+        final var result = new MustRegexReplaceAllLiteralFunc()
+                .execute("a(x*)b", "-ab-axxb-", "REPLACED")
+                .toString();
         assertEquals("-QREPLACEDE-QREPLACEDE-", result);
     }
 
     @Test
     void mustRegexReplaceAllLiteralBadRegex() {
-        assertThrows(RuntimeException.class, () -> new MustRegexReplaceAllLiteralFunc().execute("[invalid", "hello", "x"));
+        assertThrows(
+                RuntimeException.class, () -> new MustRegexReplaceAllLiteralFunc().execute("[invalid", "hello", "x"));
     }
 
     @Test
@@ -543,19 +578,21 @@ class HelmFunctionsTest {
 
     @Test
     void mustToJson() {
-        final var result = new MustToJsonFunc().execute(Map.of("key", "val")).toString();
+        final var result =
+                new MustToJsonFunc(mapper).execute(Map.of("key", "val")).toString();
         assertTrue(result.contains("\"key\""));
         assertTrue(result.contains("\"val\""));
     }
 
     @Test
     void mustToJsonNull() {
-        assertEquals("null", new MustToJsonFunc().execute((Object) null));
+        assertEquals("null", new MustToJsonFunc(mapper).execute((Object) null));
     }
 
     @Test
     void mustToPrettyJson() {
-        final var result = new MustToPrettyJsonFunc().execute(Map.of("key", "val")).toString();
+        final var result =
+                new MustToPrettyJsonFunc(mapper).execute(Map.of("key", "val")).toString();
         assertTrue(result.contains("\"key\""));
         assertTrue(result.contains("\"val\""));
         assertTrue(result.contains("\n"));
@@ -563,31 +600,33 @@ class HelmFunctionsTest {
 
     @Test
     void mustToPrettyJsonNull() {
-        assertEquals("null", new MustToPrettyJsonFunc().execute((Object) null));
+        assertEquals("null", new MustToPrettyJsonFunc(mapper).execute((Object) null));
     }
 
     @Test
     void toRawJson() {
-        final var result = new ToRawJsonFunc().execute(Map.of("key", "val")).toString();
+        final var result =
+                new ToRawJsonFunc(mapper).execute(Map.of("key", "val")).toString();
         assertTrue(result.contains("key"));
         assertTrue(result.contains("val"));
     }
 
     @Test
     void toRawJsonNull() {
-        assertEquals("null", new ToRawJsonFunc().execute((Object) null));
+        assertEquals("null", new ToRawJsonFunc(mapper).execute((Object) null));
     }
 
     @Test
     void mustToRawJson() {
-        final var result = new MustToRawJsonFunc().execute(Map.of("key", "val")).toString();
+        final var result =
+                new MustToRawJsonFunc(mapper).execute(Map.of("key", "val")).toString();
         assertTrue(result.contains("key"));
         assertTrue(result.contains("val"));
     }
 
     @Test
     void mustToRawJsonNull() {
-        assertEquals("null", new MustToRawJsonFunc().execute((Object) null));
+        assertEquals("null", new MustToRawJsonFunc(mapper).execute((Object) null));
     }
 
     @Test
@@ -642,7 +681,7 @@ class HelmFunctionsTest {
     @Test
     void htmlDateFunc() {
         final var result = new HtmlDateFunc().execute("2023-05-15T12:00:00Z").toString();
-        assertTrue(result.matches("\\d{4}-\\d{2}-\\d{2}"));
+        assertTrue(DATE.matcher(result).matches());
     }
 
     @Test
@@ -675,7 +714,7 @@ class HelmFunctionsTest {
     void sha512sum() {
         final var result = new Sha512SumFunc().execute("Hello world!").toString();
         assertEquals(128, result.length());
-        assertTrue(result.matches("[0-9a-f]+"));
+        assertTrue(HEX.matcher(result).matches());
     }
 
     @Test
@@ -687,7 +726,7 @@ class HelmFunctionsTest {
     void adler32sum() {
         final var result = new Adler32SumFunc().execute("Hello").toString();
         assertEquals(8, result.length());
-        assertTrue(result.matches("[0-9a-f]+"));
+        assertTrue(HEX.matcher(result).matches());
     }
 
     @Test
@@ -699,7 +738,7 @@ class HelmFunctionsTest {
     void randBytes() {
         final var result = new RandBytesFunc().execute(24).toString();
         assertFalse(result.isEmpty());
-        assertTrue(result.matches("[A-Za-z0-9+/=]+"));
+        assertTrue(BASE64.matcher(result).matches());
     }
 
     @Test
@@ -809,7 +848,7 @@ class HelmFunctionsTest {
     @Test
     void uuidv4() {
         final var result = new Uuidv4Func().execute().toString();
-        assertTrue(result.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"));
+        assertTrue(UUID.matcher(result).matches());
     }
 
     @Test

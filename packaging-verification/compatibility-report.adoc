@@ -1,0 +1,343 @@
+//
+// Copyright (c) 2021 - present - Yupiik SAS - https://www.yupiik.com
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+//
+= Fusion migration validation evidence
+
+This report records validation performed on 2026-11-22 and subsequent integration checks on 2026-11-23.
+It is evidence for the tested contracts, not a claim that every historical combination of options or Kubernetes deployment has been exercised.
+No artifacts were published, no images were pushed, and no commits were created.
+The earlier operator fixture errors, Java 17 Maven test compilation issue and intermediate source-cleanup build failures are resolved historical failures, not outstanding failures of the current reactor.
+
+== Current evidence reconciliation (2026-11-23)
+
+IMPORTANT: The current all-18-module clean builds passed 812 tests per runtime, with zero failures, errors or skips.
+This supersedes the intermediate uncompiled-batch warning and the older 715-test reactor counts; the separately verified external and native matrices are reconciled below.
+
+[options="header"]
+|===
+|Build / test runtime |Result |Evidence
+|Maven 3.9.16 on Java 21 / actual Java 17 Surefire forks (`-Djvm`) |Clean install passed, all 18 modules; 812 tests, no failures/errors/skips; XML runtime homes verified as Java 17. |`/tmp/bundlebee-fusion-final-build21-runtime17-install-verified.log`
+|Java 21 / Java 21 |Full clean verify passed; 812 tests, no failures/errors/skips. |`/tmp/bundlebee-fusion-final-java21-verify.log`
+|Java 25 / Java 25 |Full clean verify passed; 812 tests, no failures/errors/skips. |`/tmp/bundlebee-fusion-final-java25-verify.log`
+|===
+
+Each run reports 283 Helm, 466 core, 19 operator, six JUnit integration, 15 Maven plugin and 23 documentation tests.
+The Java 21/25 verifies used isolated source `/home/rmannibucau/.cache/bundlebee-final-fusion-jdks.1HBLZJ`, skipping only git metadata discovery, not tests.
+Full Spotless apply/check repetition changed zero files (`/tmp/bundlebee-fusion-final-format-idempotence.log`); source remained unchanged after the full builds.
+All main application-module class files were verified as major version 61 (Java 17).
+Java 17 remains the application/runtime baseline; Maven and formatting require Java 21 or later, not a Java 21 application baseline.
+Resources-only alveolus modules still emit nonfatal fake-apidocs and missing Javadoc-link warnings; build success is not universal Javadoc-link validation.
+
+The tested source includes the intentional Fusion-native configuration policy `CLI > embedding > Argo > explicit file > system properties > environment > .bundlebeerc`.
+Placeholder resolution is independently `manifest execution context > invocation placeholders > configuration`; invocation placeholders do not become bootstrap configuration.
+Failures await all already-launched sibling tasks before completion.
+The operator uses one long-lived Fusion container, direct apply/delete execution (including apply for MODIFIED events), shared namespace/client/executor services and execution-ID-scoped state, without nested containers or subprocesses.
+The root typed configuration record keys and approved deprecated API removals are included in this source state.
+A shared SnakeYAML concurrency defect was fixed with independent parsers per conversion, not command serialization.
+The operator callback fixture now expects missing-resource DELETE after HTTP 410 and a deleted latch count of two; no tests were skipped to accommodate it.
+Formatting and public Java API changes are intentional; hash values have no fixed numeric compatibility contract.
+
+The authorized detached Fusion operator-base module previously passed 23 tests on Java 17/21.
+After discovery of an unexpectedly old constructor in the installed jar, it was restored with Maven on Java 21 and actual Java 17 tests: 23 passed, no failures/errors/skips (`/tmp/bundlebee-fusion-final-operator-base-restore.log`).
+The restored jar SHA-256 is `15656958132bcfe868c531098b74cce840a4a778880df1874633b55f7d4014ad`; the original Fusion worktree remains read-only.
+
+Fresh policy-aware external compatibility is complete: 85 effective JUnit executions, 84 passed, zero failures/errors and one intentional native-artifact gate skip.
+The fresh native/release/Krew/container rehearsal is complete and is recorded separately below; its four passing release tests cover that separate artifact gate without being double-counted here.
+The older frozen 84/86-execution external and 715-test JVM results below retain historical provenance only, not current-source closure.
+
+=== Current policy-aware external compatibility
+
+[options="header"]
+|===
+|Suite |Current result
+|Artifact packaging |8 passed
+|CLI |31 passed
+|Network recipes |15 passed; 75 CLI/plugin invocations against loopback fixtures
+|Approved state/rollback |12 passed
+|External Maven |5 passed on 3.6.3 and 5 passed on 4.0.0-rc-7, including actual eight-module `-T 4` execution
+|Built-in recipe JUnit comparisons |2 passed, one per historical baseline
+|Spotless/CI and Shade configuration |2 and 1 passed
+|Release configuration |3 passed, 1 intentionally skipped native-artifact gate
+|===
+
+Counts combine selected fresh agent suite XMLs and corrected retries with the final parent CLI rerun, not a single uninterrupted invocation or the misleading initial aggregate.
+Independent corpora matched nine built-ins across HEAD/release/current (27 successful invocations, 64 resources per distribution), and 18 legacy cases across HEAD/current (36 invocations: 15 successful pairs and three shared historical failures).
+The original CLI result was 30/31: v2 rejects valueless `--version`, while historical artifacts fall back to help.
+The approved policy is to use `bundlebee version` in v2; the harness now explicitly asserts both distributions' behaviors instead of excluding the case.
+All 31 CLI tests passed with Maven 3.9.16 on Java 21 and actual Java 17 Surefire/application JVMs in `/tmp/bundlebee-v2-version-cli-approved-retry.log`.
+Raw outputs, commands and hashes are in `/home/rmannibucau/.cache/bundlebee-final-policy-compat/cli-v2-approved-retry`.
+The first parent attempt exceeded its 125-second tool timeout (`/tmp/bundlebee-v2-version-cli-approved.log`); the complete successful retry took 5:42.
+The agent's initial state/Maven failures were launcher/shebang orchestration errors; corrected targeted retries passed all 12 state and five Maven 3.6.3 tests without production changes.
+Original failures, exact commands, selected XMLs, retry results and corpus evidence remain under `/home/rmannibucau/.cache/bundlebee-final-policy-compat`.
+`/tmp/bundlebee-final-policy-compat-summary.txt` records the pre-approval failure and must be read with this reconciliation.
+All selected fresh agent suites also used Maven on Java 21 and actual Java 17 Surefire/application JVMs, with default test concurrency preserved.
+The audit verified 125 frozen hashes unchanged, matching source/installed/isolated thin POMs and JARs, direct dependency counts 18/10/0/8 for core/Helm/lang/plugin, and no root/module dependency-reduced POM pollution.
+The reported hash discrepancy compared different artifacts: `b07c0063551bff9a64afb24a6ee2f25031dcc0f34e4c1a4dedd9b9b06a77fe11` identifies BundleBee's operator JAR, whereas `15656958132bcfe868c531098b74cce840a4a778880df1874633b55f7d4014ad` identifies Fusion's operator-base JAR.
+The frozen external repository's Fusion operator-base JAR was independently checked and matches the full restored hash above, as used by the native rehearsal.
+At final reconciliation, the mutable live local repository contained operator-base SHA-256 `c2230bcb978764e0b8bb304664f7699d59fc19a5aeb9263845fcb2b5d8132b45`, modified on 2026-11-23 at 15:58:06 +0100.
+That later snapshot was not validated by these frozen-artifact results and was not replaced during the external-matrix follow-up.
+A subsequent bootstrap investigation reproduced all five `OperatorBootstrapTest` failures against it: its eager lifecycle resolved runtime settings before enablement, including the deliberately malformed URI.
+Rebuilding and installing only `/tmp/fusion-k8s/fusion-kubernetes-operator-base` restored SHA-256 `15656958132bcfe868c531098b74cce840a4a778880df1874633b55f7d4014ad`, with the `OperatorsLifecycle(RuntimeContainer)` constructor and lazy opt-in behavior.
+Fresh verification on Maven/JDK 21 with Java 17 test JVMs passed all 23 Fusion operator-base tests and all 19 BundleBee operator tests, including all five bootstrap regressions, without test or production-source changes.
+Evidence: `/tmp/bundlebee-operator-current-bootstrap-regression.log`, `/tmp/bundlebee-bootstrap-fusion-restore-install.log` and `/tmp/bundlebee-operator-restored-bootstrap-tests.log`.
+Future builds must retain or revalidate their exact Fusion prerequisite; another installation under the same snapshot coordinate can overwrite these fixes.
+
+=== Current native, release, Krew and local container refresh
+
+The isolated snapshot `/home/rmannibucau/.cache/bundlebee-final-fusion-native-rehearsal` captured 685 source/configuration hashes and 45 Fusion JAR hashes, all unchanged at final verification.
+The source manifest SHA-256 is `2f50170860d73ee0aea3b4433c36524d8eb8446700bbcdbc77c18c552f053b06`; the operator-base input matches the restored SHA-256 above and its `RuntimeContainer` constructor.
+
+[options="header"]
+|===
+|Check |Current result |Boundary
+|Selected native/release reactor |Core/operator and upstream modules passed fresh `native,krew,release` clean verify on Maven 3.9.16 / Java 21, application release 17, GraalVM CE 21.0.2. |Application tests were skipped only in this packaging rehearsal; the separately tested 812-test reactors remain distinct evidence.
+|Release regressions and signatures |Four `ReleaseConfigurationTest` tests passed without skips using a Java 17 fork; all 22 detached signatures and 40 checksum sidecars verified. |Only disposable rehearsal fingerprint `7F22713ADA4A278F1A928DFF0F52D76936F30A59`, extended by one day after expiration, was used; no production-signing claim.
+|Krew |Fully filtered manifest, single executable ZIP entry with mode `0755`, byte identity and loopback download passed; ZIP SHA-256 `5618e6ef42061b92184750b46990974b69318ba4f9470a48981fe41709b81065`. |No hosted download or actual Krew-client installation.
+|Native CLI and configured JVM image |Offline help/version, namespace apply, escaped raw path/query and bearer authentication passed. |Native target is this Linux x86-64-v3 host, dynamically linked; not all platforms or every command.
+|Native operator and configured JVM image |Default-enabled startup, UID/list/MODIFIED handling, opaque bookmark/EOF resume, HTTP 410 missing-resource deletion, JSON checkpoint/inventory persistence and shutdown passed. |Local HTTP fixtures with an empty-descriptor recipe, not real-cluster reconciliation or descriptor-level operator side effects.
+|Disabled startup |Malformed runtime configuration with `operator.enabled=false` returned successfully without HTTP or binding an occupied probe port, in native and configured JVM image runs. |A focused startup-isolation contract, not a sandbox for trusted recipes/scripts.
+|===
+
+The fresh native core SHA-256 is `4b46a03ddb4f6a8f6b18ed68a6012a6d613214e910739ae6d714a75602e4da42`; native operator SHA-256 is `515c2bf3877bd077ac7eb3901dacbce3d2cbb40f96770bcf37ccede2bdfc823d`.
+The configured JVM images used core Java 21.0.7 and operator Java 17.0.1; base-image upgrades/security auditing were not part of this validation.
+Evidence is `/tmp/bundlebee-final-fusion-native-summary.log` and the same-prefix build, artifacts, release-tests, images, CLI/operator results, limits and provenance files.
+Production signing, Central publication, externally hosted Krew, other native platforms and a real Kubernetes cluster remain unverified.
+No source/POM changes, native metadata workarounds, Fusion installation, main-target writes, commits, publishing or image pushes occurred in this rehearsal.
+
+=== Read-only active documentation and CI audit
+
+Targeted searches of `README.adoc`, `bundlebee-documentation/src/main/minisite/content` (including partials) and `.github/workflows` found no active instruction requiring MicroProfile configuration or Java 8/11, or contradicting the current configuration precedence.
+The remaining MicroProfile mentions in `maven-plugin.adoc:82`, `extensions.adoc:78` and `migration-2.adoc:17,34` describe migration away from it, not current setup requirements.
+`README.adoc:94-118`, `getting-started.adoc:18-31` and `migration-2.adoc:7-14` distinguish Java 17 application/plugin use from Java 21+ source-build/formatter requirements.
+`user-configuration.adoc:25-31` and `migration-2.adoc:95-100` document the current CLI-first policy; `operator.adoc:50` documents manifest-context-first placeholders.
+`.github/workflows/maven.yml:38-43,54-73` selects build/runtime lanes 21/17, 21/21 and 25/25, preserves the runtime path for `-Djvm`, and restricts native packaging to 21/21.
+This is a source audit, not a hosted CI execution or proof of remote Fusion snapshot availability; snapshot bootstrap remains explicitly deferred.
+No documentation or CI files were edited during this reconciliation.
+
+== Baselines and dependency provenance
+
+* Pre-migration source: `e743e5fc`, built in `/tmp/bundlebee-validation-baseline-head`.
+* Released source: `bundlebee-1.0.32`, built in `/tmp/bundlebee-validation-baseline-release`.
+* Both baseline core builds used Java 17, skipped tests/Javadoc, and disabled git metadata discovery because the isolated source archives have no `.git` directory.
+* BundleBee uses Fusion `1.2.1-SNAPSHOT`.
+* The Kubernetes dependency previously remained pinned separately to `1.2.0`; it now uses `${fusion.version}`.
+* With explicit user authorization, kubeconfig Basic authentication was added in the detached Fusion worktree `/tmp/fusion-k8s`, based on `5e3f5573`.
+* The original Fusion worktree was not modified.
+* The Fusion Kubernetes tests and local snapshot installation passed on Java 17; its 11 module tests cover Basic authentication, token/exec precedence, explicit headers, sync/async requests and WebSocket preparation.
+
+A fresh external environment still needs the patched Fusion snapshot built locally or distributed through an approved snapshot repository.
+A build starting with an empty local repository was established by first installing the selected Fusion modules from the authorized source worktree, then building BundleBee in an isolated source copy against that same repository.
+This verifies source-build reproducibility with the patched Fusion prerequisite, not remote availability of that unpublished snapshot.
+The snapshot is not a substitute for a published, immutable Fusion dependency when preparing an actual release.
+The user explicitly deferred Fusion snapshot provisioning and CI bootstrap work, accepting the locally patched snapshot for validation and planning to publish it after validation.
+This deferral does not establish remote dependency availability or release readiness; approved provisioning or a published immutable dependency remains a release prerequisite.
+
+== Historical verified contracts (before final review fixes)
+
+[options="header"]
+|===
+|Area |Evidence |Boundary
+|Built-in alveoli |All nine unchanged processed recipes produced equivalent JSON resources with the HEAD baseline, release baseline and migrated CLI. |Independent root resource emission order was ignored; object/array/null/number content and duplicate resources were retained.
+|Legacy recipe corpus |18 original test-manifest alveoli compared against HEAD: 15 rendered successfully and three failed on both versions; all 18 had matching exit/resource results after the YAML fix. |Matching failure status does not prove identical exception text; this corpus is not an exhaustive feature-combination test.
+|CLI configuration names |A frozen fixture checks 207 legacy exported names against generated command descriptors. |The `xxx` Javadoc example is excluded; the internal awaiter option is tested separately and retained in Maven generation.
+|CLI bootstrap |31 packaged differential tests passed against HEAD/release/current with explicit Java 17 and a validated network-denial policy; focused tests additionally cover files, environment, system properties, Argo collisions, repeated values, dotted/hyphenated/short aliases, literal option-looking values, invalid flags, unknown commands, completion and invocation isolation. |No claim that every command has been exercised with every option combination; the shared metadata comparison explicitly permits the tokenFile/certificates additions.
+|Maven descriptors |Every published 1.0.32 goal, parameter, parameter type, default and property expression is retained; `helm` and `run` are additional goals. |The historical literal `n` in the HTTP goal's default headers is intentionally preserved, not silently corrected during migration.
+|External Maven executions |15 fixture cases compared with 1.0.32 on Maven 4: list, inspect, process, lint success/failure, YAML conversion, new, build, explicit skip, completion, HTTP, packaging skips/override and project requirements. |Maven 3.6.3 also exercised these cases: 14 matched, while legacy lint failed with a CDI `Instance.stream()` linkage error and the migrated plugin succeeded; this is not reported as identical behavior.
+|Parallel external Maven |Five durable tests passed for the installed current plugin on both Maven 3.6.3 and 4.0.0-rc-7, covering eight modules at `-T 4`, repeated executions, expression/configuration isolation, failure/skip/recovery and plugin-realm resources. |Legacy 1.0.32 passed all five on Maven 4; on Maven 3.6.3 two tests reproduced CDI/classrealm concurrency failures, including failure of an independent healthy module.
+|Network recipe parity |15 durable tests passed across 75 invocations of HEAD/release/current CLI jars and release/current Maven plugins against loopback HTTP. |Tests compare methods, paths/query parameters, semantic bodies, content types and relevant ordering for PATCH/POST/PUT, HTTP 415 fallback, namespaces, awaits, dependencies, exclusions, conditional patches, nested overrides and deletion; synthetic responses are not real Kubernetes admission/controller behavior.
+|Scripts and extensions |Generated Fusion extension discovery, synchronous ordered observers and failure propagation are tested with Nashorn 15.4; type-only lookup and cleanup regressions passed 36 focused tests on each of Java 17/21/25. |The accepted migration removes CDI `lookupByName`; use `lookupByType`. All acquired handles close after evaluation and string conversion, in reverse order, including failures; cleanup failures are suppressed onto the original failure.
+|JSON practices |Production documentation code resolves the container-owned public `JsonMapper`; Helm uses public `PrettyJsonMapper`; known models use generated codecs. |Focused tests still directly construct internal mappers/codecs in some isolated unit fixtures; these are not application runtime dependencies.
+|Javadoc |Java 17/21/25 reactor builds generated attached Javadoc jars; all seven Java modules contain `index.html`. |Missing-comment warnings are not enforced.
+|Strict Javadoc |An isolated `all,-missing` doclint run regenerated Javadoc successfully; that setting is now enabled in the root POM. |This checks structural documentation quality, not semantic completeness of every API explanation.
+|Release/native |An isolated Java 17 `release,native` clean verify passed with pinned GraalVM CE 21.0.2; both CLI and operator native executables were produced. |No release preparation, deployment or publication was attempted.
+|Signing/checksums |60 available detached signatures and 120 available SHA-512 files were verified in the isolated release rehearsal. |18 additional signatures referenced transient Maven 4 consumer POM paths which no longer existed; these were explicitly excluded, not reported as verified.
+|Native smoke tests |Pinned-GraalVM-21 CLI help/version passed; operator watch, unknown-field decoding and resourceVersion persistence passed against local HTTP. |Not a live-cluster or exhaustive native-command test.
+|Configured containers |Jib built local tar images using the configured base images; loaded core help/version passed without networking; operator watch/bookmark processing passed against a local HTTP fixture. |No push and no live Kubernetes installation.
+|===
+
+The pre-review approved-state Java 17 clean install and Java 21/25 reactor verify logs each report 701 tests with zero failures, errors or skips (module totals: 271, 403, 6, 6, 10 and 5), with Javadoc generation enabled.
+The Java 17 install completed at `2026-11-22T17:35:05+01:00`; the Java 21 and Java 25 verifies completed at `17:03:15+01:00` and `17:06:05+01:00`, respectively.
+Evidence: `/tmp/bundlebee-approved-final-java17-install.log`, `/tmp/bundlebee-approved-state-java21-verify.log`, and `/tmp/bundlebee-approved-state-java25-verify.log`.
+These superseded the earlier 675/678-test reactor counts for that historical source state; the earlier focused scripting suites passed 36 tests on each of Java 17/21/25.
+The earlier Java 17 release-profile verification passed 670 tests before the later extension and approved-state additions; it is not a release-profile verification of the final 701-test source state.
+Default test concurrency was retained.
+Historical external fixtures remain explicitly opt-in so ordinary CI does not require local baseline artifacts.
+The earlier documentation minisite generation and standalone artifact/recipe verification against the release baseline also passed.
+After the earlier local plugin installation, the Maven 3.6.3 HTTP fixture captured exactly matching legacy/current request headers, including the historical default-header quirk.
+
+== Historical installed-artifact compatibility refresh
+
+After the successful clean Java 17 install, the complete opt-in standalone run completed at `2026-11-22T17:50:49+01:00`: 76 tests reported, 75 passed, zero failures/errors, and one deliberately skipped native release-manifest assertion.
+It used explicit Java 17, Maven 3.9.16 as the harness launcher, the current fat/thin jars from this checkout, and the freshly installed current plugin; it did not build or clean application modules.
+The log is `/tmp/bundlebee-approved-final-compat/all-java17.log`.
+
+[options="header"]
+|===
+|Suite |Pre-review result |Boundary
+|PackagingTest |8 passed |Artifact metadata/content and help/version smoke checks; absent metadata types are reported, not invented.
+|RecipeCompatibilityTest against HEAD |1 passed, covering all 9 built-in recipes |Semantic resources compared as multisets, not independent emission order.
+|RollbackStateCompatibilityTest |12 passed |9 dynamic recipes and 3 dedicated safety tests; approved state differences are intentional bugfixes, not parity.
+|ExternalMavenCompatibilityTest on Maven 3.6.3 |5 passed |Current installed plugin; includes eight-module `-T 4` repeated executions and failure/skip/recovery isolation.
+|CliFeatureCompatibilityTest |31 passed |HEAD/release/current artifacts, explicit Java 17, validated network-denial policy; raw evidence in `/tmp/bundlebee-cli-feature-14515925625598595930`.
+|NetworkRecipeCompatibilityTest |15 passed, covering 75 CLI/plugin invocations |HEAD/release/current CLI and release/current plugin on loopback HTTP with Maven comparisons enabled.
+|ReleaseConfigurationTest |3 passed, 1 skipped |Configuration checks only; the native archive/checksum/signature assertion was deliberately not run.
+|ExternalMavenCompatibilityTest on Maven 4.0.0-rc-7 |5 passed |Same five current-plugin tests with explicit Java 17; not a rerun of every historical Maven goal fixture.
+|RecipeCompatibilityTest against release 1.0.32 |1 passed, covering all 9 built-in recipes |Second standalone invocation, using the same freshly packaged current artifact.
+|===
+
+The second standalone invocation completed at `2026-11-22T17:52:28+01:00` with 6 tests passed and zero failures, errors or skips; its log is `/tmp/bundlebee-approved-final-compat/maven4-release-java17.log`.
+Across the two invocations, 82 tests were reported: 81 passed, zero failures/errors, and one deliberate native-manifest skip.
+This is an execution total, not 81 distinct compatibility scenarios: the five external Maven tests and the built-in recipe test each ran twice with different consumers/baselines.
+The SHA-256 checks in `/tmp/bundlebee-approved-final-compat/artifacts-before.sha256` still matched the core fat/thin jars, Helm thin jar and installed plugin jars after both runs.
+No files in `/tmp/bundlebee-approved-release-rehearsal` were accessed by this compatibility refresh.
+
+The separate three-way recipe script again matched all 9 built-ins across HEAD/release/current (64 resources per distribution, 27 successful invocations).
+The legacy corpus again matched all 18 HEAD/current cases (36 invocations): 15 successful renders and 3 shared failures, not 18 successful renders.
+Evidence is `/tmp/bundlebee-approved-final-compat/builtins-three-way.log`, `/tmp/bundlebee-differential-recipes/results.json`, `/tmp/bundlebee-approved-final-compat/legacy-corpus.log`, and `/tmp/bundlebee-legacy-corpus/results.json`.
+These script comparisons are additional evidence, not extra JUnit test counts.
+No harness defect or production regression was demonstrated by those runs, and no harness or production source changes were needed for that refresh.
+This matrix predates the final review fixes below and is not evidence of a post-fix external rerun.
+
+== Historical reviewed native and packaging refresh (2026-11-22)
+
+The isolated rehearsal in `/tmp/bundlebee-approved-release-rehearsal` captured 526 source files at `2026-11-22T18:04:39+01:00` from the dirty working tree at HEAD `e743e5fc9738ccc09e2584e378a2cf24d7f5f4ca`; it is not a build of the unchanged HEAD commit.
+The source manifest, artifact inventory and local Fusion snapshot input hashes are recorded in `/tmp/bundlebee-final-reviewed-source-manifest.json`, `/tmp/bundlebee-final-reviewed-artifact-provenance.json` and `/tmp/bundlebee-final-reviewed-fusion-inputs.json`.
+Provenance completed at `18:08:52+01:00` and recorded no captured main-source files changed since capture; this does not certify subsequent working-tree changes.
+
+[options="header"]
+|===
+|Check |Historical evidence |Boundary
+|Native release build |`native,krew,release` clean verify passed at `18:08:27+01:00`, producing core/operator executables with pinned GraalVM CE 21.0.2. |Maven 3.9.16 ran on Java 21; only core/operator and their upstream modules were selected, with tests skipped, not a full tested reactor.
+|Release artifacts |22 detached signatures and 40 SHA-512 sidecars verified; native core and extracted Krew executable help/version passed. |Counts apply to this selected-module refresh, not the historical 60-signature/120-checksum rehearsal.
+|Krew |Filtered manifest fields, loopback archive retrieval and SHA-256 passed: `69f427c810e6e5ecf2a00c55ead046f5d7b9730fad7c3f66c9e5efa1f8445835`. |Local retrieval, not hosted publication or plugin installation from an external index.
+|JVM containers |Core/operator configured images built and loaded locally; core help/version passed. |Exact rehearsal artifacts populated an isolated image dependency overlay; no image push.
+|Operator smoke |Native and configured JVM image watch, unknown-field decoding and bookmark `resourceVersion=42` persistence passed against local HTTP. |Not a live-cluster deployment or exhaustive event/configuration test.
+|===
+
+Evidence: `/tmp/bundlebee-final-reviewed-native-release.log`, `/tmp/bundlebee-final-reviewed-release-artifacts.log`, `/tmp/bundlebee-final-reviewed-image-packaging.log`, `/tmp/bundlebee-final-reviewed-operator-smoke-results.log` and `/tmp/bundlebee-final-reviewed-finish.log`.
+The earlier `/tmp/bundlebee-final-reviewed-java17-install.log` ended in `BUILD FAILURE` at `18:08:02+01:00`: the operator module reported 11 tests, zero assertion failures and five errors (`OperatorCommandBoundaryTest`, `ConnectException` from fixture endpoint configuration); downstream modules were skipped.
+This is resolved historical evidence: the test-only correction runs the five operator boundary scenarios in isolated child JVMs, avoiding shared Surefire Kubernetes system properties without mutating them during concurrent tests.
+The Maven concurrency test's Java 17 `ExecutorService` lifecycle was also corrected in test code to use explicit shutdown and bounded termination instead of try-with-resources, which requires a later Java API.
+The final reviewed clean Java 17 install passed at `2026-11-22T18:17:32+01:00`, with all 18 reactor modules successful and 715 tests, zero failures, errors or skips (module totals: 272 Helm, 407 core, 11 operator, 6 JUnit 5, 14 Maven plugin and 5 documentation).
+Evidence: `/tmp/bundlebee-final-reviewed-java17-install-complete.log`, also retained as `/tmp/bundlebee-final-reviewed-compat/reactor-java17-install.log`.
+The final reviewed Java 21 and Java 25 clean verifies also passed at `2026-11-22T18:21:11+01:00` and `2026-11-22T18:24:21+01:00`, respectively, each with the same 715 tests and zero failures, errors or skips.
+These used isolated source snapshots with only git metadata discovery skipped, not tests.
+Evidence: `/tmp/bundlebee-final-reviewed-java21-verify-complete.log` and `/tmp/bundlebee-final-reviewed-java25-verify-complete.log`.
+These completed runs superseded the failed final-review attempts and the 701-test results for that historical source state, not the current 812-test reactor.
+The separate historical documentation build also passed five tests with zero failures, errors or skips at `2026-11-22T18:30:57+01:00`; evidence is `/tmp/bundlebee-final-reviewed-docs.log`.
+Its rendering/upload step was skipped, so this is not a new minisite rendering or publication claim.
+
+== Historical reviewed installed-artifact compatibility closure (2026-11-22)
+
+The post-fix matrix used the final Java 17 installed artifacts without rebuilding or cleaning application modules.
+The standalone invocations completed at `18:37:14+01:00` and `18:40:21+01:00`: together, 82 executions, 81 passed, zero failures/errors and one gated native release assertion skipped.
+The separate `ReleaseConfigurationTest` invocation completed at `18:44:42+01:00` with all four tests passed and no skips, exercising the previously gated assertion against the release rehearsal.
+Combined, these are 86 executions, 85 passed, zero failures/errors and one initial gate skip subsequently covered, not 85 distinct scenarios or a skip-free original run.
+
+[options="header"]
+|===
+|Suite |Final reviewed result |Boundary
+|PackagingTest |8 passed |Artifact checks and help/version smoke tests.
+|CliFeatureCompatibilityTest |31 passed |HEAD/release/current CLI artifacts with explicit Java 17 and validated network denial.
+|RollbackStateCompatibilityTest |12 passed |Approved state safety corrections remain intentional differences from legacy behavior.
+|NetworkRecipeCompatibilityTest |15 passed |Loopback CLI/plugin request comparisons, not real-cluster behavior.
+|ExternalMavenCompatibilityTest |5 passed on each of Maven 3.6.3 and 4.0.0-rc-7 |Installed current plugin; repeated parallel execution and isolation checks, not every historical goal fixture.
+|RecipeCompatibilityTest |1 passed against each of HEAD and release |Each execution covers all nine built-in recipes.
+|ReleaseConfigurationTest |Initially 3 passed and 1 gated skip; separately 4 passed with no skips |The native release assertion was subsequently exercised, not waived.
+|===
+
+The final three-way script matched all nine built-in recipes across HEAD/release/current: 27 successful invocations and 64 resources per distribution.
+The final legacy corpus matched all 18 HEAD/current cases: 15 successful pairs and three shared failures across 36 invocations, not 18 successful renders.
+These script results are additional evidence, not extra JUnit executions.
+The follow-up SHA-256 check confirmed unchanged packaged core fat/thin and Helm jars and packaged/installed Maven plugin artifacts, including installed source/Javadoc jars.
+Both recorded exit files (`reproduce.exit` and `followup.exit`) contain zero.
+Evidence under `/tmp/bundlebee-final-reviewed-compat/`: `evidence-summary.log`, `all-java17.log`, `maven4-release-java17.log`, `release-configuration-java17.log`, `builtins-three-way.log`, `legacy-corpus.log` and `artifacts-after-check.log`.
+This closes the post-fix external rerun gap identified in the historical matrix without changing its provenance or reclassifying its original skip.
+
+== Regressions fixed during validation
+
+* Restored legacy source precedence without installing invocation files into JVM-wide properties.
+* Historically restored Argo-over-CLI collisions and last-value-wins repeated arguments; the current approved CLI-first policy supersedes that collision ordering, while repeated arguments remain last-value-wins.
+* Restored completion's legacy input handling and its qualified `useLogger` alias.
+* Restored the generated Maven completion goal, internal awaiter parameter and Set-typed statefulset-filter parameter.
+* Preserved the published Maven HTTP default-header quirk rather than changing a non-logging observable default.
+* Restored YAML omission of null object members while retaining null array elements.
+* Restored kubeconfig defaults, missing-path fallback, selected-credential precedence, endpoint normalization and invalid-context failure checks through focused Kubernetes regressions.
+* Restored kubeconfig Basic authentication in Fusion rather than adding a parallel BundleBee authentication implementation.
+* Final review restored YAML timestamp/binary handling, Helm `first` behavior and dependency resolution.
+* Final review preserved arbitrary operator placeholder names while isolating placeholder-only configuration from startup settings.
+* Final review made Maven logging additive and owner-thread scoped: asynchronous logging remains ordinary JUL by default, with no global logger changes; records also handled by existing JUL handlers can produce duplicate output.
+
+== JSON implementation caveat
+
+Helm's compatibility adapter uses a generated single-Object-field model to select Fusion's dynamic JSON codec and removes that fixed envelope from the mapper's output.
+This is a localized, tested workaround: Fusion's direct BigDecimal codec serializes strings, while its Object codec preserves numeric values, and homogeneous-map specialization can select an inappropriate codec for heterogeneous nested collections.
+Removing the envelope and directly invoking `JsonMapper.toString` reproduced both a numeric-wire-type regression and malformed nested JSON.
+There is no hand-written parser or custom JSON codec in the adapter.
+Exact-formatting, escaping, numeric, null and heterogeneous-collection tests cover this boundary.
+A public Fusion API for explicitly requesting dynamic-root serialization would allow this workaround to be removed without changing the intentional typed BigDecimal contract.
+
+== Remaining validation and compatibility limitations
+
+* The state Secret reader correction and its safety policy are approved intentional version-1 bugfixes, not strict legacy behavioral parity.
+See link:state-tracking-analysis.adoc[the detailed state analysis] for the approved checkpoint/cleanup contract, historical defect characterization, and packaged regression boundaries.
+
+* A full all-command/all-option behavioral matrix, including every destructive/network command and every historical extension, is not complete.
+* Live-cluster apply/delete/rollback/await, service-account mounts, actual ArgoCD execution and exhaustive TLS/proxy/auth combinations remain outside the local fixtures.
+* Configuration-key availability and Maven descriptor parity do not independently prove conversion/behavior parity for every possible input.
+* The full legacy corpus has not yet been driven through both CLI and Maven frontends with identical local HTTP request-sequence assertions.
+* Public Java extension APIs changed with the approved CDI/JSON migration; the earlier Lombok API comparison only established equivalence immediately before/after Lombok removal, not binary compatibility with 1.x.
+* JSR223 `lookupByName` was explicitly removed as part of the accepted extension migration; recipes must use `lookupByType` with a registered Fusion bean type instead of CDI aliases.
+* Snapshot/release repository routing, immutable dependency availability, real release signing credentials and actual Central acceptance remain unverified.
+* Snapshot routing now targets Sonatype's current snapshot endpoint, and the Krew archive URI is explicitly overridable for snapshot rehearsals; actual hosted availability, namespace enablement and publishing credentials remain external prerequisites.
+* Production signing, hosted Krew installation and coverage of every operating system/architecture were not tested; local signature/archive verification and the selected native builds do not establish those contracts.
+* Collection serialization timing remains too variable to claim performance parity.
+
+These items must not be reclassified as successful merely because the reactor tests or release rehearsal pass.
+
+== Reproduction entry points
+
+The historical installed-artifact compatibility refresh used explicit Java 17 (`/home/rmannibucau/.sdkman/candidates/java/17.0.20+1.1-zulu`) and Maven 3.9.16 as the standalone harness launcher, with Maven 3.6.3 and 4.0.0-rc-7 as external-plugin consumers.
+The complete exact command sequence, including every opt-in property gate and artifact path, is retained in `/tmp/bundlebee-approved-final-compat/reproduce.sh`.
+It invokes only `packaging-verification/pom.xml test` and the existing recipe comparison scripts, never a main-reactor lifecycle.
+The CLI feature suite enforces Java 17 and validates network denial through its SecurityManager policy.
+The ordinary packaging help/version smoke tests isolate configuration but do not enforce network denial without `bundlebee.offline=true`; that optional Linux namespace gate was not enabled in this refresh.
+The native release-manifest assertion requires `bundlebee.release.root` and was deliberately not enabled in that historical standalone run; historical native/Krew checks are recorded separately above and the current refresh remains pending.
+
+Run the standalone artifact checks after building the reactor:
+
+[source,sh]
+----
+mvn -f packaging-verification/pom.xml test -Dbundlebee.root="$PWD"
+----
+
+Run the built-in recipe differential regression against a separately built legacy fat jar:
+
+[source,sh]
+----
+mvn -f packaging-verification/pom.xml test \
+  -Dbundlebee.root="$PWD" \
+  -Dbundlebee.baseline.jar=/path/to/legacy-fat.jar \
+  -Dbundlebee.fixture.repository=/path/to/local-repository
+----
+
+The local repository must contain the recipe dependency artifacts needed by monitoring.
+The baseline and current executable receive exactly the same recipe manifests and command arguments.
+The fixture clears the child environment and uses an isolated home directory.
+
+Primary local evidence includes `/tmp/bundlebee-differential-recipes/results.json`, `/tmp/bundlebee-legacy-corpus/results.json`, `/tmp/bundlebee-maven-parity/fixture-results.json`, `/tmp/bundlebee-maven-parity/extended-results.json`, `/tmp/bundlebee-config-key-audit.json`, `/tmp/bundlebee-release-pinned-graal21.log`, and `/tmp/bundlebee-release-signature-review.txt`.
+Follow-up evidence includes `/tmp/bundlebee-maven-concurrency-results.md`, `/tmp/bundlebee-network-parity-results.md`, `/tmp/bundlebee-fusion-fresh-repository.log`, `/tmp/bundlebee-fresh-repository-java17.log`, `/tmp/bundlebee-validation-type-only-java17.log`, and `/tmp/bundlebee-script-type-only-java{17,21,25}.log`.
+See the verifier README for the opt-in external-fixture switches; network parity now additionally requires `-Dbundlebee.network.enabled=true`.
+These temporary logs are supporting evidence, not files required by the normal build.

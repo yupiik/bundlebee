@@ -17,13 +17,12 @@ package io.yupiik.bundlebee.helm.fn;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-import javax.enterprise.context.Dependent;
-
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = List
-//metadata:end
+// metadata:end
 @Description("Returns the largest numeric value from a set of arguments")
 public class LargestFunc implements HelmFunction {
     @Override

@@ -15,9 +15,9 @@
  */
 package io.yupiik.bundlebee.core.http;
 
-import lombok.RequiredArgsConstructor;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import javax.net.ssl.SSLSession;
+import io.yupiik.fusion.httpclient.core.DelegatingHttpClient;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -32,10 +32,9 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Flow;
+import javax.net.ssl.SSLSession;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-
-public class DryRunClient extends DelegatingClient {
+public class DryRunClient extends DelegatingHttpClient {
     private final boolean skipDryRunForGet;
 
     public DryRunClient(final HttpClient delegate, final boolean skipDryRunForGet) {
@@ -43,16 +42,14 @@ public class DryRunClient extends DelegatingClient {
         this.skipDryRunForGet = skipDryRunForGet;
     }
 
-    private <T> HttpResponse<T> mockResponse(final HttpRequest request,
-                                             final HttpResponse.BodyHandler<T> bodyHandler) {
+    private <T> HttpResponse<T> mockResponse(final HttpRequest request, final HttpResponse.BodyHandler<T> bodyHandler) {
         return new MockResponse<>(
-                request, 200,
-                HttpHeaders.of(Map.of("X-Dry-Run", List.of("true")), (a, b) -> true),
-                bodyHandler);
+                request, 200, HttpHeaders.of(Map.of("X-Dry-Run", List.of("true")), (a, b) -> true), bodyHandler);
     }
 
     @Override
-    public <T> HttpResponse<T> send(final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler) throws IOException, InterruptedException {
+    public <T> HttpResponse<T> send(final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler)
+            throws IOException, InterruptedException {
         if (passthrough(request)) {
             return super.send(request, responseBodyHandler);
         }
@@ -60,14 +57,16 @@ public class DryRunClient extends DelegatingClient {
     }
 
     @Override
-    public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
-                                                            final HttpResponse.BodyHandler<T> responseBodyHandler) {
+    public <T> CompletableFuture<HttpResponse<T>> sendAsync(
+            final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler) {
         if (passthrough(request)) {
             return super.sendAsync(request, responseBodyHandler);
         }
         final var httpResponse = mockResponse(request, responseBodyHandler);
-        return delegate.executor()
-                .map(e -> { // try to respect async contract
+        return
+        // try to respect async contract
+        delegate.executor()
+                .map(e -> {
                     final var res = new CompletableFuture<HttpResponse<T>>();
                     try {
                         e.execute(() -> res.complete(httpResponse));
@@ -80,9 +79,10 @@ public class DryRunClient extends DelegatingClient {
     }
 
     @Override
-    public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request,
-                                                            final HttpResponse.BodyHandler<T> responseBodyHandler,
-                                                            final HttpResponse.PushPromiseHandler<T> pushPromiseHandler) {
+    public <T> CompletableFuture<HttpResponse<T>> sendAsync(
+            final HttpRequest request,
+            final HttpResponse.BodyHandler<T> responseBodyHandler,
+            final HttpResponse.PushPromiseHandler<T> pushPromiseHandler) {
         if (passthrough(request)) {
             return super.sendAsync(request, responseBodyHandler, pushPromiseHandler);
         }
@@ -93,12 +93,11 @@ public class DryRunClient extends DelegatingClient {
         return "GET".equalsIgnoreCase(request.method()) && skipDryRunForGet;
     }
 
-    @RequiredArgsConstructor
     private static class MockResponse<T> implements HttpResponse<T>, HttpResponse.ResponseInfo {
         private final HttpRequest request;
         private final int status;
         private final HttpHeaders headers;
-        private final BodyHandler<T> bodyHandler;
+        private final T body;
 
         @Override
         public String toString() {
@@ -128,6 +127,10 @@ public class DryRunClient extends DelegatingClient {
 
         @Override
         public T body() {
+            return body;
+        }
+
+        private T readBody(final BodyHandler<T> bodyHandler) {
             try {
                 final var handler = bodyHandler.apply(this);
                 sendEmptyJson(handler);
@@ -169,6 +172,17 @@ public class DryRunClient extends DelegatingClient {
             });
             handler.onNext(List.of(ByteBuffer.wrap("{}".getBytes(StandardCharsets.UTF_8))));
             handler.onComplete();
+        }
+
+        public MockResponse(
+                final HttpRequest request,
+                final int status,
+                final HttpHeaders headers,
+                final BodyHandler<T> bodyHandler) {
+            this.request = request;
+            this.status = status;
+            this.headers = headers;
+            this.body = readBody(bodyHandler);
         }
     }
 }

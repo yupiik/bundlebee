@@ -15,15 +15,14 @@
  */
 package io.yupiik.bundlebee.junit5;
 
-import io.yupiik.bundlebee.junit5.impl.ValidateExtension;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.Target;
-
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
+
+import io.yupiik.bundlebee.junit5.impl.ValidateExtension;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
  * Will execute an {@code apply} in dry run mode.

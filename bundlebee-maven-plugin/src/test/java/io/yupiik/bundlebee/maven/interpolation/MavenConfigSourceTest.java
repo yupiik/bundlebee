@@ -15,48 +15,58 @@
  */
 package io.yupiik.bundlebee.maven.interpolation;
 
-import org.apache.maven.execution.MavenSession;
-import org.apache.maven.plugin.MojoExecution;
-import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
-import org.apache.maven.plugin.descriptor.MojoDescriptor;
-import org.eclipse.microprofile.config.ConfigProvider;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import java.util.concurrent.CompletableFuture;
+import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.MojoExecution;
+import org.apache.maven.plugin.PluginParameterExpressionEvaluator;
+import org.apache.maven.plugin.descriptor.MojoDescriptor;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class MavenConfigSourceTest {
-    @BeforeAll
-    static void before() {
-        final var session = new MavenSession(
-                null, null, null, null, null,
-                List.of("g"), null, new Properties(), new Date(0));
-        session.getUserProperties().setProperty("prop.name", "ok-for-test");
-        MavenConfigSource.expressionEvaluator = new PluginParameterExpressionEvaluator(
-                session,
-                new MojoExecution(new MojoDescriptor()));
-        MavenConfigSource.config = new MavenConfigSource.Config(true);
-    }
-
-    @AfterAll
-    static void after() {
-        MavenConfigSource.expressionEvaluator = null;
-        MavenConfigSource.config = null;
-    }
-
     @ParameterizedTest
     @CsvSource({
-            "prop.name,ok-for-test",
-            "${prop.name},ok-for-test",
-            "prop.name.missing,null",
+        "prop.name,ok-for-test",
+        "${prop.name},ok-for-test",
+        "prop.name.missing,null",
+        "${prop.name.missing},null",
     })
     void filter(final String key, final String value) {
-        assertEquals(value, ConfigProvider.getConfig().getOptionalValue(key, String.class).orElse("null"));
+        final var actual = source("ok-for-test", true).get(key);
+        assertEquals(value, actual == null ? "null" : actual);
+    }
+
+    @Test
+    void forcedFilteringCanBeDisabled() {
+        final var source = source("one", false);
+        assertNull(source.get("prop.name"));
+        assertEquals("one", source.get("${prop.name}"));
+        assertNull(source.get("missing"));
+    }
+
+    @Test
+    void invocationIsolation() {
+        final var first = source("first", true);
+        final var second = source("second", true);
+        final var one = CompletableFuture.supplyAsync(() -> first.get("prop.name"));
+        final var two = CompletableFuture.supplyAsync(() -> second.get("prop.name"));
+        assertEquals("first", one.join());
+        assertEquals("second", two.join());
+        assertEquals("first", first.get("prop.name"));
+    }
+
+    private MavenConfigSource source(final String value, final boolean force) {
+        final var session =
+                new MavenSession(null, null, null, null, null, List.of("g"), null, new Properties(), new Date(0));
+        session.getUserProperties().setProperty("prop.name", value);
+        return new MavenConfigSource(
+                new PluginParameterExpressionEvaluator(session, new MojoExecution(new MojoDescriptor())), force);
     }
 }

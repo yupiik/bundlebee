@@ -15,9 +15,22 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static java.util.stream.Collectors.toList;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.yupiik.bundlebee.core.BundleBee;
 import io.yupiik.bundlebee.core.test.BundleBeeExtension;
 import io.yupiik.bundlebee.core.test.CommandExecutor;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
@@ -26,19 +39,6 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.stream.Stream;
-
-import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Integration test that installs the Fairwinds Polaris Helm chart via bundlebee
@@ -49,11 +49,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class PolarisHelmIT {
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
     private static final String POLARIS_NAMESPACE = "polaris";
+
     private static final String MANIFEST_PATH = "src/test/resources/bundlebee/polaris-manifest.json";
+
     private static final int POD_READY_TIMEOUT_SECONDS = 180;
 
     private static final List<String> namespacesToDelete = new ArrayList<>();
@@ -62,7 +66,6 @@ class PolarisHelmIT {
     static void ensureMinikubeRunning() {
         Assumptions.assumeTrue(isCommandAvailable("minikube"), "minikube is not installed, skipping integration test");
         Assumptions.assumeTrue(isCommandAvailable("kubectl"), "kubectl is not installed, skipping integration test");
-
         final var status = execCommand("minikube", "status");
         if (status != 0) {
             final var start = execCommand("minikube", "start");
@@ -73,13 +76,14 @@ class PolarisHelmIT {
     @AfterAll
     static void cleanupNamespaces() {
         // delete all created namespaces (all but kube-system works)
-        final var exclude = Stream.of("kube-system", "default", "kube-public", "kube-node-lease").collect(toList());
+        final var exclude = Stream.of("kube-system", "default", "kube-public", "kube-node-lease")
+                .collect(toList());
         for (final var ns : namespacesToDelete) {
             if (exclude.contains(ns)) {
                 continue;
             }
-            System.getLogger(PolarisHelmIT.class.getName()).log(System.Logger.Level.INFO,
-                    "Deleting namespace '" + ns + "'");
+            System.getLogger(PolarisHelmIT.class.getName())
+                    .log(System.Logger.Level.INFO, "Deleting namespace '" + ns + "'");
             execCommand("kubectl", "delete", "namespace", ns, "--ignore-not-found", "--wait=false");
         }
         // explicit polaris cleanup in case namespace listing missed it
@@ -91,13 +95,20 @@ class PolarisHelmIT {
     void applyPolarisHelmChart(final CommandExecutor executor) {
         // create the target namespace so resources referencing it can be applied
         final var nsResult = execCommand("kubectl", "create", "namespace", POLARIS_NAMESPACE);
-        assertTrue(nsResult == 0 || execCommand("kubectl", "get", "namespace", POLARIS_NAMESPACE) == 0,
+        assertTrue(
+                nsResult == 0 || execCommand("kubectl", "get", "namespace", POLARIS_NAMESPACE) == 0,
                 "Failed to create namespace '" + POLARIS_NAMESPACE + "'");
-
         final var manifest = Path.of(MANIFEST_PATH).toAbsolutePath().toString();
-        final var logs = executor.wrap(null, Level.INFO, () -> new BundleBee()
-                .launch("apply", "--alveolus", "polaris-test", "--manifest", manifest));
-
+        final var logs = executor.wrap(
+                null,
+                Level.INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "apply",
+                                "--bundlebee-apply-alveolus",
+                                "polaris-test",
+                                "--bundlebee-apply-manifest",
+                                manifest));
         assertTrue(logs.contains("Deploying"), "Expected 'Deploying' in logs:\n" + logs);
         assertTrue(logs.contains("polaris"), "Expected 'polaris' in logs:\n" + logs);
     }
@@ -107,16 +118,21 @@ class PolarisHelmIT {
     void polarisIsRunning() {
         // collect namespaces created by the chart (polaris namespace)
         namespacesToDelete.add(POLARIS_NAMESPACE);
-
         final var deadline = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(POD_READY_TIMEOUT_SECONDS);
         while (System.currentTimeMillis() < deadline) {
-            final var output = execCommandOutput("kubectl", "get", "pods",
-                    "-n", POLARIS_NAMESPACE,
-                    "-o", "jsonpath={range .items[*]}{.status.phase}{' '}{end}");
-            if (output != null && !output.isBlank()
-                    && Stream.of(output.trim().split("\\s+")).allMatch("Running"::equals)
+            final var output = execCommandOutput(
+                    "kubectl",
+                    "get",
+                    "pods",
+                    "-n",
+                    POLARIS_NAMESPACE,
+                    "-o",
+                    "jsonpath={range .items[*]}{.status.phase}{' '}{end}");
+            if (output != null
+                    && !output.isBlank()
+                    && Stream.of(WHITESPACE.split(output.trim())).allMatch("Running"::equals)
                     && !output.trim().isEmpty()) {
-                final var count = output.trim().split("\\s+").length;
+                final var count = WHITESPACE.split(output.trim()).length;
                 assertTrue(count > 0, "At least one polaris pod should be running");
                 return;
             }
@@ -129,17 +145,24 @@ class PolarisHelmIT {
         }
         // dump pod status for diagnostics
         final var debug = execCommandOutput("kubectl", "get", "pods", "-n", POLARIS_NAMESPACE, "-o", "wide");
-        throw new AssertionError("Polaris pods did not become Running within " + POD_READY_TIMEOUT_SECONDS
-                + "s. Pod status:\n" + debug);
+        throw new AssertionError(
+                "Polaris pods did not become Running within " + POD_READY_TIMEOUT_SECONDS + "s. Pod status:\n" + debug);
     }
 
     @Test
     @Order(3)
     void deletePolarisHelmChart(final CommandExecutor executor) {
         final var manifest = Path.of(MANIFEST_PATH).toAbsolutePath().toString();
-        final var logs = executor.wrap(null, Level.INFO, () -> new BundleBee()
-                .launch("delete", "--alveolus", "polaris-test", "--manifest", manifest));
-
+        final var logs = executor.wrap(
+                null,
+                Level.INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "delete",
+                                "--bundlebee-delete-alveolus",
+                                "polaris-test",
+                                "--bundlebee-delete-manifest",
+                                manifest));
         assertTrue(logs.contains("Deleting"), "Expected 'Deleting' in logs:\n" + logs);
     }
 
@@ -161,8 +184,9 @@ class PolarisHelmIT {
             pb.redirectErrorStream(true);
             final var p = pb.start();
             try (final var reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-                reader.lines().forEach(l -> System.getLogger(PolarisHelmIT.class.getName())
-                        .log(System.Logger.Level.INFO, l));
+                reader.lines()
+                        .forEach(l ->
+                                System.getLogger(PolarisHelmIT.class.getName()).log(System.Logger.Level.INFO, l));
             }
             final var finished = p.waitFor(5, TimeUnit.MINUTES);
             return finished ? p.exitValue() : -1;

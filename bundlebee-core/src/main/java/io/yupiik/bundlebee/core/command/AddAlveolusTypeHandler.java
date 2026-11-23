@@ -20,9 +20,10 @@ import java.util.concurrent.CompletionStage;
 /**
  * Called by add-alveolus command when generating the alveolus.
  * It replaces default implementation.
- * You can read the configuration you need using {@code @ConfigProperty(name = "bundlebee.add-alveolus.xxx"} injections.
+ * Inject a Fusion root configuration record to read handler-specific configuration.
  */
 public interface AddAlveolusTypeHandler {
+
     String name();
 
     CompletionStage<?> handle();

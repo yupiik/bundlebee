@@ -15,31 +15,37 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.BundleBee;
-import io.yupiik.bundlebee.core.test.BundleBeeExtension;
-import io.yupiik.bundlebee.core.test.CommandExecutor;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import static java.util.logging.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.yupiik.bundlebee.core.BundleBee;
+import io.yupiik.bundlebee.core.test.BundleBeeExtension;
+import io.yupiik.bundlebee.core.test.CommandExecutor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+
 class Yaml2JsonCommandTest {
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
     @Test
     void yaml2jsonCommand(final CommandExecutor executor, @TempDir Path work) {
-
-        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch("yaml2json",
-                "--bundlebee.yaml2json.input", "src/test/resources/bundlebee",
-                "--bundlebee.yaml2json.output", work.toAbsolutePath().toString()));
+        final var logs = executor.wrap(
+                null,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "yaml2json",
+                                "--bundlebee-yaml2json-input",
+                                "src/test/resources/bundlebee",
+                                "--bundlebee-yaml2json-output",
+                                work.toAbsolutePath().toString()));
         assertAll(
                 () -> assertTrue(logs.contains("Found 6 files to convert")),
                 () -> assertTrue(Files.exists(work.resolve("kubernetes/ApplyCommandTest.d0.json"))),
@@ -52,7 +58,6 @@ class Yaml2JsonCommandTest {
                         Files.readString(work.resolve("kubernetes/ApplyCommandTest.d0.json"))),
                 () -> assertEquals(
                         "{\"apiVersion\":\"v1\",\"kind\":\"Service\",\"metadata\":{\"name\":{},\"labels\":{\"app\":{},\"withdefault1\":{},\"withdefault2\":{}}},\"spec\":{\"type\":{},\"ports\":[{\"port\":{},\"targetPort\":{}}],\"selector\":{\"app\":{}}}}",
-                        Files.readString(work.resolve("kubernetes/ApplyCommandTest.template.json")))
-        );
+                        Files.readString(work.resolve("kubernetes/ApplyCommandTest.template.json"))));
     }
 }

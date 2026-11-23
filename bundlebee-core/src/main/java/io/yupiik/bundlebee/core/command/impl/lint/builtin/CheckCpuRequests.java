@@ -15,10 +15,11 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import javax.enterprise.context.Dependent;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-@Dependent
+@DefaultScoped
 public class CheckCpuRequests extends CheckResources {
+
     public CheckCpuRequests() {
         super("requests", "cpu");
     }

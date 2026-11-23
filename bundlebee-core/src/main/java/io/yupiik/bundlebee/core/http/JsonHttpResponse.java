@@ -15,23 +15,21 @@
  */
 package io.yupiik.bundlebee.core.http;
 
-import lombok.RequiredArgsConstructor;
+import static java.util.Optional.empty;
 
-import javax.json.JsonObject;
-import javax.json.bind.Jsonb;
-import javax.net.ssl.SSLSession;
+import io.yupiik.fusion.framework.api.container.Types;
+import io.yupiik.fusion.json.JsonMapper;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 import java.util.Optional;
+import javax.net.ssl.SSLSession;
 
-import static java.util.Optional.empty;
-
-@RequiredArgsConstructor
-public class JsonHttpResponse implements HttpResponse<JsonObject> {
-    private final Jsonb jsonb;
+public class JsonHttpResponse implements HttpResponse<Map<String, Object>> {
+    private final JsonMapper jsonb;
     private final HttpResponse<String> delegate;
 
     @Override
@@ -41,13 +39,14 @@ public class JsonHttpResponse implements HttpResponse<JsonObject> {
     }
 
     @Override
-    public Optional<HttpResponse<JsonObject>> previousResponse() {
+    public Optional<HttpResponse<Map<String, Object>>> previousResponse() {
         return empty();
     }
 
     @Override
-    public JsonObject body() {
-        return jsonb.fromJson(delegate.body(), JsonObject.class);
+    public Map<String, Object> body() {
+        return jsonb.fromString(
+                new Types.ParameterizedTypeImpl(Map.class, String.class, Object.class), delegate.body());
     }
 
     @Override
@@ -78,5 +77,10 @@ public class JsonHttpResponse implements HttpResponse<JsonObject> {
     @Override
     public HttpClient.Version version() {
         return delegate.version();
+    }
+
+    public JsonHttpResponse(final JsonMapper jsonb, final HttpResponse<String> delegate) {
+        this.jsonb = jsonb;
+        this.delegate = delegate;
     }
 }

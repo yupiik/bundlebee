@@ -15,7 +15,11 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
-import org.junit.jupiter.api.Test;
+import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Iterator;
 import java.util.List;
@@ -24,36 +28,40 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-
-import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
 
 class CompletionFuturesTest {
+
     @Test
     void emptyChain() throws ExecutionException, InterruptedException {
         // ensure it completes
-        assertNotNull(chain(new Iterator<>() {
-            @Override
-            public boolean hasNext() {
-                return false;
-            }
+        assertNotNull(chain(
+                        new Iterator<>() {
 
-            @Override
-            public Supplier<CompletionStage<?>> next() {
-                throw new UnsupportedOperationException();
-            }
-        }, true).toCompletableFuture().get());
+                            @Override
+                            public boolean hasNext() {
+                                return false;
+                            }
+
+                            @Override
+                            public Supplier<CompletionStage<?>> next() {
+                                throw new UnsupportedOperationException();
+                            }
+                        },
+                        true)
+                .toCompletableFuture()
+                .get());
     }
 
     @Test
     void oneTaskChain() throws ExecutionException, InterruptedException {
         final var counter = new AtomicInteger();
-        assertNotNull(chain(List.<Supplier<CompletionStage<?>>>of(
-                () -> completedFuture(counter.incrementAndGet())
-        ).iterator(), true).toCompletableFuture().get());
+        assertNotNull(chain(
+                        List.<Supplier<CompletionStage<?>>>of(() -> completedFuture(counter.incrementAndGet()))
+                                .iterator(),
+                        true)
+                .toCompletableFuture()
+                .get());
         assertEquals(1, counter.get());
     }
 
@@ -61,22 +69,34 @@ class CompletionFuturesTest {
     void oneTaskErrorChain() {
         assertEquals(
                 "test error",
-                assertThrows(ExecutionException.class, () -> chain(List.<Supplier<CompletionStage<?>>>of(
-                        () -> {
-                            final var promise = new CompletableFuture<>();
-                            promise.completeExceptionally(new IllegalArgumentException("test error"));
-                            return promise;
-                        }
-                ).iterator(), true).toCompletableFuture().get()).getCause().getMessage());
+                assertThrows(
+                                ExecutionException.class,
+                                () -> chain(
+                                                List.<Supplier<CompletionStage<?>>>of(() -> {
+                                                            final var promise = new CompletableFuture<>();
+                                                            promise.completeExceptionally(
+                                                                    new IllegalArgumentException("test error"));
+                                                            return promise;
+                                                        })
+                                                        .iterator(),
+                                                true)
+                                        .toCompletableFuture()
+                                        .get())
+                        .getCause()
+                        .getMessage());
     }
 
     @Test
     void twoTasksChain() throws ExecutionException, InterruptedException {
         final var counter = new AtomicInteger();
-        assertNotNull(chain(List.<Supplier<CompletionStage<?>>>of(
-                () -> completedFuture(counter.incrementAndGet()),
-                () -> completedFuture(counter.incrementAndGet())
-        ).iterator(), true).toCompletableFuture().get());
+        assertNotNull(chain(
+                        List.<Supplier<CompletionStage<?>>>of(
+                                        () -> completedFuture(counter.incrementAndGet()),
+                                        () -> completedFuture(counter.incrementAndGet()))
+                                .iterator(),
+                        true)
+                .toCompletableFuture()
+                .get());
         assertEquals(2, counter.get());
     }
 
@@ -85,17 +105,27 @@ class CompletionFuturesTest {
         final var counter = new AtomicInteger();
         assertEquals(
                 "test error 2",
-                assertThrows(ExecutionException.class, () -> chain(List.<Supplier<CompletionStage<?>>>of(
-                        () -> {
-                            counter.incrementAndGet();
-                            return completedFuture(true);
-                        },
-                        () -> {
-                            final var promise = new CompletableFuture<>();
-                            promise.completeExceptionally(new IllegalArgumentException("test error " + counter.incrementAndGet()));
-                            return promise;
-                        }
-                ).iterator(), true).toCompletableFuture().get()).getCause().getMessage());
+                assertThrows(
+                                ExecutionException.class,
+                                () -> chain(
+                                                List.<Supplier<CompletionStage<?>>>of(
+                                                                () -> {
+                                                                    counter.incrementAndGet();
+                                                                    return completedFuture(true);
+                                                                },
+                                                                () -> {
+                                                                    final var promise = new CompletableFuture<>();
+                                                                    promise.completeExceptionally(
+                                                                            new IllegalArgumentException("test error "
+                                                                                    + counter.incrementAndGet()));
+                                                                    return promise;
+                                                                })
+                                                        .iterator(),
+                                                true)
+                                        .toCompletableFuture()
+                                        .get())
+                        .getCause()
+                        .getMessage());
     }
 
     @Test
@@ -103,36 +133,51 @@ class CompletionFuturesTest {
         final var counter = new AtomicInteger();
         assertEquals(
                 "test error 1",
-                assertThrows(ExecutionException.class, () -> chain(List.<Supplier<CompletionStage<?>>>of(
-                        () -> {
-                            final var ctr = counter.incrementAndGet();
-                            final var promise = new CompletableFuture<>();
-                            promise.completeExceptionally(new IllegalArgumentException("test error " + ctr));
-                            return promise;
-                        },
-                        () -> {
-                            counter.incrementAndGet();
-                            return completedFuture(true);
-                        }
-                ).iterator(), true).toCompletableFuture().get()).getCause().getMessage());
+                assertThrows(
+                                ExecutionException.class,
+                                () -> chain(
+                                                List.<Supplier<CompletionStage<?>>>of(
+                                                                () -> {
+                                                                    final var ctr = counter.incrementAndGet();
+                                                                    final var promise = new CompletableFuture<>();
+                                                                    promise.completeExceptionally(
+                                                                            new IllegalArgumentException(
+                                                                                    "test error " + ctr));
+                                                                    return promise;
+                                                                },
+                                                                () -> {
+                                                                    counter.incrementAndGet();
+                                                                    return completedFuture(true);
+                                                                })
+                                                        .iterator(),
+                                                true)
+                                        .toCompletableFuture()
+                                        .get())
+                        .getCause()
+                        .getMessage());
         assertEquals(1, counter.get());
     }
 
     @Test
     void twoTasksFirstErrorChainDontStopOnError() throws ExecutionException, InterruptedException {
         final var counter = new AtomicInteger();
-        chain(List.<Supplier<CompletionStage<?>>>of(
-                () -> {
-                    final var ctr = counter.incrementAndGet();
-                    final var promise = new CompletableFuture<>();
-                    promise.completeExceptionally(new IllegalArgumentException("test error " + ctr));
-                    return promise;
-                },
-                () -> {
-                    counter.incrementAndGet();
-                    return completedFuture(true);
-                }
-        ).iterator(), false).toCompletableFuture().get();
+        chain(
+                        List.<Supplier<CompletionStage<?>>>of(
+                                        () -> {
+                                            final var ctr = counter.incrementAndGet();
+                                            final var promise = new CompletableFuture<>();
+                                            promise.completeExceptionally(
+                                                    new IllegalArgumentException("test error " + ctr));
+                                            return promise;
+                                        },
+                                        () -> {
+                                            counter.incrementAndGet();
+                                            return completedFuture(true);
+                                        })
+                                .iterator(),
+                        false)
+                .toCompletableFuture()
+                .get();
         assertEquals(2, counter.get());
     }
 }

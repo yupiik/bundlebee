@@ -16,21 +16,21 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonNumber;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class SetAntiAffinity extends CheckValue {
+
     public SetAntiAffinity() {
         super(
                 Set.of("Deployment"),
                 Map.of("Deployment", "/spec/template/spec/affinity/podAntiAffinity"),
-                Map.of("Deployment", new Condition("/spec/replicas", v -> v.getValueType() == JsonValue.ValueType.NUMBER && ((JsonNumber) v).intValue() > 1)));
+                Map.of(
+                        "Deployment",
+                        new Condition("/spec/replicas", v -> v instanceof Number && ((Number) v).intValue() > 1)));
     }
 
     @Override
@@ -49,10 +49,11 @@ public class SetAntiAffinity extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        // todo: validate topologyKey: "kubernetes.io/hostname" ? for now we assume that if it is set user knows what he does
-        return value.getValueType() != JsonValue.ValueType.NULL ?
-                Stream.empty() :
-                Stream.of(new LintError(LintError.LintLevel.WARNING, "Missing pod anti affinity."));
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        // todo: validate topologyKey: "kubernetes.io/hostname" ? for now we assume that if it is set user knows what he
+        // does
+        return value != null
+                ? Stream.empty()
+                : Stream.of(new LintError(LintError.LintLevel.WARNING, "Missing pod anti affinity."));
     }
 }

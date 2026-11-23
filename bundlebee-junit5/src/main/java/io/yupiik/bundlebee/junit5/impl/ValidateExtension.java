@@ -15,10 +15,15 @@
  */
 package io.yupiik.bundlebee.junit5.impl;
 
+import static java.util.Objects.requireNonNull;
+import static java.util.Optional.ofNullable;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import io.yupiik.bundlebee.junit5.CommandExecutor;
 import io.yupiik.bundlebee.junit5.KubernetesApi;
 import io.yupiik.bundlebee.junit5.LogCapturer;
 import io.yupiik.bundlebee.junit5.ValidateAlveolus;
+import java.lang.reflect.Method;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -29,14 +34,10 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 import org.junit.platform.commons.util.AnnotationUtils;
 
-import java.lang.reflect.Method;
-
-import static java.util.Objects.requireNonNull;
-import static java.util.Optional.ofNullable;
-import static org.junit.jupiter.api.Assertions.fail;
-
-public class ValidateExtension implements BeforeEachCallback, ParameterResolver, AfterEachCallback, InvocationInterceptor {
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(ValidateExtension.class);
+public class ValidateExtension
+        implements BeforeEachCallback, ParameterResolver, AfterEachCallback, InvocationInterceptor {
+    private static final ExtensionContext.Namespace NAMESPACE =
+            ExtensionContext.Namespace.create(ValidateExtension.class);
 
     @Override
     public void beforeEach(final ExtensionContext extensionContext) {
@@ -50,8 +51,11 @@ public class ValidateExtension implements BeforeEachCallback, ParameterResolver,
     }
 
     @Override
-    public void interceptTestMethod(final Invocation<Void> invocation, final ReflectiveInvocationContext<Method> invocationContext,
-                                    final ExtensionContext extensionContext) throws Throwable {
+    public void interceptTestMethod(
+            final Invocation<Void> invocation,
+            final ReflectiveInvocationContext<Method> invocationContext,
+            final ExtensionContext extensionContext)
+            throws Throwable {
         invocation.proceed();
         if (extensionContext.getStore(NAMESPACE).get(CommandExecutor.class) == null) {
             newExecutor(extensionContext).run();
@@ -72,18 +76,21 @@ public class ValidateExtension implements BeforeEachCallback, ParameterResolver,
                     }
                 });
         final var executor = store.get(CommandExecutor.class, CommandExecutor.class);
-        if (DefaultCommandExecutor.class.isInstance(executor) && !DefaultCommandExecutor.class.cast(executor).wasExecuted()) {
+        if (DefaultCommandExecutor.class.isInstance(executor)
+                && !DefaultCommandExecutor.class.cast(executor).wasExecuted()) {
             fail("no execution detected, ensure you called CommandExecutor.run()");
         }
     }
 
     @Override
-    public boolean supportsParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext) throws ParameterResolutionException {
+    public boolean supportsParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext)
+            throws ParameterResolutionException {
         return parameterContext.getParameter().getType().isAnnotationPresent(Injectable.class);
     }
 
     @Override
-    public Object resolveParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext) throws ParameterResolutionException {
+    public Object resolveParameter(final ParameterContext parameterContext, final ExtensionContext extensionContext)
+            throws ParameterResolutionException {
         final var type = parameterContext.getParameter().getType();
         final var store = extensionContext.getStore(NAMESPACE);
         final var instance = store.get(type, type);
@@ -96,11 +103,16 @@ public class ValidateExtension implements BeforeEachCallback, ParameterResolver,
     }
 
     private DefaultCommandExecutor newExecutor(final ExtensionContext extensionContext) {
-        final var config = AnnotationUtils.findAnnotation(extensionContext.getRequiredTestMethod(), ValidateAlveolus.class)
-                .orElseThrow(() -> new IllegalArgumentException("No @ValidateAlveolus on " + extensionContext.getRequiredTestMethod()));
+        final var config = AnnotationUtils.findAnnotation(
+                        extensionContext.getRequiredTestMethod(), ValidateAlveolus.class)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No @ValidateAlveolus on " + extensionContext.getRequiredTestMethod()));
         return new DefaultCommandExecutor(
                 config,
-                extensionContext.getStore(NAMESPACE).get(KubernetesApi.class, KubernetesApi.class).base(),
+                extensionContext
+                        .getStore(NAMESPACE)
+                        .get(KubernetesApi.class, KubernetesApi.class)
+                        .base(),
                 extensionContext.getStore(NAMESPACE).get(LogCapturer.class, LogCapturer.class));
     }
 }

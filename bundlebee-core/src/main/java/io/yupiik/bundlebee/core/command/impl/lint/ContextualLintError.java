@@ -15,20 +15,53 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import java.util.Objects;
 
-@Getter
-@ToString(callSuper = true)
-@EqualsAndHashCode(callSuper = true)
 public class ContextualLintError extends LintError {
     private final String alveolus;
     private final String descriptor;
 
-    public ContextualLintError(final LintLevel level, final String message, final String alveolus, final String descriptor) {
+    public ContextualLintError(
+            final LintLevel level, final String message, final String alveolus, final String descriptor) {
         super(level, message);
         this.alveolus = alveolus;
         this.descriptor = descriptor;
+    }
+
+    public String getAlveolus() {
+        return this.alveolus;
+    }
+
+    public String getDescriptor() {
+        return this.descriptor;
+    }
+
+    @Override
+    public String toString() {
+        return "ContextualLintError(super=" + super.toString() + ", alveolus=" + this.getAlveolus() + ", descriptor="
+                + this.getDescriptor() + ")";
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof ContextualLintError other)) {
+            return false;
+        }
+        return other.canEqual(this)
+                && super.equals(o)
+                && Objects.equals(this.getAlveolus(), other.getAlveolus())
+                && Objects.equals(this.getDescriptor(), other.getDescriptor());
+    }
+
+    protected boolean canEqual(final Object other) {
+        return other instanceof ContextualLintError;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), this.getAlveolus(), this.getDescriptor());
     }
 }

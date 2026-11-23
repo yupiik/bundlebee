@@ -15,10 +15,4 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
-import lombok.Data;
-
-@Data
-public class Tuple2<A, B> {
-    private final A first;
-    private final B second;
-}
+public record Tuple2<A, B>(A first, B second) {}

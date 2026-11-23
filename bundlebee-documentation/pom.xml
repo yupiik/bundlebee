@@ -17,12 +17,12 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <artifactId>bundlebee</artifactId>
-    <groupId>io.yupiik</groupId>
-    <version>1.0.33-SNAPSHOT</version>
-  </parent>
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.yupiik</groupId>
+    <artifactId>bundlebee</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+  </parent>
 
   <artifactId>bundlebee-documentation</artifactId>
   <name>BundleBee :: Documentation</name>
@@ -44,9 +44,19 @@
 
   <dependencies>
     <dependency>
-      <groupId>org.apache.xbean</groupId>
-      <artifactId>xbean-finder-shaded</artifactId>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-build-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-json</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bundlebee-core</artifactId>
@@ -68,7 +78,8 @@
         </exclusion>
       </exclusions>
     </dependency>
-    <dependency> <!-- for the reactor -->
+    <dependency>
+      <!-- for the reactor -->
       <groupId>${project.groupId}</groupId>
       <artifactId>bundlebee-maven-plugin</artifactId>
       <version>${project.version}</version>
@@ -129,28 +140,44 @@
       <plugin>
         <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>
-        <version>1.15.4</version>
+        <version>2.0.2</version>
+        <configuration>
+          <nodeVersion>v26.13.1</nodeVersion>
+          <npmVersion>12.2.3</npmVersion>
+          <installDirectory>${project.basedir}/.node</installDirectory>
+          <workingDirectory>${project.basedir}/src/main/frontend</workingDirectory>
+        </configuration>
         <executions>
           <execution>
             <id>setup-node</id>
-            <phase>process-classes</phase>
             <goals>
               <goal>install-node-and-npm</goal>
             </goals>
+            <phase>process-classes</phase>
           </execution>
           <execution>
             <id>npm-install</id>
-            <phase>process-classes</phase>
             <goals>
               <goal>npm</goal>
             </goals>
+            <phase>process-classes</phase>
+          </execution>
+          <execution>
+            <id>npm-test</id>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <phase>process-classes</phase>
+            <configuration>
+              <arguments>test</arguments>
+            </configuration>
           </execution>
           <execution>
             <id>npm-build</id>
-            <phase>process-classes</phase>
             <goals>
               <goal>npm</goal>
             </goals>
+            <phase>process-classes</phase>
             <configuration>
               <arguments>run build</arguments>
               <environmentVariables>
@@ -160,14 +187,9 @@
             </configuration>
           </execution>
         </executions>
-        <configuration>
-          <nodeVersion>v24.11.1</nodeVersion>
-          <npmVersion>11.6.2</npmVersion>
-          <installDirectory>${project.basedir}/.node</installDirectory>
-          <workingDirectory>${project.basedir}/src/main/frontend</workingDirectory>
-        </configuration>
       </plugin>
-      <plugin> <!-- mvn process-classes yupiik-tools:serve-minisite -e -->
+      <plugin>
+        <!-- mvn process-classes yupiik-tools:serve-minisite -e -->
         <groupId>io.yupiik.maven</groupId>
         <artifactId>yupiik-tools-maven-plugin</artifactId>
         <configuration>
@@ -181,23 +203,17 @@
           <logoSideText>Documentation</logoSideText>
           <copyright>© 2025 &lt;strong&gt;&lt;a href="https://www.yupiik.com"&gt;Yupiik&lt;/a&gt;&lt;/strong&gt;. All Rights Reserved</copyright>
           <templateExtensionPoints>
-            <socialLinks>
-              &lt;li class="list-inline-item"&gt;&lt;a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"&gt;&lt;i class="fab fa-linkedin fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
+            <socialLinks>&lt;li class="list-inline-item"&gt;&lt;a title="LinkedIn" target="_blank" href="https://www.linkedin.com/company/yupiik/"&gt;&lt;i class="fab fa-linkedin fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
               &lt;li class="list-inline-item"&gt;&lt;a title="Twitter" target="_blank" href="https://twitter.com/Yupiik/"&gt;&lt;i class="fab fa-twitter fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
-              &lt;li class="list-inline-item"&gt;&lt;a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"&gt;&lt;i class="fab fa-github fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;
-            </socialLinks>
+              &lt;li class="list-inline-item"&gt;&lt;a title="Github" target="_blank" href="https://www.github.com/yupiik/bundlebee"&gt;&lt;i class="fab fa-github fa-fw"&gt;&lt;/i&gt;&lt;/a&gt;&lt;/li&gt;</socialLinks>
           </templateExtensionPoints>
-          <customHead>
-            &lt;style&gt;
+          <customHead>&lt;style&gt;
             .first-version {border-top-width:1px !important;}
-            &lt;/style&gt;
-          </customHead>
-          <customScripts>
-            &lt;script&gt;
+            &lt;/style&gt;</customHead>
+          <customScripts>&lt;script&gt;
             document.querySelector('div.site-logo &gt; a').href =
             document.location.pathname.indexOf('/bundlebee') == 0 ? '/bundlebee/index.html' : '/index.html';
-            &lt;/script&gt;
-          </customScripts>
+            &lt;/script&gt;</customScripts>
           <attributes>
             <partialsdir>${project.basedir}/src/main/minisite/content/_partials</partialsdir>
           </attributes>
@@ -239,9 +255,7 @@
                 <type>JSON</type>
                 <pretty>true</pretty>
                 <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
-                <to>
-                  ${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.json
-                </to>
+                <to>${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.json</to>
                 <title>Manifest Descriptor</title>
                 <description>BundleBee manifest descriptor.</description>
               </configuration>
@@ -253,9 +267,7 @@
                 <type>JSON</type>
                 <pretty>true</pretty>
                 <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
-                <to>
-                  ${project.basedir}/src/main/minisite/assets/generated/jsonschema/manifest.descriptor.json
-                </to>
+                <to>${project.basedir}/src/main/minisite/assets/generated/jsonschema/manifest.descriptor.json</to>
                 <title>Manifest Descriptor</title>
                 <description>BundleBee manifest descriptor.</description>
               </configuration>
@@ -266,9 +278,7 @@
                 <class>io.yupiik.bundlebee.core.descriptor.Manifest</class>
                 <type>ADOC</type>
                 <annotationOnlyProvidesTheDescription>true</annotationOnlyProvidesTheDescription>
-                <to>
-                  ${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.adoc
-                </to>
+                <to>${project.basedir}/src/main/minisite/content/_partials/generated/jsonschema/manifest.descriptor.adoc</to>
                 <title>Manifest Descriptor</title>
                 <description>BundleBee manifest descriptor.</description>
               </configuration>
@@ -310,7 +320,8 @@
   </build>
 
   <profiles>
-    <profile> <!--  by default we want changes we do in the project to be reflected in the doc even without building it  -->
+    <profile>
+      <!--  by default we want changes we do in the project to be reflected in the doc even without building it  -->
       <id>generate-content-but-not-site</id>
       <activation>
         <activeByDefault>true</activeByDefault>
@@ -323,10 +334,10 @@
             <executions>
               <execution>
                 <id>buildDoc</id>
-                <phase>prepare-package</phase>
                 <goals>
                   <goal>minisite</goal>
                 </goals>
+                <phase>prepare-package</phase>
                 <configuration>
                   <skipRendering>true</skipRendering>
                 </configuration>
@@ -336,7 +347,8 @@
         </plugins>
       </build>
     </profile>
-    <profile> <!--  mvn clean package -Pgh-pages -->
+    <profile>
+      <!--  mvn clean package -Pgh-pages -->
       <id>gh-pages</id>
       <properties>
         <minisite.serverId>github.com</minisite.serverId>
@@ -350,10 +362,10 @@
             <executions>
               <execution>
                 <id>gh-pages</id>
-                <phase>prepare-package</phase>
                 <goals>
                   <goal>minisite</goal>
                 </goals>
+                <phase>prepare-package</phase>
                 <configuration>
                   <git>
                     <ignore>false</ignore>

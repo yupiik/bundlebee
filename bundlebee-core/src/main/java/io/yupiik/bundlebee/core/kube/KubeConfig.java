@@ -15,118 +15,35 @@
  */
 package io.yupiik.bundlebee.core.kube;
 
-import lombok.Data;
-
-import javax.json.JsonObject;
-import javax.json.bind.annotation.JsonbProperty;
 import java.util.List;
 
-@Data
-public class KubeConfig {
-    private String apiVersion;
-    private String kind;
-
-    @JsonbProperty("current-context")
-    private String currentContext;
-
-    private List<NamedCluster> clusters;
-    private List<NamedContext> contexts;
-    private List<NamedUser> users;
-
-    @Data
-    public static class NamedExtension {
-        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
-        private String name;
-        private JsonObject extension;
+/**
+ * Metadata-only compatibility view for the cluster-host placeholder.
+ * Authentication, TLS, context selection and token refresh belong to Fusion's KubernetesClient.
+ * This is deliberately not a second kubeconfig serialization model.
+ */
+public record KubeConfig(List<NamedCluster> clusters) {
+    public KubeConfig {
+        clusters = List.copyOf(clusters);
     }
 
-    @Data
-    public static class NamedCluster {
-        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
-        private String name;
-        private Cluster cluster;
+    public List<NamedCluster> getClusters() {
+        return clusters;
     }
 
-    @Data
-    public static class NamedContext {
-        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
-        private String name;
-        private Context context;
-    }
+    public record NamedCluster(String name, Cluster cluster) {
+        public String getName() {
+            return name;
+        }
 
-    @Data
-    public static class NamedUser {
-        @JsonbProperty("name") // to let arthur detect it with our conf, not strictly needed in jvm mode
-        private String name;
-        private User user;
-    }
-
-    @Data
-    public static class User {
-        private String username;
-        private String password;
-
-        private String token;
-        private String tokenFile;
-
-        @JsonbProperty("client-certificate")
-        private String clientCertificate;
-
-        @JsonbProperty("client-certificate-data")
-        private String clientCertificateData;
-
-        @JsonbProperty("client-key")
-        private String clientKey;
-
-        @JsonbProperty("client-key-data")
-        private String clientKeyData;
-
-        // exec part
-        private Exec exec;
-
-        @Data
-        public static class Exec {
-            private String apiVersion; // client.authentication.k8s.io/v
-            private String command;
-            private List<EnvItem> env;
-            private List<String> args;
-            private boolean provideClusterInfo;
-            private String interactiveMode;
-            private String installHint;
-
-            @Data
-            public static class EnvItem {
-                private String name;
-                private String value;
-            }
+        public Cluster getCluster() {
+            return cluster;
         }
     }
 
-    @Data
-    public static class Context {
-        private String cluster;
-        private String namespace;
-        private String user;
-
-        @JsonbProperty("certificate-authority")
-        private String certificateAuthority;
-
-        private List<NamedExtension> extensions;
-    }
-
-    @Data
-    public static class Cluster {
-        private String server;
-
-        @JsonbProperty("certificate-authority")
-        private String certificateAuthority;
-
-        @JsonbProperty("certificate-authority-data")
-        private String certificateAuthorityData;
-
-        @JsonbProperty("insecure-skip-tls-verify")
-        private boolean insecureSkipTlsVerify;
-
-        private List<NamedExtension> extensions;
+    public record Cluster(String server) {
+        public String getServer() {
+            return server;
+        }
     }
 }

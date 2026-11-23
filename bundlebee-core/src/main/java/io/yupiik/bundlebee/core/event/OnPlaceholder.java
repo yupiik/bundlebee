@@ -15,31 +15,68 @@
  */
 package io.yupiik.bundlebee.core.event;
 
-import lombok.Data;
+import java.util.Objects;
 
-@Data
 public class OnPlaceholder {
     private final String name;
     private final String defaultValue;
     private final String resolvedValue;
-
     /**
      * an execution id, not needed anytime offline but enables to support concurrency in some commands.
      */
     private final String id;
-
-    /**
-     * @deprecated ensure to pass an id or explicitly {@code null}. Not doing it can have side effects with some commands.
-     */
-    @Deprecated
-    public OnPlaceholder(final String name, final String defaultValue, final String resolvedValue) {
-        this(name, defaultValue, resolvedValue, null);
-    }
 
     public OnPlaceholder(final String name, final String defaultValue, final String resolvedValue, final String id) {
         this.name = name;
         this.defaultValue = defaultValue;
         this.resolvedValue = resolvedValue;
         this.id = id;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public String getDefaultValue() {
+        return this.defaultValue;
+    }
+
+    public String getResolvedValue() {
+        return this.resolvedValue;
+    }
+
+    /**
+     * an execution id, not needed anytime offline but enables to support concurrency in some commands.
+     */
+    public String getId() {
+        return this.id;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == this) {
+            return true;
+        }
+        return o instanceof OnPlaceholder other
+                && other.canEqual(this)
+                && Objects.equals(getName(), other.getName())
+                && Objects.equals(getDefaultValue(), other.getDefaultValue())
+                && Objects.equals(getResolvedValue(), other.getResolvedValue())
+                && Objects.equals(getId(), other.getId());
+    }
+
+    protected boolean canEqual(final Object other) {
+        return other instanceof OnPlaceholder;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getName(), getDefaultValue(), getResolvedValue(), getId());
+    }
+
+    @Override
+    public String toString() {
+        return "OnPlaceholder(name=" + this.getName() + ", defaultValue=" + this.getDefaultValue() + ", resolvedValue="
+                + this.getResolvedValue() + ", id=" + this.getId() + ")";
     }
 }

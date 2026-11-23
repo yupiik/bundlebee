@@ -15,19 +15,23 @@
  */
 package io.yupiik.bundlebee.core.kube;
 
-import io.yupiik.bundlebee.core.kube.model.APIResourceList;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import lombok.Getter;
-import lombok.extern.java.Log;
+import static java.util.Comparator.comparing;
+import static java.util.Locale.ROOT;
+import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedStage;
+import static java.util.logging.Level.SEVERE;
+import static java.util.stream.Collectors.toMap;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.json.JsonObject;
-import javax.json.bind.Jsonb;
+import io.yupiik.bundlebee.core.kube.model.APIResourceList;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import io.yupiik.fusion.framework.build.api.lifecycle.Destroy;
+import io.yupiik.fusion.framework.build.api.lifecycle.Init;
+import io.yupiik.fusion.json.JsonMapper;
+import io.yupiik.fusion.kubernetes.client.KubernetesClient;
+import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,39 +41,40 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
-import static java.util.Comparator.comparing;
-import static java.util.Locale.ROOT;
-import static java.util.Optional.ofNullable;
-import static java.util.concurrent.CompletableFuture.completedStage;
-import static java.util.logging.Level.SEVERE;
-import static java.util.stream.Collectors.toMap;
-
-@Log
 @ApplicationScoped
 public class ApiPreloader {
-    @Inject
-    @BundleBee
-    private Jsonb jsonb;
+    private final Logger log = Logger.getLogger(ApiPreloader.class.getName());
 
-    @Inject
-    private HttpKubeClient api;
-
-    private volatile CompletionStage<?> pending; // we don't want to do 2 calls to get base urls at the same time
-    private final Collection<String> fetchedResourceLists = new HashSet<>();
-
-    @Getter
-    private final Map<String, String> baseUrls = new ConcurrentHashMap<>();
-
-    @PostConstruct
-    private void init() {
-        // preload default resources
-        chainedAPIResourceListFetch("/api/v1", () -> api.execute(HttpRequest.newBuilder(), "/api/v1")
-                .thenAccept(r -> processResourceListDefinition("/api/v1", r)));
+    public ApiPreloader(final JsonMapper jsonb, final KubernetesClient api) {
+        this.jsonb = jsonb;
+        this.api = api;
     }
 
-    @PreDestroy
-    private void destroy() {
+    private final JsonMapper jsonb;
+    private final KubernetesClient api;
+    // we don't want to do 2 calls to get base urls at the same time
+    private volatile CompletionStage<?> pending;
+    private final Collection<String> fetchedResourceLists = new HashSet<>();
+    private final Map<String, String> baseUrls = new ConcurrentHashMap<>();
+
+    @Init
+    protected void init() {
+        // preload default resources
+        chainedAPIResourceListFetch("/api/v1", () -> fetch("/api/v1"));
+    }
+
+    private CompletionStage<?> fetch(final String path) {
+        return api.sendAsync(
+                        HttpRequest.newBuilder(URI.create(api.base().toString() + path))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
+                .thenAccept(r -> processResourceListDefinition(path, r));
+    }
+
+    @Destroy
+    protected void destroy() {
         // pending can be resetted concurrently and we can't synchronized(this)
         // to avoid deadlocks so we just test the ref, this is sufficient here
         final CompletionStage<?> current = pending;
@@ -86,12 +91,13 @@ public class ApiPreloader {
         }
     }
 
-    public CompletionStage<?> ensureResourceSpec(final JsonObject desc, final String kindLowerCased) {
+    public CompletionStage<?> ensureResourceSpec(final Map<String, Object> desc, final String kindLowerCased) {
         final CompletionStage<?> ready;
-        if (!baseUrls.containsKey(kindLowerCased) && desc.containsKey("apiVersion") && !"v1".equals(desc.getString("apiVersion"))) {
-            final var base = "/apis/" + desc.getString("apiVersion");
-            ready = chainedAPIResourceListFetch(base, () -> api.execute(HttpRequest.newBuilder(), base)
-                    .thenAccept(r -> processResourceListDefinition(base, r)));
+        if (!baseUrls.containsKey(kindLowerCased)
+                && desc.containsKey("apiVersion")
+                && !"v1".equals(desc.get("apiVersion"))) {
+            final var base = "/apis/" + desc.get("apiVersion");
+            ready = chainedAPIResourceListFetch(base, () -> fetch(base));
         } else {
             ready = ofNullable(pending).orElseGet(() -> completedStage(null));
         }
@@ -102,47 +108,55 @@ public class ApiPreloader {
         log.finest(() -> "Fetched " + response.uri() + ", status=" + response.statusCode());
         switch (response.statusCode()) {
             case 200:
-                doProcessResourceListDefinition(base, jsonb.fromJson(response.body(), APIResourceList.class));
+                doProcessResourceListDefinition(base, jsonb.fromString(APIResourceList.class, response.body()));
                 break;
             case 404:
-                log.warning(() -> "Didn't find apiVersion '" + response.uri() + "', using default mapping");
+                log.warning(() -> "Didn\'t find apiVersion \'" + response.uri() + "\', using default mapping");
                 break;
             default:
-                log.finest(() -> "Can't get apiVersion '" + response.uri() + "', status=" + response.statusCode() + "\n" + response.body());
+                log.finest(() -> "Can\'t get apiVersion \'" + response.uri() + "\', status=" + response.statusCode()
+                        + "\n" + response.body());
         }
     }
 
-    // more accurate impl is https://github.com/kubernetes/apimachinery/blob/dd0b9a0a73d89b90dbc4930db4f1e7dbdc6eb8c3/pkg/api/meta/restmapper.go#L192
+    // more accurate impl is
+    // https://github.com/kubernetes/apimachinery/blob/dd0b9a0a73d89b90dbc4930db4f1e7dbdc6eb8c3/pkg/api/meta/restmapper.go#L192
     private void doProcessResourceListDefinition(final String base, final APIResourceList list) {
-        if (list.getResources() == null) {
+        if (list.resources() == null) {
             return;
         }
-        final var newMappings = list.getResources().stream()
-                .filter(it -> it.getKind() != null)
-                // sort to find the smallest first, this way if 2 equal kind exist we take the minimal one
-                // (Namespace name=namespaces vs name=namespaces/status for ex)
-                .sorted(comparing(it -> ofNullable(it.getName())
-                        .filter(v -> !v.isBlank())
-                        .or(() -> ofNullable(it.getSingularName()))
-                        .filter(v -> !v.isBlank())
-                        .orElse(it.getKind())))
-                .collect(toMap(i -> i.getKind().toLowerCase(ROOT) + 's', i -> "" +
-                                (i.getGroup() != null && i.getVersion() != null ?
-                                        "/apis/" + i.getGroup() + "/" + i.getVersion() :
-                                        base) +
-                                (i.isNamespaced() ? "/namespaces/${namespace}" : "") +
-                                '/' + ofNullable(i.getName())
-                                .filter(it -> !it.isBlank())
-                                .orElse(i.getSingularName()),
-                        // since we sorted the list we can take the first one securely normally
-                        (a, b) -> a));
-        // /!\ some url will be wrong but shouldn't be used like podexecoptions -> /api/v1/namespaces/${namespace}/pods/exec
+        final var
+                newMappings = // sort to find the smallest first, this way if 2 equal kind exist we take the minimal one
+                        // (Namespace name=namespaces vs name=namespaces/status for ex)
+                        list.resources().stream()
+                                .filter(it -> it.kind() != null)
+                                .sorted(comparing(it -> ofNullable(it.name())
+                                        .filter(v -> !v.isBlank())
+                                        .or(() -> ofNullable(it.singularName()))
+                                        .filter(v -> !v.isBlank())
+                                        .orElse(it.kind())))
+                                .collect(toMap(
+                                        i -> i.kind().toLowerCase(ROOT) + 's',
+                                        i -> ""
+                                                + (i.group() != null && i.version() != null
+                                                        ? "/apis/" + i.group() + "/" + i.version()
+                                                        : base)
+                                                + (i.namespaced() ? "/namespaces/${namespace}" : "") + '/'
+                                                + ofNullable(i.name())
+                                                        .filter(it -> !it.isBlank())
+                                                        .orElse(i.singularName()), // since we sorted the list we
+                                        // can take the first one
+                                        // securely normally
+                                        (a, b) -> a));
+        // /!\ some url will be wrong but shouldn't be used like podexecoptions ->
+        // /api/v1/namespaces/${namespace}/pods/exec
         // which is actually /api/v1/namespaces/${namespace}/pods/${name}/exec
         baseUrls.putAll(newMappings);
     }
 
     // we don't want to fetch twice the same api resource list
-    private CompletionStage<?> chainedAPIResourceListFetch(final String marker, final Supplier<CompletionStage<?>> supplier) {
+    private CompletionStage<?> chainedAPIResourceListFetch(
+            final String marker, final Supplier<CompletionStage<?>> supplier) {
         synchronized (this) {
             if (!fetchedResourceLists.add(marker)) {
                 return ofNullable(pending).orElseGet(() -> completedStage(null));
@@ -151,7 +165,8 @@ public class ApiPreloader {
             root.whenComplete((r, e) -> {
                 synchronized (ApiPreloader.this) {
                     if (ApiPreloader.this.pending == root) {
-                        ApiPreloader.this.pending = null; // let it be gc
+                        // let it be gc
+                        ApiPreloader.this.pending = null;
                     }
                 }
                 if (e != null) {
@@ -161,5 +176,9 @@ public class ApiPreloader {
             pending = pending == null ? root : pending.thenCompose(ignored -> root);
             return this.pending;
         }
+    }
+
+    public Map<String, String> getBaseUrls() {
+        return this.baseUrls;
     }
 }

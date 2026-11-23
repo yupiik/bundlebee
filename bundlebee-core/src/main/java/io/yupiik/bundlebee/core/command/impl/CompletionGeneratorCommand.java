@@ -15,17 +15,19 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
+
 import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.core.service.CompletionService;
 import io.yupiik.bundlebee.core.service.ParameterExtractor;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,36 +35,37 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
-
-@Log
-@Dependent
+@DefaultScoped
+@Command(
+        name = "completion",
+        description =
+                "Execute bash completion. " + "Should be setup in your ~/.bashrc or ~/.profile file to be active.\n"
+                        + "// end of short description\n"
+                        + "The result will be the list of proposal you can inject into COMPREPLY array.\n" + "\n"
+                        + "To set it up you can add this snippet to your .bashrc "
+                        + "(assumes you uses the `bundlebee` linux binary and it is in your `$PATH` otherwise replace bundlebee by your own launching script):\n"
+                        + "\n" + "[source,bash]\n" + "----\n"
+                        + "complete -o default -o nospace -C \"bundlebee completion\" bundlebee\n" + "----\n")
 public class CompletionGeneratorCommand implements Executable {
-    @Inject
-    private CompletionService completionService;
+    private final Logger log = Logger.getLogger(CompletionGeneratorCommand.class.getName());
 
-    @Inject
-    private Substitutor substitutor;
+    public CompletionGeneratorCommand(
+            final Options options, CompletionService completionService, Substitutor substitutor) {
+        this.completionService = completionService;
+        this.substitutor = substitutor;
+        this.useLogger = options.useLogger();
+        this.compLine = options.compLine();
+        this.compPoint = options.compPoint();
+    }
 
-    @Inject
-    @Description("If true logger will be used instead of stdout.")
-    @ConfigProperty(name = "bundlebee.completion.useLogger", defaultValue = "false")
-    private boolean useLogger;
-
-    @Inject
-    @Description("Matches bash COMP_LINE environment variable, represents the current command line.")
-    @ConfigProperty(name = "comp.line", defaultValue = UNSET)
-    private String compLine;
-
-    @Inject
-    @Description("Matches bash COMP_POINT environment variable, represents the index of the cursor position.")
-    @ConfigProperty(name = "comp.point", defaultValue = "-1")
-    private int compPoint;
+    private final CompletionService completionService;
+    private final Substitutor substitutor;
+    private final boolean useLogger;
+    private final String compLine;
+    private final int compPoint;
 
     @Override
     public String name() {
@@ -71,18 +74,13 @@ public class CompletionGeneratorCommand implements Executable {
 
     @Override
     public String description() {
-        return "Execute bash completion. " +
-                "Should be setup in your ~/.bashrc or ~/.profile file to be active.\n" +
-                "// end of short description\n" +
-                "The result will be the list of proposal you can inject into COMPREPLY array.\n" +
-                "\n" +
-                "To set it up you can add this snippet to your .bashrc " +
-                "(assumes you uses the `bundlebee` linux binary and it is in your `$PATH` otherwise replace bundlebee by your own launching script):\n" +
-                "\n" +
-                "[source,bash]\n" +
-                "----\n" +
-                "complete -o default -o nospace -C \"bundlebee completion\" bundlebee\n" +
-                "----\n";
+        return "Execute bash completion. " + "Should be setup in your ~/.bashrc or ~/.profile file to be active.\n"
+                + "// end of short description\n"
+                + "The result will be the list of proposal you can inject into COMPREPLY array.\n" + "\n"
+                + "To set it up you can add this snippet to your .bashrc "
+                + "(assumes you uses the `bundlebee` linux binary and it is in your `$PATH` otherwise replace bundlebee by your own launching script):\n"
+                + "\n" + "[source,bash]\n" + "----\n"
+                + "complete -o default -o nospace -C \"bundlebee completion\" bundlebee\n" + "----\n";
     }
 
     @Override
@@ -105,20 +103,22 @@ public class CompletionGeneratorCommand implements Executable {
             idx = args.indexOf(arg);
         } else {
             final int end = compLine.indexOf(' ', compPoint);
-            current = compLine.substring(compLine.lastIndexOf(' ', compPoint - 1) + 1, end < 0 ? compLine.length() : end).trim();
+            current = compLine.substring(
+                            compLine.lastIndexOf(' ', compPoint - 1) + 1, end < 0 ? compLine.length() : end)
+                    .trim();
             idx = args.size();
         }
-
         switch (idx) {
-            case 0: // just to be complete but should never be triggered
-                return Stream.of("bundlebee")
-                        .filter(it -> it.startsWith(current));
+            case // just to be complete but should never be triggered
+            0:
+                return Stream.of("bundlebee").filter(it -> it.startsWith(current));
             case 1:
                 return completionService.getCommands().keySet().stream()
                         .filter(it -> it.startsWith(current))
                         .sorted();
             default:
-                if ((idx % 2) == 0) { // key (--xxx) - absolutely we should do "-2" for binary and command but "(x-2) % 2 == x % 2"
+                if ((idx % 2) == 0) {
+                    // key (--xxx) - absolutely we should do "-2" for binary and command but "(x-2) % 2 == x % 2"
                     final var cmd = completionService.getCommands().get(args.get(1).value);
                     if (cmd == null) {
                         return Stream.of();
@@ -132,7 +132,8 @@ public class CompletionGeneratorCommand implements Executable {
                             .map(ParameterExtractor.Parameter::getName)
                             .filter(it -> it.startsWith(current))
                             .filter(it -> !alreadySet.contains(it))
-                            .sorted((a1, a2) -> { // shared last
+                            .sorted((a1, a2) -> {
+                                // shared last
                                 if (a1.equals(a2)) {
                                     return 0;
                                 }
@@ -148,8 +149,10 @@ public class CompletionGeneratorCommand implements Executable {
                                 return a1.compareTo(a2);
                             });
                 }
-                // note that returning an empty list will enable bash default completion if complete is used with -o default
-                final var cmd = completionService.getCommands().get(args.get(1).value.trim());
+                // note that returning an empty list will enable bash default completion if complete is used with -o
+                // default
+                final var cmd =
+                        completionService.getCommands().get(args.get(1).value.trim());
                 if (cmd == null) {
                     return Stream.of();
                 }
@@ -160,12 +163,9 @@ public class CompletionGeneratorCommand implements Executable {
                             if (isGlobalOption(argName)) {
                                 return completeSharedOption(argName);
                             }
-                            final var prefix = "bundlebee." + cmd.getExecutable().name() + '.';
-                            final var map = toOptionMap("bundlebee." + cmd.getExecutable().name() + '.', args);
-                            if (argName.startsWith(prefix)) {
-                                return cmd.getCompleter().complete(map, argName);
-                            }
-                            return cmd.getCompleter().complete(map, argName);
+                            final var map = toOptionMap(
+                                    "bundlebee." + cmd.getExecutable().name() + '.', args);
+                            return cmd.complete(map, argName);
                         })
                         .map(options -> options.filter(it -> it.startsWith(current)))
                         .orElseGet(Stream::empty);
@@ -174,9 +174,12 @@ public class CompletionGeneratorCommand implements Executable {
 
     private Map<String, String> toOptionMap(final String prefix, final List<Arg> args) {
         final var out = new HashMap<String, String>();
-        final var it = args.iterator(); // don't use a loop since command can be not yet valid
-        it.next(); // bundlebee
-        it.next(); // command
+        // don't use a loop since command can be not yet valid
+        final var it = args.iterator();
+        // bundlebee
+        it.next();
+        // command
+        it.next();
         while (it.hasNext()) {
             final var option = it.next();
             if (option.value.startsWith("--") && it.hasNext()) {
@@ -218,16 +221,15 @@ public class CompletionGeneratorCommand implements Executable {
     }
 
     private boolean isGlobalOption(final String argName) {
-        return argName.startsWith("bundlebee.maven.") ||
-                argName.startsWith("bundlebee.kube.") ||
-                argName.startsWith("bundlebee.httpclient.");
+        return argName.startsWith("bundlebee.maven.")
+                || argName.startsWith("bundlebee.kube.")
+                || argName.startsWith("bundlebee.httpclient.");
     }
 
     private Stream<String> toPossibleKeys(final String value) {
-        return Stream.of(
-                value,
-                value.replace('-', '.'),
-                value.replace('.', '-'));
+        final var prefix = value.startsWith("--") ? "--" : "";
+        final var key = value.substring(prefix.length());
+        return Stream.of(value, prefix + key.replace('-', '.'), prefix + key.replace('.', '-'));
     }
 
     // simple parser since we don't have COMP_WORDS using complete -C
@@ -252,7 +254,7 @@ public class CompletionGeneratorCommand implements Executable {
                 end = null;
             } else if (c == '\\') {
                 escaped = true;
-            } else if (c == '"' || c == '\'') {
+            } else if (c == '\"' || c == '\'') {
                 end = c;
             } else {
                 current.append(c);
@@ -264,10 +266,36 @@ public class CompletionGeneratorCommand implements Executable {
         return result;
     }
 
-    @RequiredArgsConstructor
     private static class Arg {
         private final String value;
         private final int from;
         private final int to;
+
+        public Arg(final String value, final int from, final int to) {
+            this.value = value;
+            this.from = from;
+            this.to = to;
+        }
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.completion.useLogger",
+                    defaultValue = "false",
+                    documentation = "If true logger will be used instead of stdout.")
+            boolean useLogger,
+
+            @Property(
+                    value = "comp.line",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation = "Matches bash COMP_LINE environment variable, represents the current command line.")
+            String compLine,
+
+            @Property(
+                    value = "comp.point",
+                    defaultValue = "-1",
+                    documentation =
+                            "Matches bash COMP_POINT environment variable, represents the index of the cursor position.")
+            int compPoint) {}
 }

@@ -15,38 +15,35 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.service.Maven;
-import io.yupiik.bundlebee.core.service.VersioningService;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-import java.util.Comparator;
-import java.util.concurrent.CompletionStage;
-
 import static java.util.stream.Collectors.joining;
 
-@Log
-@Dependent
+import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.service.Maven;
+import io.yupiik.bundlebee.core.service.VersioningService;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
+import java.util.Comparator;
+import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
+
+@DefaultScoped
+@Command(name = "versions", description = "List versions for an artifact to know which ones are available.")
 public class VersionsCommand implements Executable {
-    @Inject
-    private Maven resolver;
+    private final Logger log = Logger.getLogger(VersionsCommand.class.getName());
 
-    @Inject
-    private VersioningService versioningService;
+    public VersionsCommand(final Options options, Maven resolver, VersioningService versioningService) {
+        this.resolver = resolver;
+        this.versioningService = versioningService;
+        this.group = options.group();
+        this.artifact = options.artifact();
+    }
 
-    @Inject
-    @Description("Bundle groupId.")
-    @ConfigProperty(name = "bundlebee.versions.group", defaultValue = UNSET)
-    private String group;
-
-    @Inject
-    @Description("Bundle artifactId.")
-    @ConfigProperty(name = "bundlebee.versions.artifact", defaultValue = UNSET)
-    private String artifact;
+    private final Maven resolver;
+    private final VersioningService versioningService;
+    private final String group;
+    private final String artifact;
 
     @Override
     public String name() {
@@ -63,24 +60,35 @@ public class VersionsCommand implements Executable {
         if (UNSET.equals(group) || UNSET.equals(artifact)) {
             throw new IllegalArgumentException("Ensure to set group and artifact for command versions");
         }
-        return resolver.findAvailableVersions(group, artifact)
-                .thenApply(versions -> {
-                    versions.sort(compareVersions().reversed());
-                    log.info("Available version:\n" + versions.stream()
-                            .map(it -> "- " + it)
-                            .collect(joining("\n")));
-                    return versions;
-                });
+        return resolver.findAvailableVersions(group, artifact).thenApply(versions -> {
+            versions.sort(compareVersions().reversed());
+            log.info("Available version:\n"
+                    + versions.stream().map(it -> "- " + it).collect(joining("\n")));
+            return versions;
+        });
     }
 
     private Comparator<String> compareVersions() {
         return (a, b) -> {
             try {
-                return versioningService.toSemanticVersion(a)
-                        .compareTo(versioningService.toSemanticVersion(b));
+                return versioningService.toSemanticVersion(a).compareTo(versioningService.toSemanticVersion(b));
             } catch (final IllegalArgumentException iae) {
                 return a.compareTo(b);
             }
         };
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.versions.group",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation = "Bundle groupId.")
+            String group,
+
+            @Property(
+                    value = "bundlebee.versions.artifact",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation = "Bundle artifactId.")
+            String artifact) {}
 }

@@ -15,18 +15,16 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
-import io.yupiik.bundlebee.core.configuration.Description;
-
 import static java.util.Locale.ROOT;
 
-@Dependent
-//metadata:start
+import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+
+@DefaultScoped
+// metadata:start
 // category = Other
-//metadata:end
+// metadata:end
 @Description("Removes title casing from a string")
 public class UntitleFunc implements HelmFunction {
     @Override

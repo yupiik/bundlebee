@@ -15,16 +15,11 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import io.yupiik.bundlebee.lang.spi.BundleBeeResources;
 import io.yupiik.bundlebee.lang.spi.PasswordResolver;
-import lombok.extern.java.Log;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -35,34 +30,27 @@ import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 
 /**
  * Downloads remote Helm charts from HTTP/HTTPS URIs or resolves file:// URIs.
  * Supports optional basic authentication with Maven server credentials.
  */
-@Log
-@Dependent
+@DefaultScoped
 public class HelmChartDownloader {
+    private final Logger log = Logger.getLogger(HelmChartDownloader.class.getName());
+    private final HttpClient httpClient;
+    private final ScheduledExecutorService executor;
+    private final PasswordResolver passwordResolver;
 
-    @Inject
-    @BundleBee
-    private HttpClient httpClient;
-
-    @Inject
-    @BundleBee
-    private ScheduledExecutorService executor;
-
-    @Inject
-    private PasswordResolver passwordResolver;
-
-    public HelmChartDownloader() {
-        // CDI proxy
-    }
-
-    public HelmChartDownloader(final PasswordResolver passwordResolver, final HttpClient httpClient, final ScheduledExecutorService executor) {
+    public HelmChartDownloader(final PasswordResolver passwordResolver, final BundleBeeResources resources) {
         this.passwordResolver = passwordResolver;
-        this.httpClient = httpClient;
-        this.executor = executor;
+        this.httpClient = resources.httpClient();
+        this.executor = resources.scheduler();
     }
 
     /**
@@ -76,7 +64,6 @@ public class HelmChartDownloader {
     public CompletionStage<Path> resolve(final String chartUri, final String username, final String password) {
         final var uri = URI.create(chartUri);
         final var scheme = uri.getScheme();
-
         if ("file".equals(scheme)) {
             return CompletableFuture.completedFuture(Path.of(uri));
         }
@@ -95,33 +82,30 @@ public class HelmChartDownloader {
         try {
             final var tempDir = Files.createTempDirectory("bundlebee-helm-");
             final var tgzFile = tempDir.resolve("chart.tgz");
-
-            final var requestBuilder = HttpRequest.newBuilder()
-                    .uri(uri)
-                    .GET();
-
+            final var requestBuilder = HttpRequest.newBuilder().uri(uri).GET();
             final var authHeader = buildAuthHeader(username, password);
             if (authHeader != null) {
                 requestBuilder.header("Authorization", authHeader);
             }
-
-            return httpClient.sendAsync(
-                            requestBuilder.build(),
-                            HttpResponse.BodyHandlers.ofInputStream())
-                    .thenComposeAsync(response -> {
-                        if (response.statusCode() != 200) {
-                            return CompletableFuture.failedFuture(new IllegalStateException(
-                                    "Failed to download chart from " + uri + ": HTTP " + response.statusCode()));
-                        }
-                        try {
-                            final var in = response.body();
-                            Files.copy(in, tgzFile);
-                            in.close();
-                        } catch (final IOException e) {
-                            return CompletableFuture.failedFuture(e);
-                        }
-                        return CompletableFuture.completedFuture(extractWithCommonsCompress(tgzFile, tempDir));
-                    }, executor);
+            return httpClient
+                    .sendAsync(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream())
+                    .thenComposeAsync(
+                            response -> {
+                                if (response.statusCode() != 200) {
+                                    return CompletableFuture.failedFuture(
+                                            new IllegalStateException("Failed to download chart from " + uri + ": HTTP "
+                                                    + response.statusCode()));
+                                }
+                                try {
+                                    final var in = response.body();
+                                    Files.copy(in, tgzFile);
+                                    in.close();
+                                } catch (final IOException e) {
+                                    return CompletableFuture.failedFuture(e);
+                                }
+                                return CompletableFuture.completedFuture(extractWithCommonsCompress(tgzFile, tempDir));
+                            },
+                            executor);
         } catch (final IOException e) {
             return CompletableFuture.failedFuture(
                     new IllegalStateException("Failed to create temp directory for " + uri, e));
@@ -132,10 +116,8 @@ public class HelmChartDownloader {
         if (username == null && password == null) {
             return null;
         }
-
         final var effectiveUsername = username;
         final var effectivePassword = resolvePassword(password);
-
         if (effectiveUsername != null && effectivePassword != null) {
             final var credentials = effectiveUsername + ":" + effectivePassword;
             final var encoded = Base64.getEncoder().encodeToString(credentials.getBytes());
@@ -150,9 +132,10 @@ public class HelmChartDownloader {
         }
         if (password.startsWith("maven:")) {
             final var serverId = password.substring("maven:".length());
-            return passwordResolver.resolveServerPassword(serverId)
-                    .orElseThrow(() -> new IllegalStateException(
-                            "Maven server '" + serverId + "' not found in settings.xml"));
+            return passwordResolver
+                    .resolveServerPassword(serverId)
+                    .orElseThrow(() ->
+                            new IllegalStateException("Maven server \'" + serverId + "\' not found in settings.xml"));
         }
         return password;
     }
@@ -161,34 +144,28 @@ public class HelmChartDownloader {
         try {
             final var chartDir = targetDir.resolve("chart");
             Files.createDirectories(chartDir);
-
             // Use Java's built-in GZIPInputStream for decompression (commons-compress 1.28.0
             // strict extra field parsing rejects some valid gzip headers)
-            try (final var tarInput = new TarArchiveInputStream(
-                    new java.util.zip.GZIPInputStream(new java.io.FileInputStream(tgzFile.toFile())))) {
+            try (var tarInput = new TarArchiveInputStream(new GZIPInputStream(new FileInputStream(tgzFile.toFile())))) {
                 TarArchiveEntry entry;
                 while ((entry = tarInput.getNextTarEntry()) != null) {
                     final var name = entry.getName();
-
                     // Skip root directory and normalize path
                     final var normalName = name.startsWith("./") ? name.substring(2) : name;
                     if (normalName.isEmpty()) {
                         continue;
                     }
-
                     final var entryPath = chartDir.resolve(normalName);
-
                     // Prevent zip slip
                     if (!entryPath.normalize().startsWith(chartDir.normalize())) {
                         log.warning("Skipping potentially unsafe path: " + name);
                         continue;
                     }
-
                     if (entry.isDirectory()) {
                         Files.createDirectories(entryPath);
                     } else {
                         Files.createDirectories(entryPath.getParent());
-                        try (final var out = Files.newOutputStream(entryPath)) {
+                        try (var out = Files.newOutputStream(entryPath)) {
                             final var buffer = new byte[8192];
                             int bytesRead;
                             while ((bytesRead = tarInput.read(buffer, 0, buffer.length)) != -1) {
@@ -198,24 +175,18 @@ public class HelmChartDownloader {
                     }
                 }
             }
-
             // If the tgz contains a single directory, use that as the chart dir
-            try (final var entries = Files.list(chartDir)) {
-                final var subdirs = entries
-                        .filter(Files::isDirectory)
-                        .collect(java.util.stream.Collectors.toList());
-                final var files = Files.list(chartDir)
-                        .filter(p -> !Files.isDirectory(p))
-                        .collect(java.util.stream.Collectors.toList());
+            try (var entries = Files.list(chartDir)) {
+                final var subdirs = entries.filter(Files::isDirectory).collect(Collectors.toList());
+                final var files =
+                        Files.list(chartDir).filter(p -> !Files.isDirectory(p)).collect(Collectors.toList());
                 if (subdirs.size() == 1 && files.isEmpty()) {
                     return subdirs.get(0);
                 }
             }
-
             return chartDir;
         } catch (final Exception e) {
-            throw new IllegalStateException(
-                    "Failed to extract chart archive '" + tgzFile + "'.", e);
+            throw new IllegalStateException("Failed to extract chart archive \'" + tgzFile + "\'.", e);
         }
     }
 }

@@ -15,16 +15,11 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import static java.util.concurrent.CompletableFuture.completedStage;
 
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.stream.Stream;
-
-import static java.util.Optional.ofNullable;
-import static java.util.concurrent.CompletableFuture.completedStage;
 
 public interface LintingCheck {
     String name();
@@ -46,12 +41,10 @@ public interface LintingCheck {
         return completedStage(Stream.empty());
     }
 
-    @Getter
-    @RequiredArgsConstructor
     class LintableDescriptor {
         private final String alveolus;
         private final String name;
-        private final JsonObject descriptor;
+        private final Map<String, Object> descriptor;
 
         public boolean isKind(final String kind) {
             try {
@@ -62,21 +55,39 @@ public interface LintingCheck {
         }
 
         public String kind() {
-            return descriptor.getString("kind", "");
+            return (descriptor.get("kind") instanceof String kindValue ? kindValue : "");
         }
 
         public String name() {
-            return ofNullable(descriptor.getJsonObject("metadata"))
-                    .map(JsonValue::asJsonObject)
-                    .map(o -> o.getString("name", ""))
-                    .orElse("");
+            return descriptor.get("metadata") instanceof Map<?, ?> metadata
+                            && metadata.get("name") instanceof String value
+                    ? value
+                    : "";
         }
 
         public String namespace() {
-            return ofNullable(descriptor.getJsonObject("metadata"))
-                    .map(JsonValue::asJsonObject)
-                    .map(o -> o.getString("namespace", ""))
-                    .orElse("");
+            return descriptor.get("metadata") instanceof Map<?, ?> metadata
+                            && metadata.get("namespace") instanceof String value
+                    ? value
+                    : "";
+        }
+
+        public String getAlveolus() {
+            return this.alveolus;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public Map<String, Object> getDescriptor() {
+            return this.descriptor;
+        }
+
+        public LintableDescriptor(final String alveolus, final String name, final Map<String, Object> descriptor) {
+            this.alveolus = alveolus;
+            this.name = name;
+            this.descriptor = descriptor;
         }
     }
 }

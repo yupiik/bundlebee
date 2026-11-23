@@ -15,12 +15,15 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
+import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.counting;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+
 import io.yupiik.bundlebee.core.command.impl.lint.ContextualLintError;
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,31 +34,33 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.counting;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
-
-@Dependent
+@DefaultScoped
 public class DuplicateEnvVar extends CheckValue {
+
     private final Map<String, LintableDescriptor> configMaps = new ConcurrentHashMap<>();
+
     private final Collection<LintableDescriptor> descriptors = new CopyOnWriteArraySet<>();
 
     public DuplicateEnvVar() {
         super(
                 Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job"),
                 Map.of(
-                        "DeploymentConfig", "/spec/template/spec/containers",
-                        "Deployment", "/spec/template/spec/containers",
-                        "CronJob", "/spec/jobTemplate/spec/template/spec/containers",
-                        "Job", "/spec/template/spec/containers",
-                        "Pod", "/spec/containers"),
+                        "DeploymentConfig",
+                        "/spec/template/spec/containers",
+                        "Deployment",
+                        "/spec/template/spec/containers",
+                        "CronJob",
+                        "/spec/jobTemplate/spec/template/spec/containers",
+                        "Job",
+                        "/spec/template/spec/containers",
+                        "Pod",
+                        "/spec/containers"),
                 true);
     }
 
     @Override
-    public boolean accept(final LintableDescriptor descriptor) { // capture role related descriptors
+    public boolean accept(final LintableDescriptor descriptor) {
+        // capture role related descriptors
         final var kind = descriptor.kind();
         if (kind.equals("ConfigMap")) {
             configMaps.put(descriptor.namespace() + ":" + descriptor.name(), descriptor);
@@ -69,17 +74,20 @@ public class DuplicateEnvVar extends CheckValue {
     public Stream<ContextualLintError> afterAllSync() {
         return descriptors.stream()
                 .flatMap(it -> super.validateSync(it)
-                        .map(e -> new ContextualLintError(e.getLevel(), e.getMessage(), it.getAlveolus(), it.getName())));
+                        .map(e ->
+                                new ContextualLintError(e.getLevel(), e.getMessage(), it.getAlveolus(), it.getName())));
     }
 
-    @Override // triggered from afterAll() but makes the impl easier to read
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        if (value.getValueType() != JsonValue.ValueType.ARRAY) {
+    // triggered from afterAll() but makes the impl easier to read
+    @Override
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        if (!(value instanceof List<?> containers)) {
             return Stream.empty();
         }
         final var namespace = descriptor.namespace();
-        return value.asJsonArray().stream()
-                .map(JsonValue::asJsonObject)
+        return containers.stream()
+                .filter(Map.class::isInstance)
+                .<Map<?, ?>>map(it -> (Map<?, ?>) it)
                 .flatMap(it -> validateContainer(namespace, it));
     }
 
@@ -98,12 +106,9 @@ public class DuplicateEnvVar extends CheckValue {
         return "Confirm that your DeploymentLike doesn't have duplicate env vars names.";
     }
 
-    private Stream<LintError> validateContainer(final String namespace, final JsonObject container) {
+    private Stream<LintError> validateContainer(final String namespace, final Map<?, ?> container) {
         final var keys = findKeys(namespace, container);
-
-        final var duplicated = keys.stream()
-                .collect(groupingBy(identity(), counting()))
-                .entrySet().stream()
+        final var duplicated = keys.stream().collect(groupingBy(identity(), counting())).entrySet().stream()
                 .filter(it -> it.getValue() > 1)
                 .map(Map.Entry::getKey)
                 .sorted()
@@ -111,48 +116,48 @@ public class DuplicateEnvVar extends CheckValue {
         if (duplicated.isEmpty()) {
             return Stream.empty();
         }
-
-        return Stream.of(new LintError(WARNING, "Duplicated environment variables (container=" + container.getString("name", "") + "): " + duplicated));
+        return Stream.of(new LintError(
+                WARNING,
+                "Duplicated environment variables (container="
+                        + (container.get("name") instanceof String nameValue ? nameValue : "") + "): " + duplicated));
     }
 
-    private List<String> findKeys(final String namespace, final JsonObject container) {
+    private List<String> findKeys(final String namespace, final Map<?, ?> container) {
         final var out = new ArrayList<String>();
-
-        final var env = container.getJsonArray("env");
-        if (env != null && env.getValueType() == JsonValue.ValueType.ARRAY) {
-            out.addAll(env.asJsonArray().stream()
-                    .map(JsonValue::asJsonObject)
-                    .map(it -> it.getString("name", ""))
+        if (container.get("env") instanceof List<?> env) {
+            out.addAll(env.stream()
+                    .filter(Map.class::isInstance)
+                    .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                    .map(it -> (it.get("name") instanceof String nameValue ? nameValue : ""))
                     .filter(Predicate.not(String::isBlank))
                     .collect(toList()));
         }
-
-        final var envFrom = container.getJsonArray("envFrom");
-        if (envFrom != null && envFrom.getValueType() == JsonValue.ValueType.ARRAY) {
-            out.addAll(envFrom.asJsonArray().stream()
-                    .map(JsonValue::asJsonObject)
+        if (container.get("envFrom") instanceof List<?> envFrom) {
+            out.addAll(envFrom.stream()
+                    .filter(Map.class::isInstance)
+                    .<Map<?, ?>>map(it -> (Map<?, ?>) it)
                     .flatMap(it -> {
-                        final var configMapRef = it.getJsonObject("configMapRef");
-                        if (configMapRef != null) {
-                            final var key = namespace + ':' + configMapRef.getString("name", "");
+                        if (it.get("configMapRef") instanceof Map<?, ?> configMapRef) {
+                            final var key = namespace
+                                    + ':'
+                                    + (configMapRef.get("name") instanceof String nameValue ? nameValue : "");
                             final var values = configMaps.get(key);
                             if (values != null) {
-                                final var data = values.getDescriptor().asJsonObject().getJsonObject("data");
-                                if (data != null) {
-                                    return data.keySet().stream();
+                                if (values.getDescriptor().get("data") instanceof Map<?, ?> data) {
+                                    return data.keySet().stream()
+                                            .filter(String.class::isInstance)
+                                            .map(String.class::cast);
                                 }
                                 return Stream.empty();
                             }
-
-                            lazyLogger().warning(() -> "ConfigMap '" + key + "' was not part of the deployment, ignoring");
+                            lazyLogger()
+                                    .warning(() -> "ConfigMap '" + key + "' was not part of the deployment, ignoring");
                         }
-
                         return Stream.empty();
                     })
                     .filter(Predicate.not(String::isBlank))
                     .collect(toList()));
         }
-
         return out;
     }
 }

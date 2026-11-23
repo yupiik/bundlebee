@@ -15,38 +15,19 @@
  */
 package io.yupiik.bundlebee.core.command.model.sarif;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 
-import javax.json.bind.annotation.JsonbProperty;
-import javax.json.bind.annotation.JsonbPropertyOrder;
+@JsonModel
+public record CompleteLocation(@JsonProperty(order = 0) PhysicalLocation physicalLocation) {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonbPropertyOrder({"artifactLocation", "region", "ruleId", "ruleIndex", "locations"})
-public class CompleteLocation {
-    @JsonbProperty
-    private PhysicalLocation physicalLocation;
+    @JsonModel
+    public record PhysicalLocation(
+            @JsonProperty(order = 0) String artifactLocation,
+            @JsonProperty(order = 1) Integer index) {}
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @JsonbPropertyOrder({"artifactLocation", "index"})
-    public static class PhysicalLocation {
-        @JsonbProperty
-        private String artifactLocation;
-        private Integer index;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @JsonbPropertyOrder({"uri", "index"})
-    public static class ArtifactLocation {
-        @JsonbProperty
-        private String uri;
-        private Integer index;
-    }
+    @JsonModel
+    public record ArtifactLocation(
+            @JsonProperty(order = 0) String uri,
+            @JsonProperty(order = 1) Integer index) {}
 }

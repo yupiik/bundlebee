@@ -15,19 +15,16 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = JSON/YAML
-//metadata:end
+// metadata:end
 @Description("Encodes a value to YAML")
 public class ToYamlFunc implements HelmFunction {
     private volatile Yaml yaml;

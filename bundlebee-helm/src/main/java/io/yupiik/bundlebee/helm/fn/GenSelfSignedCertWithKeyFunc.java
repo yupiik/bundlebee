@@ -15,19 +15,15 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
-import java.security.interfaces.RSAPublicKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
 import java.time.Instant;
@@ -36,13 +32,16 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.regex.Pattern;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Crypto
-//metadata:end
+// metadata:end
 @Description("Generates a self-signed cert with a given key")
 public class GenSelfSignedCertWithKeyFunc implements HelmFunction {
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
+
     @Override
     public String name() {
         return "genSelfSignedCertWithKey";
@@ -63,8 +62,8 @@ public class GenSelfSignedCertWithKeyFunc implements HelmFunction {
         try {
             final var privateKey = parsePrivateKey(keyPem);
             final var kf = KeyFactory.getInstance("RSA");
-            final var publicKey = kf.generatePublic(
-                    new RSAPublicKeySpec(privateKey.getModulus(), privateKey.getPublicExponent()));
+            final var publicKey =
+                    kf.generatePublic(new RSAPublicKeySpec(privateKey.getModulus(), privateKey.getPublicExponent()));
             final var cert = generateSelfSignedCert(cn, days, publicKey, privateKey);
 
             final var result = new LinkedHashMap<String, String>();
@@ -77,12 +76,12 @@ public class GenSelfSignedCertWithKeyFunc implements HelmFunction {
     }
 
     private RSAPrivateCrtKey parsePrivateKey(final String pem) throws Exception {
-        var base64 = pem
-                .replace("-----BEGIN RSA PRIVATE KEY-----", "")
-                .replace("-----END RSA PRIVATE KEY-----", "")
-                .replace("-----BEGIN PRIVATE KEY-----", "")
-                .replace("-----END PRIVATE KEY-----", "")
-                .replaceAll("\\s", "");
+        final var base64 = WHITESPACE
+                .matcher(pem.replace("-----BEGIN RSA PRIVATE KEY-----", "")
+                        .replace("-----END RSA PRIVATE KEY-----", "")
+                        .replace("-----BEGIN PRIVATE KEY-----", "")
+                        .replace("-----END PRIVATE KEY-----", ""))
+                .replaceAll("");
         final var keyBytes = Base64.getDecoder().decode(base64);
         final var spec = new PKCS8EncodedKeySpec(keyBytes);
         final var kf = KeyFactory.getInstance("RSA");
@@ -92,9 +91,7 @@ public class GenSelfSignedCertWithKeyFunc implements HelmFunction {
     @SuppressWarnings("unchecked")
     private List<String> toStringList(final Object o) {
         if (o instanceof List) {
-            return ((List<Object>) o).stream()
-                    .map(Object::toString)
-                    .collect(java.util.stream.Collectors.toList());
+            return ((List<Object>) o).stream().map(Object::toString).collect(java.util.stream.Collectors.toList());
         }
         return List.of(o.toString());
     }
@@ -110,9 +107,11 @@ public class GenSelfSignedCertWithKeyFunc implements HelmFunction {
         }
     }
 
-    private X509Certificate generateSelfSignedCert(final String cn, final int days,
-                                                   final java.security.PublicKey publicKey,
-                                                   final java.security.PrivateKey privateKey)
+    private X509Certificate generateSelfSignedCert(
+            final String cn,
+            final int days,
+            final java.security.PublicKey publicKey,
+            final java.security.PrivateKey privateKey)
             throws Exception {
         final var now = Instant.now();
         final var notBefore = Date.from(now);
@@ -125,70 +124,70 @@ public class GenSelfSignedCertWithKeyFunc implements HelmFunction {
         }
     }
 
-    private X509Certificate generateWithSunApi(final String cn, final BigInteger serial,
-                                               final Date notBefore, final Date notAfter,
-                                               final java.security.PublicKey publicKey,
-                                               final java.security.PrivateKey privateKey) throws Exception {
+    private X509Certificate generateWithSunApi(
+            final String cn,
+            final BigInteger serial,
+            final Date notBefore,
+            final Date notAfter,
+            final java.security.PublicKey publicKey,
+            final java.security.PrivateKey privateKey)
+            throws Exception {
         final var certClass = Class.forName("sun.security.x509.X509CertImpl");
         final var builderClass = Class.forName("sun.security.x509.X509CertInfo");
         final var algIdClass = Class.forName("sun.security.x509.AlgorithmId");
         final var certInfo = builderClass.getConstructor().newInstance();
         final var validityClass = Class.forName("sun.security.x509.CertificateValidity");
-        final var validity = validityClass.getConstructor(Date.class, Date.class)
-                .newInstance(notBefore, notAfter);
-        builderClass.getMethod("set", String.class, Object.class)
-                .invoke(certInfo, "validity", validity);
+        final var validity =
+                validityClass.getConstructor(Date.class, Date.class).newInstance(notBefore, notAfter);
+        builderClass.getMethod("set", String.class, Object.class).invoke(certInfo, "validity", validity);
         final var serialClass = Class.forName("sun.security.x509.CertificateSerialNumber");
         final var serialNumber = serialClass.getConstructor(BigInteger.class).newInstance(serial);
-        builderClass.getMethod("set", String.class, Object.class)
-                .invoke(certInfo, "serialNumber", serialNumber);
+        builderClass.getMethod("set", String.class, Object.class).invoke(certInfo, "serialNumber", serialNumber);
         final var x500NameClass = Class.forName("sun.security.x509.X500Name");
-        final var x500Name = x500NameClass.getConstructor(String.class)
-                .newInstance("CN=" + cn);
-        builderClass.getMethod("set", String.class, Object.class)
-                .invoke(certInfo, "subject", x500Name);
-        builderClass.getMethod("set", String.class, Object.class)
-                .invoke(certInfo, "issuer", x500Name);
+        final var x500Name = x500NameClass.getConstructor(String.class).newInstance("CN=" + cn);
+        builderClass.getMethod("set", String.class, Object.class).invoke(certInfo, "subject", x500Name);
+        builderClass.getMethod("set", String.class, Object.class).invoke(certInfo, "issuer", x500Name);
         final var pubKeyClass = Class.forName("sun.security.x509.CertificateX509Key");
-        final var certPubKey = pubKeyClass.getConstructor(java.security.PublicKey.class)
-                .newInstance(publicKey);
-        builderClass.getMethod("set", String.class, Object.class)
-                .invoke(certInfo, "key", certPubKey);
-        builderClass.getMethod("set", String.class, Object.class)
-                .invoke(certInfo, "version", new Integer(3));
+        final var certPubKey =
+                pubKeyClass.getConstructor(java.security.PublicKey.class).newInstance(publicKey);
+        builderClass.getMethod("set", String.class, Object.class).invoke(certInfo, "key", certPubKey);
+        builderClass.getMethod("set", String.class, Object.class).invoke(certInfo, "version", new Integer(3));
         final var algId = algIdClass.getMethod("get", String.class).invoke(null, "SHA256withRSA");
-        builderClass.getMethod("set", String.class, Object.class)
-                .invoke(certInfo, "algorithmId", algId);
+        builderClass.getMethod("set", String.class, Object.class).invoke(certInfo, "algorithmId", algId);
         final var cert = certClass.getConstructor(builderClass).newInstance(certInfo);
         final var signatureClass = Class.forName("sun.security.x509.CertificateAlgorithmId");
         final var sigAlgId = algIdClass.getMethod("get", String.class).invoke(null, "SHA256withRSA");
-        signatureClass.getMethod("set", algIdClass).invoke(
-                certClass.getMethod("get", String.class).invoke(cert, "algorithmId"), sigAlgId);
+        signatureClass
+                .getMethod("set", algIdClass)
+                .invoke(certClass.getMethod("get", String.class).invoke(cert, "algorithmId"), sigAlgId);
         final var signerClass = Class.forName("sun.security.x509.X509CertImpl");
-        signerClass.getMethod("sign", java.security.PrivateKey.class, String.class)
+        signerClass
+                .getMethod("sign", java.security.PrivateKey.class, String.class)
                 .invoke(cert, privateKey, "SHA256withRSA");
         return (X509Certificate) cert;
     }
 
-    private X509Certificate generateWithKeytoolApproach(final String cn, final BigInteger serial,
-                                                       final Date notBefore, final Date notAfter,
-                                                       final java.security.PublicKey publicKey,
-                                                       final java.security.PrivateKey privateKey)
+    private X509Certificate generateWithKeytoolApproach(
+            final String cn,
+            final BigInteger serial,
+            final Date notBefore,
+            final Date notAfter,
+            final java.security.PublicKey publicKey,
+            final java.security.PrivateKey privateKey)
             throws Exception {
         try {
             final var certGenClass = Class.forName("sun.security.tools.keytool.CertAndKeyGen");
-            final var certGen = certGenClass.getConstructor(String.class, String.class)
-                    .newInstance("RSA", "SHA256withRSA");
-            certGenClass.getMethod("setGenerator", SecureRandom.class)
-                    .invoke(certGen, new SecureRandom());
+            final var certGen =
+                    certGenClass.getConstructor(String.class, String.class).newInstance("RSA", "SHA256withRSA");
+            certGenClass.getMethod("setGenerator", SecureRandom.class).invoke(certGen, new SecureRandom());
             certGenClass.getMethod("gen", int.class).invoke(certGen, 2048);
             final var x500NameClass = Class.forName("sun.security.x509.X500Name");
-            final var x500Name = x500NameClass.getConstructor(String.class)
-                    .newInstance("CN=" + cn);
-            final var durationDays = java.time.Duration.between(notBefore.toInstant(), notAfter.toInstant()).toDays();
+            final var x500Name = x500NameClass.getConstructor(String.class).newInstance("CN=" + cn);
+            final var durationDays = java.time.Duration.between(notBefore.toInstant(), notAfter.toInstant())
+                    .toDays();
             final var certExtClass = Class.forName("sun.security.x509.CertificateExtensions");
-            final var cert = (X509Certificate) certGenClass.getMethod("getSelfCertificate",
-                    x500NameClass, Date.class, long.class, certExtClass)
+            final var cert = (X509Certificate) certGenClass
+                    .getMethod("getSelfCertificate", x500NameClass, Date.class, long.class, certExtClass)
                     .invoke(certGen, x500Name, notBefore, durationDays * 24 * 60 * 60, null);
             return cert;
         } catch (final ClassNotFoundException e) {
@@ -198,8 +197,7 @@ public class GenSelfSignedCertWithKeyFunc implements HelmFunction {
     }
 
     private String certToPem(final X509Certificate cert) throws CertificateEncodingException {
-        final var base64 = java.util.Base64.getMimeEncoder(64, "\n".getBytes())
-                .encodeToString(cert.getEncoded());
+        final var base64 = java.util.Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(cert.getEncoded());
         return "-----BEGIN CERTIFICATE-----\n" + base64 + "\n-----END CERTIFICATE-----\n";
     }
 }

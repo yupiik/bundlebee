@@ -15,9 +15,16 @@
  */
 package io.yupiik.bundlebee.core.kube;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.core.test.http.SpyingResponseLocator;
-import org.apache.openwebbeans.junit5.Cdi;
+import io.yupiik.fusion.testing.Fusion;
+import io.yupiik.fusion.testing.FusionSupport;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.talend.sdk.component.junit.http.api.HttpApiHandler;
@@ -27,53 +34,64 @@ import org.talend.sdk.component.junit.http.internal.impl.ResponseImpl;
 import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
-import javax.inject.Inject;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Predicate;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @HttpApi(useSsl = true)
-@Cdi
+@FusionSupport
 class KubeClientTest {
+
     @HttpApiInject
     private HttpApiHandler<?> handler;
 
-    @Inject
+    @Fusion
     private KubeClient client;
 
-    @Inject
+    @Fusion
     private Substitutor substitutor;
 
     @Test
     void findServiceAccountSecretEntry(final TestInfo info) {
-        final var spyingResponseLocator = new SpyingResponseLocator(
-                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
-            @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
-                switch (request.method()) {
-                    case "CONNECT":
-                        return Optional.empty();
-                    case "GET":
-                        if (request.uri().endsWith("/api/v1/namespaces/default/serviceaccounts/the-account")) {
-                            return Optional.of(new ResponseImpl(Map.of(), 200, "{\"secrets\":[{\"name\":\"the-secret-token-demjde\"}]}".getBytes(StandardCharsets.UTF_8)));
-                        }
-                        if (request.uri().endsWith("/api/v1/namespaces/default/secrets/the-secret-token-demjde")) {
-                            return Optional.of(new ResponseImpl(Map.of(), 200, "{\"data\":{\"token\":\"bearer-token\"}}".getBytes(StandardCharsets.UTF_8)));
-                        }
-                        return Optional.empty();
-                    default:
-                        return Optional.of(new ResponseImpl(Map.of(), 404, "{}".getBytes(StandardCharsets.UTF_8)));
-                }
-            }
-        };
-        handler.setResponseLocator(spyingResponseLocator);
-        assertEquals("bearer-token", substitutor.replace(
-                "{{kubernetes.default.serviceaccount.the-account.secrets.the-secret-token.data.token.180:-missing}}", null));
+        final var spyingResponseLocator =
+                new SpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_"
+                        + info.getTestMethod().orElseThrow().getName()) {
 
+                    @Override
+                    protected Optional<Response> doFind(
+                            final Request request,
+                            final String pref,
+                            final ClassLoader loader,
+                            final Predicate<String> headerFilter,
+                            final boolean exactMatching) {
+                        switch (request.method()) {
+                            case "CONNECT":
+                                return Optional.empty();
+                            case "GET":
+                                if (request.uri().endsWith("/api/v1/namespaces/default/serviceaccounts/the-account")) {
+                                    return Optional.of(new ResponseImpl(
+                                            Map.of(),
+                                            200,
+                                            "{\"secrets\":[{\"name\":\"the-secret-token-demjde\"}]}"
+                                                    .getBytes(StandardCharsets.UTF_8)));
+                                }
+                                if (request.uri()
+                                        .endsWith("/api/v1/namespaces/default/secrets/the-secret-token-demjde")) {
+                                    return Optional.of(new ResponseImpl(
+                                            Map.of(),
+                                            200,
+                                            "{\"data\":{\"token\":\"bearer-token\"}}"
+                                                    .getBytes(StandardCharsets.UTF_8)));
+                                }
+                                return Optional.empty();
+                            default:
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 404, "{}".getBytes(StandardCharsets.UTF_8)));
+                        }
+                    }
+                };
+        handler.setResponseLocator(spyingResponseLocator);
+        assertEquals(
+                "bearer-token",
+                substitutor.replace(
+                        "{{kubernetes.default.serviceaccount.the-account.secrets.the-secret-token.data.token.180:-missing}}",
+                        null));
         final var mocks = spyingResponseLocator.getFound();
         assertEquals(2, mocks.size());
         assertEquals(200, mocks.get(0).status());
@@ -82,20 +100,17 @@ class KubeClientTest {
 
     @Test
     void apply(final TestInfo info) throws Exception {
-        final var spyingResponseLocator = new SpyingResponseLocator(
-                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName());
-
+        final var spyingResponseLocator =
+                new SpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_"
+                        + info.getTestMethod().orElseThrow().getName());
         handler.setResponseLocator(spyingResponseLocator);
-        client.apply("" +
-                "apiVersion: v1\n" +
-                "kind: ConfigMap\n" +
-                "metadata:\n" +
-                "  name: test-config\n" +
-                "  namespace: default\n" +
-                "data:\n" +
-                "  foo: bar" +
-                "", "yaml", Map.of()).toCompletableFuture().get();
-
+        client.apply(
+                        "apiVersion: v1\n" + "kind: ConfigMap\n" + "metadata:\n" + "  name: test-config\n"
+                                + "  namespace: default\n" + "data:\n" + "  foo: bar" + "",
+                        "yaml",
+                        Map.of())
+                .toCompletableFuture()
+                .get();
         final var mocks = spyingResponseLocator.getFound();
         assertEquals(2, mocks.size());
         assertEquals(404, mocks.get(0).status(), mocks::toString);
@@ -104,70 +119,70 @@ class KubeClientTest {
 
     @Test
     void customLabels(final TestInfo info) throws Exception {
-        final var spyingResponseLocator = new SpyingResponseLocator(
-                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
-            @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
-                switch (request.method()) {
-                    case "CONNECT":
-                        return Optional.empty();
-                    case "GET":
-                        return Optional.of(new ResponseImpl(Map.of(), 404, "{}".getBytes(StandardCharsets.UTF_8)));
-                    case "POST": // forward request payload to assert it
-                        return Optional.of(new ResponseImpl(Map.of(), 201, request.payload().getBytes(StandardCharsets.UTF_8)));
-                    default:
-                        return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
-                }
-            }
-        };
+        final var spyingResponseLocator =
+                new SpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_"
+                        + info.getTestMethod().orElseThrow().getName()) {
 
-        { // no label originally
+                    @Override
+                    protected Optional<Response> doFind(
+                            final Request request,
+                            final String pref,
+                            final ClassLoader loader,
+                            final Predicate<String> headerFilter,
+                            final boolean exactMatching) {
+                        switch (request.method()) {
+                            case "CONNECT":
+                                return Optional.empty();
+                            case "GET":
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 404, "{}".getBytes(StandardCharsets.UTF_8)));
+                            case // forward request payload to assert it
+                            "POST":
+                                return Optional.of(new ResponseImpl(
+                                        Map.of(), 201, request.payload().getBytes(StandardCharsets.UTF_8)));
+                            default:
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
+                        }
+                    }
+                };
+        {
+            // no label originally
             handler.setResponseLocator(spyingResponseLocator);
-            client.apply("" +
-                    "apiVersion: v1\n" +
-                    "kind: ConfigMap\n" +
-                    "metadata:\n" +
-                    "  name: test-config\n" +
-                    "  namespace: default\n" +
-                    "data:\n" +
-                    "  foo: bar" +
-                    "", "yaml", Map.of("bundlebee.foo", "bar", "bundlebee.dummy", "true")).toCompletableFuture().get();
-
+            client.apply(
+                            "apiVersion: v1\n" + "kind: ConfigMap\n" + "metadata:\n" + "  name: test-config\n"
+                                    + "  namespace: default\n" + "data:\n" + "  foo: bar" + "",
+                            "yaml",
+                            Map.of("bundlebee.foo", "bar", "bundlebee.dummy", "true"))
+                    .toCompletableFuture()
+                    .get();
             final var mocks = spyingResponseLocator.getFound();
             assertEquals(2, mocks.size());
-            assertEquals("{" +
-                            "\"apiVersion\":\"v1\"," +
-                            "\"data\":{\"foo\":\"bar\"}," +
-                            "\"kind\":\"ConfigMap\"," +
-                            "\"metadata\":{\"name\":\"test-config\",\"namespace\":\"default\"," +
-                            "\"labels\":{\"bundlebee.dummy\":\"true\",\"bundlebee.foo\":\"bar\"}}}",
+            assertEquals(
+                    "{" + "\"apiVersion\":\"v1\"," + "\"data\":{\"foo\":\"bar\"}," + "\"kind\":\"ConfigMap\","
+                            + "\"metadata\":{\"name\":\"test-config\",\"namespace\":\"default\","
+                            + "\"labels\":{\"bundlebee.dummy\":\"true\",\"bundlebee.foo\":\"bar\"}}}",
                     new String(mocks.get(1).payload(), StandardCharsets.UTF_8));
         }
         spyingResponseLocator.getFound().clear();
-        { // merged labels
+        {
+            // merged labels
             handler.setResponseLocator(spyingResponseLocator);
-            client.apply("" +
-                    "apiVersion: v1\n" +
-                    "kind: ConfigMap\n" +
-                    "metadata:\n" +
-                    "  name: test-config\n" +
-                    "  namespace: default\n" +
-                    "  labels:\n" +
-                    "    first: true\n" +
-                    "data:\n" +
-                    "  foo: bar" +
-                    "", "yaml", Map.of("bundlebee.foo", "bar", "bundlebee.dummy", "true")).toCompletableFuture().get();
-
+            client.apply(
+                            "apiVersion: v1\n" + "kind: ConfigMap\n" + "metadata:\n" + "  name: test-config\n"
+                                    + "  namespace: default\n" + "  labels:\n" + "    first: true\n" + "data:\n"
+                                    + "  foo: bar" + "",
+                            "yaml",
+                            Map.of("bundlebee.foo", "bar", "bundlebee.dummy", "true"))
+                    .toCompletableFuture()
+                    .get();
             final var mocks = spyingResponseLocator.getFound();
             assertEquals(2, mocks.size());
-            assertEquals("{" +
-                            "\"apiVersion\":\"v1\"," +
-                            "\"data\":{\"foo\":\"bar\"}," +
-                            "\"kind\":\"ConfigMap\"," +
-                            "\"metadata\":{" +
-                            "\"labels\":{\"first\":true,\"bundlebee.dummy\":\"true\",\"bundlebee.foo\":\"bar\"}," +
-                            "\"name\":\"test-config\",\"namespace\":\"default\"}}",
+            assertEquals(
+                    "{" + "\"apiVersion\":\"v1\"," + "\"data\":{\"foo\":\"bar\"}," + "\"kind\":\"ConfigMap\","
+                            + "\"metadata\":{"
+                            + "\"labels\":{\"first\":true,\"bundlebee.dummy\":\"true\",\"bundlebee.foo\":\"bar\"},"
+                            + "\"name\":\"test-config\",\"namespace\":\"default\"}}",
                     new String(mocks.get(1).payload(), StandardCharsets.UTF_8));
         }
     }

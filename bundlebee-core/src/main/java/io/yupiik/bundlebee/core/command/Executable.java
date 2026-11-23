@@ -15,16 +15,34 @@
  */
 package io.yupiik.bundlebee.core.command;
 
-import java.util.Map;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Stream;
 
 /**
- * Represents a command, must be scope {@link javax.enterprise.context.Dependent}.
+ * Represents a command, must be scope {@link io.yupiik.fusion.framework.api.scope.DefaultScoped}.
  */
-public interface Executable {
+public interface Executable extends Runnable {
+
+    @Override
+    default void run() {
+        try {
+            execute().toCompletableFuture().get();
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Execution interrupted", e);
+        } catch (final java.util.concurrent.ExecutionException e) {
+            final var cause = e.getCause();
+            if (cause instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IllegalStateException(cause);
+        }
+    }
+
     /**
-     * Since microprofile-config fails at startup when data is not available we use this default value
+     * Optional command arguments use this sentinel when no explicit value is available
      * to mark a config entry as required for a command.
      * Command must then test it and fail if needed in its execute method.
      */
@@ -53,23 +71,4 @@ public interface Executable {
      * @return execute this command.
      */
     CompletionStage<?> execute();
-
-    /**
-     * @return a completer to propose option values when relevant. See {@link CompletingExecutable}.
-     */
-    default Completer completer() {
-        return new Completer() {
-        };
-    }
-
-    interface Completer {
-        /**
-         * @param config     the current line option configurations (can be wrong so take with cautious).
-         * @param optionName the option name to complete the value for.
-         * @return the list of proposal for the option.
-         */
-        default Stream<String> complete(final Map<String, String> config, final String optionName) {
-            return Stream.empty();
-        }
-    }
 }

@@ -16,24 +16,29 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class DNSConfigOptions extends CheckValue {
+
     public DNSConfigOptions() {
         super(
                 Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job"),
                 Map.of(
-                        "DeploymentConfig", "/spec/template/spec/dnsConfig/options",
-                        "Deployment", "/spec/template/spec/dnsConfig/options",
-                        "CronJob", "/spec/jobTemplate/spec/template/spec/dnsConfig/options",
-                        "Job", "/spec/template/spec/dnsConfig/options",
-                        "Pod", "/spec/dnsConfig/options"),
+                        "DeploymentConfig",
+                        "/spec/template/spec/dnsConfig/options",
+                        "Deployment",
+                        "/spec/template/spec/dnsConfig/options",
+                        "CronJob",
+                        "/spec/jobTemplate/spec/template/spec/dnsConfig/options",
+                        "Job",
+                        "/spec/template/spec/dnsConfig/options",
+                        "Pod",
+                        "/spec/dnsConfig/options"),
                 false);
     }
 
@@ -49,23 +54,31 @@ public class DNSConfigOptions extends CheckValue {
 
     @Override
     public String remediation() {
-        return "Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod.\n" +
-                "Refer to https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config for details.";
+        return "Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod.\n"
+                + "Refer to https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config for details.";
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        return value.getValueType() != JsonValue.ValueType.ARRAY || value.asJsonArray().stream()
-                .map(JsonValue::asJsonObject)
-                .filter(o -> "ndots".equals(o.getString("name", "")))
-                .noneMatch(o -> {
-                    try {
-                        return Integer.parseInt(o.getString("value", "5")) <= 2;
-                    } catch (final NumberFormatException nfe) {
-                        return true;
-                    }
-                }) ?
-                Stream.of(new LintError(LintError.LintLevel.WARNING, "No ndots configuration for pod(s)")) :
-                Stream.empty();
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        return !(value instanceof List<?>)
+                        || (value instanceof List<?> values ? values : List.of())
+                                .stream()
+                                        .filter(Map.class::isInstance)
+                                        .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                                        .filter(o -> "ndots"
+                                                .equals((o.get("name") instanceof String nameValue ? nameValue : "")))
+                                        .noneMatch(o -> {
+                                            try {
+                                                return Integer.parseInt(
+                                                                (o.get("value") instanceof String valueValue
+                                                                        ? valueValue
+                                                                        : "5"))
+                                                        <= 2;
+                                            } catch (final NumberFormatException nfe) {
+                                                return true;
+                                            }
+                                        })
+                ? Stream.of(new LintError(LintError.LintLevel.WARNING, "No ndots configuration for pod(s)"))
+                : Stream.empty();
     }
 }

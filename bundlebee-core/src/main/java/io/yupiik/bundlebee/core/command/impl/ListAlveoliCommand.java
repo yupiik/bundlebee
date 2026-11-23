@@ -15,58 +15,45 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.descriptor.Manifest;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import io.yupiik.bundlebee.core.service.AlveolusHandler;
-import lombok.Data;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import static java.util.Comparator.comparing;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonBuilderFactory;
-import javax.json.bind.annotation.JsonbProperty;
+import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.bundlebee.core.service.AlveolusHandler;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.stream.Collector;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-
-@Log
-@Dependent
+@DefaultScoped
+@Command(name = "list-alveoli", description = "Lists all found alveoli")
 public class ListAlveoliCommand implements Executable {
-    @Inject
-    @Description("Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath.")
-    @ConfigProperty(name = "bundlebee.list-alveoli.from", defaultValue = "auto")
-    private String from;
+    private final Logger log = Logger.getLogger(ListAlveoliCommand.class.getName());
+    private final JsonMapper jsonb;
 
-    @Inject
-    @Description("Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. " +
-            "Ignored if set to `skip`.")
-    @ConfigProperty(name = "bundlebee.list-alveoli.manifest", defaultValue = "skip")
-    private String manifest;
+    public ListAlveoliCommand(final Options options, JsonMapper jsonb, AlveolusHandler visitor) {
+        this.jsonb = jsonb;
+        this.from = options.from();
+        this.manifest = options.manifest();
+        this.output = options.output();
+        this.visitor = visitor;
+    }
 
-    @Inject
-    @Description("`logger` means the standard bundlebee logging output stream else it is considered as a file path. " +
-            "Note that if you end the filename with `.json` it will be formatted as json else just readable text.")
-    @ConfigProperty(name = "bundlebee.list-alveoli.output", defaultValue = "logger")
-    private String output;
-
-    @Inject
-    private AlveolusHandler visitor;
-
-    @Inject
-    @BundleBee
-    private JsonBuilderFactory json;
+    private final String from;
+    private final String manifest;
+    private final String output;
+    private final AlveolusHandler visitor;
 
     @Override
     public String name() {
@@ -81,11 +68,11 @@ public class ListAlveoliCommand implements Executable {
     @Override
     public CompletionStage<?> execute() {
         return visitor.findManifest(from, manifest, null)
-                .thenApply(m -> m == null || m.getAlveoli() == null ?
-                        visitor.findManifestsFromClasspath(null)
-                                .flatMap(it -> it.getAlveoli() == null ? Stream.empty() : it.getAlveoli().stream())
-                                .collect(toList()) :
-                        m.getAlveoli())
+                .thenApply(m -> m == null || m.alveoli() == null
+                        ? visitor.findManifestsFromClasspath(null)
+                                .flatMap(it -> it.alveoli() == null ? Stream.empty() : it.alveoli().stream())
+                                .collect(toList())
+                        : m.alveoli())
                 .thenApply(items -> {
                     switch (output) {
                         case "logger":
@@ -100,9 +87,7 @@ public class ListAlveoliCommand implements Executable {
                                 if (out.getParent() != null) {
                                     Files.createDirectories(out.getParent());
                                 }
-                                Files.writeString(out, output.endsWith(".json") ?
-                                        asJson(items) :
-                                        asText(items));
+                                Files.writeString(out, output.endsWith(".json") ? asJson(items) : asText(items));
                             } catch (final IOException ioe) {
                                 throw new IllegalStateException(ioe);
                             }
@@ -112,36 +97,49 @@ public class ListAlveoliCommand implements Executable {
     }
 
     private String asJson(final List<Manifest.Alveolus> items) {
-        return json.createObjectBuilder()
-                .add("items", items.stream()
-                        .sorted(comparing(Manifest.Alveolus::getName))
-                        .map(it -> json.createObjectBuilder().add("name", it.getName()).build())
-                        .collect(Collector.of(
-                                json::createArrayBuilder,
-                                JsonArrayBuilder::add,
-                                JsonArrayBuilder::addAll)))
-                .build()
-                .toString();
+        return jsonb.toString(new Items(items.stream()
+                .sorted(comparing(Manifest.Alveolus::name))
+                .map(it -> new Item(it.name()))
+                .collect(toList())));
     }
 
     private static String asText(final List<Manifest.Alveolus> a) {
-        return a.isEmpty() ?
-                "No alveolus found." :
-                a.stream()
-                        .sorted(comparing(Manifest.Alveolus::getName))
-                        .map(i -> "- " + i.getName())
+        return a.isEmpty()
+                ? "No alveolus found."
+                : a.stream()
+                        .sorted(comparing(Manifest.Alveolus::name))
+                        .map(i -> "- " + i.name())
                         .collect(joining("\n", "Found alveoli:\n", "\n"));
     }
 
-    @Data
-    public static class Item {
-        @JsonbProperty
-        private final String name;
-    }
+    @JsonModel
+    public record Item(String name) {}
 
-    @Data
-    public static class Items {
-        @JsonbProperty
-        private final List<Item> item;
-    }
+    @JsonModel
+    public record Items(List<Item> items) {}
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.list-alveoli.from",
+                    defaultValue = "\"auto\"",
+                    documentation =
+                            "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath.")
+            String from,
+
+            @Property(
+                    value = "bundlebee.list-alveoli.manifest",
+                    defaultValue = "\"skip\"",
+                    documentation =
+                            "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. "
+                                    + "Ignored if set to `skip`.")
+            String manifest,
+
+            @Property(
+                    value = "bundlebee.list-alveoli.output",
+                    defaultValue = "\"logger\"",
+                    documentation =
+                            "`logger` means the standard bundlebee logging output stream else it is considered as a file path. "
+                                    + "Note that if you end the filename with `.json` it will be formatted as json else just readable text.")
+            String output) {}
 }

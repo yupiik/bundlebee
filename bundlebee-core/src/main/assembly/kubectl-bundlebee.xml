@@ -30,6 +30,7 @@
     <file>
       <source>${project.build.directory}/${project.artifactId}</source>
       <destName>kubectl-bundlebee</destName>
+      <fileMode>0755</fileMode>
     </file>
   </files>
 </assembly>

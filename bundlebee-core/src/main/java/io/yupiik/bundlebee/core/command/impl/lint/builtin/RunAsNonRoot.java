@@ -16,14 +16,14 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonObject;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class RunAsNonRoot extends ContainerValueValidator {
+
     @Override
     public String name() {
         return "run-as-non-root";
@@ -36,8 +36,8 @@ public class RunAsNonRoot extends ContainerValueValidator {
 
     @Override
     public String remediation() {
-        return "Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext.\n" +
-                "Refer to https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for details.";
+        return "Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext.\n"
+                + "Refer to https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for details.";
     }
 
     @Override
@@ -46,17 +46,18 @@ public class RunAsNonRoot extends ContainerValueValidator {
     }
 
     @Override
-    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
-        final var securityContext = container.getJsonObject("securityContext");
-        if (securityContext == null) {
+    protected Stream<LintError> validate(final Map<?, ?> container, final LintableDescriptor descriptor) {
+        if (!(container.get("securityContext") instanceof Map<?, ?> securityContext)) {
             return Stream.empty();
         }
-
         final var errors = new ArrayList<LintError>();
-        if (!securityContext.getBoolean("runAsNonRoot", true)) {
+        if (!(securityContext.get("runAsNonRoot") instanceof Boolean runAsNonRootValue ? runAsNonRootValue : true)) {
             errors.add(new LintError(LintError.LintLevel.ERROR, "'runAsNonRoot' is false"));
         }
-        if (0 == securityContext.getInt("runAsUser", 1_000 /* let's assume container is correct for now to avoid false positives */)) {
+        if (0
+                == (securityContext.get("runAsUser") instanceof Number runAsUserValue
+                        ? runAsUserValue.intValue()
+                        : 1_000)) {
             errors.add(new LintError(LintError.LintLevel.ERROR, "'runAsUser' is 0"));
         }
         return errors.stream();

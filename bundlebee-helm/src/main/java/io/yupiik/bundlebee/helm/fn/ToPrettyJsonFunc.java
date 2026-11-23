@@ -15,26 +15,21 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-import javax.json.Json;
-import javax.json.JsonValue;
-import javax.json.spi.JsonProvider;
-import javax.json.stream.JsonGenerator;
-import javax.json.stream.JsonGeneratorFactory;
+import io.yupiik.bundlebee.helm.internal.JsonFunctionSupport;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.json.JsonMapper;
 
-import java.io.StringWriter;
-import java.util.Map;
-
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = JSON/YAML
-//metadata:end
+// metadata:end
 @Description("Encodes a value to pretty JSON")
-public class ToPrettyJsonFunc implements HelmFunction {
+public class ToPrettyJsonFunc extends JsonFunctionSupport {
+    public ToPrettyJsonFunc(final JsonMapper mapper) {
+        super(mapper);
+    }
+
     @Override
     public String name() {
         return "toPrettyJson";
@@ -42,52 +37,9 @@ public class ToPrettyJsonFunc implements HelmFunction {
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length < 1 || args[0] == null) {
+        if (args == null || args.length == 0 || args[0] == null) {
             return "{}";
         }
-        try {
-            final var provider = JsonProvider.provider();
-            final var writer = new StringWriter();
-            final var factory = provider.createGeneratorFactory(
-                    Map.of(JsonGenerator.PRETTY_PRINTING, true));
-            try (var generator = factory.createGenerator(writer)) {
-                generator.write(toJsonValue(args[0]));
-            }
-            return writer.toString();
-        } catch (final Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private JsonValue toJsonValue(final Object value) {
-        final var provider = JsonProvider.provider();
-        if (value == null) {
-            return JsonValue.NULL;
-        }
-        if (value instanceof Map) {
-            final var builder = provider.createObjectBuilder();
-            for (final var entry : ((Map<?, ?>) value).entrySet()) {
-                builder.add(entry.getKey().toString(), toJsonValue(entry.getValue()));
-            }
-            return builder.build();
-        }
-        if (value instanceof Iterable) {
-            final var builder = provider.createArrayBuilder();
-            for (final var item : (Iterable<?>) value) {
-                builder.add(toJsonValue(item));
-            }
-            return builder.build();
-        }
-        if (value instanceof Boolean) {
-            return (Boolean) value ? JsonValue.TRUE : JsonValue.FALSE;
-        }
-        if (value instanceof Number) {
-            final var num = (Number) value;
-            if (value instanceof Double || value instanceof Float) {
-                return provider.createValue(num.doubleValue());
-            }
-            return provider.createValue(num.longValue());
-        }
-        return provider.createValue(value.toString());
+        return encode(args[0], true, true);
     }
 }

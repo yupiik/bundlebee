@@ -15,23 +15,25 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
+import static java.util.Optional.ofNullable;
+
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.handlebars.HandlebarsInterpolator;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
-
-import javax.enterprise.inject.Vetoed;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static java.util.Optional.ofNullable;
-
 // forked from commons-text but no need to bring a dep only for < 200 LOC
-@Vetoed
+
 public class Substitutor {
+
     private static final char ESCAPE = '\\';
+
     private static final String PREFIX = "{{";
+
     private static final String SUFFIX = "}}";
+
     private static final String VALUE_DELIMITER = ":-";
 
     private final int maxIterations = Integer.getInteger("bundlebee.substitutor.max-iterations", 100);
@@ -46,17 +48,11 @@ public class Substitutor {
         this.lookup = (key, defVal) -> lookup.apply(key);
     }
 
-    /**
-     * @deprecated ensure to pass an execution id or explicitly {@code null}.
-     */
-    @Deprecated
-    public String replace(final String source) {
-        return replace(source, null);
-    }
-
-    public String replace(final Manifest.Alveolus alveolus,
-                          final AlveolusHandler.LoadedDescriptor desc,
-                          final String source, final String id) {
+    public String replace(
+            final Manifest.Alveolus alveolus,
+            final AlveolusHandler.LoadedDescriptor desc,
+            final String source,
+            final String id) {
         return doReplace(alveolus, desc, source, id);
     }
 
@@ -64,12 +60,15 @@ public class Substitutor {
         return replace(null, null, source, id);
     }
 
-    private String substitute(final Manifest.Alveolus alveolus, AlveolusHandler.LoadedDescriptor descriptor,
-                              final String input, int iteration, final String id) {
+    private String substitute(
+            final Manifest.Alveolus alveolus,
+            AlveolusHandler.LoadedDescriptor descriptor,
+            final String input,
+            int iteration,
+            final String id) {
         if (iteration > maxIterations) {
             return input;
         }
-
         int from = 0;
         int start = -1;
         while (from < input.length()) {
@@ -82,7 +81,6 @@ public class Substitutor {
             }
             from = start + 1;
         }
-
         final var keyStart = start + PREFIX.length();
         final var end = input.indexOf(SUFFIX, keyStart);
         if (end < 0) {
@@ -95,10 +93,8 @@ public class Substitutor {
             final var newKey = substitute(alveolus, descriptor, nestedPlaceholder, iteration + 1, id);
             return input.replace(nestedPlaceholder, newKey);
         }
-
         final var startOfString = input.substring(0, start);
         final var endOfString = input.substring(end + SUFFIX.length());
-
         final int sep = key.indexOf(VALUE_DELIMITER);
         if (sep > 0) {
             final var actualKey = key.substring(0, sep);
@@ -112,20 +108,27 @@ public class Substitutor {
         return Map.of();
     }
 
-    private String handlebars(final Manifest.Alveolus alveolus, final AlveolusHandler.LoadedDescriptor desc,
-                              final String source, final String id) {
+    private String handlebars(
+            final Manifest.Alveolus alveolus,
+            final AlveolusHandler.LoadedDescriptor desc,
+            final String source,
+            final String id) {
         return new HandlebarsInterpolator(alveolus, desc, id, handlebarsHelpers(), this::replace).apply(source);
     }
 
-    private String doReplace(final Manifest.Alveolus alveolus, final AlveolusHandler.LoadedDescriptor desc, final String source, final String id) {
+    private String doReplace(
+            final Manifest.Alveolus alveolus,
+            final AlveolusHandler.LoadedDescriptor desc,
+            final String source,
+            final String id) {
         if (source == null) {
             return null;
         }
-
-        if (desc != null && desc.getExtension() != null && ("hb".equals(desc.getExtension()) || "handlebars".equals(desc.getExtension()))) {
+        if (desc != null
+                && desc.getExtension() != null
+                && ("hb".equals(desc.getExtension()) || "handlebars".equals(desc.getExtension()))) {
             return handlebars(alveolus, desc, source, id);
         }
-
         String current = source;
         do {
             final var previous = current;
@@ -136,25 +139,23 @@ public class Substitutor {
         } while (true);
     }
 
-    @Deprecated
-    protected String getOrDefault(final String varName, final String varDefaultValue) {
-        return getOrDefault(varName, varDefaultValue, null);
-    }
-
-    protected String doGetOrDefault(final Manifest.Alveolus alveolus,
-                                    final AlveolusHandler.LoadedDescriptor descriptor,
-                                    final String varName, final String varDefaultValue, final String id) {
+    protected String doGetOrDefault(
+            final Manifest.Alveolus alveolus,
+            final AlveolusHandler.LoadedDescriptor descriptor,
+            final String varName,
+            final String varDefaultValue,
+            final String id) {
         if ("executionId".equals(varName)) {
             return id == null ? "" : id;
         }
         if ("descriptor.name".equals(varName)) {
-            return descriptor == null ? "" : descriptor.getConfiguration().getName();
+            return descriptor == null ? "" : descriptor.getConfiguration().name();
         }
         if ("alveolus.name".equals(varName)) {
-            return alveolus == null ? "" : alveolus.getName();
+            return alveolus == null ? "" : alveolus.name();
         }
         if ("alveolus.version".equals(varName)) {
-            return alveolus == null || alveolus.getVersion() == null ? "" : alveolus.getVersion();
+            return alveolus == null || alveolus.version() == null ? "" : alveolus.version();
         }
         return getOrDefault(varName, varDefaultValue, id);
     }

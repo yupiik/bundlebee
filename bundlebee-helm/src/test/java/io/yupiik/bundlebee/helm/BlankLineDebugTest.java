@@ -15,26 +15,55 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import io.yupiik.bundlebee.helm.fn.*;
-import org.junit.jupiter.api.Test;
-
+import io.yupiik.bundlebee.helm.fn.CoalesceFunc;
+import io.yupiik.bundlebee.helm.fn.ContainsFunc;
+import io.yupiik.bundlebee.helm.fn.DefaultFunc;
+import io.yupiik.bundlebee.helm.fn.DictFunc;
+import io.yupiik.bundlebee.helm.fn.GeFunc;
+import io.yupiik.bundlebee.helm.fn.IndentFunc;
+import io.yupiik.bundlebee.helm.fn.ListFunc;
+import io.yupiik.bundlebee.helm.fn.NeFunc;
+import io.yupiik.bundlebee.helm.fn.NindentFunc;
+import io.yupiik.bundlebee.helm.fn.PrintfFunc;
+import io.yupiik.bundlebee.helm.fn.QuoteFunc;
+import io.yupiik.bundlebee.helm.fn.ReplaceFunc;
+import io.yupiik.bundlebee.helm.fn.SetFunc;
+import io.yupiik.bundlebee.helm.fn.ToStringFunc;
+import io.yupiik.bundlebee.helm.fn.ToYamlFunc;
+import io.yupiik.bundlebee.helm.fn.TrimPrefixFunc;
+import io.yupiik.bundlebee.helm.fn.TrimSuffixFunc;
+import io.yupiik.bundlebee.helm.fn.TruncFunc;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
+import org.junit.jupiter.api.Test;
 
 class BlankLineDebugTest {
+    private static final Pattern NEWLINE = Pattern.compile("\n");
 
     @Test
     void debugBlankLines() throws Exception {
         final var functionsMap = new LinkedHashMap<String, HelmFunction>();
         for (final var fn : List.<HelmFunction>of(
-                new DefaultFunc(), new TrimSuffixFunc(), new TrimPrefixFunc(),
-                new TruncFunc(), new PrintfFunc(), new ReplaceFunc(),
-                new ContainsFunc(), new QuoteFunc(), new NindentFunc(),
-                new IndentFunc(), new NeFunc(), new GeFunc(),
-                new ToYamlFunc(), new ToStringFunc(), new CoalesceFunc(),
-                new SetFunc(), new DictFunc(), new ListFunc()
-        )) {
+                new DefaultFunc(),
+                new TrimSuffixFunc(),
+                new TrimPrefixFunc(),
+                new TruncFunc(),
+                new PrintfFunc(),
+                new ReplaceFunc(),
+                new ContainsFunc(),
+                new QuoteFunc(),
+                new NindentFunc(),
+                new IndentFunc(),
+                new NeFunc(),
+                new GeFunc(),
+                new ToYamlFunc(),
+                new ToStringFunc(),
+                new CoalesceFunc(),
+                new SetFunc(),
+                new DictFunc(),
+                new ListFunc())) {
             functionsMap.put(fn.name(), fn);
         }
         final var renderer = new HelmGoTemplateRenderer(functionsMap);
@@ -42,24 +71,23 @@ class BlankLineDebugTest {
 
         // Register polaris.labels
         final var helpersTokens = lexer.tokenize(
-                "{{- define \"polaris.labels\" -}}\n" +
-                "helm.sh/chart: {{ include \"polaris.chart\" . }}\n" +
-                "{{ include \"polaris.selectorLabels\" . }}\n" +
-                "{{- if .Chart.AppVersion }}\n" +
-                "app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}\n" +
-                "{{- end }}\n" +
-                "app.kubernetes.io/managed-by: {{ .Release.Service }}\n" +
-                "{{- end }}\n\n" +
-                "{{- define \"polaris.selectorLabels\" -}}\n" +
-                "app.kubernetes.io/name: {{ include \"polaris.name\" . }}\n" +
-                "app.kubernetes.io/instance: {{ .Release.Name }}\n" +
-                "{{- end }}\n\n" +
-                "{{- define \"polaris.name\" -}}\n" +
-                "{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" }}\n" +
-                "{{- end }}\n\n" +
-                "{{- define \"polaris.chart\" -}}\n" +
-                "{{ printf \"%s-%s\" .Chart.Name .Chart.Version | replace \"+\" \"_\" | trunc 63 | trimSuffix \"-\" }}\n" +
-                "{{- end }}");
+                "{{- define \"polaris.labels\" -}}\n" + "helm.sh/chart: {{ include \"polaris.chart\" . }}\n"
+                        + "{{ include \"polaris.selectorLabels\" . }}\n"
+                        + "{{- if .Chart.AppVersion }}\n"
+                        + "app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}\n"
+                        + "{{- end }}\n"
+                        + "app.kubernetes.io/managed-by: {{ .Release.Service }}\n"
+                        + "{{- end }}\n\n"
+                        + "{{- define \"polaris.selectorLabels\" -}}\n"
+                        + "app.kubernetes.io/name: {{ include \"polaris.name\" . }}\n"
+                        + "app.kubernetes.io/instance: {{ .Release.Name }}\n"
+                        + "{{- end }}\n\n"
+                        + "{{- define \"polaris.name\" -}}\n"
+                        + "{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix \"-\" }}\n"
+                        + "{{- end }}\n\n"
+                        + "{{- define \"polaris.chart\" -}}\n"
+                        + "{{ printf \"%s-%s\" .Chart.Name .Chart.Version | replace \"+\" \"_\" | trunc 63 | trimSuffix \"-\" }}\n"
+                        + "{{- end }}");
         final var helpersNodes = new HelmGoTemplateParser(helpersTokens).parse();
         renderer.registerDefines(helpersNodes);
 
@@ -74,7 +102,7 @@ class BlankLineDebugTest {
         System.out.println("=== Result ===");
         System.out.println("'" + result + "'");
         System.out.println("=== Lines ===");
-        final var lines = result.split("\n", -1);
+        final var lines = NEWLINE.split(result, -1);
         for (int i = 0; i < lines.length; i++) {
             System.out.println("Line " + i + ": '" + lines[i] + "'");
         }

@@ -16,16 +16,14 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonObject;
-import javax.json.JsonString;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
-import static javax.json.JsonValue.ValueType.STRING;
-
-@Dependent
+@DefaultScoped
 public class DropNetRawCapability extends ContainerValueValidator {
+
     @Override
     public String name() {
         return "drop-net-raw-capability";
@@ -38,9 +36,9 @@ public class DropNetRawCapability extends ContainerValueValidator {
 
     @Override
     public String remediation() {
-        return "`NET_RAW` makes it so that an application within the container is able to craft raw packets, " +
-                "use raw sockets, and bind to any address. Remove this capability in the containers under " +
-                "containers security contexts.";
+        return "`NET_RAW` makes it so that an application within the container is able to craft raw packets, "
+                + "use raw sockets, and bind to any address. Remove this capability in the containers under "
+                + "containers security contexts.";
     }
 
     @Override
@@ -49,23 +47,17 @@ public class DropNetRawCapability extends ContainerValueValidator {
     }
 
     @Override
-    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
-        final var securityContext = container.getJsonObject("securityContext");
-        if (securityContext == null) {
+    protected Stream<LintError> validate(final Map<?, ?> container, final LintableDescriptor descriptor) {
+        if (!(container.get("securityContext") instanceof Map<?, ?> securityContext)) {
             return Stream.empty();
         }
-        final var capabilities = securityContext.getJsonObject("capabilities");
-        if (capabilities == null) {
+        if (!(securityContext.get("capabilities") instanceof Map<?, ?> capabilities)) {
             return Stream.empty();
         }
-        final var add = capabilities.getJsonArray("add");
-        if (add == null) {
-            return Stream.empty();
-        }
+        final var add = (capabilities.get("add") instanceof List<?> addValue ? addValue : List.of());
         return add.stream()
-                .filter(it -> it.getValueType() == STRING)
-                .map(it -> (JsonString) it)
-                .map(JsonString::getString)
+                .filter(it -> it instanceof String)
+                .map(it -> (String) it)
                 .filter("NET_RAW"::equals)
                 .map(it -> new LintError(LintError.LintLevel.ERROR, "'NET_RAW' capabilities usage"));
     }

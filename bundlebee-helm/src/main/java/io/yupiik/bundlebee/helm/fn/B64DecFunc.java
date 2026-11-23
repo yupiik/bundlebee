@@ -15,19 +15,16 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Other
-//metadata:end
+// metadata:end
 @Description("Decodes a Base64 string")
 public class B64DecFunc implements HelmFunction {
     @Override

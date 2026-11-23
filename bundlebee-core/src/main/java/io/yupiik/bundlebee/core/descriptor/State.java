@@ -16,11 +16,8 @@
 package io.yupiik.bundlebee.core.descriptor;
 
 import io.yupiik.bundlebee.core.configuration.Description;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 import java.util.List;
 
 /**
@@ -30,21 +27,39 @@ import java.util.List;
  * <p>
  * Force updates go through annotations, see apply command.
  */
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class State {
-    @Description("Version of the state.")
-    private int version = 1;
+@JsonModel
+public record State(
+        @Description("Version of the state.") @JsonProperty(order = 0)
+        Integer version,
 
-    @Description("Version of the state.")
-    private List<Resource> resources = new ArrayList<>();
+        @Description("Version of the state.") @JsonProperty(order = 1)
+        List<Resource> resources) {
+    public State {
+        version = version == null ? 1 : version;
+        resources = resources == null ? List.of() : List.copyOf(resources);
+    }
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Resource {
-        @Description("Path (url part) of the resource.")
-        private String path;
+    @JsonModel
+    public record Resource(
+            @Description("Path (url part) of the resource.") @JsonProperty(order = 0)
+            String path,
+
+            @Description("Absent for an applied resource; otherwise its pending or failed operation.")
+            @JsonProperty(order = 1)
+            Status status,
+
+            @Description("HTTP status associated with the pending or failed cleanup, when available.")
+            @JsonProperty(order = 2)
+            Integer httpStatus) {
+        public Resource(final String path) {
+            this(path, null, null);
+        }
+    }
+
+    @JsonModel
+    public enum Status {
+        APPLY_FAILED,
+        PENDING_DELETION,
+        DELETE_FAILED
     }
 }

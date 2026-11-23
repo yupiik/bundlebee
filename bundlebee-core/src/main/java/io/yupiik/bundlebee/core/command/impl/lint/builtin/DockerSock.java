@@ -15,28 +15,33 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.ERROR;
 
-import javax.enterprise.context.Dependent;
-import javax.json.JsonValue;
+import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.ERROR;
-
-@Dependent
+@DefaultScoped
 public class DockerSock extends CheckValue {
+
     public DockerSock() {
         super(
                 Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job"),
-                Map.of(
-                        "DeploymentConfig", "/spec/template/spec/volumes", // openshift
-                        "Deployment", "/spec/template/spec/volumes",
-                        "CronJob", "/spec/jobTemplate/spec/template/spec/volumes",
-                        "Job", "/spec/template/spec/volumes",
-                        "Pod", "/spec/volumes"),
+                Map.of( // openshift
+                        "DeploymentConfig", // openshift
+                        "/spec/template/spec/volumes",
+                        "Deployment",
+                        "/spec/template/spec/volumes",
+                        "CronJob",
+                        "/spec/jobTemplate/spec/template/spec/volumes",
+                        "Job",
+                        "/spec/template/spec/volumes",
+                        "Pod",
+                        "/spec/volumes"),
                 true);
     }
 
@@ -52,20 +57,26 @@ public class DockerSock extends CheckValue {
 
     @Override
     public String remediation() {
-        return "Ensure the Docker socket is not mounted inside any containers by removing the associated \n" +
-                "Volume and VolumeMount in deployment yaml specification.\n" +
-                "If the Docker socket is mounted inside a container it could allow processes running within \n" +
-                "the container to execute Docker commands which would effectively allow for full control of the host.";
+        return "Ensure the Docker socket is not mounted inside any containers by removing the associated \n"
+                + "Volume and VolumeMount in deployment yaml specification.\n"
+                + "If the Docker socket is mounted inside a container it could allow processes running within \n"
+                + "the container to execute Docker commands which would effectively allow for full control of the host.";
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        return value.getValueType() == JsonValue.ValueType.ARRAY && value.asJsonArray().stream()
-                .map(JsonValue::asJsonObject)
-                .map(it -> it.getJsonObject("hostPath"))
-                .filter(Objects::nonNull)
-                .anyMatch(it -> it.getString("path", "").endsWith("docker.sock")) ?
-                Stream.of(new LintError(ERROR, "docker.sock shouldn't be bound from the host")) :
-                Stream.empty();
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        return value instanceof List<?>
+                        && (value instanceof List<?> values ? values : List.of())
+                                .stream()
+                                        .filter(Map.class::isInstance)
+                                        .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                                        .map(it -> (it.get("hostPath") instanceof Map<?, ?> hostPathValue
+                                                ? hostPathValue
+                                                : null))
+                                        .filter(Objects::nonNull)
+                                        .anyMatch(it -> (it.get("path") instanceof String pathValue ? pathValue : "")
+                                                .endsWith("docker.sock"))
+                ? Stream.of(new LintError(ERROR, "docker.sock shouldn't be bound from the host"))
+                : Stream.empty();
     }
 }

@@ -17,26 +17,55 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <artifactId>bundlebee</artifactId>
-    <groupId>io.yupiik</groupId>
-    <version>1.0.33-SNAPSHOT</version>
-  </parent>
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.yupiik</groupId>
+    <artifactId>bundlebee</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+  </parent>
 
   <artifactId>bundlebee-core</artifactId>
   <name>BundleBee :: Core</name>
 
   <properties>
-    <image.base>ossyupiik/java:21.0.7@sha256:82b9c52317c9d0ea1033bd022a1a44650583f99cc909ca48bdb771db60da0604</image.base>
+    <image.base>ossyupiik/java:21.0.9@sha256:1a4d92442b4ac358b29bc1cb06af39ba2db5050433f985eb8c4a3cb2df05641b</image.base>
     <image.workdir>/opt/yupiik/bundlebee/${project.artifactId}</image.workdir>
     <image.version>${project.version}</image.version>
-    <image.registry /> <!-- when pushing remotely: -Dimage.registry=docker.io/ for ex -->
+    <image.registry />
+    <!-- when pushing remotely: -Dimage.registry=docker.io/ for ex -->
     <image.name>${image.registry}yupiik/bundlebee:${image.version}</image.name>
     <image.url>${project.scm.url}</image.url>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-build-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-kubernetes-client</artifactId>
+      <version>${fusion.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-httpclient</artifactId>
+      <version>${fusion.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-cli</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>io.yupiik</groupId>
       <artifactId>bundlebee-lang</artifactId>
@@ -60,59 +89,16 @@
       <scope>provided</scope>
     </dependency>
 
-    <dependency> <!-- todo: replace it by something lighter without the mapping feature? -->
+    <dependency>
+      <!-- todo: replace it by something lighter without the mapping feature? -->
       <groupId>org.openjdk.nashorn</groupId>
       <artifactId>nashorn-core</artifactId>
-      <version>15.4</version>
+      <version>15.7</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jcdi_2.0_spec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-annotation_1.3_spec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-atinject_1.0_spec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-interceptor_1.2_spec</artifactId>
-      <version>1.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.microprofile.config</groupId>
-      <artifactId>microprofile-config-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-json_1.1_spec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.geronimo.specs</groupId>
-      <artifactId>geronimo-jsonb_1.0_spec</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.openwebbeans</groupId>
-      <artifactId>openwebbeans-se</artifactId>
-      <version>${owb.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.geronimo.config</groupId>
-      <artifactId>geronimo-config-impl</artifactId>
-      <version>1.2.3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.johnzon</groupId>
-      <artifactId>johnzon-jsonb</artifactId>
     </dependency>
     <dependency>
       <groupId>io.yupiik.logging</groupId>
@@ -125,36 +111,28 @@
       <artifactId>codec-core</artifactId>
       <version>${yupiik-tools.version}</version>
     </dependency>
-
-    <dependency>
-      <groupId>org.apache.openwebbeans</groupId>
-      <artifactId>openwebbeans-junit5</artifactId>
-      <version>${owb.version}</version>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>io.yupiik.fusion</groupId>
       <artifactId>fusion-handlebars</artifactId>
-      <version>1.0.16</version>
-      <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>io.yupiik.fusion</groupId>
-          <artifactId>fusion-json</artifactId>
-        </exclusion>
-      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-testing</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.talend.sdk.component</groupId>
       <artifactId>component-runtime-http-junit</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency> <!-- for http-junit self signed cert generation on java 17 -->
+    <dependency>
+      <!-- for http-junit self signed cert generation on java 17 -->
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk15on</artifactId>
+      <artifactId>bcpkix-jdk18on</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency> <!-- for talend mock http server -->
+    <dependency>
+      <!-- for talend mock http server -->
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-jdk14</artifactId>
       <scope>test</scope>
@@ -166,7 +144,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>templating-maven-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>3.2.0</version>
         <executions>
           <execution>
             <id>filter-src</id>
@@ -182,7 +160,14 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.6.2</version>
+        <dependencies>
+          <dependency>
+            <groupId>io.yupiik.maven</groupId>
+            <artifactId>maven-shade-transformers</artifactId>
+            <version>0.0.5</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <goals>
@@ -198,10 +183,8 @@
                   <mainClass>io.yupiik.bundlebee.core.BundleBee</mainClass>
                 </transformer>
                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                <transformer implementation="org.apache.maven.plugins.shade.resource.XmlAppendingTransformer">
-                  <resource>META-INF/beans.xml</resource>
-                </transformer>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.properties.OpenWebBeansPropertiesTransformer" />
+                <transformer implementation="io.yupiik.maven.shade.transformer.FusionDocumentationTransformer" />
+                <transformer implementation="io.yupiik.maven.shade.transformer.FusionJsonSchemaTransformer" />
               </transformers>
               <filters>
                 <filter>
@@ -241,7 +224,7 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.4.6</version>
+        <version>3.5.2</version>
         <configuration>
           <containerizingMode>packaged</containerizingMode>
           <from>
@@ -257,11 +240,11 @@
             <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
             <jvmFlags>
               <jvmFlag>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</jvmFlag>
+              <jvmFlag>-D.handlers=io.yupiik.logging.jul.handler.StandardHandler</jvmFlag>
               <jvmFlag>-Djava.security.egd=file:/dev/./urandom</jvmFlag>
               <jvmFlag>-Djdk.serialFilter=oracle.sql.converter.*;!*</jvmFlag>
               <jvmFlag>-Djdk.jndi.object.factoriesFilter=!*</jvmFlag>
               <jvmFlag>-Dcom.sun.jndi.ldap.object.trustSerialData=false</jvmFlag>
-              <jvmFlag>-Dorg.apache.webbeans.spi.deployer.skipValidations=true</jvmFlag>
               <jvmFlag>-Dyupiik.build.timestamp=${maven.build.timestamp}</jvmFlag>
             </jvmFlags>
             <environment>
@@ -294,7 +277,8 @@
           </outputPaths>
         </configuration>
       </plugin>
-      <plugin> <!-- mvn package arthur:native-image arthur:docker -DskipTests  -->
+      <plugin>
+        <!-- mvn package arthur:native-image arthur:docker -DskipTests  -->
         <groupId>org.apache.geronimo.arthur</groupId>
         <artifactId>arthur-maven-plugin</artifactId>
         <configuration>
@@ -313,16 +297,17 @@
         <finalName>${project.artifactId}</finalName>
 
         <plugins>
-          <plugin> <!-- mvn package -Pnative -DskipTests  -->
+          <plugin>
+            <!-- mvn package -Pnative -DskipTests  -->
             <groupId>org.apache.geronimo.arthur</groupId>
             <artifactId>arthur-maven-plugin</artifactId>
             <executions>
               <execution>
                 <id>native</id>
-                <phase>package</phase>
                 <goals>
                   <goal>native-image</goal>
                 </goals>
+                <phase>prepare-package</phase>
               </execution>
             </executions>
           </plugin>
@@ -332,6 +317,9 @@
 
     <profile>
       <id>krew</id>
+      <properties>
+        <bundlebee.krew.archiveUri>https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/${project.version}/bundlebee-core-${project.version}-kubectl-bundlebee.zip</bundlebee.krew.archiveUri>
+      </properties>
       <build>
         <plugins>
           <!-- enable to work with krew kubectl plugin manager (zip + manifest filtering) -->
@@ -341,11 +329,13 @@
             <executions>
               <execution>
                 <id>kubectl-bundlebee-zip</id>
-                <phase>package</phase>
                 <goals>
                   <goal>single</goal>
                 </goals>
+                <!-- Produce the checksum before the inherited resources plugin filters the manifest at package. -->
+                <phase>prepare-package</phase>
                 <configuration>
+                  <finalName>${project.artifactId}</finalName>
                   <descriptors>
                     <descriptor>${project.basedir}/src/main/assembly/kubectl-bundlebee.xml</descriptor>
                   </descriptors>
@@ -359,17 +349,17 @@
             <executions>
               <execution>
                 <id>krew-sha256</id>
-                <phase>package</phase>
                 <goals>
                   <goal>files</goal>
                 </goals>
+                <phase>prepare-package</phase>
                 <configuration>
                   <csvSummary>false</csvSummary>
                   <fileSets>
                     <fileSet>
                       <directory>${project.build.directory}</directory>
                       <includes>
-                        <include>${project.build.finalName}-kubectl-bundlebee.zip</include>
+                        <include>${project.artifactId}-kubectl-bundlebee.zip</include>
                       </includes>
                     </fileSet>
                   </fileSets>
@@ -386,13 +376,13 @@
             <executions>
               <execution>
                 <id>read-kubectl-bundlebee-sha256</id>
-                <phase>package</phase>
                 <goals>
                   <goal>readfiles</goal>
                 </goals>
+                <phase>prepare-package</phase>
                 <configuration>
                   <files>
-                    <file>${project.build.directory}/${project.build.finalName}-kubectl-bundlebee.zip.sha256</file>
+                    <file>${project.build.directory}/${project.artifactId}-kubectl-bundlebee.zip.sha256</file>
                   </files>
                 </configuration>
               </execution>
@@ -401,14 +391,14 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>3.3.0</version>
+            <version>3.5.0</version>
             <executions>
               <execution>
                 <id>copy-krew-manifest</id>
-                <phase>verify</phase>
                 <goals>
                   <goal>copy-resources</goal>
                 </goals>
+                <phase>package</phase>
                 <configuration>
                   <outputDirectory>${project.basedir}/target/krew</outputDirectory>
                   <resources>
@@ -427,10 +417,10 @@
             <executions>
               <execution>
                 <id>add-krew</id>
-                <phase>verify</phase>
                 <goals>
                   <goal>attach-artifact</goal>
                 </goals>
+                <phase>package</phase>
                 <configuration>
                   <artifacts>
                     <artifact>

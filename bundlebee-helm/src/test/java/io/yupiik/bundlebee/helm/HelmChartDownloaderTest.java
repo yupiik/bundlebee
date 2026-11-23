@@ -15,7 +15,29 @@
  */
 package io.yupiik.bundlebee.helm;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.yupiik.bundlebee.helm.test.http.SpyingResponseLocator;
+import io.yupiik.bundlebee.lang.spi.BundleBeeResources;
+import java.io.ByteArrayOutputStream;
+import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Predicate;
+import java.util.zip.GZIPOutputStream;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.junit.jupiter.api.Test;
@@ -27,54 +49,44 @@ import org.talend.sdk.component.junit.http.internal.impl.ResponseImpl;
 import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
-import java.io.ByteArrayOutputStream;
-import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.SecureRandom;
-import java.security.cert.X509Certificate;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Predicate;
-import java.util.zip.GZIPOutputStream;
-
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @HttpApi(useSsl = false)
 class HelmChartDownloaderTest {
 
     @HttpApiInject
     private HttpApiHandler<?> handler;
 
+    private BundleBeeResources resources(final HttpClient client, final ScheduledExecutorService scheduler) {
+        return new BundleBeeResources() {
+            @Override
+            public HttpClient httpClient() {
+                return client;
+            }
+
+            @Override
+            public ScheduledExecutorService scheduler() {
+                return scheduler;
+            }
+        };
+    }
+
     private HttpClient createTrustAllHttpClient() throws Exception {
-        final var trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    @Override
-                    public void checkClientTrusted(final X509Certificate[] chain, final String authType) {}
+        final var trustAllCerts = new TrustManager[] {
+            new X509TrustManager() {
+                @Override
+                public void checkClientTrusted(final X509Certificate[] chain, final String authType) {}
 
-                    @Override
-                    public void checkServerTrusted(final X509Certificate[] chain, final String authType) {}
+                @Override
+                public void checkServerTrusted(final X509Certificate[] chain, final String authType) {}
 
-                    @Override
-                    public X509Certificate[] getAcceptedIssuers() {
-                        return new X509Certificate[0];
-                    }
+                @Override
+                public X509Certificate[] getAcceptedIssuers() {
+                    return new X509Certificate[0];
                 }
+            }
         };
         final var sslContext = SSLContext.getInstance("TLS");
         sslContext.init(null, trustAllCerts, new SecureRandom());
-        return HttpClient.newBuilder()
-                .sslContext(sslContext)
-                .build();
+        return HttpClient.newBuilder().sslContext(sslContext).build();
     }
 
     @Test
@@ -83,8 +95,12 @@ class HelmChartDownloaderTest {
 
         handler.setResponseLocator(new SpyingResponseLocator("download") {
             @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
+            protected Optional<Response> doFind(
+                    final Request request,
+                    final String pref,
+                    final ClassLoader loader,
+                    final Predicate<String> headerFilter,
+                    final boolean exactMatching) {
                 if (request.method().equals("GET") && request.uri().contains("chart.tgz")) {
                     return Optional.of(new ResponseImpl(Map.of(), 200, tgzBytes));
                 }
@@ -93,9 +109,10 @@ class HelmChartDownloaderTest {
         });
 
         final var executor = Executors.newSingleThreadScheduledExecutor();
-        final var downloader = new HelmChartDownloader(null, createTrustAllHttpClient(), executor);
+        final var downloader = new HelmChartDownloader(null, resources(createTrustAllHttpClient(), executor));
         final var url = "http://localhost:" + handler.getPort() + "/charts/chart.tgz";
-        final var chartDir = downloader.resolve(url, null, null).toCompletableFuture().get();
+        final var chartDir =
+                downloader.resolve(url, null, null).toCompletableFuture().get();
         executor.shutdown();
 
         assertNotNull(chartDir);
@@ -113,23 +130,29 @@ class HelmChartDownloaderTest {
 
         handler.setResponseLocator(new SpyingResponseLocator("download-auth") {
             @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
+            protected Optional<Response> doFind(
+                    final Request request,
+                    final String pref,
+                    final ClassLoader loader,
+                    final Predicate<String> headerFilter,
+                    final boolean exactMatching) {
                 if (request.method().equals("GET") && request.uri().contains("chart.tgz")) {
                     final var auth = request.headers().getOrDefault("Authorization", null);
                     if (auth != null && auth.startsWith("Basic ")) {
                         return Optional.of(new ResponseImpl(Map.of(), 200, tgzBytes));
                     }
-                    return Optional.of(new ResponseImpl(Map.of(), 401, "Unauthorized".getBytes(StandardCharsets.UTF_8)));
+                    return Optional.of(
+                            new ResponseImpl(Map.of(), 401, "Unauthorized".getBytes(StandardCharsets.UTF_8)));
                 }
                 return Optional.of(new ResponseImpl(Map.of(), 404, "{}".getBytes(StandardCharsets.UTF_8)));
             }
         });
 
         final var executor = Executors.newSingleThreadScheduledExecutor();
-        final var downloader = new HelmChartDownloader(null, createTrustAllHttpClient(), executor);
+        final var downloader = new HelmChartDownloader(null, resources(createTrustAllHttpClient(), executor));
         final var url = "http://localhost:" + handler.getPort() + "/charts/chart.tgz";
-        final var chartDir = downloader.resolve(url, "user", "pass").toCompletableFuture().get();
+        final var chartDir =
+                downloader.resolve(url, "user", "pass").toCompletableFuture().get();
         executor.shutdown();
 
         assertNotNull(chartDir);
@@ -143,21 +166,25 @@ class HelmChartDownloaderTest {
     void download404Throws(@TempDir final Path tempDir) throws Exception {
         handler.setResponseLocator(new SpyingResponseLocator("download-404") {
             @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
+            protected Optional<Response> doFind(
+                    final Request request,
+                    final String pref,
+                    final ClassLoader loader,
+                    final Predicate<String> headerFilter,
+                    final boolean exactMatching) {
                 return Optional.of(new ResponseImpl(Map.of(), 404, "Not Found".getBytes(StandardCharsets.UTF_8)));
             }
         });
 
         final var executor = Executors.newSingleThreadScheduledExecutor();
-        final var downloader = new HelmChartDownloader(null, createTrustAllHttpClient(), executor);
+        final var downloader = new HelmChartDownloader(null, resources(createTrustAllHttpClient(), executor));
         final var url = "http://localhost:" + handler.getPort() + "/charts/missing.tgz";
 
         final var future = downloader.resolve(url, null, null).toCompletableFuture();
         try {
             future.get();
             throw new AssertionError("Expected ExecutionException wrapping IllegalStateException for 404");
-        } catch (final java.util.concurrent.ExecutionException e) {
+        } catch (final ExecutionException e) {
             assertTrue(e.getCause() instanceof IllegalStateException, "Should wrap IllegalStateException");
             assertTrue(e.getCause().getMessage().contains("HTTP 404"), "Should report HTTP 404 in error");
         } finally {
@@ -168,8 +195,11 @@ class HelmChartDownloaderTest {
     @Test
     void fileUriResolvesToPath() throws Exception {
         final var executor = Executors.newSingleThreadScheduledExecutor();
-        final var downloader = new HelmChartDownloader(null, null, executor);
-        final var path = downloader.resolve("file:///tmp/my-chart", null, null).toCompletableFuture().get();
+        final var downloader = new HelmChartDownloader(null, resources(null, executor));
+        final var path = downloader
+                .resolve("file:///tmp/my-chart", null, null)
+                .toCompletableFuture()
+                .get();
         executor.shutdown();
         assertEquals(Path.of("/tmp/my-chart"), path);
     }
@@ -177,8 +207,11 @@ class HelmChartDownloaderTest {
     @Test
     void localPathResolvesDirectly() throws Exception {
         final var executor = Executors.newSingleThreadScheduledExecutor();
-        final var downloader = new HelmChartDownloader(null, null, executor);
-        final var path = downloader.resolve("/some/local/path", null, null).toCompletableFuture().get();
+        final var downloader = new HelmChartDownloader(null, resources(null, executor));
+        final var path = downloader
+                .resolve("/some/local/path", null, null)
+                .toCompletableFuture()
+                .get();
         executor.shutdown();
         assertEquals(Path.of("/some/local/path"), path);
     }
@@ -186,21 +219,24 @@ class HelmChartDownloaderTest {
     @Test
     void ociSchemeThrows() throws Exception {
         final var executor = Executors.newSingleThreadScheduledExecutor();
-        final var downloader = new HelmChartDownloader(null, null, executor);
-        final var future = downloader.resolve("oci://registry.example.com/chart:1.0", null, null).toCompletableFuture();
+        final var downloader = new HelmChartDownloader(null, resources(null, executor));
+        final var future = downloader
+                .resolve("oci://registry.example.com/chart:1.0", null, null)
+                .toCompletableFuture();
         try {
             future.get();
             throw new AssertionError("Expected ExecutionException wrapping UnsupportedOperationException for oci");
-        } catch (final java.util.concurrent.ExecutionException e) {
-            assertTrue(e.getCause() instanceof UnsupportedOperationException, "Should wrap UnsupportedOperationException");
+        } catch (final ExecutionException e) {
+            assertTrue(
+                    e.getCause() instanceof UnsupportedOperationException, "Should wrap UnsupportedOperationException");
             assertTrue(e.getCause().getMessage().contains("OCI"), "Should mention OCI is not supported");
         } finally {
             executor.shutdown();
         }
     }
 
-    private byte[] createChartTgz(final String chartName, final String version,
-                                  final String templateContent) throws Exception {
+    private byte[] createChartTgz(final String chartName, final String version, final String templateContent)
+            throws Exception {
         final var chartYaml = "apiVersion: v2\nname: " + chartName + "\nversion: " + version + "\n";
         final var deploymentYaml = templateContent;
 

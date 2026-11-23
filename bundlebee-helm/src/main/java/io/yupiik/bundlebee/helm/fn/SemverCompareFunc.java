@@ -15,20 +15,20 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
+import java.util.regex.Pattern;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Semver
-//metadata:end
+// metadata:end
 @Description("Compares a semantic version against a constraint")
 public class SemverCompareFunc implements HelmFunction {
+    private static final Pattern VERSION_SEPARATOR = Pattern.compile("\\.");
+
     @Override
     public String name() {
         return "semverCompare";
@@ -57,7 +57,7 @@ public class SemverCompareFunc implements HelmFunction {
         if (v.startsWith("v")) {
             v = v.substring(1);
         }
-        final var parts = v.split("\\.");
+        final var parts = VERSION_SEPARATOR.split(v);
         if (parts.length < 3) {
             throw new IllegalArgumentException("invalid semver string: " + version);
         }

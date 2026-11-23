@@ -19,14 +19,13 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
- * Just more common to implement than having an anonymous completer but strictly equivalent to a plain executable.
+ * A command that can propose option values.
  */
-public interface CompletingExecutable extends Executable, Executable.Completer {
-    @Override
-    default Completer completer() {
-        return this;
-    }
-
-    @Override
+public interface CompletingExecutable extends Executable {
+    /**
+     * @param config current option values, which may be incomplete or invalid.
+     * @param optionName the option to complete.
+     * @return proposals consumed and closed within the command lookup scope.
+     */
     Stream<String> complete(Map<String, String> config, String optionName);
 }

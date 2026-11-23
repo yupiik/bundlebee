@@ -15,21 +15,17 @@
  */
 package io.yupiik.bundlebee.core.command.model.sarif;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.json.bind.annotation.JsonbProperty;
-import javax.json.bind.annotation.JsonbPropertyOrder;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonbPropertyOrder({"tool", "artifacts", "results"})
-public class Run {
-    @JsonbProperty
-    private Tool tool;
-    private List<Artifact> artifacts;
-    private List<Result> results;
+@JsonModel
+public record Run(
+        @JsonProperty(order = 0) Tool tool,
+        @JsonProperty(order = 1) List<Artifact> artifacts,
+        @JsonProperty(order = 2) List<Result> results) {
+    public Run {
+        artifacts = artifacts == null ? null : List.copyOf(artifacts);
+        results = results == null ? null : List.copyOf(results);
+    }
 }

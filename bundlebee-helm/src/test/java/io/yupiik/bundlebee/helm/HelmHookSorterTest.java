@@ -15,13 +15,12 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import org.junit.jupiter.api.Test;
-import org.yaml.snakeyaml.Yaml;
-
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.Yaml;
 
 class HelmHookSorterTest {
 
@@ -61,7 +60,8 @@ class HelmHookSorterTest {
                 "---\napiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: app-config");
         final var sorted = sorter.sort(docs);
         assertEquals(3, sorted.size());
-        assertTrue(sorted.get(0).contains("hook-no-weight"), "No weight (default 0) should come before positive weight");
+        assertTrue(
+                sorted.get(0).contains("hook-no-weight"), "No weight (default 0) should come before positive weight");
         assertTrue(sorted.get(1).contains("hook-with-weight"), "Positive weight should come second");
         assertTrue(sorted.get(2).contains("app-config"), "Regular resource should come last");
     }

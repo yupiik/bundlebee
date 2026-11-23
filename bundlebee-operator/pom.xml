@@ -17,26 +17,44 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <parent>
-    <artifactId>bundlebee</artifactId>
-    <groupId>io.yupiik</groupId>
-    <version>1.0.33-SNAPSHOT</version>
-  </parent>
   <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.yupiik</groupId>
+    <artifactId>bundlebee</artifactId>
+    <version>2.0.0-SNAPSHOT</version>
+  </parent>
 
   <artifactId>bundlebee-operator</artifactId>
   <name>BundleBee :: Operator</name>
   <description>A simple operator wrapping bundlebee to deploy directly alveoli!</description>
 
   <properties>
-    <image.base>ossyupiik/java:17.0.1@sha256:5e8040466437f8b04e8f08a26e65b80142b130d0652fd75fe28d8a19416f36c5
-    </image.base>
+    <image.base>ossyupiik/java:17.0.17@sha256:c2f7ccf3bb8e45cedb08d836455c06e616a953c460d0a4c205902b68b0190bf1</image.base>
     <image.workdir>/opt/yupiik/applications/${project.artifactId}</image.workdir>
     <image.version>${project.version}</image.version>
     <image.name>yupiik/bundlebee/operator:${image.version}</image.name>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-kubernetes-operator-base</artifactId>
+      <version>${fusion.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-build-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.yupiik.fusion</groupId>
+      <artifactId>fusion-json</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>bundlebee-core</artifactId>
@@ -55,7 +73,7 @@
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk15on</artifactId>
+      <artifactId>bcpkix-jdk18on</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -63,8 +81,8 @@
   <build>
     <resources>
       <resource>
-        <directory>src/main/resources</directory>
         <filtering>true</filtering>
+        <directory>src/main/resources</directory>
       </resource>
     </resources>
 
@@ -72,7 +90,7 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>3.1.4</version>
+        <version>3.5.2</version>
         <!--
         mvn package jib:build [-Dimage.registry=...] -> will be pushed
         mvn package -Pdocker -> local docker image
@@ -86,13 +104,14 @@
             <image>${image.name}</image>
           </to>
           <container>
-            <mainClass>io.yupiik.bundlebee.operator.BundlebeeOperator</mainClass>
+            <mainClass>io.yupiik.fusion.framework.api.main.Launcher</mainClass>
             <appRoot>${image.workdir}</appRoot>
             <workingDirectory>${image.workdir}</workingDirectory>
             <extraClasspath>${image.workdir}/custom/*:${image.workdir}/custom</extraClasspath>
             <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
             <jvmFlags>
               <jvmFlag>-Djava.util.logging.manager=io.yupiik.logging.jul.YupiikLogManager</jvmFlag>
+              <jvmFlag>-D.handlers=io.yupiik.logging.jul.handler.StandardHandler</jvmFlag>
               <jvmFlag>-Dio.yupiik.logging.jul.handler.StandardHandler.formatter=json</jvmFlag>
               <jvmFlag>-Djava.security.egd=file:/dev/./urandom</jvmFlag>
               <jvmFlag>-Djdk.serialFilter=!*</jvmFlag>
@@ -129,15 +148,23 @@
       <build>
         <plugins>
           <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-resources-plugin</artifactId>
+            <configuration>
+              <!-- Preserve the processor-merged SPI when compilation is already up to date. -->
+              <changeDetection>timestamp+content</changeDetection>
+            </configuration>
+          </plugin>
+          <plugin>
             <groupId>com.google.cloud.tools</groupId>
             <artifactId>jib-maven-plugin</artifactId>
             <executions>
               <execution>
                 <id>docker</id>
-                <phase>package</phase>
                 <goals>
                   <goal>dockerBuild</goal>
                 </goals>
+                <phase>package</phase>
               </execution>
             </executions>
           </plugin>
@@ -162,10 +189,10 @@
             <executions>
               <execution>
                 <id>image</id>
-                <phase>package</phase>
                 <goals>
                   <goal>build</goal>
                 </goals>
+                <phase>package</phase>
               </execution>
             </executions>
           </plugin>
@@ -176,21 +203,22 @@
       <id>native</id>
       <build>
         <plugins>
-          <plugin> <!-- mvn package -Pnative -DskipTests -->
+          <plugin>
+            <!-- mvn package -Pnative -DskipTests -->
             <groupId>org.apache.geronimo.arthur</groupId>
             <artifactId>arthur-maven-plugin</artifactId>
+            <configuration>
+              <main>io.yupiik.fusion.framework.api.main.Launcher</main>
+            </configuration>
             <executions>
               <execution>
                 <id>native</id>
-                <phase>package</phase>
                 <goals>
                   <goal>native-image</goal>
                 </goals>
+                <phase>package</phase>
               </execution>
             </executions>
-            <configuration>
-              <main>io.yupiik.bundlebee.operator.BundlebeeOperator</main>
-            </configuration>
           </plugin>
         </plugins>
       </build>

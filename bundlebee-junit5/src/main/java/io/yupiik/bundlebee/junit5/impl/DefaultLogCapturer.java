@@ -15,14 +15,13 @@
  */
 package io.yupiik.bundlebee.junit5.impl;
 
-import io.yupiik.bundlebee.junit5.LogCapturer;
+import static java.util.Optional.ofNullable;
 
+import io.yupiik.bundlebee.junit5.LogCapturer;
 import java.util.Collection;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.logging.LogRecord;
-
-import static java.util.Optional.ofNullable;
 
 public class DefaultLogCapturer implements LogCapturer {
     private Predicate<LogRecord> filter = l -> ofNullable(l.getLoggerName())
@@ -31,7 +30,6 @@ public class DefaultLogCapturer implements LogCapturer {
             .startsWith("io.yupiik.bundlebee.core.");
 
     private final Collection<LogRecord> capture = new CopyOnWriteArrayList<>();
-
 
     @Override
     public LogCapturer useFilter(final Predicate<LogRecord> filter) {

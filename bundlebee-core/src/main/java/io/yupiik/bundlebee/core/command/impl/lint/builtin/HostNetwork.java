@@ -15,27 +15,31 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
 
-import javax.enterprise.context.Dependent;
-import javax.json.JsonValue;
+import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
-
-@Dependent
+@DefaultScoped
 public class HostNetwork extends CheckValue {
+
     public HostNetwork() {
         super(
                 Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job"),
                 Map.of(
-                        "DeploymentConfig", "/spec/template/spec/hostNetwork",
-                        "Deployment", "/spec/template/spec/hostNetwork",
-                        "CronJob", "/spec/jobTemplate/spec/template/spec/hostNetwork",
-                        "Job", "/spec/template/spec/hostNetwork",
-                        "Pod", "/spec/hostNetwork"),
+                        "DeploymentConfig",
+                        "/spec/template/spec/hostNetwork",
+                        "Deployment",
+                        "/spec/template/spec/hostNetwork",
+                        "CronJob",
+                        "/spec/jobTemplate/spec/template/spec/hostNetwork",
+                        "Job",
+                        "/spec/template/spec/hostNetwork",
+                        "Pod",
+                        "/spec/hostNetwork"),
                 true);
     }
 
@@ -55,9 +59,7 @@ public class HostNetwork extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        return value.getValueType() == JsonValue.ValueType.TRUE ?
-                Stream.of(new LintError(WARNING, "hostNetwork is true")) :
-                Stream.empty();
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        return Boolean.TRUE.equals(value) ? Stream.of(new LintError(WARNING, "hostNetwork is true")) : Stream.empty();
     }
 }

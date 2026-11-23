@@ -15,18 +15,16 @@
  */
 package io.yupiik.bundlebee.core.configuration;
 
-import io.yupiik.bundlebee.core.service.AlveolusHandler;
-import org.eclipse.microprofile.config.spi.ConfigSource;
-
-import javax.enterprise.inject.Vetoed;
+import io.yupiik.fusion.framework.api.configuration.ConfigurationSource;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
 import java.util.Map;
 import java.util.function.Supplier;
 
-@Vetoed
-public class ThreadLocalConfigSource implements ConfigSource {
+@ApplicationScoped
+public class ThreadLocalConfigSource implements ConfigurationSource {
+
     private final ThreadLocal<Map<String, String>> threadLocal = new ThreadLocal<>();
 
-    @Override
     public Map<String, String> getProperties() {
         final var current = threadLocal.get();
         if (current == null) {
@@ -37,11 +35,10 @@ public class ThreadLocalConfigSource implements ConfigSource {
     }
 
     @Override
-    public String getValue(final String s) {
+    public String get(final String s) {
         return getProperties().get(s);
     }
 
-    @Override
     public String getName() {
         return "thread-local";
     }

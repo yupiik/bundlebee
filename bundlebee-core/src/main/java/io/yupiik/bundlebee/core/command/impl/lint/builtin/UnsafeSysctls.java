@@ -16,16 +16,17 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonObject;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class UnsafeSysctls extends ContainerValueValidator {
-    private final Set<String> forbidden = Set.of("kernel.msg", "kernel.sem", "kernel.shm", "fs.mqueue."); // + "net.*"
+
+    // + "net.*"
+    private final Set<String> forbidden = Set.of("kernel.msg", "kernel.sem", "kernel.shm", "fs.mqueue.");
 
     @Override
     public String name() {
@@ -39,9 +40,9 @@ public class UnsafeSysctls extends ContainerValueValidator {
 
     @Override
     public String remediation() {
-        return "Ensure container does not allow unsafe allocation of system resources by removing unsafe sysctls configurations.\n" +
-                "For more details see https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/\n" +
-                "https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.";
+        return "Ensure container does not allow unsafe allocation of system resources by removing unsafe sysctls configurations.\n"
+                + "For more details see https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/\n"
+                + "https://docs.docker.com/engine/reference/commandline/run/#configure-namespaced-kernel-parameters-sysctls-at-runtime.";
     }
 
     @Override
@@ -50,18 +51,15 @@ public class UnsafeSysctls extends ContainerValueValidator {
     }
 
     @Override
-    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
-        final var securityContext = container.getJsonObject("securityContext");
-        if (securityContext == null) {
+    protected Stream<LintError> validate(final Map<?, ?> container, final LintableDescriptor descriptor) {
+        if (!(container.get("securityContext") instanceof Map<?, ?> securityContext)) {
             return Stream.empty();
         }
-        final var sysctls = securityContext.getJsonArray("sysctls");
-        if (sysctls == null) {
-            return Stream.empty();
-        }
+        final var sysctls = (securityContext.get("sysctls") instanceof List<?> sysctlsValue ? sysctlsValue : List.of());
         return sysctls.stream()
-                .map(JsonValue::asJsonObject)
-                .map(it -> it.getString("name", ""))
+                .filter(Map.class::isInstance)
+                .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                .map(it -> (it.get("name") instanceof String nameValue ? nameValue : ""))
                 .filter(it -> forbidden.contains(it) || it.startsWith("net."))
                 .map(it -> new LintError(LintError.LintLevel.ERROR, "Sysctls '" + it + "' is not recommended"));
     }

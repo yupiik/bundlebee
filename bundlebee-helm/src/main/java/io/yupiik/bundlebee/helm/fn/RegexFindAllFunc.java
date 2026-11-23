@@ -15,19 +15,17 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Regex
-//metadata:end
+// metadata:end
 @Description("Returns all matches of a regex in a string")
 public class RegexFindAllFunc implements HelmFunction {
     @Override

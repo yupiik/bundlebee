@@ -15,29 +15,25 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.Base64;
-
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Crypto
-//metadata:end
+// metadata:end
 @Description("Encrypts text with AES-256 CBC")
 public class EncryptAESFunc implements HelmFunction {
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
     private static final int KEY_SIZE = 32; // 256 bits
-    private static final int IV_SIZE = 16;  // 128 bits
+    private static final int IV_SIZE = 16; // 128 bits
 
     private final SecureRandom random = new SecureRandom();
 
@@ -57,9 +53,7 @@ public class EncryptAESFunc implements HelmFunction {
             random.nextBytes(iv);
 
             final var cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE,
-                    new SecretKeySpec(keyBytes, "AES"),
-                    new IvParameterSpec(iv));
+            cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(keyBytes, "AES"), new IvParameterSpec(iv));
             final var encrypted = cipher.doFinal(args[1].toString().getBytes(StandardCharsets.UTF_8));
 
             // Prepend IV to ciphertext

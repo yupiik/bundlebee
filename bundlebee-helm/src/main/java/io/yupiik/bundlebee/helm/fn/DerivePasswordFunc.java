@@ -15,24 +15,19 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.stream.Collectors;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Crypto
-//metadata:end
+// metadata:end
 @Description("Derives a password using the Spectre algorithm")
 public class DerivePasswordFunc implements HelmFunction {
     @Override
@@ -42,8 +37,12 @@ public class DerivePasswordFunc implements HelmFunction {
 
     @Override
     public Object execute(final Object... args) {
-        if (args.length < 5 || args[0] == null || args[1] == null || args[2] == null
-                || args[3] == null || args[4] == null) {
+        if (args.length < 5
+                || args[0] == null
+                || args[1] == null
+                || args[2] == null
+                || args[3] == null
+                || args[4] == null) {
             throw new IllegalArgumentException(
                     "derivePassword requires 5 arguments: counter, type, password, user, site");
         }

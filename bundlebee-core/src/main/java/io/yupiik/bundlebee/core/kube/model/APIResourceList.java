@@ -15,27 +15,18 @@
  */
 package io.yupiik.bundlebee.core.kube.model;
 
-import lombok.Data;
-
-import javax.json.bind.annotation.JsonbProperty;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
 import java.util.List;
 
-@Data
-public class APIResourceList {
-    @JsonbProperty
-    private String kind;
-    private String apiVersion;
-    private List<Item> resources;
-
-    @Data
-    public static class Item {
-        @JsonbProperty
-        private String group;
-        private String kind;
-        private String name; // plural name
-        private String singularName;
-        private String version;
-        private boolean namespaced;
-        private List<String> verb;
-    }
+@JsonModel
+public record APIResourceList(String kind, String apiVersion, List<Item> resources) {
+    @JsonModel
+    public record Item(
+            String group,
+            String kind,
+            String name,
+            String singularName,
+            String version,
+            boolean namespaced,
+            List<String> verbs) {}
 }

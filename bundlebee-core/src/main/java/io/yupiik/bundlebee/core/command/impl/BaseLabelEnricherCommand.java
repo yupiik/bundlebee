@@ -15,31 +15,32 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static java.util.stream.Collectors.toMap;
+
 import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.LabelSanitizerService;
 import io.yupiik.bundlebee.core.service.VersioningService;
-import lombok.extern.java.Log;
-
-import javax.inject.Inject;
 import java.time.Instant;
 import java.util.Map;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toMap;
-
-@Log
 public abstract class BaseLabelEnricherCommand implements CompletingExecutable {
-    @Inject
-    private LabelSanitizerService labelSanitizerService;
+    private final Logger log = Logger.getLogger(BaseLabelEnricherCommand.class.getName());
 
-    @Inject
-    private VersioningService versioningService;
+    protected BaseLabelEnricherCommand(
+            LabelSanitizerService labelSanitizerService, VersioningService versioningService, AlveolusHandler visitor) {
+        this.labelSanitizerService = labelSanitizerService;
+        this.versioningService = versioningService;
+        this.visitor = visitor;
+    }
 
-    @Inject
-    protected AlveolusHandler visitor;
+    private final LabelSanitizerService labelSanitizerService;
+    private final VersioningService versioningService;
+    protected final AlveolusHandler visitor;
 
     @Override
     public Stream<String> complete(final Map<String, String> options, final String optionName) {
@@ -54,22 +55,24 @@ public abstract class BaseLabelEnricherCommand implements CompletingExecutable {
         }
     }
 
-    protected Map<String, String> createLabels(final Manifest.Alveolus alveolus,
-                                               final boolean injectTimestamp,
-                                               final boolean injectBundleBeeMetadata) {
+    protected Map<String, String> createLabels(
+            final Manifest.Alveolus alveolus, final boolean injectTimestamp, final boolean injectBundleBeeMetadata) {
         return Stream.of(
-                        injectTimestamp ?
-                                Map.of("bundlebee.timestamp", Long.toString(Instant.now().toEpochMilli())) :
-                                Map.<String, String>of(),
-                        injectBundleBeeMetadata ?
-                                Map.of(
-                                        "bundlebee.root.alveolus.version", labelSanitizerService.sanitize(findVersion(alveolus)),
-                                        "bundlebee.root.alveolus.name", labelSanitizerService.sanitize(alveolus.getName())) :
-                                Map.<String, String>of())
+                        injectTimestamp
+                                ? Map.of(
+                                        "bundlebee.timestamp",
+                                        Long.toString(Instant.now().toEpochMilli()))
+                                : Map.<String, String>of(),
+                        injectBundleBeeMetadata
+                                ? Map.of(
+                                        "bundlebee.root.alveolus.version",
+                                        labelSanitizerService.sanitize(findVersion(alveolus)),
+                                        "bundlebee.root.alveolus.name",
+                                        labelSanitizerService.sanitize(alveolus.name()))
+                                : Map.<String, String>of())
                 .flatMap(m -> m.entrySet().stream())
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-
 
     private String findVersion(final Manifest.Alveolus alveolus) {
         try {
@@ -79,5 +82,4 @@ public abstract class BaseLabelEnricherCommand implements CompletingExecutable {
             return "unknown";
         }
     }
-
 }

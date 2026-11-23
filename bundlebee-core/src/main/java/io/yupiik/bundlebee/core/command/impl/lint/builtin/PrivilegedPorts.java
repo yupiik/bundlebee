@@ -16,23 +16,25 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class PrivilegedPorts extends CheckValue {
+
     public PrivilegedPorts() {
         super(
                 Set.of("DeploymentConfig", "Deployment"),
                 Map.of(
-                        "DeploymentConfig", "/spec/template/spec/containers",
-                        "Deployment", "/spec/template/spec/containers"),
+                        "DeploymentConfig",
+                        "/spec/template/spec/containers",
+                        "Deployment",
+                        "/spec/template/spec/containers"),
                 true);
     }
 
@@ -52,17 +54,23 @@ public class PrivilegedPorts extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        return value.asJsonArray().stream()
-                .map(JsonValue::asJsonObject)
-                .map(it -> it.getJsonArray("ports"))
-                .filter(Objects::nonNull)
-                .flatMap(Collection::stream)
-                .map(JsonValue::asJsonObject)
-                .map(it -> it.getInt("containerPort", 10_000))
-                .filter(it -> it >= 0 && it <= 1024)
-                .distinct()
-                .sorted()
-                .map(it -> new LintError(LintError.LintLevel.ERROR, "priviledged port used by container: " + it));
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        return (value instanceof List<?> values ? values : List.of())
+                .stream()
+                        .filter(Map.class::isInstance)
+                        .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                        .map(it -> (it.get("ports") instanceof List<?> portsValue ? portsValue : List.of()))
+                        .filter(Objects::nonNull)
+                        .flatMap(Collection::stream)
+                        .filter(Map.class::isInstance)
+                        .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                        .map(it -> (it.get("containerPort") instanceof Number containerPortValue
+                                ? containerPortValue.intValue()
+                                : 10_000))
+                        .filter(it -> it >= 0 && it <= 1024)
+                        .distinct()
+                        .sorted()
+                        .map(it ->
+                                new LintError(LintError.LintLevel.ERROR, "priviledged port used by container: " + it));
     }
 }

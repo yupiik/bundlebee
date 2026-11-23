@@ -15,20 +15,21 @@
  */
 package io.yupiik.bundlebee.core.http;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 class RateLimiterTest {
+
     @Test
     void rateLimit() {
         final var instant = new AtomicReference<>(Instant.ofEpochMilli(0));
         final var rateLimiter = new RateLimiter(3, 1_000, new Clock() {
+
             @Override
             public ZoneId getZone() {
                 return ZoneId.of("UTC");
@@ -44,7 +45,6 @@ class RateLimiterTest {
                 return instant.get();
             }
         });
-
         assertEquals(0, rateLimiter.before());
         assertEquals(0, rateLimiter.before());
         assertEquals(0, rateLimiter.before());
@@ -53,7 +53,6 @@ class RateLimiterTest {
             assertEquals(nextWindow, rateLimiter.before());
             instant.set(Instant.ofEpochMilli(nextWindow));
         }
-
         assertEquals(2000, rateLimiter.before());
         assertEquals(2000, rateLimiter.before());
         assertEquals(2000, rateLimiter.before());
@@ -62,7 +61,6 @@ class RateLimiterTest {
             assertEquals(nextWindow, rateLimiter.before());
             instant.set(Instant.ofEpochMilli(nextWindow + 1000));
         }
-
         assertEquals(0, rateLimiter.before());
         assertEquals(0, rateLimiter.before());
         assertEquals(0, rateLimiter.before());

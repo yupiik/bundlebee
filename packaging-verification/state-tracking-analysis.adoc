@@ -1,0 +1,134 @@
+//
+// Copyright (c) 2021 - present - Yupiik SAS - https://www.yupiik.com
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+//
+= State tracking migration analysis
+
+== Approved behavior and compatibility scope
+
+The user approved the state-reader correction and associated safety changes as intentional version-1 bugfixes.
+They are not strict behavioral parity with the pre-migration artifacts and are not merely logging changes.
+State tracking is apply's resource inventory and cleanup mechanism, not automatic recovery of resource contents after a failed deployment.
+Explicit rollback remains a separate command that deletes the selected current resources and applies a selected previous recipe.
+
+Both pre-migration HEAD `e743e5fc` and release `1.0.32` write base64-encoded JSON in the standard Kubernetes Secret `data.state` field, but their reader checks a top-level `state` field instead.
+The approved implementation reads `data.state`, making the intended inventory-based cleanup reachable for ordinary persisted Secrets.
+This is a BundleBee adapter bugfix, not a requirement imposed by Fusion JSON.
+The nonstandard top-level envelope is not read by the corrected implementation.
+
+== Version-1 wire format
+
+Existing payloads such as `{"version":1,"resources":[{"path":"https://cluster/api/v1/namespaces/default/configmaps/example"}]}` remain readable without conversion.
+A successfully applied resource still needs only its `path`; no status is written for that normal case.
+Resource entries can now carry optional `status` and `httpStatus` fields to preserve operation outcomes.
+The status values are `APPLY_FAILED`, `PENDING_DELETION`, and `DELETE_FAILED`.
+The legacy single-path resource constructor remains available.
+Unknown JSON fields remain ignored, and omitted version/resources fields retain their model defaults (version 1 and an empty inventory).
+Malformed decoded state fails closed before descriptor mutation or overwriting the previous Secret; a missing state Secret or absent `data.state` starts an empty inventory.
+Object property order is not part of the wire contract.
+
+== Apply, checkpoint, and cleanup policy
+
+* `bundlebee.apply.trackState` still defaults to `false`, and tracking requires an explicit alveolus selection rather than `alveolus=auto`.
+* The inventory Secret is named `<alveolus>-bbs` in the configured API namespace.
+* After descriptor processing, the checkpoint is a union of previously tracked resources and observed apply outcomes, rather than only the newly selected paths.
+* On successful descriptor processing, old paths not attempted by this apply become `PENDING_DELETION`.
+* The checkpoint must be persisted successfully before any stale-resource deletion is attempted.
+* `skipStaledResourceDeletion=true` skips deletion but retains stale paths as pending, so a later apply can retry cleanup.
+* Failed descriptor application records `APPLY_FAILED`, preserves previous inventory, suppresses stale cleanup, and propagates the failure after attempting to save the checkpoint.
+* Cleanup validates the target against the configured Kubernetes API origin and base path; an arbitrary recorded absolute URL cannot receive the current credential.
+* DELETE 404 confirms absence directly; a successful DELETE requires a subsequent GET returning 404 before the path is removed from inventory.
+* A resource still returned by GET 200 remains `PENDING_DELETION`, including when finalizers delay actual removal.
+* Unsuccessful cleanup retains the path as `DELETE_FAILED`, records an HTTP status when available, and fails the command after attempting to persist the final actual inventory.
+* When cleanup runs, its final actual inventory is saved after the checkpoint; state-save failures are propagated too.
+
+Renaming or excluding a formerly managed descriptor can therefore make its old resource a cleanup candidate during a successful tracked apply.
+The skip flag is a durable deferral of cleanup, not an instruction to forget ownership.
+The checkpoint and final Secret writes are not an atomic transaction with cluster mutations and do not restore old resource contents.
+
+== Historical baseline and intentional differences
+
+The original nine-case characterization completed against HEAD/release/current CLI artifacts and release/current Maven plugin artifacts using local HTTP fixtures.
+Each case also generated a real HEAD state payload before supplying a prior inventory.
+The original three additional safety characterizations reproduced loss of skipped inventory, successful exit on cleanup HTTP 500, and credential-bearing DELETE to a foreign loopback origin in the then-current migrated artifact.
+Those historical results are evidence of the defects addressed by the approved fix, not acceptance criteria or a claim of parity for the final artifact.
+Only dummy credentials and local servers were used.
+
+[options="header"]
+|===
+|Scenario |Legacy baseline evidence |Approved current contract
+|Normal `data.state` containing live and stale paths |Reader ignores inventory; apply writes only the new paths. |Read inventory, save union checkpoint, delete stale path, confirm absence, then save final inventory.
+|Unknown JSON fields |Normal inventory ignored due to wrong envelope lookup. |Ignore unknown fields and perform the same guarded cleanup.
+|`skipStaledResourceDeletion=true` |Save only newly applied paths. |Retain stale paths with `PENDING_DELETION` for later cleanup.
+|Top-level `state` instead of `data.state` |Read nonstandard envelope and delete stale path. |Ignore nonstandard envelope and start an empty inventory.
+|Malformed decoded JSON |Normal envelope ignored, so apply continues. |Fail before applying descriptors or overwriting state.
+|Missing version/resources fields (`{}`) |Normal envelope ignored, so apply continues. |Use the existing version-1 empty-inventory defaults.
+|Cleanup HTTP 500 in the formerly migrated implementation |Historical migrated characterization exited successfully and forgot stale path. |Fail the command and save stale path as `DELETE_FAILED` with `httpStatus=500`.
+|Foreign absolute URL in the formerly migrated implementation |Historical migrated characterization sent DELETE with the configured dummy token to a second server. |Send no request to that server, retain failed path, and fail cleanup.
+|Tracking disabled |No state Secret traffic. |No state Secret traffic.
+|Explicit rollback |Delete current selection, then apply previous selection. |Preserve request sequence and resource bodies in this fixture.
+|===
+
+== Packaged-artifact regression assertions
+
+`RollbackStateCompatibilityTest` retains its nine dynamic recipes and three dedicated tests, but now asserts approved current behavior rather than the historical unsafe outcomes.
+HEAD/release CLI and release plugin outcomes are still checked as legacy baselines.
+Current CLI/plugin descriptor traffic is compared with those baselines where appropriate, while state persistence, cleanup, and malformed-state rejection are checked as intentional differences.
+The cleanup fixture returns GET 404 after successful DELETE so the tests verify checkpoint-before-delete, confirmation-after-delete, and final-save-after-confirmation ordering.
+The dedicated skip test feeds the saved inventory into another apply and verifies that the deferred stale path is deleted.
+The HTTP 500 test checks a nonzero command exit and retained `DELETE_FAILED` state, while the foreign-origin test checks no foreign requests and retained failure state.
+The harness records every decoded checkpoint and the final inventory, not just the first Secret write.
+
+These packaged fixtures do not exercise all failure combinations, delayed finalizers, API base-path validation variants, or apply failure outcomes.
+Those broader semantics above are based on production source analysis; this document does not claim the packaging class covers them all.
+
+== Evidence and reproduction
+
+Historical preapproval runs are recorded in `/tmp/bundlebee-rollback-parity-final.log` (nine recipes) and `/tmp/bundlebee-state-risk-characterization.log` (three safety characterizations).
+Those logs must not be reported as verification of the approved implementation.
+The updated harness must run against the final prebuilt artifacts; it never builds application modules.
+Before running, inspect the current fat jar with `jar tf` and confirm it contains `io/yupiik/bundlebee/core/descriptor/State$Status.class` to avoid exercising an obsolete artifact.
+The current Maven plugin and its installed core dependency must also be from the final Java 17 install.
+
+Run only the assigned class from the repository root, using explicit Java 17 and Maven 3.9.16:
+
+[source,sh]
+----
+export JAVA_HOME=/home/rmannibucau/.sdkman/candidates/java/17.0.20+1.1-zulu
+export PATH="$JAVA_HOME/bin:/usr/bin:/bin"
+MAVEN=/home/rmannibucau/.sdkman/candidates/maven/3.9.16/bin/mvn
+"$MAVEN" -f packaging-verification/pom.xml test \
+  -Dtest=RollbackStateCompatibilityTest \
+  -Dbundlebee.rollback.enabled=true \
+  -Dbundlebee.rollback.mvn="$MAVEN" \
+  -Dbundlebee.root="$PWD"
+----
+
+The class supports overriding the legacy/current jar paths and plugin versions through its documented system properties.
+Maven comparisons default to enabled and run offline against preinstalled application artifacts.
+Per-command arguments, logs, wire traces, all decoded checkpoints, and final inventories remain under `/tmp/bundlebee-rollback-parity-*`.
+The final execution result and any artifact-availability limitations must be reported separately from historical baseline evidence.
+
+=== Approved artifact validation
+
+The earlier harness compile succeeded with explicit Java 17 and Maven 3.9.16 (`/tmp/bundlebee-state-approved-harness-compile.log`).
+An earlier execution stopped at the missing-fat-jar gate following two `FusionCliMetadataTest` failures; that attempt did not execute the twelve tests and is superseded by the successful runs below.
+The approved external state suite subsequently passed all 12 tests with zero failures, errors or skips in `/tmp/bundlebee-state-approved-external.log`, completing at `2026-11-22T16:59:44+01:00`.
+The later clean Java 17 install passed all 701 reactor tests with zero failures, errors or skips (`/tmp/bundlebee-approved-final-java17-install.log`, completed at `17:35:05+01:00`).
+The approved-state Java 21 and Java 25 verifies also passed 701 tests each (`/tmp/bundlebee-approved-state-java21-verify.log` and `/tmp/bundlebee-approved-state-java25-verify.log`).
+The fresh-artifact rerun after that install again passed all 12 packaged rollback/state tests with zero failures, errors or skips (325.431 seconds), using explicit Java 17 and Maven 3.9.16 with CLI and Maven comparisons enabled.
+Its log is `/tmp/bundlebee-approved-final-compat/all-java17.log`; the exact invocation is retained in `/tmp/bundlebee-approved-final-compat/reproduce.sh`.
+Before execution, the current fat jar was confirmed to contain `io/yupiik/bundlebee/core/descriptor/State$Status.class`.
+Artifact SHA-256 provenance is retained in `/tmp/bundlebee-approved-final-compat/artifacts-before.sha256`.
+These reactor results and successful packaged assertions do not expand the packaged fixture's coverage beyond the boundaries described above.

@@ -16,25 +16,28 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class DefaultServiceAccount extends CheckValue {
+
     public DefaultServiceAccount() {
         super(
                 Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job"),
-                Map.of(
-                        "DeploymentConfig", "/spec/template/spec/serviceAccountName", // openshift
-                        "Deployment", "/spec/template/spec/serviceAccountName",
-                        "CronJob", "/spec/jobTemplate/spec/template/spec/serviceAccountName",
-                        "Job", "/spec/template/spec/serviceAccountName",
-                        "Pod", "/spec/serviceAccountName"),
+                Map.of( // openshift
+                        "DeploymentConfig", // openshift
+                        "/spec/template/spec/serviceAccountName",
+                        "Deployment",
+                        "/spec/template/spec/serviceAccountName",
+                        "CronJob",
+                        "/spec/jobTemplate/spec/template/spec/serviceAccountName",
+                        "Job",
+                        "/spec/template/spec/serviceAccountName",
+                        "Pod",
+                        "/spec/serviceAccountName"),
                 true);
     }
 
@@ -50,14 +53,14 @@ public class DefaultServiceAccount extends CheckValue {
 
     @Override
     public String remediation() {
-        return "Create a dedicated service account for your pod.\n" +
-                "Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/ for details.";
+        return "Create a dedicated service account for your pod.\n"
+                + "Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/ for details.";
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue serviceAccountName) {
-        return serviceAccountName.getValueType() == JsonValue.ValueType.STRING && "default".equals(((JsonString) serviceAccountName).getString()) ?
-                Stream.of(new LintError(LintError.LintLevel.ERROR, "'default' service account used")) :
-                Stream.empty();
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object serviceAccountName) {
+        return serviceAccountName instanceof String && "default".equals(((String) serviceAccountName))
+                ? Stream.of(new LintError(LintError.LintLevel.ERROR, "'default' service account used"))
+                : Stream.empty();
     }
 }

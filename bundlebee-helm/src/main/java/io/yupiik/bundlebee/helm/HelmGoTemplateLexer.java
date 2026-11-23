@@ -15,11 +15,9 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Tokenizer for Go template syntax, aligned with Go's text/template/parse/lex.go.
@@ -48,13 +46,64 @@ import java.util.List;
  */
 public class HelmGoTemplateLexer {
 
-    @Data
-    @AllArgsConstructor
     public static class Token {
         private final TokenType type;
         private final String value;
         private final boolean trimLeft;
         private final boolean trimRight;
+
+        public TokenType getType() {
+            return this.type;
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+
+        public boolean isTrimLeft() {
+            return this.trimLeft;
+        }
+
+        public boolean isTrimRight() {
+            return this.trimRight;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (!(o instanceof Token other)) {
+                return false;
+            }
+            return other.canEqual(this)
+                    && this.isTrimLeft() == other.isTrimLeft()
+                    && this.isTrimRight() == other.isTrimRight()
+                    && Objects.equals(this.getType(), other.getType())
+                    && Objects.equals(this.getValue(), other.getValue());
+        }
+
+        protected boolean canEqual(final Object other) {
+            return other instanceof HelmGoTemplateLexer.Token;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.isTrimLeft(), this.isTrimRight(), this.getType(), this.getValue());
+        }
+
+        @Override
+        public String toString() {
+            return "HelmGoTemplateLexer.Token(type=" + this.getType() + ", value=" + this.getValue() + ", trimLeft="
+                    + this.isTrimLeft() + ", trimRight=" + this.isTrimRight() + ")";
+        }
+
+        public Token(final TokenType type, final String value, final boolean trimLeft, final boolean trimRight) {
+            this.type = type;
+            this.value = value;
+            this.trimLeft = trimLeft;
+            this.trimRight = trimRight;
+        }
     }
 
     public enum TokenType {
@@ -69,14 +118,14 @@ public class HelmGoTemplateLexer {
         NUMBER,
         BOOL,
         PIPE,
-        ASSIGN,      // = (itemAssign)
-        DECLARE,     // := (itemDeclare)
+        ASSIGN, // = (itemAssign)
+        DECLARE, // := (itemDeclare)
         LPAREN,
         RPAREN,
         LBRACK,
         RBRACK,
         COMMA,
-        DOT,         // bare . (itemDot)
+        DOT, // bare . (itemDot)
         IF,
         ELSE,
         END,
@@ -85,7 +134,7 @@ public class HelmGoTemplateLexer {
         DEFINE,
         BLOCK,
         TEMPLATE,
-        NIL
+        NIL;
     }
 
     public List<Token> tokenize(final String template) {
@@ -239,8 +288,10 @@ public class HelmGoTemplateLexer {
                         tokens.add(new Token(TokenType.FIELD, "." + ident, false, false));
                         pos += ident.length();
                         // Continue chaining .Field
-                        while (pos < action.length() && action.charAt(pos) == '.'
-                                && pos + 1 < action.length() && isAlphaNum(action.charAt(pos + 1))) {
+                        while (pos < action.length()
+                                && action.charAt(pos) == '.'
+                                && pos + 1 < action.length()
+                                && isAlphaNum(action.charAt(pos + 1))) {
                             pos++; // skip dot
                             final var field = readIdent(action, pos);
                             tokens.add(new Token(TokenType.FIELD, "." + field, false, false));
@@ -260,8 +311,10 @@ public class HelmGoTemplateLexer {
                         tokens.add(new Token(TokenType.VARIABLE, "$" + ident, false, false));
                         pos += ident.length();
                         // Continue chaining .field after variable
-                        while (pos < action.length() && action.charAt(pos) == '.'
-                                && pos + 1 < action.length() && isAlphaNum(action.charAt(pos + 1))) {
+                        while (pos < action.length()
+                                && action.charAt(pos) == '.'
+                                && pos + 1 < action.length()
+                                && isAlphaNum(action.charAt(pos + 1))) {
                             pos++; // skip dot
                             final var field = readIdent(action, pos);
                             tokens.add(new Token(TokenType.FIELD, "." + field, false, false));
@@ -319,7 +372,7 @@ public class HelmGoTemplateLexer {
                     }
                     break;
                 }
-                case '"': {
+                case '\"': {
                     final var str = readString(action, pos);
                     tokens.add(new Token(TokenType.STRING, str, false, false));
                     pos += str.length();
@@ -332,7 +385,8 @@ public class HelmGoTemplateLexer {
                     break;
                 }
                 default: {
-                    if (Character.isDigit(ch) || (ch == '-' && pos + 1 < action.length() && Character.isDigit(action.charAt(pos + 1)))) {
+                    if (Character.isDigit(ch)
+                            || (ch == '-' && pos + 1 < action.length() && Character.isDigit(action.charAt(pos + 1)))) {
                         final var num = readNumber(action, pos);
                         tokens.add(new Token(TokenType.NUMBER, num, false, false));
                         pos += num.length();
@@ -354,18 +408,29 @@ public class HelmGoTemplateLexer {
 
     private TokenType keywordType(final String ident) {
         switch (ident) {
-            case "if": return TokenType.IF;
-            case "else": return TokenType.ELSE;
-            case "end": return TokenType.END;
-            case "range": return TokenType.RANGE;
-            case "with": return TokenType.WITH;
-            case "define": return TokenType.DEFINE;
-            case "block": return TokenType.BLOCK;
-            case "template": return TokenType.TEMPLATE;
-            case "nil": return TokenType.NIL;
+            case "if":
+                return TokenType.IF;
+            case "else":
+                return TokenType.ELSE;
+            case "end":
+                return TokenType.END;
+            case "range":
+                return TokenType.RANGE;
+            case "with":
+                return TokenType.WITH;
+            case "define":
+                return TokenType.DEFINE;
+            case "block":
+                return TokenType.BLOCK;
+            case "template":
+                return TokenType.TEMPLATE;
+            case "nil":
+                return TokenType.NIL;
             case "true":
-            case "false": return TokenType.BOOL;
-            default: return TokenType.IDENT;
+            case "false":
+                return TokenType.BOOL;
+            default:
+                return TokenType.IDENT;
         }
     }
 
@@ -398,7 +463,7 @@ public class HelmGoTemplateLexer {
             final char ch = s.charAt(end);
             if (ch == '\\') {
                 end += 2;
-            } else if (ch == '"') {
+            } else if (ch == '\"') {
                 end++;
                 break;
             } else {

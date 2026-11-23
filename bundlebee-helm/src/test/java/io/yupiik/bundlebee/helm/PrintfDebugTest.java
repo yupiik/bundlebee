@@ -15,22 +15,22 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import io.yupiik.bundlebee.helm.fn.*;
-import org.junit.jupiter.api.Test;
-
+import io.yupiik.bundlebee.helm.fn.PrintfFunc;
+import io.yupiik.bundlebee.helm.fn.ReplaceFunc;
+import io.yupiik.bundlebee.helm.fn.TrimSuffixFunc;
+import io.yupiik.bundlebee.helm.fn.TruncFunc;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.Test;
 
 class PrintfDebugTest {
 
     @Test
     void debugPrintfPipeline() throws Exception {
         final var functionsMap = new LinkedHashMap<String, HelmFunction>();
-        for (final var fn : List.<HelmFunction>of(
-                new PrintfFunc(), new TrimSuffixFunc(), new TruncFunc(),
-                new ReplaceFunc()
-        )) {
+        for (final var fn :
+                List.<HelmFunction>of(new PrintfFunc(), new TrimSuffixFunc(), new TruncFunc(), new ReplaceFunc())) {
             functionsMap.put(fn.name(), fn);
         }
         final var renderer = new HelmGoTemplateRenderer(functionsMap);

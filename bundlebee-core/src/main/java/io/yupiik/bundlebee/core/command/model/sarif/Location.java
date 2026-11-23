@@ -15,16 +15,8 @@
  */
 package io.yupiik.bundlebee.core.command.model.sarif;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 
-import javax.json.bind.annotation.JsonbProperty;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Location {
-    @JsonbProperty
-    private String uri;
-}
+@JsonModel
+public record Location(@JsonProperty(order = 0) String uri) {}

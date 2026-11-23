@@ -15,16 +15,15 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.List;
 import java.util.Map;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Defaults
-//metadata:end
+// metadata:end
 @Description("Returns one of two values based on a condition")
 public class TernaryFunc implements io.yupiik.bundlebee.helm.HelmFunction {
     @Override

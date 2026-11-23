@@ -15,19 +15,16 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Encoding
-//metadata:end
+// metadata:end
 @Description("URL-encodes a string")
 public class UrlencodeFunc implements HelmFunction {
     @Override

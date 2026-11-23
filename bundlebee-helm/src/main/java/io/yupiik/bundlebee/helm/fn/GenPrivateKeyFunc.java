@@ -15,18 +15,15 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.security.KeyPairGenerator;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Crypto
-//metadata:end
+// metadata:end
 @Description("Generates a PEM-encoded private key")
 public class GenPrivateKeyFunc implements HelmFunction {
     @Override
@@ -40,7 +37,8 @@ public class GenPrivateKeyFunc implements HelmFunction {
             final var generator = KeyPairGenerator.getInstance("RSA");
             generator.initialize(2048);
             final var keyPair = generator.generateKeyPair();
-            final var encoded = java.util.Base64.getMimeEncoder(64, "\n".getBytes()).encodeToString(keyPair.getPrivate().getEncoded());
+            final var encoded = java.util.Base64.getMimeEncoder(64, "\n".getBytes())
+                    .encodeToString(keyPair.getPrivate().getEncoded());
             return "-----BEGIN RSA PRIVATE KEY-----\n" + encoded + "\n-----END RSA PRIVATE KEY-----";
         } catch (final Exception e) {
             throw new IllegalStateException("Failed to generate RSA private key", e);

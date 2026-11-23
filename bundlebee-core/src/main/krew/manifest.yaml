@@ -32,7 +32,7 @@ spec:
             operator: "In"
             values:
               - linux
-      uri: https://repo.maven.apache.org/maven2/io/yupiik/bundlebee-core/${project.version}/bundlebee-core-${project.version}-kubectl-bundlebee.zip
+      uri: ${bundlebee.krew.archiveUri}
       sha256: ${bundlebee-core-kubectl-bundlebee.zip.sha256}
       bin: kubectl-bundlebee
       files:

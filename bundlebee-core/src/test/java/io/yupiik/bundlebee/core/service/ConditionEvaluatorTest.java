@@ -15,37 +15,40 @@
  */
 package io.yupiik.bundlebee.core.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.yupiik.bundlebee.core.descriptor.Manifest;
-import org.junit.jupiter.api.TestInstance;
+import io.yupiik.fusion.framework.api.configuration.Configuration;
+import io.yupiik.fusion.json.JsonMapper;
+import io.yupiik.fusion.testing.Fusion;
+import io.yupiik.fusion.testing.FusionSupport;
+import java.util.Map;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
-import javax.json.bind.JsonbConfig;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS;
-
-@TestInstance(PER_CLASS)
+@FusionSupport
 class ConditionEvaluatorTest {
-    private final Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().setProperty("johnzon-.skip-cdi", true));
-    private final ConditionEvaluator evaluator = new ConditionEvaluator();
+
+    @Fusion
+    private JsonMapper jsonb;
+
+    private final ConditionEvaluator evaluator =
+            new ConditionEvaluator(Configuration.of(Map.of("TEST_ENV_VAR", "set")));
 
     @ParameterizedTest
     @CsvSource({
-            "'{\"operator\":\"ALL\",\"conditions\":[]}',true",
-            "'{\"operator\":\"ALL\",\"conditions\":[{\"type\":\"ENV\",\"key\":\"TEST_ENV_VAR\",\"value\":\"set\"}]}',true",
-            "'{\"operator\":\"ALL\",\"conditions\":[{\"type\":\"ENV\",\"key\":\"TEST_ENV_VAR\",\"value\":\"set2\"}]}',false",
-            "'{\"operator\":\"ALL\",\"conditions\":[{\"key\":\"TEST_ENV_VAR\",\"value\":\"set\"}]}',true",
-            "'{\"operator\":\"ALL\",\"conditions\":[{\"key\":\"TEST_ENV_VAR\",\"value\":\"set2\"}]}',false",
-            "'{\"conditions\":[{\"key\":\"TEST_ENV_VAR\",\"value\":\"set2\",\"negate\":true}]}',true",
-            "'{\"conditions\":[]}',true",
-            "'{\"operator\":\"ALL\"}',true",
-            "'{\"operator\":\"ANY\"}',false",
-            "'{}',true",
+        "'{\"operator\":\"ALL\",\"conditions\":[]}',true",
+        "'{\"operator\":\"ALL\",\"conditions\":[{\"type\":\"ENV\",\"key\":\"TEST_ENV_VAR\",\"value\":\"set\"}]}',true",
+        "'{\"operator\":\"ALL\",\"conditions\":[{\"type\":\"ENV\",\"key\":\"TEST_ENV_VAR\",\"value\":\"set2\"}]}',false",
+        "'{\"operator\":\"ALL\",\"conditions\":[{\"key\":\"TEST_ENV_VAR\",\"value\":\"set\"}]}',true",
+        "'{\"operator\":\"ALL\",\"conditions\":[{\"key\":\"TEST_ENV_VAR\",\"value\":\"set2\"}]}',false",
+        "'{\"conditions\":[{\"key\":\"TEST_ENV_VAR\",\"value\":\"set2\",\"negate\":true}]}',true",
+        "'{\"conditions\":[]}',true",
+        "'{\"operator\":\"ALL\"}',true",
+        "'{\"operator\":\"ANY\"}',false",
+        "'{}',true"
     })
     void eval(final String cond, final boolean expected) {
-        assertEquals(expected, evaluator.test(jsonb.fromJson(cond, Manifest.Conditions.class)), cond);
+        assertEquals(expected, evaluator.test(jsonb.fromString(Manifest.Conditions.class, cond)), cond);
     }
 }

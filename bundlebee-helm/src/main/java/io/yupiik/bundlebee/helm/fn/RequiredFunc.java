@@ -15,16 +15,14 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Defaults
-//metadata:end
+// metadata:end
 @Description("Fails if the value is empty")
 public class RequiredFunc implements HelmFunction {
     @Override

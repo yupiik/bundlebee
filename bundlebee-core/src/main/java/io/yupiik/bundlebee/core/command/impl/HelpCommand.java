@@ -15,67 +15,37 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.CompletingExecutable;
-import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.lang.ConfigHolder;
-import io.yupiik.bundlebee.core.service.CompletionService;
-import io.yupiik.bundlebee.core.service.ParameterExtractor;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-import java.util.List;
-import java.util.Map;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.concurrent.CompletionStage;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
 
-@Log
-@Dependent
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
+import io.yupiik.bundlebee.core.configuration.GlobalConfiguration;
+import io.yupiik.bundlebee.core.configuration.HelpConfiguration;
+import io.yupiik.bundlebee.core.service.ParameterExtractor;
+import io.yupiik.fusion.cli.internal.CliCommand;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
+@DefaultScoped
+@Command(name = "help", description = "print help for all available commands.")
 public class HelpCommand implements CompletingExecutable {
-    @Any
-    @Inject
-    private Instance<Executable> executables;
+    private static final Pattern NEWLINE = Pattern.compile("\n");
+    private static final Pattern SPACE = Pattern.compile(" ");
+    private final Logger log = Logger.getLogger(HelpCommand.class.getName());
 
-    @Any
-    @Inject
-    private Instance<ConfigHolder> configHolders;
+    public HelpCommand(final GlobalConfiguration options, final ParameterExtractor parameterExtractor) {
+        this.options = options.help();
+        this.parameterExtractor = parameterExtractor;
+    }
 
-    @Inject
-    private BeanManager beanManager;
-
-    @Inject
-    @Description("Which command to show help for. If not set it will show all commands.")
-    @ConfigProperty(name = "bundlebee.help.command", defaultValue = UNSET)
-    private String command;
-
-    @Inject
-    @Description("If `false` args are not shown, enable a lighter output.")
-    @ConfigProperty(name = "bundlebee.help.args", defaultValue = "true")
-    private boolean showArgs;
-
-    @Inject
-    @Description("If `false` shared configuration (by all commands) is not shown.")
-    @ConfigProperty(name = "bundlebee.help.shared", defaultValue = "true")
-    private boolean showSharedOptions;
-
-    @Inject
-    private ParameterExtractor parameterExtractor;
-
-    @Inject
-    private CompletionService completionService;
+    private final HelpConfiguration options;
+    private final ParameterExtractor parameterExtractor;
 
     @Override
     public String name() {
@@ -84,69 +54,60 @@ public class HelpCommand implements CompletingExecutable {
 
     @Override
     public String description() {
-        return "Print help for all available commands.";
+        return "print help for all available commands.";
     }
 
     @Override
     public Stream<String> complete(final Map<String, String> config, final String optionName) {
-        switch (optionName) {
-            case "command":
-                return completionService.getCommands().keySet().stream();
-            case "shared":
-            case "args":
-                return Stream.of("true", "false");
-            default:
-                return Stream.empty();
-        }
+        return switch (optionName) {
+            case "command" ->
+                parameterExtractor.commands().stream().map(io.yupiik.fusion.cli.internal.CliCommand::name);
+            case "shared", "args" -> Stream.of("true", "false");
+            default -> Stream.empty();
+        };
     }
 
     @Override
     public CompletionStage<?> execute() {
-        final var showAllCommands = UNSET.equals(command);
-        log.info("\n" +
-                "BundleBee\n" +
-                "\n" +
-                (showAllCommands ? "  BundleBee is a light Kubernetes package manager.\n\n" : "") +
-                (showSharedOptions ? sharedOptions() : "") +
-                (showAllCommands ? " Available commands:\n\n" : "") +
-                stream(executables)
-                        .filter(it -> showAllCommands || command.equals(it.name()))
-                        .filter(it -> !it.hidden())
-                        .map(executable -> {
-                            final var parameters = findParameters(executable).collect(toList());
-                            final var description = executable.description();
-                            final int end = description.indexOf("\n//");
-                            final var desc = reflowText(end > 0 ? description.substring(0, end) : description, "        ") +
-                                    (!showArgs || parameters.isEmpty() ? "" : "\n");
-                            return "" +
-                                    "  [] " + executable.name() + ": " +
-                                    Character.toLowerCase(desc.charAt(0)) + desc.substring(1) + (showArgs ? "\n" +
-                                    toString(parameters) : "");
-                        })
+        final var showAll = UNSET.equals(options.command());
+        final var shared = options.showSharedOptions()
+                ? " Shared Options:\n\n"
+                        + toString(parameterExtractor
+                                .sharedParameters()
+                                .map(parameter -> new ParameterExtractor.Parameter(
+                                        "--" + parameter.configName(),
+                                        parameterExtractor.defaultValue(parameter),
+                                        parameter.description()))
+                                .toList())
+                        + "\n\n"
+                : "";
+        log.info("\nBundleBee\n\n" + (showAll ? "  BundleBee is a light Kubernetes package manager.\n\n" : "")
+                + shared + (showAll ? " Available commands:\n\n" : "")
+                + parameterExtractor.commands().stream()
+                        .filter(command -> showAll || options.command().equals(command.name()))
+                        .filter(command -> !"true".equals(command.metadata().get("bundlebee.hidden")))
+                        .map(this::commandHelp)
                         .sorted()
-                        .collect(joining(showArgs ? "\n\n" : "\n", "", "\n")));
+                        .collect(joining(options.showArgs() ? "\n\n" : "\n", "", "\n")));
         return completedFuture(null);
     }
 
-    private String sharedOptions() {
-        return " Shared Options:\n" +
-                "\n" +
-                stream(configHolders)
-                        .map(ConfigHolder::getClass)
-                        .map(c -> c.getName().contains("$$") ? c.getSuperclass() : c) // unwrap proxy
-                        .map(it -> parameterExtractor.toParameters(it, n -> n).collect(toList()))
-                        .map(this::toString)
-                        .collect(joining("\n", "", "\n\n"));
-    }
-
-    // functionally we want executables.stream() but maven 3.6 requires this workaround for our maven plugin
-    private <T> Stream<T> stream(final Instance<T> instance) {
-        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(instance.iterator(), Spliterator.IMMUTABLE), false);
+    private String commandHelp(final CliCommand<?> command) {
+        final var description = command.description() == null ? "" : command.description();
+        final var end = description.indexOf("\n//");
+        final var summary = reflowText(end > 0 ? description.substring(0, end) : description, "        ");
+        final var parameters = command.parameters().stream()
+                .filter(parameter ->
+                        !"help".equals(command.name()) || parameter.configName().startsWith("bundlebee.help."))
+                .map(parameter -> parameterExtractor.toParameter(command, parameter))
+                .toList();
+        return "  [] " + command.name() + ": " + lowerFirst(summary)
+                + (options.showArgs() ? (parameters.isEmpty() ? "" : "\n") + "\n" + toString(parameters) : "");
     }
 
     // not perfect impl but sufficient for now
     private String reflowText(final String content, final String prefix) {
-        final var lines = content.split("\n");
+        final var lines = NEWLINE.split(content);
         final var builder = new StringBuilder();
         int currentCount = builder.length();
         for (final String s : lines) {
@@ -159,7 +120,7 @@ public class HelpCommand implements CompletingExecutable {
                 builder.append("\n").append(prefix);
                 currentCount = 0;
             }
-            final var words = line.split(" ");
+            final var words = SPACE.split(line);
             for (final String word : words) {
                 if (currentCount + word.length() + prefix.length() < 80) {
                     if (currentCount > 0) {
@@ -177,18 +138,17 @@ public class HelpCommand implements CompletingExecutable {
     }
 
     private String toString(final List<ParameterExtractor.Parameter> parameters) {
-        return parameters.stream().map(p -> "" +
-                "    " + p.getName() +
-                (p.getDefaultValue() != null ? " (default: " + p.getDefaultValue()
-                        .replace("\n", "\\\\n") + ")" : "") + ": " +
-                reflowText(p.getDescription(), "          "))
+        return parameters.stream()
+                .map(p -> "    " + p.getName()
+                        + (p.getDefaultValue() != null
+                                ? " (default: " + p.getDefaultValue().replace("\n", "\\\\n") + ")"
+                                : "")
+                        + ": " + reflowText(lowerFirst(p.getDescription()), "          "))
                 .sorted()
                 .collect(joining("\n"));
     }
 
-    private Stream<ParameterExtractor.Parameter> findParameters(final Executable executable) {
-        // see io.yupiik.bundlebee.core.BundleBee.toProperties
-        final var prefix = Pattern.compile("^bundlebee\\." + executable.name() + "\\.");
-        return parameterExtractor.toParameters(executable.getClass(), name -> prefix.matcher(name).replaceFirst(""));
+    private String lowerFirst(final String value) {
+        return value == null || value.isEmpty() ? "" : Character.toLowerCase(value.charAt(0)) + value.substring(1);
     }
 }

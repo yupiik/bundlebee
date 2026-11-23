@@ -15,19 +15,21 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-import javax.json.Json;
-import javax.json.stream.JsonGenerator;
-import java.io.StringWriter;
+import io.yupiik.bundlebee.helm.internal.JsonFunctionSupport;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.json.JsonMapper;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = JSON/YAML
-//metadata:end
+// metadata:end
 @Description("Encodes a value to JSON, returns empty string on null")
-public class ToJsonFunc implements io.yupiik.bundlebee.helm.HelmFunction {
+public class ToJsonFunc extends JsonFunctionSupport {
+    public ToJsonFunc(final JsonMapper mapper) {
+        super(mapper);
+    }
+
     @Override
     public String name() {
         return "toJson";
@@ -35,65 +37,9 @@ public class ToJsonFunc implements io.yupiik.bundlebee.helm.HelmFunction {
 
     @Override
     public Object execute(final Object... args) {
-        if (args == null || args.length == 0) {
+        if (args == null || args.length == 0 || args[0] == null) {
             return "";
         }
-        final var value = args[0];
-        if (value == null) {
-            return "";
-        }
-        return toJson(value);
-    }
-
-    private String toJson(final Object value) {
-        final var writer = new StringWriter();
-        try (var generator = Json.createGenerator(writer)) {
-            writeValue(generator, value);
-        }
-        return writer.toString();
-    }
-
-    private void writeValue(final JsonGenerator generator, final Object value) {
-        if (value == null) {
-            generator.writeNull();
-        } else if (value instanceof String) {
-            final String s = (String) value;
-            generator.write(s);
-        } else if (value instanceof Boolean) {
-            final Boolean b = (Boolean) value;
-            generator.write(b);
-        } else if (value instanceof Number) {
-            final Number n = (Number) value;
-            if (n instanceof java.math.BigDecimal) {
-                generator.write((java.math.BigDecimal) n);
-            } else if (n instanceof java.math.BigInteger) {
-                generator.write((java.math.BigInteger) n);
-            } else if (n instanceof Long) {
-                generator.write(n.longValue());
-            } else if (n instanceof Double) {
-                generator.write(n.doubleValue());
-            } else if (n instanceof Float) {
-                generator.write(n.doubleValue());
-            } else {
-                generator.write(n.intValue());
-            }
-        } else if (value instanceof java.util.Map) {
-            final java.util.Map<?, ?> map = (java.util.Map<?, ?>) value;
-            generator.writeStartObject();
-            for (final var entry : map.entrySet()) {
-                generator.writeKey(String.valueOf(entry.getKey()));
-                writeValue(generator, entry.getValue());
-            }
-            generator.writeEnd();
-        } else if (value instanceof java.util.List) {
-            final java.util.List<?> list = (java.util.List<?>) value;
-            generator.writeStartArray();
-            for (final var item : list) {
-                writeValue(generator, item);
-            }
-            generator.writeEnd();
-        } else {
-            generator.write(value.toString());
-        }
+        return encode(args[0], false, false);
     }
 }

@@ -15,22 +15,20 @@
  */
 package io.yupiik.bundlebee.core.command.model.sarif;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import static java.util.Collections.unmodifiableMap;
 
-import javax.json.bind.annotation.JsonbProperty;
-import javax.json.bind.annotation.JsonbPropertyOrder;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonbPropertyOrder({"id", "shortDescription", "helpUri", "properties"})
-public class Rule {
-    @JsonbProperty
-    private String id;
-    private Text shortDescription;
-    private String helpUri;
-    private Map<String, Object> properties;
+@JsonModel
+public record Rule(
+        @JsonProperty(order = 0) String id,
+        @JsonProperty(order = 1) Text shortDescription,
+        @JsonProperty(order = 2) String helpUri,
+        @JsonProperty(order = 3) Map<String, Object> properties) {
+    public Rule {
+        properties = properties == null ? null : unmodifiableMap(new LinkedHashMap<>(properties));
+    }
 }

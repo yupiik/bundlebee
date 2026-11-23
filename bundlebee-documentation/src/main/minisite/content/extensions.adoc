@@ -1,0 +1,162 @@
+= Writing Java extensions
+:minisite-index: 1110
+:minisite-index-title: Java extensions
+:minisite-index-description: Build-time Fusion registration, configuration and JSON integration.
+:minisite-index-icon: plug
+
+BundleBee 2 Java extensions target Java 17 and Yupiik Fusion `1.2.1-SNAPSHOT`.
+Use the same BundleBee version as the host application (`2.0.0-SNAPSHOT` for the current development line).
+Manifest-only bundles do not need Java extension code or a dependency injection container.
+
+== Build-time registration
+
+Compile your extension with the Fusion annotation processor and include its generated module metadata in the resulting JAR.
+Use `io.yupiik.fusion.framework.api.scope.DefaultScoped` for ordinary beans and constructor parameters for dependencies.
+A CDI `beans.xml`, a CDI scope annotation or a class merely implementing an interface does not register a Fusion bean.
+Do not discard generated service resources when assembling a shaded JAR.
+
+== Configuration sources
+
+Use `io.yupiik.fusion.framework.api.configuration.Configuration` to read host configuration.
+An additional source implements `io.yupiik.fusion.framework.api.configuration.ConfigurationSource`:
+
+[source,java]
+----
+public final class DeploymentConfiguration implements ConfigurationSource {
+    private final Map<String, String> values;
+
+    public DeploymentConfiguration(final Map<String, String> values) {
+        this.values = Map.copyOf(values);
+    }
+
+    @Override
+    public String get(final String key) {
+        return values.get(key);
+    }
+}
+----
+
+Register the source in the Fusion container that owns the execution.
+Returning `null` means the source does not define the key; an empty string is an explicit value.
+Do not store credentials, a Maven session or an expression evaluator in a static field.
+For invocation-specific configuration prefer the BundleBee launch integration over a global service registration.
+
+== Commands and metadata
+
+Use Fusion's `@Command` and pass a typed `@RootConfiguration` record as the first constructor parameter.
+A command must implement `Runnable`; implementing BundleBee's `Executable` provides a synchronous `run()` adapter for an asynchronous `execute()` result.
+The adapter waits for completion, preserves interruption, and propagates runtime failures and errors.
+
+[source,java]
+----
+@DefaultScoped
+@Command(name = "greet", description = "Greet a user.")
+public class Greet implements Runnable {
+    private final Options options;
+
+    public Greet(final Options options) {
+        this.options = options;
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Hello " + options.name());
+    }
+
+    @RootConfiguration("greet")
+    public record Options(
+            @Property(defaultValue = "\"world\"", documentation = "The user to greet.")
+            String name) {
+    }
+}
+----
+
+Fusion generates both the command descriptor and the configuration factory.
+Use `greet --greet-name user`, or Fusion's command-prefix shortcut `greet --name user` when the configuration prefix matches the command name.
+BundleBee's built-in configuration names retain their `bundlebee.<command>` prefix, so their canonical CLI form is `--bundlebee-<command>-<property>`.
+A `@RootConfiguration("-")` record can declare complete property names explicitly with `@Property(value = "...")`.
+Defaults in `@Property` are Java expressions, not raw MicroProfile default strings.
+Use `@Property.documentation` for option documentation; runtime field annotations and field reflection are not used.
+
+Additional command dependencies must be simple bean types after the configuration parameter.
+To inject a list of extensions, inject a scoped wrapper bean whose constructor receives that list, as documented by Fusion CLI.
+Nested configuration records compose options explicitly; Java superclass fields are not inspected for inherited options.
+The generated `CliCommand.parameters()` supplies names, types, defaults and descriptions to help, completion, documentation and Maven generation.
+Discovery creates descriptors only, not command instances or their HTTP/Kubernetes dependencies.
+No separate BundleBee command catalog or extension registration list is required.
+To hide an internal command from BundleBee's reference output, add `@BeanMetadata(name = "bundlebee.hidden", value = "true")` to its class.
+Native Fusion usage remains controlled by Fusion itself.
+Test both command execution and metadata-only discovery offline.
+See https://www.yupiik.io/fusion/fusion/cli.html[Fusion CLI documentation] for the native command and argument contract.
+
+== JSON data
+
+Inject Fusion's `io.yupiik.fusion.json.JsonMapper` for JSON serialization and parsing.
+For arbitrary Kubernetes resources, use generic trees instead of JSON-P objects:
+
+[source,java]
+----
+final Object resource = mapper.fromString(Object.class, json);
+final String serialized = mapper.toString(resource);
+----
+
+Objects are maps, arrays are lists and scalar values remain Java scalar values.
+Check the shape before casting values obtained from external documents.
+For typed records, use Fusion's JSON model annotations and generated codecs, and ensure the processor output is included in the extension artifact.
+Johnzon configuration properties and JSON-B annotations do not configure Fusion codecs.
+
+== Synchronous events
+
+Replace CDI observer parameters with `io.yupiik.fusion.framework.build.api.event.OnEvent` and compile the observer with the Fusion processor.
+Fusion dispatches events synchronously on the emitting thread, and `io.yupiik.fusion.framework.build.api.order.Order` on the event parameter orders observers (lower values first).
+An observer exception propagates to the caller; observers are not fire-and-forget tasks.
+Do not move descriptor preparation or placeholder observation to a background executor when subsequent processing depends on its result.
+
+[source,java]
+----
+import io.yupiik.bundlebee.core.event.OnPrepareDescriptor;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.event.OnEvent;
+import io.yupiik.fusion.framework.build.api.order.Order;
+
+@DefaultScoped
+public class ReleasePlaceholders {
+    public void prepare(@OnEvent @Order(100) final OnPrepareDescriptor event) {
+        event.getPlaceholders().put("release.channel", "stable");
+    }
+}
+----
+
+`OnPrepareDescriptor.getPlaceholders()` is the mutable descriptor placeholder map, populated before descriptor preparation continues.
+Use the event execution id to distinguish concurrent executions instead of storing invocation state in a singleton.
+`OnPlaceholder` reports a resolution; it does not offer a mutable replacement value.
+The script/substitutor extension fixture tests generated service discovery, ordered map updates on the calling thread, and propagation of placeholder observer failures.
+No hand-written Fusion module or runtime annotation scanner is needed.
+
+== Script access to extension beans
+
+JSR223 scripts can call `lookupByType.apply(Java.type('com.acme.ReleaseValues').class)` with a registered Fusion bean type.
+The old CDI `lookupByName` binding has been removed; use `lookupByType` instead.
+Fusion's container resolves types; it does not expose an equivalent to CDI's arbitrary named-bean lookup.
+An unregistered class is not made into a bean by mentioning it in a script.
+Compile the bean with the processor and retain `META-INF/services/io.yupiik.fusion.framework.api.container.FusionModule` and the generated classes in the extension JAR.
+
+Lookup handles are retained until evaluation and string conversion finish, then closed in reverse lookup order, including on script failure.
+Do not keep a looked-up dependent bean for later asynchronous work or close a container-owned injected resource yourself.
+
+Scripts use JSR223 engines supplied on the execution classpath; Java 17 and later do not supply Nashorn as part of the JDK.
+The core test dependency `org.openjdk.nashorn:nashorn-core:15.4` verifies JavaScript execution but does not install a JavaScript engine in the shipped CLI.
+Supply the engine and its runtime dependencies to the launcher that evaluates your scripts.
+Inline scripts default to `js`; a comment such as `// bundlebee.language: javascript` selects another engine language.
+Resource scripts use the file extension, and engine resolution tries extension, name, then MIME type.
+Only installed engines can be selected; adding a language marker does not install one.
+Treat scripts as trusted code: they can access Java classes and registered beans, and are not sandboxed.
+See xref:migration-2.adoc#script-bean-lookup[the incompatible named-bean recipe and migration choices].
+
+== Lifecycle and testing
+
+Let the container own injected resources and close resources created directly by the extension.
+Keep execution-local state out of singleton beans and avoid global configuration mutation.
+Test repeated and concurrent invocations with different configuration values to detect state leakage.
+Test generated help and documentation for stable ordering and non-empty output; a successful generator that emits an empty reference is not sufficient verification.
+For a migration checklist, see xref:migration-2.adoc[Migrating to BundleBee 2].

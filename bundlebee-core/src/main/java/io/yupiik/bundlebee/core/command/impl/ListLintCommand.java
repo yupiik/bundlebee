@@ -15,25 +15,28 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.command.impl.lint.LintingCheck;
-import lombok.extern.java.Log;
-
-import javax.enterprise.context.Dependent;
-import javax.enterprise.inject.Any;
-import javax.enterprise.inject.Instance;
-import javax.inject.Inject;
-import java.util.concurrent.CompletionStage;
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.joining;
 
-@Log
-@Dependent
+import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.command.impl.lint.LintingCheck;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
+import java.util.List;
+import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
+
+@DefaultScoped
+@Command(name = "list-lint-rules", description = "List available linting rules (ease exclusions for ex).")
 public class ListLintCommand implements Executable {
-    @Inject
-    @Any
-    private Instance<LintingCheck> checks;
+    private final Logger log = Logger.getLogger(ListLintCommand.class.getName());
+
+    public ListLintCommand(final Options options, Components components) {
+        this.checks = components.values();
+    }
+
+    private final List<LintingCheck> checks;
 
     @Override
     public String name() {
@@ -47,10 +50,14 @@ public class ListLintCommand implements Executable {
 
     @Override
     public CompletionStage<?> execute() {
-        final var output = checks.stream()
-                .map(c -> " *" + c.name())
-                .collect(joining("\n"));
+        final var output = checks.stream().map(c -> " *" + c.name()).collect(joining("\n"));
         log.info(output);
         return completedFuture(output);
     }
+
+    @RootConfiguration("-")
+    public record Options() {}
+
+    @DefaultScoped
+    public record Components(List<LintingCheck> values) {}
 }

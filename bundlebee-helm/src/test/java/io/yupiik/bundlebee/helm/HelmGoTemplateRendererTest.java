@@ -15,59 +15,73 @@
  */
 package io.yupiik.bundlebee.helm;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import io.yupiik.bundlebee.helm.fn.AndFunc;
 import io.yupiik.bundlebee.helm.fn.B64EncFunc;
+import io.yupiik.bundlebee.helm.fn.CatFunc;
+import io.yupiik.bundlebee.helm.fn.ContainsFunc;
 import io.yupiik.bundlebee.helm.fn.DefaultFunc;
 import io.yupiik.bundlebee.helm.fn.DictFunc;
-import io.yupiik.bundlebee.helm.fn.ContainsFunc;
-import io.yupiik.bundlebee.helm.fn.AndFunc;
-import io.yupiik.bundlebee.helm.fn.OrFunc;
-import io.yupiik.bundlebee.helm.fn.NotFunc;
 import io.yupiik.bundlebee.helm.fn.EqFunc;
 import io.yupiik.bundlebee.helm.fn.HasFunc;
 import io.yupiik.bundlebee.helm.fn.HasPrefixFunc;
 import io.yupiik.bundlebee.helm.fn.HasSuffixFunc;
-import io.yupiik.bundlebee.helm.fn.LowerFunc;
-import io.yupiik.bundlebee.helm.fn.ListFunc;
-import io.yupiik.bundlebee.helm.fn.NindentFunc;
 import io.yupiik.bundlebee.helm.fn.IndentFunc;
+import io.yupiik.bundlebee.helm.fn.ListFunc;
+import io.yupiik.bundlebee.helm.fn.LowerFunc;
+import io.yupiik.bundlebee.helm.fn.NindentFunc;
+import io.yupiik.bundlebee.helm.fn.NospaceFunc;
+import io.yupiik.bundlebee.helm.fn.NotFunc;
+import io.yupiik.bundlebee.helm.fn.OrFunc;
+import io.yupiik.bundlebee.helm.fn.PluralFunc;
+import io.yupiik.bundlebee.helm.fn.QuoteFunc;
+import io.yupiik.bundlebee.helm.fn.RepeatFunc;
+import io.yupiik.bundlebee.helm.fn.ReplaceFunc;
+import io.yupiik.bundlebee.helm.fn.TitleFunc;
 import io.yupiik.bundlebee.helm.fn.TrimFunc;
 import io.yupiik.bundlebee.helm.fn.TrimPrefixFunc;
 import io.yupiik.bundlebee.helm.fn.TrimSuffixFunc;
 import io.yupiik.bundlebee.helm.fn.UpperFunc;
-import io.yupiik.bundlebee.helm.fn.QuoteFunc;
-import io.yupiik.bundlebee.helm.fn.ReplaceFunc;
-import io.yupiik.bundlebee.helm.fn.RepeatFunc;
-import io.yupiik.bundlebee.helm.fn.NospaceFunc;
-import io.yupiik.bundlebee.helm.fn.PluralFunc;
-import io.yupiik.bundlebee.helm.fn.CatFunc;
-import io.yupiik.bundlebee.helm.fn.TitleFunc;
 import io.yupiik.bundlebee.helm.fn.WrapFunc;
-import org.junit.jupiter.api.Test;
-
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
 
 class HelmGoTemplateRendererTest {
 
     private Map<String, HelmFunction> defaultFunctions() {
         final var map = new LinkedHashMap<String, HelmFunction>();
         for (final var fn : List.<HelmFunction>of(
-                new TrimFunc(), new TrimPrefixFunc(), new TrimSuffixFunc(),
-                new UpperFunc(), new LowerFunc(), new TitleFunc(),
-                new RepeatFunc(), new ReplaceFunc(), new ContainsFunc(),
-                new HasPrefixFunc(), new HasSuffixFunc(),
-                new QuoteFunc(), new NospaceFunc(), new IndentFunc(),
-                new NindentFunc(), new PluralFunc(), new CatFunc(),
-                new WrapFunc(), new DefaultFunc(), new DictFunc(),
-                new ListFunc(), new B64EncFunc(),
-                new AndFunc(), new OrFunc(), new NotFunc(),
-                new EqFunc(), new HasFunc())) {
+                new TrimFunc(),
+                new TrimPrefixFunc(),
+                new TrimSuffixFunc(),
+                new UpperFunc(),
+                new LowerFunc(),
+                new TitleFunc(),
+                new RepeatFunc(),
+                new ReplaceFunc(),
+                new ContainsFunc(),
+                new HasPrefixFunc(),
+                new HasSuffixFunc(),
+                new QuoteFunc(),
+                new NospaceFunc(),
+                new IndentFunc(),
+                new NindentFunc(),
+                new PluralFunc(),
+                new CatFunc(),
+                new WrapFunc(),
+                new DefaultFunc(),
+                new DictFunc(),
+                new ListFunc(),
+                new B64EncFunc(),
+                new AndFunc(),
+                new OrFunc(),
+                new NotFunc(),
+                new EqFunc(),
+                new HasFunc())) {
             map.put(fn.name(), fn);
         }
         return map;
@@ -82,15 +96,15 @@ class HelmGoTemplateRendererTest {
 
     @Test
     void simpleVariable() {
-        final var result = render("Hello {{ .Values.name }}!", Map.of(
-                "Values", Map.of("name", "world")));
+        final var result = render("Hello {{ .Values.name }}!", Map.of("Values", Map.of("name", "world")));
         assertEquals("Hello world!", result);
     }
 
     @Test
     void nestedVariable() {
-        final var result = render("{{ .Values.image.repository }}:{{ .Values.image.tag }}", Map.of(
-                "Values", Map.of("image", Map.of("repository", "nginx", "tag", "1.19"))));
+        final var result = render(
+                "{{ .Values.image.repository }}:{{ .Values.image.tag }}",
+                Map.of("Values", Map.of("image", Map.of("repository", "nginx", "tag", "1.19"))));
         assertEquals("nginx:1.19", result);
     }
 
@@ -119,10 +133,12 @@ class HelmGoTemplateRendererTest {
     void defineAndTemplate() {
         final var functions = defaultFunctions();
         final var renderer = new HelmGoTemplateRenderer(functions);
-        final var defineTokens = new HelmGoTemplateLexer().tokenize("{{- define \"myhelper\" -}}helper-{{ . }}{{- end }}");
+        final var defineTokens =
+                new HelmGoTemplateLexer().tokenize("{{- define \"myhelper\" -}}helper-{{ . }}{{- end }}");
         final var defineNodes = new HelmGoTemplateParser(defineTokens).parse();
         renderer.registerDefines(defineNodes);
-        final var templateTokens = new HelmGoTemplateLexer().tokenize("prefix-{{ template \"myhelper\" \"data\" }}-suffix");
+        final var templateTokens =
+                new HelmGoTemplateLexer().tokenize("prefix-{{ template \"myhelper\" \"data\" }}-suffix");
         final var templateNodes = new HelmGoTemplateParser(templateTokens).parse();
         final var result = renderer.render(templateNodes, Map.of());
         assertEquals("prefix-helper-data-suffix", result);
@@ -201,16 +217,14 @@ class HelmGoTemplateRendererTest {
     @Test
     void releaseContext() {
         final var template = "{{ .Release.Name }}-{{ .Release.Namespace }}";
-        final var result = render(template, Map.of(
-                "Release", Map.of("Name", "my-release", "Namespace", "default")));
+        final var result = render(template, Map.of("Release", Map.of("Name", "my-release", "Namespace", "default")));
         assertEquals("my-release-default", result);
     }
 
     @Test
     void chartContext() {
         final var template = "{{ .Chart.Name }}-{{ .Chart.Version }}";
-        final var result = render(template, Map.of(
-                "Chart", Map.of("Name", "my-chart", "Version", "1.0.0")));
+        final var result = render(template, Map.of("Chart", Map.of("Name", "my-chart", "Version", "1.0.0")));
         assertEquals("my-chart-1.0.0", result);
     }
 
@@ -281,10 +295,12 @@ class HelmGoTemplateRendererTest {
     void andWithNull() {
         final var template = "{{ and .Values.a .Values.b }}";
         final var ctx = new HashMap<String, Object>();
-        ctx.put("Values", new HashMap<String, Object>() {{
-            put("a", null);
-            put("b", "world");
-        }});
+        ctx.put("Values", new HashMap<String, Object>() {
+            {
+                put("a", null);
+                put("b", "world");
+            }
+        });
         assertEquals("<nil>", render(template, ctx));
     }
 
@@ -415,10 +431,12 @@ class HelmGoTemplateRendererTest {
     void eqWithNull() {
         final var template = "{{ eq .Values.a .Values.b }}";
         final var ctx = new HashMap<String, Object>();
-        ctx.put("Values", new HashMap<String, Object>() {{
-            put("a", null);
-            put("b", "hello");
-        }});
+        ctx.put("Values", new HashMap<String, Object>() {
+            {
+                put("a", null);
+                put("b", "hello");
+            }
+        });
         assertEquals("false", render(template, ctx));
     }
 
@@ -426,10 +444,12 @@ class HelmGoTemplateRendererTest {
     void eqBothNull() {
         final var template = "{{ eq .Values.a .Values.b }}";
         final var ctx = new HashMap<String, Object>();
-        ctx.put("Values", new HashMap<String, Object>() {{
-            put("a", null);
-            put("b", null);
-        }});
+        ctx.put("Values", new HashMap<String, Object>() {
+            {
+                put("a", null);
+                put("b", null);
+            }
+        });
         assertEquals("true", render(template, ctx));
     }
 
@@ -457,17 +477,34 @@ class HelmGoTemplateRendererTest {
     @Test
     void hasInList() {
         final var template = "{{ has .Values.needle .Values.haystack }}";
-        assertEquals("true", render(template, Map.of("Values", Map.of("needle", "b", "haystack", List.of("a", "b", "c")))));
-        assertEquals("false", render(template, Map.of("Values", Map.of("needle", "d", "haystack", List.of("a", "b", "c")))));
+        assertEquals(
+                "true", render(template, Map.of("Values", Map.of("needle", "b", "haystack", List.of("a", "b", "c")))));
+        assertEquals(
+                "false", render(template, Map.of("Values", Map.of("needle", "d", "haystack", List.of("a", "b", "c")))));
     }
 
     @Test
     void andWithOrAndEq() {
-        final var template = "{{ and .Values.externalTrafficPolicy (or (eq .Values.serviceType \"LoadBalancer\") (eq .Values.serviceType \"NodePort\")) }}";
-        assertEquals("true", render(template, Map.of("Values", Map.of("externalTrafficPolicy", "Local", "serviceType", "LoadBalancer"))));
-        assertEquals("true", render(template, Map.of("Values", Map.of("externalTrafficPolicy", "Local", "serviceType", "NodePort"))));
-        assertEquals("false", render(template, Map.of("Values", Map.of("externalTrafficPolicy", "Local", "serviceType", "ClusterIP"))));
-        assertEquals("", render(template, Map.of("Values", Map.of("externalTrafficPolicy", "", "serviceType", "LoadBalancer"))));
+        final var template =
+                "{{ and .Values.externalTrafficPolicy (or (eq .Values.serviceType \"LoadBalancer\") (eq .Values.serviceType \"NodePort\")) }}";
+        assertEquals(
+                "true",
+                render(
+                        template,
+                        Map.of("Values", Map.of("externalTrafficPolicy", "Local", "serviceType", "LoadBalancer"))));
+        assertEquals(
+                "true",
+                render(
+                        template,
+                        Map.of("Values", Map.of("externalTrafficPolicy", "Local", "serviceType", "NodePort"))));
+        assertEquals(
+                "false",
+                render(
+                        template,
+                        Map.of("Values", Map.of("externalTrafficPolicy", "Local", "serviceType", "ClusterIP"))));
+        assertEquals(
+                "",
+                render(template, Map.of("Values", Map.of("externalTrafficPolicy", "", "serviceType", "LoadBalancer"))));
     }
 
     @Test
@@ -489,8 +526,10 @@ class HelmGoTemplateRendererTest {
     @Test
     void andWithParensAndCapabilities() {
         final var template = "{{ and ( .Values.hasMonitoring ) (eq .Values.type \"ServiceMonitor\") }}";
-        assertEquals("true", render(template, Map.of("Values", Map.of("hasMonitoring", true, "type", "ServiceMonitor"))));
-        assertEquals("false", render(template, Map.of("Values", Map.of("hasMonitoring", false, "type", "ServiceMonitor"))));
+        assertEquals(
+                "true", render(template, Map.of("Values", Map.of("hasMonitoring", true, "type", "ServiceMonitor"))));
+        assertEquals(
+                "false", render(template, Map.of("Values", Map.of("hasMonitoring", false, "type", "ServiceMonitor"))));
     }
 
     @Test

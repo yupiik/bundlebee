@@ -15,16 +15,18 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.CompletingExecutable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.kube.HttpKubeClient;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.joining;
 
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
+import io.yupiik.fusion.kubernetes.client.KubernetesClient;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
@@ -32,48 +34,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.joining;
-
-@Log
-@Dependent
+@DefaultScoped
+@Command(
+        name = "http",
+        description = "Execute a HTTP request over Kubernetes client. "
+                + "This is mainly for not yet existing commands and to reuse all the client auto-configuration.")
 public class HttpCommand implements CompletingExecutable {
-    @Inject
-    private HttpKubeClient kube;
+    private final Logger log = Logger.getLogger(HttpCommand.class.getName());
 
-    @Inject
-    @Description("HTTP verb to use for the request.")
-    @ConfigProperty(name = "bundlebee.http.method", defaultValue = "GET")
+    public HttpCommand(final Options options, final KubernetesClient kube) {
+        this.kube = kube;
+        this.method = options.method();
+        this.payload = options.payload();
+        this.headers = options.headers();
+        this.path = options.path();
+        this.payloadOnly = options.payloadOnly();
+        this.failOnError = options.failOnError();
+    }
+
+    private final KubernetesClient kube;
     private String method;
-
-    @Inject
-    @Description("HTTP payload to use for the request - skipped for method different from `PATCH`, `POST` and `PUT`.")
-    @ConfigProperty(name = "bundlebee.http.payload", defaultValue = "")
     private String payload;
-
-    @Inject
-    @Description("Request HTTP headers (in properties format).")
-    @ConfigProperty(name = "bundlebee.http.headers", defaultValue = "Accept: application/json\nContent-Type: application/json")
     private String headers;
-
-    @Inject
-    @Description("" +
-            "HTTP request path (optionally with query parameters). " +
-            "You can use the absolute kubernetes URL but if the value does not start with a protocol (`http` or `https`) " +
-            "then it will be prefixed by the Kubernetes API base.")
-    @ConfigProperty(name = "bundlebee.http.path", defaultValue = "/api/")
     private String path;
-
-    @Inject
-    @Description("If `true`, only the payload of the response will be logged if successful.")
-    @ConfigProperty(name = "bundlebee.http.payloadOnly", defaultValue = "true")
     private boolean payloadOnly;
-
-    @Inject
-    @Description("If `true`, an exception if thrown if the status is not between 200 and 299 (making the execution a failure).")
-    @ConfigProperty(name = "bundlebee.http.failOnError", defaultValue = "true")
     private boolean failOnError;
 
     @Override
@@ -96,24 +83,33 @@ public class HttpCommand implements CompletingExecutable {
 
     @Override
     public String description() {
-        return "Execute a HTTP request over Kubernetes client. " +
-                "This is mainly for not yet existing commands and to reuse all the client auto-configuration.";
+        return "Execute a HTTP request over Kubernetes client. "
+                + "This is mainly for not yet existing commands and to reuse all the client auto-configuration.";
     }
 
     @Override
     public CompletionStage<?> execute() {
         final var requestBuilder = HttpRequest.newBuilder()
-                .method(this.method, List.of("PATCH", "POST", "PUT").contains(method) ?
-                        HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8) :
-                        HttpRequest.BodyPublishers.noBody());
+                .method(
+                        this.method,
+                        List.of("PATCH", "POST", "PUT").contains(method)
+                                ? HttpRequest.BodyPublishers.ofString(payload, StandardCharsets.UTF_8)
+                                : HttpRequest.BodyPublishers.noBody());
         final var properties = new Properties();
-        try (final var reader = new StringReader(headers)) {
+        try (var reader = new StringReader(headers)) {
             properties.load(reader);
         } catch (final IOException e) {
             throw new IllegalArgumentException(e);
         }
         properties.stringPropertyNames().forEach(name -> requestBuilder.setHeader(name, properties.getProperty(name)));
-        return kube.execute(requestBuilder, path)
+        return kube.sendAsync(
+                        requestBuilder
+                                .uri(URI.create(
+                                        path.startsWith("http:") || path.startsWith("https:")
+                                                ? path
+                                                : kube.base().toString() + path))
+                                .build(),
+                        HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
                 .thenApply(response -> {
                     if (isSuccess(response.statusCode())) {
                         if (payloadOnly) {
@@ -123,8 +119,8 @@ public class HttpCommand implements CompletingExecutable {
                         log.info(toHttpResponseDump(response));
                         return response;
                     }
-                    final var error = "Invalid HTTP response for request " + method + " " + path + ":\n" +
-                            "\n" + toHttpResponseDump(response);
+                    final var error = "Invalid HTTP response for request " + method + " " + path + ":\n" + "\n"
+                            + toHttpResponseDump(response);
                     if (failOnError) {
                         throw new IllegalStateException(error);
                     }
@@ -134,15 +130,57 @@ public class HttpCommand implements CompletingExecutable {
     }
 
     private String toHttpResponseDump(final HttpResponse<String> response) {
-        return "HTTP/1.1\n" +
-                response.headers().map().entrySet().stream()
+        return "HTTP/1.1\n"
+                + response.headers().map().entrySet().stream()
                         .sorted(Map.Entry.comparingByKey())
                         .map(it -> it.getKey() + ": " + String.join(", ", it.getValue()))
-                        .collect(joining("\n", "", "\n")) + '\n' +
-                ofNullable(response.body()).orElse("");
+                        .collect(joining("\n", "", "\n"))
+                + '\n' + ofNullable(response.body()).orElse("");
     }
 
     private boolean isSuccess(final int statusCode) {
         return statusCode > 199 && statusCode < 300;
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.http.method",
+                    defaultValue = "\"GET\"",
+                    documentation = "HTTP verb to use for the request.")
+            String method,
+
+            @Property(
+                    value = "bundlebee.http.payload",
+                    defaultValue = "\"\"",
+                    documentation =
+                            "HTTP payload to use for the request - skipped for method different from `PATCH`, `POST` and `PUT`.")
+            String payload,
+
+            @Property(
+                    value = "bundlebee.http.headers",
+                    defaultValue = "\"Accept: application/json\\nContent-Type: application/json\"",
+                    documentation = "Request HTTP headers (in properties format).")
+            String headers,
+
+            @Property(
+                    value = "bundlebee.http.path",
+                    defaultValue = "\"/api/\"",
+                    documentation = "HTTP request path (optionally with query parameters). "
+                            + "You can use the absolute kubernetes URL but if the value does not start with a protocol (`http` or `https`) "
+                            + "then it will be prefixed by the Kubernetes API base.")
+            String path,
+
+            @Property(
+                    value = "bundlebee.http.payloadOnly",
+                    defaultValue = "true",
+                    documentation = "If `true`, only the payload of the response will be logged if successful.")
+            boolean payloadOnly,
+
+            @Property(
+                    value = "bundlebee.http.failOnError",
+                    defaultValue = "true",
+                    documentation =
+                            "If `true`, an exception if thrown if the status is not between 200 and 299 (making the execution a failure).")
+            boolean failOnError) {}
 }
