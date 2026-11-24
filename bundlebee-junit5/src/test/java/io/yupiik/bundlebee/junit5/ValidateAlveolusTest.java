@@ -19,20 +19,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ValidateAlveolusTest {
     @ValidateAlveolus("ValidateAlveolusTest.simple")
-    void simple() {
-    }
+    void simple() {}
 
     @ValidateAlveolus("ValidateAlveolusTest.simple")
     void simpleWithLogCheck(final CommandExecutor executor, final LogCapturer logCapturer) {
         executor.run();
 
-        // no manifest matching was found but apply installed all the available ones from the classpath (which is what was requested with location=auto)
+        // no manifest matching was found but apply installed all the available ones from the classpath (which is what
+        // was requested with location=auto)
         final var all = logCapturer.all();
         assertEquals(1, all.size());
-        assertEquals("" +
-                        "Auto scanning the classpath, " +
-                        "this can be dangerous if you don't fully control your classpath, " +
-                        "ensure to set a particular alveolus if you doubt about this behavior",
+        assertEquals(
+                "Auto scanning the classpath, " + "this can be dangerous if you don't fully control your classpath, "
+                        + "ensure to set a particular alveolus if you doubt about this behavior",
                 all.iterator().next().getMessage());
     }
 
@@ -41,7 +40,8 @@ class ValidateAlveolusTest {
         kubernetesApi.capture();
         executor.run();
 
-        // no manifest matching was found but apply installed all the available ones from the classpath (which is what was requested with location=auto)
+        // no manifest matching was found but apply installed all the available ones from the classpath (which is what
+        // was requested with location=auto)
         final var all = kubernetesApi.captured();
         assertEquals(0, all.size());
     }

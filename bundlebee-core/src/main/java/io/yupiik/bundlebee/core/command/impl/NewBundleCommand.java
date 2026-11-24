@@ -15,60 +15,44 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.CompletingExecutable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-
-@Log
-@Dependent
+@DefaultScoped
+@Command(name = "new", description = "Creates a new project.")
 public class NewBundleCommand implements CompletingExecutable {
-    @Inject
-    @Description("Bundle groupId.")
-    @ConfigProperty(name = "bundlebee.new.group", defaultValue = UNSET)
-    private String group;
+    private final Logger log = Logger.getLogger(NewBundleCommand.class.getName());
 
-    @Inject
-    @Description("Bundle artifactId.")
-    @ConfigProperty(name = "bundlebee.new.artifact", defaultValue = UNSET)
-    private String artifact;
+    public NewBundleCommand(final Options options) {
+        this.group = options.group();
+        this.artifact = options.artifact();
+        this.version = options.version();
+        this.directory = options.directory();
+        this.skipSamples = options.skipSamples();
+        this.skipPom = options.skipPom();
+        this.force = options.force();
+    }
 
-    @Inject
-    @Description("Bundle version.")
-    @ConfigProperty(name = "bundlebee.new.version", defaultValue = "1.0.0")
-    private String version;
-
-    @Inject
-    @Description("Where to create the project. If not set it will use the artifact value in current folder.")
-    @ConfigProperty(name = "bundlebee.new.dir", defaultValue = UNSET)
-    private String directory;
-
-    @Inject
-    @Description("By default a sample alveolus with a config map is generated, if `false` it will be skipped.")
-    @ConfigProperty(name = "bundlebee.new.skipSamples", defaultValue = "false")
-    private boolean skipSamples;
-
-    @Inject
-    @Description("If `true` no pom.xml is generated.")
-    @ConfigProperty(name = "bundlebee.new.skipPom", defaultValue = "false")
-    private boolean skipPom;
-
-    @Inject
-    @Description("If `true` the execution runs even if dir already exists.")
-    @ConfigProperty(name = "bundlebee.new.force", defaultValue = "false")
-    private boolean force;
+    private final String group;
+    private final String artifact;
+    private final String version;
+    private final String directory;
+    private final boolean skipSamples;
+    private final boolean skipPom;
+    private final boolean force;
 
     @Override
     public Stream<String> complete(final Map<String, String> options, final String optionName) {
@@ -97,101 +81,132 @@ public class NewBundleCommand implements CompletingExecutable {
         if (UNSET.equals(group) || UNSET.equals(artifact)) {
             throw new IllegalArgumentException("Ensure to set group and artifact for command new");
         }
-        final var output = Paths.get(UNSET.equals(directory) ? artifact : directory).normalize().toAbsolutePath();
+        final var output = Paths.get(UNSET.equals(directory) ? artifact : directory)
+                .normalize()
+                .toAbsolutePath();
         try {
-            if (!force && Files.exists(output) && Files.list(output).anyMatch(it -> {
-                final var name = it.getFileName().toString();
-                return !".".equals(name) && !"..".equals(name);
-            })) {
+            if (!force
+                    && Files.exists(output)
+                    && Files.list(output).anyMatch(it -> {
+                        final var name = it.getFileName().toString();
+                        return !".".equals(name) && !"..".equals(name);
+                    })) {
                 throw new IllegalArgumentException("Folder already exists: " + output);
             }
-
             log.info("Created " + Files.createDirectories(output.resolve("bundlebee/kubernetes")));
-            log.info("Created " + Files.writeString(output.resolve("bundlebee/manifest.json"), "" +
-                    "{\n" +
-                    "  \"alveoli\": [\n" +
-                    (skipSamples ? "" : "" +
-                            "    {\n" +
-                            "      \"name\": \"" + group + ":" + artifact + "_my-alveolus:" + version + "\",\n" +
-                            "      \"descriptors\": [\n" +
-                            "        {\n" +
-                            "          \"name\": \"" + group + "_" + artifact + "_my-alveolus.configmap\"\n" +
-                            "        }\n" +
-                            "      ]\n" +
-                            "    }\n") +
-                    "  ]\n" +
-                    "}" +
-                    "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+            log.info("Created "
+                    + Files.writeString(
+                            output.resolve("bundlebee/manifest.json"),
+                            "{\n" + "  \"alveoli\": [\n"
+                                    + (skipSamples
+                                            ? ""
+                                            : "    {\n" + "      \"name\": \"" + group + ":" + artifact
+                                                    + "_my-alveolus:" + version + "\",\n" + "      \"descriptors\": [\n"
+                                                    + "        {\n" + "          \"name\": \"" + group + "_" + artifact
+                                                    + "_my-alveolus.configmap\"\n" + "        }\n" + "      ]\n"
+                                                    + "    }\n")
+                                    + "  ]\n" + "}" + "",
+                            StandardOpenOption.CREATE,
+                            StandardOpenOption.TRUNCATE_EXISTING));
             if (!skipSamples) {
-                log.info("Created " + Files.writeString(output.resolve("bundlebee/kubernetes/" + group + "_" + artifact + "_my-alveolus.configmap.yaml"), "" +
-                        "apiVersion: v1\n" +
-                        "kind: ConfigMap\n" +
-                        "metadata:\n" +
-                        "  name: " +
-                        group.replace('/', '.').replace('.', '_') + '_' +
-                        artifact +
-                        "_my-alveolus_configmap\n" +
-                        "  labels:\n" +
-                        "    app: my-app\n" +
-                        "data:\n" +
-                        "  # set your data there, you can safely drop BUNDLEBEE_SKAFFOLDING variable\n" +
-                        "  BUNDLEBEE_SKAFFOLDING: true\n" +
-                        "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+                log.info("Created "
+                        + Files.writeString(
+                                output.resolve("bundlebee/kubernetes/" + group + "_" + artifact
+                                        + "_my-alveolus.configmap.yaml"),
+                                "apiVersion: v1\n" + "kind: ConfigMap\n" + "metadata:\n" + "  name: "
+                                        + group.replace('/', '.').replace('.', '_') + '_' + artifact
+                                        + "_my-alveolus_configmap\n" + "  labels:\n" + "    app: my-app\n" + "data:\n"
+                                        + "  # set your data there, you can safely drop BUNDLEBEE_SKAFFOLDING variable\n"
+                                        + "  BUNDLEBEE_SKAFFOLDING: true\n" + "",
+                                StandardOpenOption.CREATE,
+                                StandardOpenOption.TRUNCATE_EXISTING));
             } else {
-                log.info("Created " + Files.writeString(output.resolve("bundlebee/kubernetes/.keepit"),
-                        "can safely be deleted as soon as you add a file in this folder", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+                log.info("Created "
+                        + Files.writeString(
+                                output.resolve("bundlebee/kubernetes/.keepit"),
+                                "can safely be deleted as soon as you add a file in this folder",
+                                StandardOpenOption.CREATE,
+                                StandardOpenOption.TRUNCATE_EXISTING));
             }
             if (!skipPom) {
-                log.info("Created " + Files.writeString(output.resolve("pom.xml"), "" +
-                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                        "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +
-                        "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                        "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n" +
-                        "  <modelVersion>4.0.0</modelVersion>\n" +
-                        "\n" +
-                        "  <groupId>" + group.replace('/', '.') + "</groupId>\n" +
-                        "  <artifactId>" + artifact + "</artifactId>\n" +
-                        "  <version>" + version + "</version>\n" +
-                        "  <name>" + artifact + "</name>\n" +
-                        "  <description>Informative pom.xml for " + artifact + " if you want to use maven to build and deploy this bundle.</description>\n" +
-                        "\n" +
-                        "  <build>\n" +
-                        "    <resources>\n" +
-                        "      <resource>\n" +
-                        "        <directory>${project.basedir}</directory>\n" +
-                        "        <includes>\n" +
-                        "          <include>bundlebee/**</include>\n" +
-                        "        </includes>\n" +
-                        "      </resource>\n" +
-                        "    </resources>\n" +
-                        "    <plugins>\n" +
-                        "      <plugin>\n" +
-                        "        <groupId>org.apache.maven.plugins</groupId>\n" +
-                        "        <artifactId>maven-release-plugin</artifactId>\n" +
-                        "        <version>3.0.0-M1</version>\n" +
-                        "      </plugin>\n" +
-                        "    </plugins>\n" +
-                        "  </build>\n" +
-                        "\n" +
-                        "  <!-- override with your custom nexus if you have one -->\n" +
-                        "  <distributionManagement>\n" +
-                        "    <snapshotRepository>\n" +
-                        "      <id>my-nexus</id>\n" +
-                        "      <url>https://nexus.mycompany.org/content/repositories/snapshots</url>\n" +
-                        "    </snapshotRepository>\n" +
-                        "    <repository>\n" +
-                        "      <id>my-nexus</id>\n" +
-                        "      <url>https://nexus.mycompany.org/content/repositories/releases</url>\n" +
-                        "    </repository>\n" +
-                        "  </distributionManagement>\n" +
-                        "</project>\n" +
-                        "", StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+                log.info("Created "
+                        + Files.writeString(
+                                output.resolve("pom.xml"),
+                                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                        + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
+                                        + "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+                                        + "         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n"
+                                        + "  <modelVersion>4.0.0</modelVersion>\n" + "\n" + "  <groupId>"
+                                        + group.replace('/', '.') + "</groupId>\n" + "  <artifactId>" + artifact
+                                        + "</artifactId>\n" + "  <version>" + version + "</version>\n" + "  <name>"
+                                        + artifact + "</name>\n" + "  <description>Informative pom.xml for " + artifact
+                                        + " if you want to use maven to build and deploy this bundle.</description>\n"
+                                        + "\n" + "  <build>\n" + "    <resources>\n" + "      <resource>\n"
+                                        + "        <directory>${project.basedir}</directory>\n" + "        <includes>\n"
+                                        + "          <include>bundlebee/**</include>\n" + "        </includes>\n"
+                                        + "      </resource>\n" + "    </resources>\n" + "    <plugins>\n"
+                                        + "      <plugin>\n" + "        <groupId>org.apache.maven.plugins</groupId>\n"
+                                        + "        <artifactId>maven-release-plugin</artifactId>\n"
+                                        + "        <version>3.0.0-M1</version>\n" + "      </plugin>\n"
+                                        + "    </plugins>\n" + "  </build>\n" + "\n"
+                                        + "  <!-- override with your custom nexus if you have one -->\n"
+                                        + "  <distributionManagement>\n" + "    <snapshotRepository>\n"
+                                        + "      <id>my-nexus</id>\n"
+                                        + "      <url>https://nexus.mycompany.org/content/repositories/snapshots</url>\n"
+                                        + "    </snapshotRepository>\n" + "    <repository>\n"
+                                        + "      <id>my-nexus</id>\n"
+                                        + "      <url>https://nexus.mycompany.org/content/repositories/releases</url>\n"
+                                        + "    </repository>\n" + "  </distributionManagement>\n" + "</project>\n" + "",
+                                StandardOpenOption.CREATE,
+                                StandardOpenOption.TRUNCATE_EXISTING));
             }
-
-            log.info("Creation completed, you can go in " + output + " and build it with 'bundlebee build'");
+            log.info("Creation completed, you can go in " + output + " and build it with \'bundlebee build\'");
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
         return completedFuture(true);
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.new.group",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation = "Bundle groupId.")
+            String group,
+
+            @Property(
+                    value = "bundlebee.new.artifact",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation = "Bundle artifactId.")
+            String artifact,
+
+            @Property(value = "bundlebee.new.version", defaultValue = "\"1.0.0\"", documentation = "Bundle version.")
+            String version,
+
+            @Property(
+                    value = "bundlebee.new.dir",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation =
+                            "Where to create the project. If not set it will use the artifact value in current folder.")
+            String directory,
+
+            @Property(
+                    value = "bundlebee.new.skipSamples",
+                    defaultValue = "false",
+                    documentation =
+                            "By default a sample alveolus with a config map is generated, if `false` it will be skipped.")
+            boolean skipSamples,
+
+            @Property(
+                    value = "bundlebee.new.skipPom",
+                    defaultValue = "false",
+                    documentation = "If `true` no pom.xml is generated.")
+            boolean skipPom,
+
+            @Property(
+                    value = "bundlebee.new.force",
+                    defaultValue = "false",
+                    documentation = "If `true` the execution runs even if dir already exists.")
+            boolean force) {}
 }

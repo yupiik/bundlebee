@@ -15,40 +15,39 @@
  */
 package io.yupiik.bundlebee.core.kube;
 
-import io.yupiik.bundlebee.core.configuration.Description;
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
+import static java.util.Locale.ROOT;
+import static java.util.Optional.empty;
+import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedStage;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+
 import io.yupiik.bundlebee.core.http.JsonHttpResponse;
-import io.yupiik.bundlebee.core.lang.ConfigHolder;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import io.yupiik.bundlebee.core.kube.model.KubernetesStatus;
 import io.yupiik.bundlebee.core.service.ContainerSanitizer;
 import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
-import lombok.Data;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.json.JsonArray;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonException;
-import javax.json.JsonNumber;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonPatch;
-import javax.json.JsonString;
-import javax.json.JsonValue;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbException;
-import javax.json.spi.JsonProvider;
-import javax.json.stream.JsonGenerator;
+import io.yupiik.bundlebee.lang.spi.NamespaceProvider;
+import io.yupiik.fusion.framework.api.RuntimeContainer;
+import io.yupiik.fusion.framework.api.container.Types;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import io.yupiik.fusion.framework.build.api.lifecycle.Init;
+import io.yupiik.fusion.json.JsonMapper;
+import io.yupiik.fusion.json.patch.GenericJsonPatch;
+import io.yupiik.fusion.json.patch.JsonPatchOperation;
+import io.yupiik.fusion.json.pretty.PrettyJsonMapper;
+import io.yupiik.fusion.kubernetes.client.KubernetesClient;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
+import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.AbstractMap;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,131 +61,82 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.Level;
-import java.util.stream.Collector;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.lang.CompletionFutures.all;
-import static java.util.Locale.ROOT;
-import static java.util.Optional.empty;
-import static java.util.Optional.ofNullable;
-import static java.util.concurrent.CompletableFuture.completedStage;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-
-@Log
 @ApplicationScoped
-public class KubeClient implements ConfigHolder {
-    @Inject
-    private Yaml2JsonConverter yaml2json;
+public class KubeClient {
+    private static final Pattern COMMA = Pattern.compile(",");
+    private static final Pattern PIPE = Pattern.compile("\\|");
+    private final Logger log = Logger.getLogger(KubeClient.class.getName());
 
-    @Inject
-    private ContainerSanitizer containerSanitizer;
+    public KubeClient(
+            final Yaml2JsonConverter yaml2json,
+            final ContainerSanitizer containerSanitizer,
+            final ApiPreloader apiPreloader,
+            final RuntimeContainer container,
+            final JsonMapper jsonb,
+            final ScheduledExecutorService scheduledExecutorService,
+            final DeploymentConfiguration configuration,
+            final KubernetesConfiguration settings,
+            final NamespaceProvider namespaceProvider,
+            final KubernetesClientProducer producer) {
+        this.yaml2json = yaml2json;
+        this.containerSanitizer = containerSanitizer;
+        this.apiPreloader = apiPreloader;
+        this.container = container;
+        this.jsonb = jsonb;
+        this.scheduledExecutorService = scheduledExecutorService;
+        this.configuration = configuration;
+        this.settings = settings;
+        this.namespaceProvider = namespaceProvider;
+        this.producer = producer;
+    }
 
-    @Inject
-    private ApiPreloader apiPreloader;
-
-    @Inject
-    private HttpKubeClient api;
-
-    @Inject
-    @BundleBee
-    private Jsonb jsonb;
-
-    @Inject
-    @BundleBee
-    private JsonProvider jsonProvider;
-
-    @Inject
-    @BundleBee
-    private JsonBuilderFactory jsonBuilderFactory;
-
-    @Inject
-    @Description("`fieldValidation` - server side validation - value when applying a descriptor, values can be `Strict`, `Warn` pr `Ignore`. Note that using `skip` will ignore the query parameter.")
-    @ConfigProperty(name = "bundlebee.kube.fieldValidation", defaultValue = "Strict")
+    private final Yaml2JsonConverter yaml2json;
+    private final ContainerSanitizer containerSanitizer;
+    private final ApiPreloader apiPreloader;
+    private final RuntimeContainer container;
+    private final JsonMapper jsonb;
+    private final KubernetesConfiguration settings;
+    private final NamespaceProvider namespaceProvider;
+    private final KubernetesClientProducer producer;
     private String fieldValidation;
-
-    @Inject
-    @Description("Enables to define resource mapping, syntax uses propeties one: `<lowercased resource kind>s = /apis/....`.")
-    @ConfigProperty(name = "bundlebee.kube.resourceMapping", defaultValue = "")
     private String rawResourceMapping;
-
-    @Inject
-    @Description("List of _kind_ of descriptors updates can be skipped, it is often useful for `PersistentVolumeClaim`.")
-    @ConfigProperty(name = "bundlebee.kube.skipUpdateForKinds", defaultValue = "PersistentVolumeClaim")
     private String skipUpdateForKinds;
-
-    @Inject
-    @Description("Should YAML/JSON be logged when it can't be parsed.")
-    @ConfigProperty(name = "bundlebee.kube.logDescriptorOnParsingError", defaultValue = "true")
     private boolean logDescriptorOnParsingError;
-
-    @Inject
-    @Description("The attributes to keep from `StatefulSet` (`spec` children) descriptor on updates.")
-    @ConfigProperty(name = "bundlebee.kube.filters.statefuleset.spec.allowed", defaultValue = "replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector")
     private Set<String> statefulsetSpecAllowedAttributes;
-
-    @Inject
-    @Description("" +
-            "Enables to tolerate custom attributes in the descriptors. " +
-            "Typically used to drop `/$schema` attribute which enables a nice completion in editors. " +
-            "Values are `|` delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. " +
-            "Using `none` ignores this processing.")
-    @ConfigProperty(name = "bundlebee.kube.implicitlyDroppedAttributes", defaultValue = "/$schema|/$bundlebeeIgnoredLintingRules")
     private String implicitlyDroppedAttributes;
-
-    @Inject
-    @Description("" +
-            "By default a descriptor update is done using `PATCH` with strategic merge patch logic, if set to `true` it will use a plain `PUT`. " +
-            "Note that `io.yupiik.bundlebee/putOnUpdate` annotations can be set to `true` to force that in the descriptor itself.")
-    @ConfigProperty(name = "bundlebee.kube.putOnUpdate", defaultValue = "false")
     private boolean putOnUpdate;
-
-    @Inject
-    @Description("" +
-            "By default a descriptor update is done using `PATCH` with strategic merge patch logic, if set to `true` it will use a plain `PUT`. " +
-            "Note that `io.yupiik.bundlebee/putOnUpdate` annotations can be set to `true` to force that in the descriptor itself and for cases it is not enough, " +
-            "you can set `force` to `true` to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). " +
-            "Note that you can set it to `true` in a descriptor annotation `io.yupiik.bundlebee/force` too to not be global.")
-    @ConfigProperty(name = "bundlebee.kube.force", defaultValue = "false")
     private boolean force;
-
-    @Inject
-    @Description("Default value for deletions of `propagationPolicy`. Values can be `Orphan`, `Foreground` and `Background`.")
-    @ConfigProperty(name = "bundlebee.kube.defaultPropagationPolicy", defaultValue = "Foreground")
     private String defaultPropagationPolicy;
-
-    @Inject
-    @Description("When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. " +
-            "Default uses labels since it enables to query them later on but you can switch it to annotations.")
-    @ConfigProperty(name = "bundlebee.kube.customMetadataInjectionPoint", defaultValue = "labels")
     private String customMetadataInjectionPoint;
-
-    @Inject
-    @Description("" +
-            "Default header value for `PATCH` `content-type` requests header. " +
-            "It uses strategic merge patch algorithm but in some cases you just want to use `application/json` or (better) `application/merge-patch+json`. " +
-            "Annotation `io.yupiik.bundlebee/patchContentType` is also supported.")
-    @ConfigProperty(name = "bundlebee.kube.patchContentType", defaultValue = "application/strategic-merge-patch+json")
     private String patchContentType;
-
-    @Inject
-    @BundleBee
-    private ScheduledExecutorService scheduledExecutorService;
-
+    private final ScheduledExecutorService scheduledExecutorService;
     private Map<String, String> resourceMapping;
     private List<String> kindsToSkipUpdateIfPossible;
-    private List<JsonPatch> implicitlyDrops;
+    private List<GenericJsonPatch> implicitlyDrops;
 
-    @PostConstruct
-    private void init() {
-        kindsToSkipUpdateIfPossible = Stream.of(skipUpdateForKinds.split(",")).filter(it -> !it.isBlank()).collect(toList());
-
+    @Init
+    protected void init() {
+        this.fieldValidation = configuration.fieldValidation();
+        this.rawResourceMapping = configuration.rawResourceMapping();
+        this.skipUpdateForKinds = configuration.skipUpdateForKinds();
+        this.logDescriptorOnParsingError = configuration.logDescriptorOnParsingError();
+        this.statefulsetSpecAllowedAttributes = Set.copyOf(configuration.statefulsetSpecAllowedAttributes());
+        this.implicitlyDroppedAttributes = configuration.implicitlyDroppedAttributes();
+        this.putOnUpdate = configuration.putOnUpdate();
+        this.force = configuration.force();
+        this.defaultPropagationPolicy = configuration.defaultPropagationPolicy();
+        this.customMetadataInjectionPoint = configuration.customMetadataInjectionPoint();
+        this.patchContentType = configuration.patchContentType();
+        kindsToSkipUpdateIfPossible = Stream.of(COMMA.split(skipUpdateForKinds))
+                .filter(it -> !it.isBlank())
+                .collect(toList());
         final var tmpResourceMapping = new Properties();
         if (rawResourceMapping != null && !rawResourceMapping.isBlank()) {
-            try (final var reader = new StringReader(rawResourceMapping)) {
+            try (var reader = new StringReader(rawResourceMapping)) {
                 tmpResourceMapping.load(reader);
             } catch (final IOException e) {
                 throw new IllegalStateException(e);
@@ -196,43 +146,66 @@ public class KubeClient implements ConfigHolder {
         } else {
             resourceMapping = Map.of();
         }
-
-        this.implicitlyDrops = "implicitlyDroppedAttributes".equals("none") ?
-                List.of() :
-                Stream.of(implicitlyDroppedAttributes.split("\\|"))
-                        .map(it -> jsonProvider.createPatch(
-                                it.startsWith("[") ?
-                                        jsonb.fromJson(it, JsonArray.class) :
-                                        jsonBuilderFactory.createArrayBuilder()
-                                                .add(jsonBuilderFactory.createObjectBuilder()
-                                                        .add("op", JsonPatch.Operation.REMOVE.operationName())
-                                                        .add("path", it))
-                                                .build()))
+        this.implicitlyDrops = "none".equals(implicitlyDroppedAttributes)
+                ? List.of()
+                : Stream.of(PIPE.split(implicitlyDroppedAttributes))
+                        .map(it -> new GenericJsonPatch(
+                                it.startsWith("[")
+                                        ? jsonb.fromString(
+                                                new Types.ParameterizedTypeImpl(List.class, JsonPatchOperation.class),
+                                                it)
+                                        : List.of(new JsonPatchOperation(
+                                                JsonPatchOperation.Operation.remove, it, null, null))))
                         .collect(toList());
     }
 
     // for backward compatibility
     public KubeConfig getLoadedKubeConfig() {
-        return api.getLoadedKubeConfig();
+        try (final var client = container.lookup(KubernetesClient.class)) {
+            client.instance().base();
+            return producer.loadedConfiguration();
+        }
     }
 
-    public CompletionStage<JsonObject> findSecret(final String namespace, final String name) {
-        return api.execute(HttpRequest.newBuilder().GET(), "/api/v1/namespaces/" + namespace + "/secrets/" + name)
+    private CompletionStage<HttpResponse<String>> execute(final HttpRequest.Builder builder, final String path) {
+        // Do not use Fusion's kubernetes.api URI alias here: it resolves against the
+        // origin and decodes the path. BundleBee preserves base paths and raw escapes.
+        try (final var client = container.lookup(KubernetesClient.class)) {
+            final var api = client.instance();
+            // The application scope owns the client until container shutdown, not this lookup handle.
+            return api.sendAsync(
+                    builder.uri(URI.create(
+                                    path.startsWith("http:") || path.startsWith("https:")
+                                            ? path
+                                            : api.base().toString() + path))
+                            .build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        }
+    }
+
+    public CompletionStage<Map<String, Object>> findSecret(final String namespace, final String name) {
+        return execute(HttpRequest.newBuilder().GET(), "/api/v1/namespaces/" + namespace + "/secrets/" + name)
                 .thenApply(r -> {
                     if (r.statusCode() != 200) {
-                        throw new IllegalArgumentException("Can't read secret '" + namespace + "'/'" + name + "': " + tryFormat(r.body()));
+                        throw new IllegalArgumentException(
+                                "Can\'t read secret \'" + namespace + "\'/\'" + name + "\': " + tryFormat(r.body()));
                     }
-                    return jsonb.fromJson(r.body().trim(), JsonObject.class);
+                    return jsonb.fromString(
+                            new Types.ParameterizedTypeImpl(Map.class, String.class, Object.class),
+                            r.body().trim());
                 });
     }
 
-    public CompletionStage<JsonObject> findServiceAccount(final String namespace, final String name) {
-        return api.execute(HttpRequest.newBuilder().GET(), "/api/v1/namespaces/" + namespace + "/serviceaccounts/" + name)
+    public CompletionStage<Map<String, Object>> findServiceAccount(final String namespace, final String name) {
+        return execute(HttpRequest.newBuilder().GET(), "/api/v1/namespaces/" + namespace + "/serviceaccounts/" + name)
                 .thenApply(r -> {
                     if (r.statusCode() != 200) {
-                        throw new IllegalArgumentException("Can't read account '" + namespace + "'/'" + name + "': " + tryFormat(r.body()));
+                        throw new IllegalArgumentException(
+                                "Can\'t read account \'" + namespace + "\'/\'" + name + "\': " + tryFormat(r.body()));
                     }
-                    return jsonb.fromJson(r.body().trim(), JsonObject.class);
+                    return jsonb.fromString(
+                            new Types.ParameterizedTypeImpl(Map.class, String.class, Object.class),
+                            r.body().trim());
                 });
     }
 
@@ -242,34 +215,39 @@ public class KubeClient implements ConfigHolder {
                 .thenApply(ignored -> result.get());
     }
 
-    private CompletionStage<?> doExists(final AtomicBoolean result, final JsonObject desc) {
-        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
-        return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
+    private CompletionStage<?> doExists(final AtomicBoolean result, final Map<String, Object> desc) {
+        final var kindLowerCased = ((String) desc.get("kind")).toLowerCase(ROOT) + 's';
+        return apiPreloader
+                .ensureResourceSpec(desc, kindLowerCased)
                 .thenCompose(ignored -> doExists(result, desc, kindLowerCased));
     }
 
-    public CompletionStage<List<HttpResponse<JsonObject>>> getResources(final String descriptorContent, final String ext) {
+    public CompletionStage<List<HttpResponse<Map<String, Object>>>> getResources(
+            final String descriptorContent, final String ext) {
         return forDescriptor(null, descriptorContent, ext, this::getResource)
                 .thenApply(responses -> responses.stream()
                         .map(it -> new JsonHttpResponse(jsonb, it))
                         .collect(toList()));
     }
 
-    public CompletionStage<HttpResponse<String>> getResource(final JsonObject desc) {
-        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
-        return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
+    public CompletionStage<HttpResponse<String>> getResource(final Map<String, Object> desc) {
+        final var kindLowerCased = ((String) desc.get("kind")).toLowerCase(ROOT) + 's';
+        return apiPreloader
+                .ensureResourceSpec(desc, kindLowerCased)
                 .thenCompose(ignored -> doGet(desc, kindLowerCased));
     }
 
-    private CompletionStage<HttpResponse<String>> doGet(final JsonObject desc, final String kindLowerCased) {
-        final var metadata = desc.getJsonObject("metadata");
-        final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.namespace();
+    private CompletionStage<HttpResponse<String>> doGet(final Map<String, Object> desc, final String kindLowerCased) {
+        final var metadata = (Map<?, ?>) desc.get("metadata");
+        final var name = (String) metadata.get("name");
+        final var namespace =
+                metadata.containsKey("namespace") ? (String) metadata.get("namespace") : namespaceProvider.namespace();
         final var baseUri = toBaseUri(desc, kindLowerCased, namespace);
-        return api.execute(HttpRequest.newBuilder().GET().header("Accept", "application/json"), baseUri + "/" + name);
+        return execute(HttpRequest.newBuilder().GET().header("Accept", "application/json"), baseUri + "/" + name);
     }
 
-    private CompletionStage<?> doExists(final AtomicBoolean result, final JsonObject desc, final String kindLowerCased) {
+    private CompletionStage<?> doExists(
+            final AtomicBoolean result, final Map<String, Object> desc, final String kindLowerCased) {
         return doGet(desc, kindLowerCased).whenComplete((r, e) -> {
             if (r != null) {
                 switch (r.statusCode()) {
@@ -285,13 +263,20 @@ public class KubeClient implements ConfigHolder {
         });
     }
 
-    public CompletionStage<?> apply(final String descriptorContent, final String ext,
-                                    final Map<String, String> customLabels, final boolean skipGet) {
-        return forDescriptorWithOriginal("Applying", descriptorContent, ext, item -> doApply(item.getRaw(), item.getPrepared(), customLabels, skipGet));
+    public CompletionStage<?> apply(
+            final String descriptorContent,
+            final String ext,
+            final Map<String, String> customLabels,
+            final boolean skipGet) {
+        return forDescriptorWithOriginal(
+                "Applying",
+                descriptorContent,
+                ext,
+                item -> doApply(item.getRaw(), item.getPrepared(), customLabels, skipGet));
     }
 
-    public CompletionStage<?> apply(final String descriptorContent, final String ext,
-                                    final Map<String, String> customLabels) {
+    public CompletionStage<?> apply(
+            final String descriptorContent, final String ext, final Map<String, String> customLabels) {
         return apply(descriptorContent, ext, customLabels, false);
     }
 
@@ -299,98 +284,126 @@ public class KubeClient implements ConfigHolder {
         return forDescriptor("Deleting", descriptorContent, ext, json -> doDelete(json, gracePeriod));
     }
 
-    public <T> CompletionStage<List<T>> forDescriptor(final String prefixLog, final String descriptorContent, final String ext,
-                                                      final Function<JsonObject, CompletionStage<T>> descHandler) {
-        return forDescriptorWithOriginal(prefixLog, descriptorContent, ext, item -> descHandler.apply(item.getPrepared()));
+    public <T> CompletionStage<List<T>> forDescriptor(
+            final String prefixLog,
+            final String descriptorContent,
+            final String ext,
+            final Function<Map<String, Object>, CompletionStage<T>> descHandler) {
+        return forDescriptorWithOriginal(
+                prefixLog, descriptorContent, ext, item -> descHandler.apply(item.getPrepared()));
     }
 
-    public <T> CompletionStage<List<T>> forDescriptorWithOriginal(final String prefixLog, final String descriptorContent, final String ext,
-                                                                  final Function<DescriptorItem, CompletionStage<T>> descHandler) {
-        if (api.isVerbose()) {
+    @SuppressWarnings("unchecked")
+    public <T> CompletionStage<List<T>> forDescriptorWithOriginal(
+            final String prefixLog,
+            final String descriptorContent,
+            final String ext,
+            final Function<DescriptorItem, CompletionStage<T>> descHandler) {
+        final var verbose = settings.verbose() || settings.dryRun();
+        if (verbose) {
             log.info(() -> prefixLog + " descriptor\n" + descriptorContent);
         }
         final var json = toJson(descriptorContent, ext);
-        if (api.isVerbose()) {
+        if (verbose) {
             log.info(() -> "Loaded descriptor(s)\n" + json);
         }
-        switch (json.getValueType()) {
-            case ARRAY:
-                return all(
-                        json.asJsonArray().stream()
-                                .map(JsonValue::asJsonObject)
-                                .map(it -> new DescriptorItem(it, sanitizeJson(it)))
-                                .map(descHandler)
-                                .collect(toList()),
-                        toList(),
-                        true);
-            case OBJECT:
-                final var jsonObject = json.asJsonObject();
-                return descHandler
-                        .apply(new DescriptorItem(jsonObject, sanitizeJson(jsonObject)))
-                        .thenApply(List::of);
-            default:
-                throw new IllegalArgumentException("Unsupported json type for apply: " + json);
+        if (json instanceof List<?> list) {
+            return all(
+                    list.stream()
+                            .map(it -> {
+                                if (!(it instanceof Map<?, ?> descriptor)) {
+                                    throw new IllegalArgumentException("Unsupported json type for apply: " + it);
+                                }
+                                final var item = (Map<String, Object>) descriptor;
+                                return new DescriptorItem(item, sanitizeJson(item));
+                            })
+                            .map(descHandler)
+                            .collect(toList()),
+                    toList(),
+                    true);
         }
+        if (json instanceof Map<?, ?> map) {
+            final var jsonObject = (Map<String, Object>) map;
+            return descHandler
+                    .apply(new DescriptorItem(jsonObject, sanitizeJson(jsonObject)))
+                    .thenApply(List::of);
+        }
+        throw new IllegalArgumentException("Unsupported json type for apply: " + json);
     }
 
-    private JsonObject sanitizeJson(final JsonObject json) {
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> sanitizeJson(final Map<String, Object> json) {
         if (implicitlyDrops.isEmpty()) {
             return json;
         }
         var out = json;
         for (final var patch : implicitlyDrops) {
             try {
-                out = patch.apply(out);
-            } catch (final JsonException je) {
-                // no-op
+                final var patched = patch.apply(out);
+                if (!(patched instanceof Map<?, ?> map)) {
+                    throw new IllegalArgumentException("Descriptor patch must produce an object");
+                }
+                out = (Map<String, Object>) map;
+            } catch (final IllegalArgumentException je) {
             }
+            // no-op
         }
         return out;
     }
 
-    private JsonValue toJson(final String descriptorContent, final String ext) {
+    private Object toJson(final String descriptorContent, final String ext) {
         try {
-            return "json".equals(ext) ?
-                    jsonb.fromJson(descriptorContent.trim(), JsonValue.class) :
-                    yaml2json.convert(JsonValue.class, descriptorContent.trim());
-        } catch (final JsonbException | JsonException je) {
+            return "json".equals(ext)
+                    ? jsonb.fromString(Object.class, descriptorContent.trim())
+                    : yaml2json.convert(Object.class, descriptorContent.trim());
+        } catch (final IllegalArgumentException je) {
             if (!logDescriptorOnParsingError) {
                 throw je;
             }
-            throw new IllegalStateException("Can't read '\n" + descriptorContent + "'\n->: " + je.getMessage(), je);
+            throw new IllegalStateException("Can\'t read \'\n" + descriptorContent + "\'\n->: " + je.getMessage(), je);
         }
     }
 
-    private CompletionStage<?> doDelete(final JsonObject desc, final int gracePeriod) {
-        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
-        return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
+    private CompletionStage<?> doDelete(final Map<String, Object> desc, final int gracePeriod) {
+        final var kindLowerCased = ((String) desc.get("kind")).toLowerCase(ROOT) + 's';
+        return apiPreloader
+                .ensureResourceSpec(desc, kindLowerCased)
                 .thenCompose(ignored -> doDelete(desc, gracePeriod, kindLowerCased));
     }
 
-    private CompletionStage<?> doDelete(final JsonObject desc, final int gracePeriod, final String kindLowerCased) {
-        final var metadata = desc.getJsonObject("metadata");
-        final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.namespace();
-        log.info(() -> "Deleting '" + name + "' (kind=" + kindLowerCased + ")" +
-                (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
-
-        final var uri = toBaseUri(desc, kindLowerCased, namespace) + "/" + name + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
-        return delete(uri, metadata.containsKey("bundlebee.delete.propagationPolicy") ?
-                metadata.getString("bundlebee.delete.propagationPolicy") :
-                defaultPropagationPolicy);
+    private CompletionStage<?> doDelete(
+            final Map<String, Object> desc, final int gracePeriod, final String kindLowerCased) {
+        final var metadata = (Map<?, ?>) desc.get("metadata");
+        final var name = (String) metadata.get("name");
+        final var namespace =
+                metadata.containsKey("namespace") ? (String) metadata.get("namespace") : namespaceProvider.namespace();
+        log.info(() -> "Deleting \'" + name + "\' (kind=" + kindLowerCased + ")"
+                + (!"namespaces".equals(kindLowerCased) ? " for namespace \'" + namespace + "\'" : ""));
+        final var uri = toBaseUri(desc, kindLowerCased, namespace) + "/" + name
+                + (gracePeriod >= 0 ? "?gracePeriodSeconds=" + gracePeriod : "");
+        return delete(
+                uri,
+                metadata.containsKey("bundlebee.delete.propagationPolicy")
+                        ? (String) metadata.get("bundlebee.delete.propagationPolicy")
+                        : defaultPropagationPolicy);
     }
 
     public CompletionStage<HttpResponse<String>> delete(final String uri, final String propagationPolicy) {
-        return api.execute(
+        return execute(
                         HttpRequest.newBuilder()
-                                .method("DELETE", HttpRequest.BodyPublishers.ofString(jsonBuilderFactory.createObjectBuilder()
-                                        .add("kind", "DeleteOptions")
-                                        .add("apiVersion", "v1")
-                                        // todo: .add("gracePeriodSeconds", config)
-                                        // .add("orphanDependents", true) // this one is deprecated, this is why we use propagationPolicy too
-                                        .add("propagationPolicy", propagationPolicy == null ? defaultPropagationPolicy : propagationPolicy)
-                                        .build()
-                                        .toString(), StandardCharsets.UTF_8))
+                                .method(
+                                        "DELETE",
+                                        HttpRequest.BodyPublishers.ofString(
+                                                jsonb.toString(Map.of(
+                                                        "kind",
+                                                        "DeleteOptions",
+                                                        "apiVersion",
+                                                        "v1",
+                                                        "propagationPolicy",
+                                                        propagationPolicy == null
+                                                                ? defaultPropagationPolicy
+                                                                : propagationPolicy)),
+                                                StandardCharsets.UTF_8))
                                 .header("Content-Type", "application/json")
                                 .header("Accept", "application/json"),
                         uri)
@@ -402,7 +415,11 @@ public class KubeClient implements ConfigHolder {
                 });
     }
 
-    public CompletionStage<?> doApply(final JsonObject originalDontUseDesc, final JsonObject rawDesc, final Map<String, String> customLabels, final boolean skipGet) {
+    public CompletionStage<?> doApply(
+            final Map<String, Object> originalDontUseDesc,
+            final Map<String, Object> rawDesc,
+            final Map<String, String> customLabels,
+            final boolean skipGet) {
         // apply logic is a "create or replace" one
         // so first thing we have to do is to test if the resource exists, and if not create it
         // for that we will need to extract the resource "kind" and "name" (id):
@@ -411,86 +428,91 @@ public class KubeClient implements ConfigHolder {
         // metadata:
         //   name: my-config
         //
-        // 1. curl -H "Accept: application/json" 'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>/<name>'
+        // 1. curl -H "Accept: application/json"
+        // 'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>/<name>'
         // if HTTP 200 -> replace (patch by default, put if configured)
         //   2. curl -XPATCH -H "Content-Type: application/strategic-merge-patch+json" -H "Accept: application/json"
-        //          'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>/<name>?fieldManager=kubectl-client-side-apply'
+        //
+        // 'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>/<name>?fieldManager=kubectl-client-side-apply'
         //          <descriptor in json - or send yaml>
         // else -> create
         //   2. curl -XPOST -H "Accept: application/json" -H "Content-Type: application/json"
-        //          'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>?fieldManager=kubectl-client-side-apply'
+        //
+        // 'https://192.168.49.2:8443/api/v1/namespaces/<namespace>/<lowercase(kind)>?fieldManager=kubectl-client-side-apply'
         //          <descriptor>
         // end
         final var desc = customLabels.isEmpty() ? rawDesc : injectMetadata(rawDesc, customLabels);
-        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
-        return apiPreloader.ensureResourceSpec(desc, kindLowerCased)
+        final var kindLowerCased = ((String) desc.get("kind")).toLowerCase(ROOT) + 's';
+        return apiPreloader
+                .ensureResourceSpec(desc, kindLowerCased)
                 .thenCompose(ignored -> doApply(originalDontUseDesc, desc, kindLowerCased, 1, skipGet));
     }
 
-    protected CompletionStage<HttpResponse<String>> doApply(final JsonObject rawDesc, final JsonObject preparedDesc,
-                                                          final String kindLowerCased, final int retry,
-                                                          final boolean skipGet) {
-        final var metadata = preparedDesc.getJsonObject("metadata");
-        final var name = metadata.getString("name");
-        final var namespace = metadata.containsKey("namespace") ? metadata.getString("namespace") : api.namespace();
-        log.info(() -> "Applying '" + name + "' (kind=" + kindLowerCased + ")" +
-                (!"namespaces".equals(kindLowerCased) ? " for namespace '" + namespace + "'" : ""));
-
-        final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!api.isDryRun() ? "" : ("&dryRun=All")) + ("skip".equals(fieldValidation) ? "" : ("&fieldValidation=" + fieldValidation));
+    protected CompletionStage<HttpResponse<String>> doApply(
+            final Map<String, Object> rawDesc,
+            final Map<String, Object> preparedDesc,
+            final String kindLowerCased,
+            final int retry,
+            final boolean skipGet) {
+        final var metadata = (Map<?, ?>) preparedDesc.get("metadata");
+        final var name = (String) metadata.get("name");
+        final var namespace =
+                metadata.containsKey("namespace") ? (String) metadata.get("namespace") : namespaceProvider.namespace();
+        log.info(() -> "Applying \'" + name + "\' (kind=" + kindLowerCased + ")"
+                + (!"namespaces".equals(kindLowerCased) ? " for namespace \'" + namespace + "\'" : ""));
+        final var fieldManager = "?fieldManager=kubectl-client-side-apply" + (!settings.dryRun() ? "" : ("&dryRun=All"))
+                + ("skip".equals(fieldValidation) ? "" : ("&fieldValidation=" + fieldValidation));
         final var baseUri = toBaseUri(preparedDesc, kindLowerCased, namespace);
-
-        if (api.isVerbose()) {
+        if (settings.verbose()) {
             log.info(() -> "Will apply descriptor " + preparedDesc + " on " + baseUri);
         }
-
         if (skipGet) {
             return doApplyOnMissingDescriptor(
-                    rawDesc, preparedDesc, kindLowerCased, retry, name, baseUri, fieldManager,
-                    true);
+                    rawDesc, preparedDesc, kindLowerCased, retry, name, baseUri, fieldManager, true);
         }
-
-        return api.execute(HttpRequest.newBuilder()
-                                .GET()
-                                .header("Accept", "application/json"),
-                        baseUri + "/" + name)
+        return execute(HttpRequest.newBuilder().GET().header("Accept", "application/json"), baseUri + "/" + name)
                 .thenCompose(findResponse -> {
-                    if (api.isVerbose()) {
+                    if (settings.verbose()) {
                         log.info(findResponse::toString);
                     }
-
                     if (findResponse.statusCode() > 404) {
                         throw new IllegalStateException("Invalid HTTP response: " + findResponse);
                     }
-
                     // we re-serialize the json there, we could use the raw descriptor
                     // but in case it is a list it is saner to do it this way
                     if (findResponse.statusCode() == 200) {
                         log.finest(() -> name + " (" + kindLowerCased + ") already exists, updating it");
-                        JsonObject obj = null;
+                        Map<String, Object> obj = null;
                         String kind = null;
                         try {
-                            obj = jsonb.fromJson(findResponse.body(), JsonObject.class);
-                            kind = obj.getString("kind");
+                            obj = jsonb.fromString(
+                                    new Types.ParameterizedTypeImpl(Map.class, String.class, Object.class),
+                                    findResponse.body());
+                            kind = (String) obj.get("kind");
                         } catch (final RuntimeException re) {
-                            // no-op
                         }
-
-                        final var desc = filterForApply("@" + kindLowerCased + "/" + namespace + '/' + name, preparedDesc, kindLowerCased);
+                        // no-op
+                        final var desc = filterForApply(
+                                "@" + kindLowerCased + "/" + namespace + '/' + name, preparedDesc, kindLowerCased);
                         if (obj == null || !kindsToSkipUpdateIfPossible.contains(kind) || needsUpdate(obj, desc)) {
                             return doUpdate(rawDesc, desc, name, fieldManager, baseUri)
                                     .thenCompose(response -> {
-                                        if (api.isVerbose()) {
+                                        if (settings.verbose()) {
                                             log.info(response::toString);
                                         }
-
-                                        final var errorMessage = "" +
-                                                "Can't update " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                                tryFormat(response.body());
-                                        if (response.statusCode() == 422) { // try to get then update to forward the existing id
+                                        final var errorMessage = "Can\'t update " + name + " (" + kindLowerCased + "): "
+                                                + response + "\n" + tryFormat(response.body());
+                                        if (response.statusCode() == 422) {
+                                            // try to get then update to forward the existing id
                                             return injectResourceVersionInDescriptor(desc, name, baseUri, errorMessage)
-                                                    .thenCompose(descWithResourceVersion -> doUpdate(rawDesc, descWithResourceVersion, name, fieldManager, baseUri)
+                                                    .thenCompose(descWithResourceVersion -> doUpdate(
+                                                                    rawDesc,
+                                                                    descWithResourceVersion,
+                                                                    name,
+                                                                    fieldManager,
+                                                                    baseUri)
                                                             .thenApply(recoverResponse -> {
-                                                                if (api.isVerbose()) {
+                                                                if (settings.verbose()) {
                                                                     log.info(recoverResponse::toString);
                                                                 }
                                                                 if (recoverResponse.statusCode() != 200) {
@@ -499,8 +521,7 @@ public class KubeClient implements ConfigHolder {
                                                                 return recoverResponse;
                                                             }));
                                         }
-
-                                        if (response.statusCode() != 200 && response.statusCode() != 201 /* force */) {
+                                        if (response.statusCode() != 200 && response.statusCode() != 201) /* force */ {
                                             throw new IllegalStateException(errorMessage);
                                         }
                                         return completedStage(response);
@@ -508,44 +529,53 @@ public class KubeClient implements ConfigHolder {
                         }
                         return completedStage(findResponse);
                     }
-
                     return doApplyOnMissingDescriptor(
-                            rawDesc, preparedDesc, kindLowerCased, retry, name, baseUri, fieldManager,
+                            rawDesc,
+                            preparedDesc,
+                            kindLowerCased,
+                            retry,
+                            name,
+                            baseUri,
+                            fieldManager,
                             findResponse.statusCode() == 404);
                 });
     }
 
     private CompletionStage<HttpResponse<String>> doApplyOnMissingDescriptor(
-            final JsonObject rawDesc, final JsonObject preparedDesc,
-            final String kindLowerCased, final int retry,
+            final Map<String, Object> rawDesc,
+            final Map<String, Object> preparedDesc,
+            final String kindLowerCased,
+            final int retry,
             final String name,
-            final String baseUri, final String fieldManager,
+            final String baseUri,
+            final String fieldManager,
             final boolean sanitize) {
-        final JsonObject preparedAndFilteredDescriptor;
+        final Map<String, Object> preparedAndFilteredDescriptor;
         if (sanitize && containerSanitizer.canSanitizeCpuResource(kindLowerCased)) {
             preparedAndFilteredDescriptor = containerSanitizer.dropCpuResources(kindLowerCased, preparedDesc);
         } else {
             preparedAndFilteredDescriptor = preparedDesc;
         }
         log.finest(() -> name + " (" + kindLowerCased + ") does not exist, creating it");
-        return api.execute(HttpRequest.newBuilder()
-                                .POST(HttpRequest.BodyPublishers.ofString(preparedAndFilteredDescriptor.toString()))
+        return execute(
+                        HttpRequest.newBuilder()
+                                .POST(HttpRequest.BodyPublishers.ofString(
+                                        jsonb.toString(preparedAndFilteredDescriptor)))
                                 .header("Content-Type", "application/json")
                                 .header("Accept", "application/json"),
                         baseUri + fieldManager)
                 .thenCompose(response -> {
-                    if (api.isVerbose()) {
+                    if (settings.verbose()) {
                         log.info(response::toString);
                     }
-
                     // can we retry, happens for service accounts for ex when implicitly created
                     if (response.statusCode() == 409 && retry > 0) {
                         try {
-                            final var payload = jsonb.fromJson(response.body(), JsonObject.class);
-                            if ("AlreadyExists".equals(payload.getString("reason", "")) &&
-                                    ofNullable(payload.getJsonObject("details"))
-                                            .map(o -> "serviceaccounts".equals(o.getString("kind", "")))
-                                            .orElse(false)) {
+                            final var payload = jsonb.fromString(KubernetesStatus.class, response.body());
+                            if ("AlreadyExists".equals(payload.reason())
+                                    && payload.details() != null
+                                    && "serviceaccounts"
+                                            .equals(payload.details().kind())) {
                                 return doApply(rawDesc, preparedDesc, kindLowerCased, retry - 1, false);
                             }
                         } catch (final RuntimeException re) {
@@ -553,11 +583,9 @@ public class KubeClient implements ConfigHolder {
                             log.log(Level.FINEST, re, re::getMessage);
                         }
                     }
-
                     if (response.statusCode() != 201) {
-                        throw new IllegalStateException(
-                                "Can't create " + name + " (" + kindLowerCased + "): " + response + "\n" +
-                                        tryFormat(response.body()));
+                        throw new IllegalStateException("Can\'t create " + name + " (" + kindLowerCased + "): "
+                                + response + "\n" + tryFormat(response.body()));
                     }
                     log.info(() -> "Created " + name + " (" + kindLowerCased + ") successfully");
                     return completedStage(response);
@@ -565,98 +593,86 @@ public class KubeClient implements ConfigHolder {
     }
 
     private String tryFormat(final String body) {
-        JsonObject obj = null;
         try {
-            obj = jsonb.fromJson(body, JsonObject.class);
-            final var mem = new StringWriter();
-            try (final var writer = jsonProvider.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true))
-                    .createWriter(mem))  {
-                writer.write(obj);
-            }
-            return mem.toString();
+            return new PrettyJsonMapper(jsonb).toString(jsonb.fromString(Object.class, body));
         } catch (final RuntimeException re) {
-            // no-op
         }
+        // no-op
         return body;
     }
 
-    private JsonObject filterForApply(final String ref, final JsonObject desc, final String kind) {
+    private Map<String, Object> filterForApply(final String ref, final Map<String, Object> desc, final String kind) {
         switch (kind) {
             case "statefulsets":
                 return filterSpec(ref, desc, statefulsetSpecAllowedAttributes);
-            default: // for now other descriptors are passthrough
+            default:
+                // for now other descriptors are passthrough
                 return desc;
         }
     }
 
-    private JsonObject filterSpec(final String ref, final JsonObject desc, final Collection<String> allowed) {
-        final var spec = desc.getJsonObject("spec");
-        if (spec == null || allowed.containsAll(spec.keySet())) {
+    private Map<String, Object> filterSpec(
+            final String ref, final Map<String, Object> desc, final Collection<String> allowed) {
+        if (!(desc.get("spec") instanceof Map<?, ?> spec) || allowed.containsAll(spec.keySet())) {
             return desc;
         }
         // drop spec forbidden fields for updates
-        log.info(() -> "Important: filtering descriptor spec attributes (" + ref + ") for update (" +
-                spec.keySet().stream().filter(it -> !allowed.contains(it)).collect(joining(", ")) +
-                " update is not supported)");
-        return jsonBuilderFactory.createObjectBuilder(desc.entrySet().stream()
-                        .filter(it -> !"spec".equals(it.getKey()))
-                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .add("spec", jsonBuilderFactory.createObjectBuilder(spec.entrySet().stream()
-                        .filter(it -> allowed.contains(it.getKey()))
-                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue))))
-                .build();
+        log.info(() -> "Important: filtering descriptor spec attributes (" + ref + ") for update ("
+                + spec.keySet().stream()
+                        .map(String.class::cast)
+                        .filter(it -> !allowed.contains(it))
+                        .collect(joining(", "))
+                + " update is not supported)");
+        final var filtered = new LinkedHashMap<>(desc);
+        final var filteredSpec = new LinkedHashMap<String, Object>();
+        spec.forEach((key, value) -> {
+            if (key instanceof String name && allowed.contains(name)) {
+                filteredSpec.put(name, value);
+            }
+        });
+        filtered.put("spec", filteredSpec);
+        return filtered;
     }
 
-    private CompletionStage<JsonObject> injectResourceVersionInDescriptor(final JsonObject desc,
-                                                                          final String name, final String baseUri,
-                                                                          final String errorMessage) {
-        return api.execute(
-                        HttpRequest.newBuilder()
-                                .GET()
-                                .header("Accept", "application/json"),
-                        baseUri + "/" + name)
+    @SuppressWarnings("unchecked")
+    private CompletionStage<Map<String, Object>> injectResourceVersionInDescriptor(
+            final Map<String, Object> desc, final String name, final String baseUri, final String errorMessage) {
+        return execute(HttpRequest.newBuilder().GET().header("Accept", "application/json"), baseUri + "/" + name)
                 .thenApply(test -> {
                     if (test.statusCode() != 200 || !desc.containsKey("metadata")) {
                         // behave as previous execution since we didn't recover there
                         throw new IllegalStateException(errorMessage);
                     }
-
                     // inject in desc the "last-applied-configuration" and submit again
-                    final var jsonObject = jsonb.fromJson(test.body(), JsonObject.class);
+                    final Map<String, Object> jsonObject = jsonb.fromString(
+                            new Types.ParameterizedTypeImpl(Map.class, String.class, Object.class), test.body());
                     final var metadataValue = jsonObject.get("metadata");
-                    if (metadataValue == null || metadataValue.getValueType() != JsonValue.ValueType.OBJECT) {
+                    if (!(metadataValue instanceof Map<?, ?> metadata)) {
                         throw new IllegalStateException(errorMessage);
                     }
-
-                    final var resourceVersion = metadataValue.asJsonObject().get("resourceVersion");
-                    if (resourceVersion == null || resourceVersion.getValueType() != JsonValue.ValueType.STRING) {
+                    final var resourceVersion = metadata.get("resourceVersion");
+                    if (!(resourceVersion instanceof String)) {
                         throw new IllegalStateException(errorMessage);
                     }
-
-                    return jsonBuilderFactory.createObjectBuilder(
-                                    desc.entrySet().stream()
-                                            .filter(it -> !"metadata".equals(it.getKey()))
-                                            .collect(Collector.of(
-                                                    jsonBuilderFactory::createObjectBuilder,
-                                                    (a, b) -> a.add(b.getKey(), b.getValue()),
-                                                    JsonObjectBuilder::addAll,
-                                                    JsonObjectBuilder::build)))
-                            .add("metadata", jsonBuilderFactory.createObjectBuilder(desc.getJsonObject("metadata"))
-                                    .add("resourceVersion", resourceVersion))
-                            .build();
+                    final var updated = new LinkedHashMap<>(desc);
+                    final var updatedMetadata = new LinkedHashMap<>((Map<String, Object>) desc.get("metadata"));
+                    updatedMetadata.put("resourceVersion", resourceVersion);
+                    updated.put("metadata", updatedMetadata);
+                    return updated;
                 });
     }
 
-    private CompletableFuture<HttpResponse<String>> doUpdate(final JsonObject raw,
-                                                             final JsonObject desc,
-                                                             final String name,
-                                                             final String fieldManager,
-                                                             final String baseUri) {
+    private CompletableFuture<HttpResponse<String>> doUpdate(
+            final Map<String, Object> raw,
+            final Map<String, Object> desc,
+            final String name,
+            final String fieldManager,
+            final String baseUri) {
         final var urlOrPath = baseUri + "/" + name + fieldManager;
         if (putOnUpdate || isUsePutOnUpdateForced(desc)) {
-            return api.execute(
+            return execute(
                             HttpRequest.newBuilder()
-                                    .PUT(HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                    .PUT(HttpRequest.BodyPublishers.ofString(jsonb.toString(desc)))
                                     .header("Content-Type", "application/json")
                                     .header("Accept", "application/json"),
                             urlOrPath)
@@ -665,32 +681,33 @@ public class KubeClient implements ConfigHolder {
         if (force || isForce(desc)) {
             return doDelete(desc, -1)
                     .thenCompose(it -> {
-                        if (api.isDryRun()) {
+                        if (settings.dryRun()) {
                             return completedStage(null);
                         }
                         return awaitDeletion(desc);
                     })
-                    .thenCompose(d -> api.execute(
+                    .thenCompose(d -> execute(
                             HttpRequest.newBuilder()
-                                    .PUT(HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                    .PUT(HttpRequest.BodyPublishers.ofString(jsonb.toString(desc)))
                                     .header("Content-Type", "application/json")
                                     .header("Accept", "application/json"),
                             urlOrPath))
                     .toCompletableFuture();
         }
-
         final var type = customPatchContentType(raw).orElse(patchContentType);
-        return api.execute(
+        return
+        // try application/merge-patch+json (CRD typically)
+        execute(
                         HttpRequest.newBuilder()
-                                .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonb.toString(desc)))
                                 .header("Content-Type", type)
                                 .header("Accept", "application/json"),
                         urlOrPath)
                 .thenCompose(res -> {
-                    if (res.statusCode() == 415 && !"application/merge-patch+json".equals(type)) { // try application/merge-patch+json (CRD typically)
-                        return api.execute(
+                    if (res.statusCode() == 415 && !"application/merge-patch+json".equals(type)) {
+                        return execute(
                                 HttpRequest.newBuilder()
-                                        .method("PATCH", HttpRequest.BodyPublishers.ofString(desc.toString()))
+                                        .method("PATCH", HttpRequest.BodyPublishers.ofString(jsonb.toString(desc)))
                                         .header("Content-Type", "application/merge-patch+json")
                                         .header("Accept", "application/json"),
                                 urlOrPath);
@@ -700,99 +717,86 @@ public class KubeClient implements ConfigHolder {
                 .toCompletableFuture();
     }
 
-    private CompletionStage<?> awaitDeletion(final JsonObject desc) {
+    private CompletionStage<?> awaitDeletion(final Map<String, Object> desc) {
         final var promise = new CompletableFuture<Void>();
         final var result = new AtomicBoolean();
-        final var kindLowerCased = desc.getString("kind").toLowerCase(ROOT) + 's';
+        final var kindLowerCased = ((String) desc.get("kind")).toLowerCase(ROOT) + 's';
         final var delay = 500;
         final var remainingRetries = new AtomicInteger(30000 / delay);
-        scheduledExecutorService.scheduleWithFixedDelay(() -> doExists(result, desc, kindLowerCased)
-                .thenApply(updated -> {
-                    if (!result.get()) {
-                        promise.complete(null);
-                    }
-                    return null;
-                })
-                .whenComplete((ok, ko) -> {
-                    if (promise.isDone() || promise.isCompletedExceptionally()) {
-                        return;
-                    }
-                    if (remainingRetries.decrementAndGet() == 0) {
-                        promise.completeExceptionally(new IllegalArgumentException("Resource was not deleted in 30s: " + desc.get("metadata")));
-                    }
-                }), 0, delay, MILLISECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(
+                () -> doExists(result, desc, kindLowerCased)
+                        .thenApply(updated -> {
+                            if (!result.get()) {
+                                promise.complete(null);
+                            }
+                            return null;
+                        })
+                        .whenComplete((ok, ko) -> {
+                            if (promise.isDone() || promise.isCompletedExceptionally()) {
+                                return;
+                            }
+                            if (remainingRetries.decrementAndGet() == 0) {
+                                promise.completeExceptionally(new IllegalArgumentException(
+                                        "Resource was not deleted in 30s: " + desc.get("metadata")));
+                            }
+                        }),
+                0,
+                delay,
+                MILLISECONDS);
         return promise;
     }
 
     // if all user entries are the same in existing one we consider we don't need an update
-    private boolean needsUpdate(final JsonValue existing, final JsonValue user) {
+    private boolean needsUpdate(final Object existing, final Object user) {
         if (existing == null && user == null) {
             return false;
         }
-        if (existing == null || user == null || existing.getValueType() != user.getValueType()) {
-            return true;
+        if (existing instanceof Map<?, ?> old && user instanceof Map<?, ?> requested) {
+            // This timestamp moves but is not a real change. Only compare user-supplied fields.
+            return requested.entrySet().stream()
+                    .filter(it -> !"bundlebee.timestamp".equals(it.getKey()))
+                    .anyMatch(it -> needsUpdate(old.get(it.getKey()), it.getValue()));
         }
-        switch (existing.getValueType()) {
-            case STRING:
-                return !Objects.equals(JsonString.class.cast(existing).getString(), JsonString.class.cast(user).getString());
-            case NUMBER:
-                return !Objects.equals(JsonNumber.class.cast(existing).doubleValue(), JsonNumber.class.cast(user).doubleValue());
-            case OBJECT:
-                final var obj = existing.asJsonObject();
-                return user.asJsonObject().entrySet().stream()
-                        .filter(it -> !"bundlebee.timestamp".equals(it.getKey())) // this one moves but is not a real change
-                        .anyMatch(e -> needsUpdate(obj.get(e.getKey()), e.getValue()));
-            case TRUE:
-            case FALSE:
-            case NULL:
-            case ARRAY:
-            default:
-                return !Objects.equals(existing, user);
+        if (existing instanceof Number old && user instanceof Number requested) {
+            return Double.compare(old.doubleValue(), requested.doubleValue()) != 0;
         }
+        return !Objects.equals(existing, user);
     }
 
-    private boolean isUsePutOnUpdateForced(final JsonObject desc) {
-        try {
-            return ofNullable(desc.getJsonObject("metadata"))
-                    .map(it -> it.getJsonObject("annotations"))
-                    .map(it -> it.getString("io.yupiik.bundlebee/putOnUpdate"))
-                    .map(Boolean::parseBoolean)
-                    .orElse(false);
-        } catch (final RuntimeException re) {
-            return false;
-        }
+    private boolean isUsePutOnUpdateForced(final Map<String, Object> desc) {
+        return desc.get("metadata") instanceof Map<?, ?> metadata
+                && metadata.get("annotations") instanceof Map<?, ?> annotations
+                && annotations.get("io.yupiik.bundlebee/putOnUpdate") instanceof String value
+                && Boolean.parseBoolean(value);
     }
 
-    private boolean isForce(final JsonObject desc) {
-        try {
-            return ofNullable(desc.getJsonObject("metadata"))
-                    .map(it -> it.getJsonObject("annotations"))
-                    .map(it -> it.getString("io.yupiik.bundlebee/force"))
-                    .map(Boolean::parseBoolean)
-                    .orElse(false);
-        } catch (final RuntimeException re) {
-            return false;
-        }
+    private boolean isForce(final Map<String, Object> desc) {
+        return desc.get("metadata") instanceof Map<?, ?> metadata
+                && metadata.get("annotations") instanceof Map<?, ?> annotations
+                && annotations.get("io.yupiik.bundlebee/force") instanceof String value
+                && Boolean.parseBoolean(value);
     }
 
-    private Optional<String> customPatchContentType(final JsonObject desc) {
-        try {
-            return ofNullable(desc.getJsonObject("metadata"))
-                    .map(it -> it.getJsonObject("annotations"))
-                    .map(it -> it.getString("io.yupiik.bundlebee/patchContentType"));
-        } catch (final RuntimeException re) {
-            return empty();
+    private Optional<String> customPatchContentType(final Map<String, Object> desc) {
+        if (desc.get("metadata") instanceof Map<?, ?> metadata
+                && metadata.get("annotations") instanceof Map<?, ?> annotations
+                && annotations.get("io.yupiik.bundlebee/patchContentType") instanceof String value) {
+            return Optional.of(value);
         }
+        return empty();
     }
 
-    public String toBaseUri(final JsonObject desc, final String kindLowerCased, final String namespace) {
-        return ofNullable(resourceMapping.get(kindLowerCased))
-                .map(mapped -> !mapped.startsWith("http") ? api.getBaseApi() + mapped : mapped)
-                .or(() -> ofNullable(apiPreloader.getBaseUrls().get(kindLowerCased))
-                        .map(url -> api.getBaseApi() + url.replace("${namespace}", namespace)))
-                .orElseGet(() -> api.getBaseApi() + findApiPrefix(kindLowerCased, desc) +
-                        (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") +
-                        "/" + kindLowerCased);
+    public String toBaseUri(final Map<String, Object> desc, final String kindLowerCased, final String namespace) {
+        try (final var client = container.lookup(KubernetesClient.class)) {
+            final var api = client.instance();
+            return ofNullable(resourceMapping.get(kindLowerCased))
+                    .map(mapped -> !mapped.startsWith("http") ? api.base().toString() + mapped : mapped)
+                    .or(() -> ofNullable(apiPreloader.getBaseUrls().get(kindLowerCased))
+                            .map(url -> api.base().toString() + url.replace("${namespace}", namespace)))
+                    .orElseGet(() -> api.base().toString() + findApiPrefix(kindLowerCased, desc)
+                            + (!isSkipNameSpace(kindLowerCased) ? "/namespaces/" + namespace : "") + "/"
+                            + kindLowerCased);
+        }
     }
 
     private boolean isSkipNameSpace(final String kindLowerCased) {
@@ -807,7 +811,7 @@ public class KubeClient implements ConfigHolder {
         }
     }
 
-    private String findApiPrefix(final String kindLowerCased, final JsonObject desc) {
+    private String findApiPrefix(final String kindLowerCased, final Map<String, Object> desc) {
         switch (kindLowerCased) {
             case "deployments":
             case "statefulsets":
@@ -828,81 +832,86 @@ public class KubeClient implements ConfigHolder {
             case "rolebindings":
             case "clusterroles":
             case "clusterrolebindings":
-                return "/apis/" + desc.getString("apiVersion");
+                return "/apis/" + desc.get("apiVersion");
             default:
                 return "/api/v1";
         }
     }
 
-    public JsonObject injectMetadata(final JsonObject rawDesc, final Map<String, String> customLabels) {
-        return rawDesc.entrySet().stream()
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> injectMetadata(
+            final Map<String, Object> rawDesc, final Map<String, String> customLabels) {
+        final var result = new LinkedHashMap<String, Object>();
+        rawDesc.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .flatMap(entry -> {
-                    if ("metadata".equals(entry.getKey())) {
-                        final JsonObject labelsJson = customLabels.entrySet().stream()
+                .forEach(entry -> result.put(entry.getKey(), entry.getValue()));
+        if (rawDesc.get("metadata") instanceof Map<?, ?> rawMetadata) {
+            final var metadata = new LinkedHashMap<String, Object>();
+            ((Map<String, Object>) rawMetadata)
+                    .entrySet().stream()
+                            .sorted(Map.Entry.comparingByKey())
+                            .forEach(entry -> metadata.put(entry.getKey(), entry.getValue()));
+            final var labels = new LinkedHashMap<String, Object>();
+            if (metadata.get(customMetadataInjectionPoint) instanceof Map<?, ?> rawLabels) {
+                ((Map<String, Object>) rawLabels)
+                        .entrySet().stream()
                                 .sorted(Map.Entry.comparingByKey())
-                                .collect(Collector.of(
-                                        jsonBuilderFactory::createObjectBuilder,
-                                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
-                                        JsonObjectBuilder::addAll,
-                                        JsonObjectBuilder::build));
-
-                        final var metadata = entry.getValue().asJsonObject();
-                        if (metadata.containsKey(customMetadataInjectionPoint)) {
-                            return mergeLabels(entry, metadata, labelsJson);
-                        }
-                        return Stream.of(new AbstractMap.SimpleImmutableEntry<>(entry.getKey(), Stream.concat(
-                                        metadata.entrySet().stream().sorted(Map.Entry.comparingByKey()),
-                                        Stream.of(new AbstractMap.SimpleImmutableEntry<>(customMetadataInjectionPoint, labelsJson)))
-                                .collect(Collector.of(
-                                        jsonBuilderFactory::createObjectBuilder,
-                                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
-                                        JsonObjectBuilder::addAll,
-                                        JsonObjectBuilder::build))));
-                    }
-                    return Stream.of(entry);
-                })
-                .collect(Collector.of(
-                        jsonBuilderFactory::createObjectBuilder,
-                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
-                        JsonObjectBuilder::addAll,
-                        JsonObjectBuilder::build));
+                                .filter(entry -> !customLabels.containsKey(entry.getKey()))
+                                .forEach(entry -> labels.put(entry.getKey(), entry.getValue()));
+            }
+            customLabels.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .forEach(entry -> labels.put(entry.getKey(), entry.getValue()));
+            metadata.put(customMetadataInjectionPoint, labels);
+            result.put("metadata", metadata);
+        }
+        return result;
     }
 
-    private Stream<Map.Entry<String, JsonValue>> mergeLabels(final Map.Entry<String, JsonValue> entry,
-                                                             final JsonObject metadata,
-                                                             final JsonObject customLabels) {
-        return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
-                entry.getKey(),
-                metadata.entrySet().stream()
-                        .sorted(Map.Entry.comparingByKey())
-                        .flatMap(metadataEntry -> {
-                            if (customMetadataInjectionPoint.equals(metadataEntry.getKey())) {
-                                return Stream.of(new AbstractMap.SimpleImmutableEntry<>(
-                                        metadataEntry.getKey(),
-                                        Stream.concat(
-                                                        metadataEntry.getValue().asJsonObject().entrySet().stream()
-                                                                .sorted(Map.Entry.comparingByKey())
-                                                                .filter(e -> !customLabels.containsKey(e.getKey())),
-                                                        customLabels.entrySet().stream())
-                                                .collect(Collector.of(
-                                                        jsonBuilderFactory::createObjectBuilder,
-                                                        (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
-                                                        JsonObjectBuilder::addAll,
-                                                        JsonObjectBuilder::build))));
-                            }
-                            return Stream.of(metadataEntry);
-                        })
-                        .collect(Collector.of(
-                                jsonBuilderFactory::createObjectBuilder,
-                                (builder, kv) -> builder.add(kv.getKey(), kv.getValue()),
-                                JsonObjectBuilder::addAll,
-                                JsonObjectBuilder::build))));
-    }
-
-    @Data
     public static class DescriptorItem {
-        private final JsonObject raw;
-        private final JsonObject prepared;
+        private final Map<String, Object> raw;
+        private final Map<String, Object> prepared;
+
+        public DescriptorItem(final Map<String, Object> raw, final Map<String, Object> prepared) {
+            this.raw = raw;
+            this.prepared = prepared;
+        }
+
+        public Map<String, Object> getRaw() {
+            return this.raw;
+        }
+
+        public Map<String, Object> getPrepared() {
+            return this.prepared;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (!(o instanceof DescriptorItem other)) {
+                return false;
+            }
+            return other.canEqual(this)
+                    && Objects.equals(this.getRaw(), other.getRaw())
+                    && Objects.equals(this.getPrepared(), other.getPrepared());
+        }
+
+        protected boolean canEqual(final Object other) {
+            return other instanceof KubeClient.DescriptorItem;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.getRaw(), this.getPrepared());
+        }
+
+        @Override
+        public String toString() {
+            return "KubeClient.DescriptorItem(raw=" + this.getRaw() + ", prepared=" + this.getPrepared() + ")";
+        }
     }
+
+    private final DeploymentConfiguration configuration;
 }

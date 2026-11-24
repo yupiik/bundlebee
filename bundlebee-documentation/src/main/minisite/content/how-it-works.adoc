@@ -113,7 +113,7 @@ Here are some examples.
 
 <.> We add to the alveolus a list of patches to apply on some descriptors
 <.> We reference the descriptor to patch
-<.> We enable interpolation from Microprofile Config (which include CLI args)
+<.> We enable interpolation from Fusion-backed BundleBee configuration (which include CLI args)
 <.> We define the JSON-Patch to use (optional, interpolation will also interpolate the descriptor if designed to be interpolated)
 <.> We use an interpolation in the configuration in the JSON-Patch `replace` operation which replaces the data of the referenced `ConfigMap`
 
@@ -216,11 +216,14 @@ Placeholders can use some keywords to get some particular values:
 - `date:<pattern>`: format `OffsetDateTime.now()` value using the provided pattern,
 - `nowUTC`: `OffsetDateTime.now()` value with UTC `ZoneId`,
 - `kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]`: secret value looked up through Kubernetes API.
-- `jsr223:<script path as file or resource or inline script>`: executes a JSR223 script to get the result, assumes that the script engine implementation is available in the JVM (not by default). To find the engine it uses the file extension or a comment in the file (for inline script) containing `bundlebee.language: <lang>`. The script contains the two functions `lookupByName` and `lookupByType` which can lookup a CDI bean to reuse BundleBee utilities (ex: `const bean = lookupByType.apply(getType('io.yupiik.bundlebee.core.kube.KubeClient'))`). If no language is found it defaults on `js`.
+- `jsr223:<script path as file or resource or inline script>`: executes a JSR223 script using an engine supplied on the application classpath (none is bundled).
+The engine is selected by file extension or an inline `bundlebee.language: <lang>` comment, defaulting to `js`.
+`lookupByType` accepts a Java class and resolves its Fusion bean; the old CDI `lookupByName` binding has been removed.
+Lookup handles are closed after evaluation, including on failure.
 - `bundlebee-directory-json-key-value-pairs:/path/to/dir`: creates a JSON object from a directory. The path can be either a directory path of a directory path with a glob pattern at the end (`/path/to/dir/*.txt` for example). The keys are the filenames (simple) and `____` are converted to `/`. The values are the content of the files, filtered. Note it only works with exploded folders, not jar resources as of today.
 - `bundlebee-directory-json-key-value-pairs-content:/path/to/dir`: same as `bundlebee-directory-json-key-value-pairs` but dropping enclosing brackets to be able to embed the content in an existing object (like `annotations`). Ex: `{{bundlebee-directory-json-key-value-pairs-content:resources/app/annotations/*.txt}}`.
 
-If none of these placeholders match, then Microprofile Config is used to lookup the value (so system properties, environment variables and BundleBee args are used).
+If none of these placeholders match, then Fusion-backed BundleBee configuration is used to lookup the value (so system properties, environment variables and BundleBee args are used).
 
 TIP: file placeholders can also read a resource from the classpath if the path does not match any existing file.
 

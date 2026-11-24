@@ -15,19 +15,63 @@
  */
 package io.yupiik.bundlebee.core.event;
 
-import lombok.Data;
-
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 
-@Data
 public final class OnKubeRequest {
     private final HttpRequest request;
-
     // overrides the default request if set
     private HttpRequest userRequest;
-
     // pre-computed response if provided, if so userRequest is ignored
     private CompletionStage<HttpResponse<String>> userResponse;
+
+    public OnKubeRequest(final HttpRequest request) {
+        this.request = request;
+    }
+
+    public HttpRequest getRequest() {
+        return this.request;
+    }
+
+    public HttpRequest getUserRequest() {
+        return this.userRequest;
+    }
+
+    public CompletionStage<HttpResponse<String>> getUserResponse() {
+        return this.userResponse;
+    }
+
+    public void setUserRequest(final HttpRequest userRequest) {
+        this.userRequest = userRequest;
+    }
+
+    public void setUserResponse(final CompletionStage<HttpResponse<String>> userResponse) {
+        this.userResponse = userResponse;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof OnKubeRequest other)) {
+            return false;
+        }
+        return Objects.equals(this.getRequest(), other.getRequest())
+                && Objects.equals(this.getUserRequest(), other.getUserRequest())
+                && Objects.equals(this.getUserResponse(), other.getUserResponse());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getRequest(), this.getUserRequest(), this.getUserResponse());
+    }
+
+    @Override
+    public String toString() {
+        return "OnKubeRequest(request=" + this.getRequest() + ", userRequest=" + this.getUserRequest()
+                + ", userResponse=" + this.getUserResponse() + ")";
+    }
 }

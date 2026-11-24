@@ -16,18 +16,21 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.json.JsonMapper;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class WildcardUsedInRules extends CheckByKind {
-    public WildcardUsedInRules() {
+    private final JsonMapper jsonb;
+
+    public WildcardUsedInRules(final JsonMapper jsonb) {
         super(Set.of("Role", "ClusterRole"));
+        this.jsonb = jsonb;
     }
 
     @Override
@@ -37,8 +40,8 @@ public class WildcardUsedInRules extends CheckByKind {
 
     @Override
     public String description() {
-        return "Indicate when a wildcard is used in Role or ClusterRole rules.\n" +
-                "CIS Benchmark 5.1.3 Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.";
+        return "Indicate when a wildcard is used in Role or ClusterRole rules.\n"
+                + "CIS Benchmark 5.1.3 Use of wildcards is not optimal from a security perspective as it may allow for inadvertent access to be granted when new resources are added to the Kubernetes API either as CRDs or in later versions of the product.";
     }
 
     @Override
@@ -48,11 +51,17 @@ public class WildcardUsedInRules extends CheckByKind {
 
     @Override
     public Stream<LintError> validateSync(final LintableDescriptor descriptor) {
-        return Stream.ofNullable(descriptor.getDescriptor().getJsonArray("rules"))
+        return Stream.ofNullable(
+                        (descriptor.getDescriptor().get("rules") instanceof List<?> rulesValue
+                                ? rulesValue
+                                : List.of()))
                 .flatMap(Collection::stream)
-                .map(JsonValue::asJsonObject)
-                .filter(it -> it.containsKey("verbs") && it.getJsonArray("verbs").stream()
-                        .anyMatch(v -> v.getValueType() == JsonValue.ValueType.STRING && "*".equals(((JsonString) v).getString())))
-                .map(it -> new LintError(LintError.LintLevel.ERROR, "Wildcard verb used in rule " + it));
+                .filter(Map.class::isInstance)
+                .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                .filter(it -> it.containsKey("verbs")
+                        && (it.get("verbs") instanceof List<?> verbsValue ? verbsValue : List.of())
+                                .stream().anyMatch(v -> v instanceof String && "*".equals(((String) v))))
+                .map(it ->
+                        new LintError(LintError.LintLevel.ERROR, "Wildcard verb used in rule " + jsonb.toString(it)));
     }
 }

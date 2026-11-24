@@ -15,19 +15,16 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Regex
-//metadata:end
+// metadata:end
 @Description("Literal regex replace, throws on error")
 public class MustRegexReplaceAllLiteralFunc implements HelmFunction {
     @Override

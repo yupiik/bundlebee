@@ -3,13 +3,17 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "build": "NODE_ENV=prod node esbuild.js"
+    "build": "NODE_ENV=prod node esbuild.js",
+    "test": "node --test test/*.test.cjs"
   },
   "devDependencies": {
     "buffer": "^6.0.3",
-    "esbuild": "^0.27.0",
-    "jsonjoy-builder": "^0.2.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "esbuild": "^0.28.2",
+    "jsonjoy-builder": "^1.0.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }

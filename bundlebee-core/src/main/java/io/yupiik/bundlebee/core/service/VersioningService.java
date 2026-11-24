@@ -15,30 +15,32 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.descriptor.Manifest;
-import lombok.Data;
-
-import javax.enterprise.context.ApplicationScoped;
-
 import static java.util.Optional.ofNullable;
+
+import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import java.util.Objects;
+import java.util.regex.Pattern;
 
 @ApplicationScoped
 public class VersioningService {
+    private static final Pattern VERSION_SEPARATOR = Pattern.compile("\\.");
+    private static final Pattern COLON = Pattern.compile(":");
+
     public String findVersion(final Manifest.Alveolus alveolus) {
-        return ofNullable(alveolus.getVersion())
-                .filter(it -> !it.isBlank())
-                .orElseGet(() -> {
-                    final var segments = alveolus.getName().split(":");
-                    if (segments.length >= 3) {
-                        return segments[2];
-                    }
-                    throw new IllegalArgumentException("Can't extract the version from " + alveolus + ". " +
-                            "Ensure to set the version \"version\":\"1.2.3\" or use the naming convention <group>:<artifact>:<version>");
-                });
+        return ofNullable(alveolus.version()).filter(it -> !it.isBlank()).orElseGet(() -> {
+            final var segments = COLON.split(alveolus.name());
+            if (segments.length >= 3) {
+                return segments[2];
+            }
+            throw new IllegalArgumentException(
+                    "Can\'t extract the version from " + alveolus + ". "
+                            + "Ensure to set the version \"version\":\"1.2.3\" or use the naming convention <group>:<artifact>:<version>");
+        });
     }
 
     public SemanticVersion toSemanticVersion(final String version) {
-        final var segments = version.split("\\.");
+        final var segments = VERSION_SEPARATOR.split(version);
         if (segments.length < 2) {
             return invalid(version);
         }
@@ -53,11 +55,10 @@ public class VersioningService {
     }
 
     private <T> T invalid(final String raw) {
-        throw new IllegalArgumentException(raw + " is not a semver friendly version, " +
-                "ensure to use <major:integer>.<minor:integer>[.<path:integer[..*]] pattern.");
+        throw new IllegalArgumentException(raw + " is not a semver friendly version, "
+                + "ensure to use <major:integer>.<minor:integer>[.<path:integer[..*]] pattern.");
     }
 
-    @Data
     public static class SemanticVersion implements Comparable<SemanticVersion> {
         private final String raw;
         private final int major;
@@ -88,6 +89,66 @@ public class VersioningService {
                 return 1;
             }
             return raw.compareTo(o.getRaw());
+        }
+
+        public SemanticVersion(
+                final String raw, final int major, final int minor, final int patch, final boolean hasPatch) {
+            this.raw = raw;
+            this.major = major;
+            this.minor = minor;
+            this.patch = patch;
+            this.hasPatch = hasPatch;
+        }
+
+        public String getRaw() {
+            return this.raw;
+        }
+
+        public int getMajor() {
+            return this.major;
+        }
+
+        public int getMinor() {
+            return this.minor;
+        }
+
+        public int getPatch() {
+            return this.patch;
+        }
+
+        public boolean isHasPatch() {
+            return this.hasPatch;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == this) {
+                return true;
+            }
+            if (!(o instanceof SemanticVersion other)) {
+                return false;
+            }
+            return other.canEqual(this)
+                    && this.getMajor() == other.getMajor()
+                    && this.getMinor() == other.getMinor()
+                    && this.getPatch() == other.getPatch()
+                    && this.isHasPatch() == other.isHasPatch()
+                    && Objects.equals(this.getRaw(), other.getRaw());
+        }
+
+        protected boolean canEqual(final Object other) {
+            return other instanceof VersioningService.SemanticVersion;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.getMajor(), this.getMinor(), this.getPatch(), this.isHasPatch(), this.getRaw());
+        }
+
+        @Override
+        public String toString() {
+            return "VersioningService.SemanticVersion(raw=" + this.getRaw() + ", major=" + this.getMajor() + ", minor="
+                    + this.getMinor() + ", patch=" + this.getPatch() + ", hasPatch=" + this.isHasPatch() + ")";
         }
     }
 }

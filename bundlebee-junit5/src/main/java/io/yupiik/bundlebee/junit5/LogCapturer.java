@@ -16,7 +16,6 @@
 package io.yupiik.bundlebee.junit5;
 
 import io.yupiik.bundlebee.junit5.impl.Injectable;
-
 import java.util.Collection;
 import java.util.function.Predicate;
 import java.util.logging.LogRecord;

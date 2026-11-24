@@ -16,13 +16,13 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonObject;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.Map;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class NoLatestImage extends ContainerValueValidator {
+
     @Override
     public String name() {
         return "no-latest";
@@ -44,12 +44,14 @@ public class NoLatestImage extends ContainerValueValidator {
     }
 
     @Override
-    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
-        final var image = container.getString("image", "");
+    protected Stream<LintError> validate(final Map<?, ?> container, final LintableDescriptor descriptor) {
+        final var image = (container.get("image") instanceof String imageValue ? imageValue : "");
         final var tagStart = image.lastIndexOf(':');
         // note: we assume that latest+sha is ok-ish
         if (tagStart < 0 || "latest".equals(image.substring(tagStart + 1))) {
-            return Stream.of(new LintError(LintError.LintLevel.ERROR, "You shouldn't use latest tag since it is highly unstable: '" + image + "'"));
+            return Stream.of(new LintError(
+                    LintError.LintLevel.ERROR,
+                    "You shouldn't use latest tag since it is highly unstable: '" + image + "'"));
         }
         return Stream.empty();
     }

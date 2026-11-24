@@ -18,5 +18,4 @@ package io.yupiik.bundlebee.junit5;
 import io.yupiik.bundlebee.junit5.impl.Injectable;
 
 @Injectable
-public interface CommandExecutor extends Runnable {
-}
+public interface CommandExecutor extends Runnable {}

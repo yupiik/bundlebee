@@ -25,6 +25,14 @@ The configuration is the same than the ones of the CLI so you can review the xre
 
 More information on xref:maven/bundlebee-maven-plugin.adoc[mojos] documentation.
 
+=== Logging behavior
+
+By default (`bundlebee.useDefaultLogging=false`), each invocation temporarily adds a handler to the `io.yupiik.bundlebee` JUL logger to forward eligible `INFO` and higher records published on the `execute()` caller thread to that invocation's Maven `Log`.
+Asynchronous callbacks, child threads, and shared workers retain the original JUL logging path; invocation ownership is never inferred for them.
+Existing JUL handlers, levels, filters, and parent routing remain untouched, so JUL levels and filters can suppress records before forwarding, and caller-thread records can appear in both JUL and Maven output.
+This additive behavior favors preserving JUL configuration over universal attribution of logs to Maven invocations.
+Set `-Dbundlebee.useDefaultLogging=true` (or `<useDefaultLogging>true</useDefaultLogging>` in the plugin configuration) to add no forwarding handler and use JUL only.
+
 == Example
 
 Here a sample to generate a web alveolus in a maven module (note it can be defined in parent pom):
@@ -67,3 +75,13 @@ TIP: even if the `add-alveolus` goal will enable you to deploy your web service,
 This goal (`add-alveolus`) is mainly to get started but once you got your `manifest.json` written you can remove the plugin execution until you write a custom `io.yupiik.bundlebee.core.command.AddAlveolusTypeHandler` added in plugin dependencies.
 
 
+
+== BundleBee 2 runtime
+
+Run Maven with Java 17 or later and align the plugin version with the BundleBee runtime (`2.0.0-SNAPSHOT` on the current development line).
+The plugin uses Fusion `1.2.1-SNAPSHOT` configuration instead of a globally registered MicroProfile Config source.
+Maven expressions are resolved through an invocation-local configuration source tied to the current session and mojo execution.
+This prevents one module's Maven evaluator from being reused by another invocation.
+The `bundlebee.skipMavenForcedFilteringForPlaceholders` option still controls whether an unwrapped key such as `project.version` is retried as `${project.version}`.
+Explicitly wrapped Maven expressions are evaluated in either mode.
+See xref:migration-2.adoc[the migration guide] for Java extensions and embedded integrations.

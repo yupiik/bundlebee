@@ -41,7 +41,7 @@ const conf = {
     sourcemap: dev,
     legalComments: 'none',
     logLevel: 'info',
-    target: ['chrome58', 'firefox57', 'safari11'],
+    target: ['chrome100', 'firefox100', 'safari15.4'],
     outfile: outDir + 'js/kubernetes.schema.js',
     jsx: 'automatic',
 };

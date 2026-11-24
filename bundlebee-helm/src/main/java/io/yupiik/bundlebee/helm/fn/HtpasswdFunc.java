@@ -15,21 +15,18 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Crypto
-//metadata:end
+// metadata:end
 @Description("Generates an htpasswd entry")
 public class HtpasswdFunc implements HelmFunction {
     @Override
@@ -44,7 +41,8 @@ public class HtpasswdFunc implements HelmFunction {
         }
         final var user = args[0].toString();
         final var pass = args[1].toString();
-        final var algo = args.length >= 3 && args[2] != null ? args[2].toString().toLowerCase() : "bcrypt";
+        final var algo =
+                args.length >= 3 && args[2] != null ? args[2].toString().toLowerCase() : "bcrypt";
 
         switch (algo) {
             case "sha":

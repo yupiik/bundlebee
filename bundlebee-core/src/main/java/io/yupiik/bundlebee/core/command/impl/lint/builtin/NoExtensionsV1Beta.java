@@ -16,26 +16,30 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class NoExtensionsV1Beta extends CheckValue {
+
     public NoExtensionsV1Beta() {
         super(
                 Set.of("Ingress", "ReplicaSet", "Deployment", "DaemonSet", "NetworkPolicy", "PodSecurityPolicy"),
-                Map.of(
-                        "Ingress", "/apiVersion", // v1.22
-                        "ReplicaSet", "/apiVersion",
-                        "Deployment", "/apiVersion",
-                        "DaemonSet", "/apiVersion",
-                        "NetworkPolicy", "/apiVersion",
-                        "PodSecurityPolicy", "/apiVersion"),
+                Map.of( // v1.22
+                        "Ingress", // v1.22
+                        "/apiVersion",
+                        "ReplicaSet",
+                        "/apiVersion",
+                        "Deployment",
+                        "/apiVersion",
+                        "DaemonSet",
+                        "/apiVersion",
+                        "NetworkPolicy",
+                        "/apiVersion",
+                        "PodSecurityPolicy",
+                        "/apiVersion"),
                 false);
     }
 
@@ -51,14 +55,15 @@ public class NoExtensionsV1Beta extends CheckValue {
 
     @Override
     public String remediation() {
-        return "Migrate using the apps/v1 API versions for the objects.\n" +
-                "Refer to https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/ for details.";
+        return "Migrate using the apps/v1 API versions for the objects.\n"
+                + "Refer to https://kubernetes.io/blog/2019/07/18/api-deprecations-in-1-16/ for details.";
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        return value.getValueType() == JsonValue.ValueType.STRING && "extensions/v1beta1".equals(((JsonString) value).getString()) ?
-                Stream.of(new LintError(LintError.LintLevel.WARNING, "'extensions/v1beta1' shouldn't be used anymore")) :
-                Stream.empty();
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        return value instanceof String && "extensions/v1beta1".equals(((String) value))
+                ? Stream.of(
+                        new LintError(LintError.LintLevel.WARNING, "'extensions/v1beta1' shouldn't be used anymore"))
+                : Stream.empty();
     }
 }

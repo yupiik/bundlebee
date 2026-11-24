@@ -15,10 +15,26 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static java.util.logging.Level.INFO;
+import static java.util.stream.Collectors.toSet;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 import io.yupiik.bundlebee.core.BundleBee;
 import io.yupiik.bundlebee.core.test.BundleBeeExtension;
 import io.yupiik.bundlebee.core.test.CommandExecutor;
 import io.yupiik.bundlebee.core.test.http.SpyingResponseLocator;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -29,25 +45,9 @@ import org.talend.sdk.component.junit.http.internal.impl.ResponseImpl;
 import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
-
-import static java.util.logging.Level.INFO;
-import static java.util.stream.Collectors.toSet;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 @HttpApi(useSsl = true)
 class ApplyCommandTest {
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
@@ -58,34 +58,33 @@ class ApplyCommandTest {
     void handlebars(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
-                "apply",
-                "--alveolus", "handlebars",
-                "--injectBundleBeeMetadata", "false",
-                "--injectTimestamp", "false"));
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "apply",
+                                "--bundlebee-apply-alveolus",
+                                "handlebars",
+                                "--bundlebee-apply-injectBundleBeeMetadata",
+                                "false",
+                                "--bundlebee-apply-injectTimestamp",
+                                "false"));
         assertEquals("Deploying 'handlebars'\nApplying 'handlebars' (kind=services) for namespace 'default'\n", logs);
-
         assertEquals(1, spyingResponseLocator.requests.size());
         final var payload = spyingResponseLocator.requests.get(0).payload();
-
         final int label2Start = payload.indexOf("\"label2\":\"");
         final int label2End = payload.indexOf("\"", label2Start + "\"label2\":\"".length() + 1);
-        final var base64 = payload.substring(label2Start +"\"label2\":\"".length(), label2End);
+        final var base64 = payload.substring(label2Start + "\"label2\":\"".length(), label2End);
         assertDoesNotThrow(() -> Base64.getDecoder().decode(base64));
-
-        final var actual = payload.substring(0, label2Start + "\"label2\":\"".length()) + "xxxx" + payload.substring(label2End);
-        assertEquals("{" +
-                "\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
-                "\"metadata\":{" +
-                "\"name\":\"handlebars\"," +
-                "\"namespace\":\"default\"," +
-                "\"labels\":{" +
-                "\"app\":\"handlebars\"," +
-                "\"label\":\"notset\"," +
-                "\"label2\":\"xxxx\"}}," +
-                "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1235,\"targetPort\":1235}]," +
-                "\"selector\":{\"app\":\"handlebars\"}}}",
+        final var actual =
+                payload.substring(0, label2Start + "\"label2\":\"".length()) + "xxxx" + payload.substring(label2End);
+        assertEquals(
+                "{" + "\"apiVersion\":\"v1\",\"kind\":\"Service\"," + "\"metadata\":{" + "\"name\":\"handlebars\","
+                        + "\"namespace\":\"default\"," + "\"labels\":{" + "\"app\":\"handlebars\","
+                        + "\"label\":\"notset\"," + "\"label2\":\"xxxx\"}},"
+                        + "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1235,\"targetPort\":1235}],"
+                        + "\"selector\":{\"app\":\"handlebars\"}}}",
                 actual);
     }
 
@@ -93,49 +92,82 @@ class ApplyCommandTest {
     void patchCustomContentType(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
-                "apply", "--alveolus", "customContentType", "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "apply",
+                                "--bundlebee-apply-alveolus",
+                                "customContentType",
+                                "--bundlebee-apply-injectBundleBeeMetadata",
+                                "false",
+                                "--bundlebee-apply-injectTimestamp",
+                                "false"));
         assertEquals("Deploying 'customContentType'\nApplying 's0' (kind=services) for namespace 'default'\n", logs);
-
         assertEquals(1, spyingResponseLocator.requests.size());
-        assertEquals("custom/json", spyingResponseLocator.requests.get(0).headers().get("Content-Type"));
+        assertEquals(
+                "custom/json", spyingResponseLocator.requests.get(0).headers().get("Content-Type"));
     }
 
     @Test
     void includeIfPatch(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
         // apply it
-        System.setProperty("ApplyCommandTest.includeIfPatch", "true");
-        try {
-            {
-                executor.wrap(handler, INFO, () -> new BundleBee().launch(
-                        "apply", "--alveolus", "ApplyCommandTest.includeIfPatch",
-                        "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
-                assertEquals(
-                        Set.of("{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
-                                "\"metadata\":{\"name\":\"s\",\"labels\":{\"app\":\"s-test\",\"patched\":\"true\"}}," +
-                                "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1234,\"targetPort\":1234}],\"selector\":{\"app\":\"s-test\"}}}"),
-                        spyingResponseLocator.requests.stream().map(Request::payload).collect(toSet()));
-            }
 
-            // skip it
-            spyingResponseLocator.requests.clear();
-            System.setProperty("ApplyCommandTest.includeIfPatch", "false");
-            {
-                executor.wrap(handler, INFO, () -> new BundleBee().launch(
-                        "apply", "--alveolus", "ApplyCommandTest.includeIfPatch",
-                        "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
-                assertEquals(
-                        Set.of("{\"apiVersion\":\"v1\",\"kind\":\"Service\"," +
-                                "\"metadata\":{\"name\":\"s\",\"labels\":{\"app\":\"s-test\"}}," +
-                                "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1234,\"targetPort\":1234}],\"selector\":{\"app\":\"s-test\"}}}"),
-                        spyingResponseLocator.requests.stream().map(Request::payload).collect(toSet()));
-            }
-        } finally {
-            System.clearProperty("ApplyCommandTest.includeIfPatch");
+        {
+            executor.wrap(
+                    handler,
+                    INFO,
+                    () -> new BundleBee()
+                            .launch(
+                                    new String[] {
+                                        "apply",
+                                        "--bundlebee-apply-alveolus",
+                                        "ApplyCommandTest.includeIfPatch",
+                                        "--bundlebee-apply-injectBundleBeeMetadata",
+                                        "false",
+                                        "--bundlebee-apply-injectTimestamp",
+                                        "false"
+                                    },
+                                    Map.of("ApplyCommandTest.includeIfPatch", "true")));
+            assertEquals(
+                    Set.of(
+                            "{\"apiVersion\":\"v1\",\"kind\":\"Service\","
+                                    + "\"metadata\":{\"name\":\"s\",\"labels\":{\"app\":\"s-test\",\"patched\":\"true\"}},"
+                                    + "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1234,\"targetPort\":1234}],\"selector\":{\"app\":\"s-test\"}}}"),
+                    spyingResponseLocator.requests.stream()
+                            .map(Request::payload)
+                            .collect(toSet()));
+        }
+        // skip it
+        spyingResponseLocator.requests.clear();
+
+        {
+            executor.wrap(
+                    handler,
+                    INFO,
+                    () -> new BundleBee()
+                            .launch(
+                                    new String[] {
+                                        "apply",
+                                        "--bundlebee-apply-alveolus",
+                                        "ApplyCommandTest.includeIfPatch",
+                                        "--bundlebee-apply-injectBundleBeeMetadata",
+                                        "false",
+                                        "--bundlebee-apply-injectTimestamp",
+                                        "false"
+                                    },
+                                    Map.of("ApplyCommandTest.includeIfPatch", "false")));
+            assertEquals(
+                    Set.of(
+                            "{\"apiVersion\":\"v1\",\"kind\":\"Service\","
+                                    + "\"metadata\":{\"name\":\"s\",\"labels\":{\"app\":\"s-test\"}},"
+                                    + "\"spec\":{\"type\":\"NodePort\",\"ports\":[{\"port\":1234,\"targetPort\":1234}],\"selector\":{\"app\":\"s-test\"}}}"),
+                    spyingResponseLocator.requests.stream()
+                            .map(Request::payload)
+                            .collect(toSet()));
         }
     }
 
@@ -143,19 +175,25 @@ class ApplyCommandTest {
     void fromTemplate(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
-                "apply", "--alveolus", "ApplyCommandTest.fromTemplate",
-                "--injectBundleBeeMetadata", "false", "--injectTimestamp", "false"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.fromTemplate'\n" +
-                "Deploying 'ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate'\n" +
-                "Deploying 'ApplyCommandTest.template'\n" +
-                "Deploying 'ApplyCommandTest.template'\n" +
-                "Applying 'bar' (kind=services) for namespace 'default'\n" +
-                "Applying 'foo' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "apply",
+                                "--bundlebee-apply-alveolus",
+                                "ApplyCommandTest.fromTemplate",
+                                "--bundlebee-apply-injectBundleBeeMetadata",
+                                "false",
+                                "--bundlebee-apply-injectTimestamp",
+                                "false"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.fromTemplate'\n"
+                        + "Deploying 'ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate'\n"
+                        + "Deploying 'ApplyCommandTest.template'\n" + "Deploying 'ApplyCommandTest.template'\n"
+                        + "Applying 'bar' (kind=services) for namespace 'default'\n"
+                        + "Applying 'foo' (kind=services) for namespace 'default'\n" + "",
+                logs);
         assertEquals(4, spyingResponseLocator.getFound().size());
         assertEquals(2, spyingResponseLocator.requests.size());
         assertEquals(
@@ -169,116 +207,163 @@ class ApplyCommandTest {
     void applyWithState(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch(
-                "apply", "--alveolus", "ApplyCommandTest.apply", "--trackState", "true"));
-        assertEquals("" +
-                "Using previous state\n" + // mock always returns 200 so we seems to have one
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
-                "Applying 'ApplyCommandTest.apply-bbs' (kind=secrets) for namespace 'default'\n" +
-                "", logs);
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "apply",
+                                "--bundlebee-apply-alveolus",
+                                "ApplyCommandTest.apply",
+                                "--bundlebee-apply-trackState",
+                                "true"));
+        assertEquals(
+                "" + // mock always returns 200 so we seems to have one
+                        "Using previous state\n"
+                        + "Deploying 'ApplyCommandTest.apply'\n"
+                        + "Applying 's' (kind=services) for namespace 'default'\n"
+                        + "Applying 'ApplyCommandTest.apply-bbs' (kind=secrets) for namespace 'default'\n" + "",
+                logs);
         // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
-        assertEquals(5/*test exists + create*/, spyingResponseLocator.getFound().size());
+        assertEquals(
+                5, /*test exists + create*/ spyingResponseLocator.getFound().size());
     }
 
     @Test
     void apply(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.apply"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee().launch("apply", "--bundlebee-apply-alveolus", "ApplyCommandTest.apply"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.apply'\n" + "Applying 's' (kind=services) for namespace 'default'\n" + "",
+                logs);
         // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
-        assertEquals(2/*test exists + create*/, spyingResponseLocator.getFound().size());
+        assertEquals(
+                2, /*test exists + create*/ spyingResponseLocator.getFound().size());
     }
 
     @Test
     void applyAwait(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.applyAwait"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.applyAwait'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
-        assertEquals(3/*test exists + create + await*/, spyingResponseLocator.getFound().size());
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee().launch("apply", "--bundlebee-apply-alveolus", "ApplyCommandTest.applyAwait"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.applyAwait'\n" + "Applying 's' (kind=services) for namespace 'default'\n"
+                        + "",
+                logs);
+        assertEquals(
+                3, /*test exists + create + await*/
+                spyingResponseLocator.getFound().size());
     }
 
     @Test
     void applyAwaitCondition(final CommandExecutor executor, final TestInfo info) {
         final var retry = new AtomicInteger(2);
-        final var spyingResponseLocator = new SpyingResponseLocator(
-                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
-            @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
-                switch (request.method()) {
-                    case "CONNECT":
-                        return Optional.empty();
-                    case "GET":
-                        if ("https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/services/s".equals(request.uri()) &&
-                                retry.getAndDecrement() <= 0) {
-                            return Optional.of(new ResponseImpl(Map.of(), 200, ("{\"status\":{\"phase\":\"Active\"}}").getBytes(StandardCharsets.UTF_8)));
+        final var spyingResponseLocator =
+                new SpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_"
+                        + info.getTestMethod().orElseThrow().getName()) {
+
+                    @Override
+                    protected Optional<Response> doFind(
+                            final Request request,
+                            final String pref,
+                            final ClassLoader loader,
+                            final Predicate<String> headerFilter,
+                            final boolean exactMatching) {
+                        switch (request.method()) {
+                            case "CONNECT":
+                                return Optional.empty();
+                            case "GET":
+                                if ("https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/services/s"
+                                                .equals(request.uri())
+                                        && retry.getAndDecrement() <= 0) {
+                                    return Optional.of(new ResponseImpl(
+                                            Map.of(),
+                                            200,
+                                            ("{\"status\":{\"phase\":\"Active\"}}").getBytes(StandardCharsets.UTF_8)));
+                                }
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                            case "PATCH":
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                            default:
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
                         }
-                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
-                    case "PATCH":
-                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
-                    default:
-                        return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
-                }
-            }
-        };
+                    }
+                };
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
-                .launch("apply", "--alveolus", "ApplyCommandTest.applyAwaitCondition"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.applyAwaitCondition'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
-        assertEquals(4/*test exists + create + 2.await*/, spyingResponseLocator.getFound().size());
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee()
+                        .launch("apply", "--bundlebee-apply-alveolus", "ApplyCommandTest.applyAwaitCondition"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.applyAwaitCondition'\n"
+                        + "Applying 's' (kind=services) for namespace 'default'\n" + "",
+                logs);
+        assertEquals(
+                4, /*test exists + create + 2.await*/
+                spyingResponseLocator.getFound().size());
         assertEquals(-1, retry.get());
     }
 
     @Test
     void applyAwaitConditionFailure(final CommandExecutor executor, final TestInfo info) {
         final var retry = new AtomicInteger(2);
-        handler.setResponseLocator(new SpyingResponseLocator(
-                info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName()) {
-            @Override
-            protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                                final Predicate<String> headerFilter, final boolean exactMatching) {
-                switch (request.method()) {
-                    case "CONNECT":
-                        return Optional.empty();
-                    case "GET":
-                        if ("https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/services/s".equals(request.uri()) &&
-                                retry.getAndDecrement() <= 0) {
-                            return Optional.of(new ResponseImpl(Map.of(), 200, ("{\"status\":{\"phase\":\"Active\"}}").getBytes(StandardCharsets.UTF_8)));
+        handler.setResponseLocator(
+                new SpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_"
+                        + info.getTestMethod().orElseThrow().getName()) {
+
+                    @Override
+                    protected Optional<Response> doFind(
+                            final Request request,
+                            final String pref,
+                            final ClassLoader loader,
+                            final Predicate<String> headerFilter,
+                            final boolean exactMatching) {
+                        switch (request.method()) {
+                            case "CONNECT":
+                                return Optional.empty();
+                            case "GET":
+                                if ("https://kubernetes.bundlebee.yupiik.test/api/v1/namespaces/default/services/s"
+                                                .equals(request.uri())
+                                        && retry.getAndDecrement() <= 0) {
+                                    return Optional.of(new ResponseImpl(
+                                            Map.of(),
+                                            200,
+                                            ("{\"status\":{\"phase\":\"Active\"}}").getBytes(StandardCharsets.UTF_8)));
+                                }
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                            case "PATCH":
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
+                            default:
+                                return Optional.of(
+                                        new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
                         }
-                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
-                    case "PATCH":
-                        return Optional.of(new ResponseImpl(Map.of(), 200, "{}".getBytes(StandardCharsets.UTF_8)));
-                    default:
-                        return Optional.of(new ResponseImpl(Map.of(), 500, "{}".getBytes(StandardCharsets.UTF_8)));
-                }
-            }
-        });
+                    }
+                });
         assertEquals(
                 "this is an expected test failure",
                 assertThrows(
-                        RuntimeException.class,
-                        () -> executor.wrap(handler, INFO, () -> new BundleBee()
-                                .launch("apply", "--alveolus", "ApplyCommandTest.applyAwaitConditionFailure")))
+                                RuntimeException.class,
+                                () -> executor.wrap(
+                                        handler,
+                                        INFO,
+                                        () -> new BundleBee()
+                                                .launch(
+                                                        "apply",
+                                                        "--bundlebee-apply-alveolus",
+                                                        "ApplyCommandTest.applyAwaitConditionFailure")))
                         .getMessage());
     }
 
@@ -286,31 +371,39 @@ class ApplyCommandTest {
     void applyWithDependencies(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withdep"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.withdep'\n" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
-                "Applying 's2' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee().launch("apply", "--bundlebee-apply-alveolus", "ApplyCommandTest.withdep"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.withdep'\n" + "Deploying 'ApplyCommandTest.apply'\n"
+                        + "Applying 's' (kind=services) for namespace 'default'\n"
+                        + "Applying 's2' (kind=services) for namespace 'default'\n" + "",
+                logs);
         // ensure the expected number of requests was done - apply itself was tested in KubeClientTest
-        assertEquals(4/* 2 * (test exists + create)*/, spyingResponseLocator.getFound().size());
+        assertEquals(
+                4, /* 2 * (test exists + create)*/
+                spyingResponseLocator.getFound().size());
     }
 
     @Test
     void applyWithDependenciesWithExclude(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
-                .launch("apply", "--alveolus", "ApplyCommandTest.withdep", "--excludedDescriptors", "ApplyCommandTest.d1"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.withdep'\n" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's2' (kind=services) for namespace 'default'\n" +
-                "", logs);
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "apply",
+                                "--bundlebee-apply-alveolus",
+                                "ApplyCommandTest.withdep",
+                                "--bundlebee-apply-excludedDescriptors",
+                                "ApplyCommandTest.d1"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.withdep'\n" + "Deploying 'ApplyCommandTest.apply'\n"
+                        + "Applying 's2' (kind=services) for namespace 'default'\n" + "",
+                logs);
         assertEquals(2, spyingResponseLocator.getFound().size());
     }
 
@@ -318,14 +411,14 @@ class ApplyCommandTest {
     void applyWithDependenciesAndExclude(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withexclude"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.withexclude'\n" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Applying 's2' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee().launch("apply", "--bundlebee-apply-alveolus", "ApplyCommandTest.withexclude"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.withexclude'\n" + "Deploying 'ApplyCommandTest.apply'\n"
+                        + "Applying 's2' (kind=services) for namespace 'default'\n" + "",
+                logs);
         assertEquals(2, spyingResponseLocator.getFound().size());
     }
 
@@ -333,27 +426,29 @@ class ApplyCommandTest {
     void applyWithDuplicatedDependencies(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee().launch("apply", "--alveolus", "ApplyCommandTest.withsamedep"));
-        assertEquals("" +
-                "Deploying 'ApplyCommandTest.withsamedep'\n" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "Deploying 'ApplyCommandTest.withdep'\n" +
-                "Deploying 'ApplyCommandTest.apply'\n" +
-                "ApplyCommandTest.d1 already deployed, skipping\n" +
-                "Applying 's' (kind=services) for namespace 'default'\n" +
-                "Applying 's2' (kind=services) for namespace 'default'\n" +
-                "Applying 's3' (kind=services) for namespace 'default'\n" +
-                "", logs);
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee().launch("apply", "--bundlebee-apply-alveolus", "ApplyCommandTest.withsamedep"));
+        assertEquals(
+                "Deploying 'ApplyCommandTest.withsamedep'\n" + "Deploying 'ApplyCommandTest.apply'\n"
+                        + "Deploying 'ApplyCommandTest.withdep'\n" + "Deploying 'ApplyCommandTest.apply'\n"
+                        + "ApplyCommandTest.d1 already deployed, skipping\n"
+                        + "Applying 's' (kind=services) for namespace 'default'\n"
+                        + "Applying 's2' (kind=services) for namespace 'default'\n"
+                        + "Applying 's3' (kind=services) for namespace 'default'\n" + "",
+                logs);
         assertEquals(6, spyingResponseLocator.getFound().size());
     }
 
     private StoringSpyingResponseLocator newSpyingHandler(final TestInfo info) {
-        return new StoringSpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_" + info.getTestMethod().orElseThrow().getName());
+        return new StoringSpyingResponseLocator(
+                info.getTestClass().orElseThrow().getName() + "_"
+                        + info.getTestMethod().orElseThrow().getName());
     }
 
     private static class StoringSpyingResponseLocator extends SpyingResponseLocator {
+
         private final List<Request> requests = new CopyOnWriteArrayList<>();
 
         public StoringSpyingResponseLocator(final String s) {
@@ -361,8 +456,12 @@ class ApplyCommandTest {
         }
 
         @Override
-        protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                            final Predicate<String> headerFilter, final boolean exactMatching) {
+        protected Optional<Response> doFind(
+                final Request request,
+                final String pref,
+                final ClassLoader loader,
+                final Predicate<String> headerFilter,
+                final boolean exactMatching) {
             switch (request.method()) {
                 case "CONNECT":
                     return Optional.empty();

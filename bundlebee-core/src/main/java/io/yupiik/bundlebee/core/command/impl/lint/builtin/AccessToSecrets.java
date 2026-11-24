@@ -15,11 +15,12 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import javax.enterprise.context.Dependent;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Set;
 
-@Dependent
+@DefaultScoped
 public class AccessToSecrets extends AccessToResources {
+
     public AccessToSecrets() {
         super(
                 Set.of("secrets"),
@@ -34,8 +35,8 @@ public class AccessToSecrets extends AccessToResources {
 
     @Override
     public String description() {
-        return "Indicates when a subject (Group/User/ServiceAccount) has access to Secrets.\n" +
-                "CIS Benchmark 5.1.2: Access to secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.";
+        return "Indicates when a subject (Group/User/ServiceAccount) has access to Secrets.\n"
+                + "CIS Benchmark 5.1.2: Access to secrets should be restricted to the smallest possible group of users to reduce the risk of privilege escalation.";
     }
 
     @Override

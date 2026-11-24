@@ -1,0 +1,95 @@
+//
+// Copyright (c) 2021 - present - Yupiik SAS - https://www.yupiik.com
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance
+// with the License.  You may obtain a copy of the License at
+//
+//  http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing,
+// software distributed under the License is distributed on an
+// "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+// KIND, either express or implied.  See the License for the
+// specific language governing permissions and limitations
+// under the License.
+//
+= Packaging verification
+
+This standalone Maven project does not build, install, or publish BundleBee modules and is intentionally outside the reactor.
+Maven must run on JDK 21 or newer because Spotless uses Palantir Java Format 2.103.0, consistently with the root build.
+The application baseline and verifier bytecode remain Java 17.
+For Java 17 runtime verification, run Maven on JDK 21+ with `-Djvm=/path/to/jdk17/bin/java`; Surefire and the packaging smoke-test child Java processes then use Java 17.
+See link:compatibility-report.adoc[the migration compatibility report] for verified results, dependency provenance and remaining validation gaps.
+See link:state-tracking-analysis.adoc[the state-tracking analysis] for the undecided cleanup behavior and reproduced safety consequences.
+Run its fast synthetic regression tests independently of application compilation:
+
+[source,sh]
+----
+mvn -B -f packaging-verification/pom.xml test
+----
+
+After a successful clean application package/install, verify the artifacts from the repository root:
+
+[source,sh]
+----
+mvn -B -f packaging-verification/pom.xml test -Dbundlebee.root="$PWD"
+----
+
+The verifier reads the version from the root POM and requires the versioned core thin jar, Helm thin jar, and core `-fat.jar` in their normal `target` directories.
+It rejects missing artifacts rather than rebuilding them or falling back to older versions.
+Run it before the native profile, which changes the core final name.
+
+The checks cover:
+
+* A runnable manifest, unique jar entries, and preservation of core/Helm classes.
+* Nonempty Fusion module service descriptors in both thin jars, preservation of all their service providers, and existence of every merged provider class in the fat jar.
+* Preservation of all emitted Fusion configuration classes/roots, JSON schemas, OpenRPC metadata, and per-module native-image JSON metadata, including semantic content rather than just filenames.
+* Absence of CDI, injection, interceptors, EE annotations, JSON-P/JSON-B, OpenWebBeans, Johnzon, Geronimo Config, MicroProfile Config, and XBean class packages, including multi-release entries, and obsolete CDI/configuration resources.
+* Successful `help` and `version` subprocesses with bounded timeouts, empty environment, temporary home/working directories, explicit local Kubernetes settings, and unusable proxy endpoints.
+
+CI additionally sets `-Dbundlebee.offline=true` to launch those subprocesses using Linux `sudo -n unshare --net`.
+This denies external networking rather than relying only on proxy settings; it requires passwordless sudo and permission to create a network namespace.
+Without that property the smoke tests isolate configuration but do not enforce network isolation.
+Maven itself can still download the verifier's dependencies; use Maven's `-o` separately if those dependencies are already cached.
+
+NOTE: Metadata resources which the thin jars do not emit are not required artificially; absent Fusion JSON resource types are reported explicitly.
+
+== Published transformer limitation
+
+An isolated probe of `maven-shade-transformers:0.0.5` with two contributions confirmed successful configuration-documentation and JSON-schema merges.
+Its `FusionOpenRPCTransformer` produced malformed JSON for valid compact partial OpenRPC inputs with `schemas` and `methods` maps (the shape emitted by Fusion 1.2.0).
+BundleBee does not expose JSON-RPC methods, so its shade configuration uses only the configuration-documentation and JSON-schema transformers, alongside the standard service transformer.
+Do not add the OpenRPC transformer until its upstream defect is resolved and verified against generated metadata.
+The packaging check consumes entire JSON documents and fails on malformed emitted metadata.
+
+== External compatibility fixtures
+
+The historical network matrix is opt-in because it requires separately built baseline artifacts, installed Maven plugins and Java 17.
+It is not part of the default Java 17/21/25 packaging checks.
+
+[source,sh]
+----
+mvn -f packaging-verification/pom.xml test \
+  -Dtest=NetworkRecipeCompatibilityTest \
+  -Dbundlebee.network.enabled=true \
+  -Dbundlebee.root="$PWD" \
+  -Dbundlebee.network.head.jar=/path/to/head-baseline-fat.jar \
+  -Dbundlebee.network.release.jar=/path/to/1.0.32-fat.jar \
+  -Dbundlebee.network.mvn=/path/to/mvn
+----
+
+The selected Maven installation must resolve both installed plugin versions offline.
+Use `-Dbundlebee.network.maven=false` for CLI-only comparisons.
+The separate `ExternalMavenCompatibilityTest` is enabled with `-Dbundlebee.external.maven=/path/to/mvn`; see the compatibility report for the exercised concurrency and failure cases.
+
+== Release routing and snapshot rehearsals
+
+Releases use the Central publishing extension; snapshots use `https://central.sonatype.com/repository/maven-snapshots/` with the `central` server ID.
+The publisher must enable snapshots for the namespace and configure its own credentials before deployment.
+Validation never invokes deployment or uploads artifacts.
+See https://central.sonatype.org/publish/publish-portal-snapshots/[Sonatype's snapshot documentation] for the service requirements.
+
+The `krew` profile defaults to the released archive URL on Maven Central.
+Maven Central does not contain development snapshots, so a snapshot rehearsal must supply `-Dbundlebee.krew.archiveUri=https://your-approved-host/path/to/the-exact-archive.zip`.
+Use the URI of the exact archive whose checksum is placed in the manifest, not an unversioned or guessed snapshot URL.
+The override only selects the manifest download URI; the build does not upload the archive or make that URI available.

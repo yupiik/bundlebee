@@ -15,18 +15,15 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.regex.Pattern;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Date
-//metadata:end
+// metadata:end
 @Description("Rounds a duration to the most significant unit")
 public class DurationRoundFunc implements HelmFunction {
     private static final Pattern DURATION_PATTERN = Pattern.compile("(\\d+)(d|h|m|s)");

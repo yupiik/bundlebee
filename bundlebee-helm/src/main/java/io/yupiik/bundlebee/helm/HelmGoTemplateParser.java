@@ -24,20 +24,18 @@ import io.yupiik.bundlebee.helm.HelmGoTemplateNode.DefineNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.FunctionCallNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.IdentifierNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.IfNode;
-import io.yupiik.bundlebee.helm.HelmGoTemplateNode.IndexNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.ListNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.NumberNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.PipelineNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.RangeNode;
-import io.yupiik.bundlebee.helm.HelmGoTemplateNode.SliceNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.StringNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.TemplateNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.TextNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.VariableNode;
 import io.yupiik.bundlebee.helm.HelmGoTemplateNode.WithNode;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Recursive-descent parser for Go template syntax, aligned with Go's text/template/parse/parse.go.
@@ -62,6 +60,7 @@ import java.util.List;
  * - DECLARE (:=) vs ASSIGN (=) (Go: itemDeclare vs itemAssign)
  */
 public class HelmGoTemplateParser {
+    private static final Pattern FIELD_SEPARATOR = Pattern.compile("\\.");
 
     private final List<Token> tokens;
     private int pos;
@@ -181,8 +180,10 @@ public class HelmGoTemplateParser {
 
         // Check for variable declaration prefix: $var := or $var =
         // Go handles this in pipeline() before parsing commands
-        if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.VARIABLE
-                && pos + 1 < tokens.size() && isAssign(tokens.get(pos + 1))) {
+        if (pos < tokens.size()
+                && tokens.get(pos).getType() == TokenType.VARIABLE
+                && pos + 1 < tokens.size()
+                && isAssign(tokens.get(pos + 1))) {
             // Don't consume - let the caller handle it via parseAssign
         }
 
@@ -253,8 +254,12 @@ public class HelmGoTemplateParser {
         final var type = token.getType();
 
         // These tokens are NOT operands - return null to stop command parsing
-        if (type == TokenType.PIPE || type == TokenType.RIGHT_DELIM || type == TokenType.DECLARE
-                || type == TokenType.ASSIGN || type == TokenType.COMMA || type == TokenType.RPAREN
+        if (type == TokenType.PIPE
+                || type == TokenType.RIGHT_DELIM
+                || type == TokenType.DECLARE
+                || type == TokenType.ASSIGN
+                || type == TokenType.COMMA
+                || type == TokenType.RPAREN
                 || type == TokenType.RBRACK) {
             return null;
         }
@@ -433,8 +438,7 @@ public class HelmGoTemplateParser {
         String keyVar = null;
         String valueVar = null;
         if (pos < tokens.size() && tokens.get(pos).getType() == TokenType.VARIABLE) {
-            if (pos + 2 < tokens.size()
-                    && tokens.get(pos + 1).getType() == TokenType.COMMA) {
+            if (pos + 2 < tokens.size() && tokens.get(pos + 1).getType() == TokenType.COMMA) {
                 // $k, $v :=
                 keyVar = tokens.get(pos).getValue();
                 pos += 2; // consume VAR and COMMA
@@ -442,8 +446,9 @@ public class HelmGoTemplateParser {
                 valueVar = tokens.get(pos).getValue();
                 pos++; // consume VAR
                 skipSpaces();
-                if (pos < tokens.size() && (tokens.get(pos).getType() == TokenType.DECLARE
-                        || tokens.get(pos).getType() == TokenType.ASSIGN)) {
+                if (pos < tokens.size()
+                        && (tokens.get(pos).getType() == TokenType.DECLARE
+                                || tokens.get(pos).getType() == TokenType.ASSIGN)) {
                     pos++; // consume := or =
                 }
             } else if (pos + 1 < tokens.size() && isAssign(tokens.get(pos + 1))) {
@@ -531,7 +536,8 @@ public class HelmGoTemplateParser {
         skipSpaces();
 
         PipelineNode pipeline = null;
-        if (pos < tokens.size() && tokens.get(pos).getType() != TokenType.RIGHT_DELIM
+        if (pos < tokens.size()
+                && tokens.get(pos).getType() != TokenType.RIGHT_DELIM
                 && tokens.get(pos).getType() != TokenType.TEXT) {
             pipeline = parsePipeline();
         }
@@ -587,8 +593,9 @@ public class HelmGoTemplateParser {
     }
 
     private void skipTextTokens() {
-        while (pos < tokens.size() && (tokens.get(pos).getType() == TokenType.TEXT
-                || tokens.get(pos).getType() == TokenType.SPACE)) {
+        while (pos < tokens.size()
+                && (tokens.get(pos).getType() == TokenType.TEXT
+                        || tokens.get(pos).getType() == TokenType.SPACE)) {
             pos++;
         }
     }
@@ -614,7 +621,7 @@ public class HelmGoTemplateParser {
         final var path = new ArrayList<String>();
         if (name.startsWith(".")) {
             path.add("");
-            final var parts = name.substring(1).split("\\.", -1);
+            final var parts = FIELD_SEPARATOR.split(name.substring(1), -1);
             for (final var part : parts) {
                 if (!part.isEmpty()) {
                     path.add(part);
@@ -659,8 +666,9 @@ public class HelmGoTemplateParser {
     }
 
     private String unquote(final String s) {
-        if (s.length() >= 2 && ((s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"')
-                || (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''))) {
+        if (s.length() >= 2
+                && ((s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"')
+                        || (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\''))) {
             return s.substring(1, s.length() - 1)
                     .replace("\\\"", "\"")
                     .replace("\\'", "'")

@@ -17,7 +17,7 @@ package io.yupiik.bundlebee.helm;
 
 /**
  * Represents a Helm template function available during Go template rendering.
- * Each implementation is a CDI bean discovered via {@link io.yupiik.bundlebee.helm.HelmFunctionProducer}.
+ * Each implementation is a CDI bean discovered via {@link HelmFunctionRegistry}.
  */
 public interface HelmFunction {
     /**

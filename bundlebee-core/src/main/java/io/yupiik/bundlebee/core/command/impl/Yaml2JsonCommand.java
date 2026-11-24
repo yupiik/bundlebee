@@ -15,17 +15,15 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.CompletingExecutable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import static java.util.concurrent.CompletableFuture.completedStage;
 
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-import javax.json.JsonValue;
-import javax.json.bind.Jsonb;
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
+import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
+import io.yupiik.fusion.json.JsonMapper;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -36,35 +34,31 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static java.util.concurrent.CompletableFuture.completedStage;
-
-@Log
-@Dependent
+@DefaultScoped
+@Command(
+        name = "yaml2json",
+        description = "Convert yaml files of a directory to json. "
+                + "This command is useful to transform Kubernetes yaml files to json to write Bundlebee descriptors.")
 public class Yaml2JsonCommand implements CompletingExecutable {
-    @Inject
-    private Yaml2JsonConverter yaml2json;
+    private final Logger log = Logger.getLogger(Yaml2JsonCommand.class.getName());
 
-    @Inject
-    @BundleBee
-    private Jsonb jsonb;
+    public Yaml2JsonCommand(final Options options, Yaml2JsonConverter yaml2json, JsonMapper jsonb) {
+        this.yaml2json = yaml2json;
+        this.jsonb = jsonb;
+        this.input = options.input();
+        this.output = options.output();
+        this.logDescriptorOnParsingError = options.logDescriptorOnParsingError();
+    }
 
-    @Inject
-    @Description("The directory path to read yaml files to convert.")
-    @ConfigProperty(name = "bundlebee.yaml2json.input", defaultValue = "/dev/null")
-    private String input;
-
-    @Inject
-    @Description("The directory path to write the generated json files.")
-    @ConfigProperty(name = "bundlebee.yaml2json.output", defaultValue = "/dev/null")
-    private String output;
-
-    @Inject
-    @Description("Should YAML/JSON be logged when it can't be parsed.")
-    @ConfigProperty(name = "bundlebee.yaml2json.logDescriptorOnParsingError", defaultValue = "true")
-    private boolean logDescriptorOnParsingError;
+    private final Yaml2JsonConverter yaml2json;
+    private final JsonMapper jsonb;
+    private final String input;
+    private final String output;
+    private final boolean logDescriptorOnParsingError;
 
     @Override
     public String name() {
@@ -73,8 +67,8 @@ public class Yaml2JsonCommand implements CompletingExecutable {
 
     @Override
     public String description() {
-        return "Convert yaml files of a directory to json. " +
-                "This command is useful to transform Kubernetes yaml files to json to write Bundlebee descriptors.";
+        return "Convert yaml files of a directory to json. "
+                + "This command is useful to transform Kubernetes yaml files to json to write Bundlebee descriptors.";
     }
 
     @Override
@@ -88,10 +82,15 @@ public class Yaml2JsonCommand implements CompletingExecutable {
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
                     final var sourceFilename = file.getFileName().toString();
                     if (sourceFilename.endsWith(".yaml")) {
-                        log.info(() -> "Converting '" + sourceFilename + "'");
-                        final var targetContent = jsonb.toJson(yaml2json.convert(JsonValue.class, Files.readString(file).trim()));
-                        final var targetFilename = sourceFilename.substring(0, sourceFilename.length() - ".yaml".length()) + ".json";
-                        final var targetPath = targetDir.resolve(Optional.ofNullable(sourceDir.toAbsolutePath().relativize(file).getParent())
+                        log.info(() -> "Converting \'" + sourceFilename + "\'");
+                        final var targetContent = jsonb.toString(yaml2json.convert(
+                                Object.class, Files.readString(file).trim()));
+                        final var targetFilename =
+                                sourceFilename.substring(0, sourceFilename.length() - ".yaml".length()) + ".json";
+                        final var targetPath = targetDir.resolve(Optional.ofNullable(sourceDir
+                                        .toAbsolutePath()
+                                        .relativize(file)
+                                        .getParent())
                                 .orElse(Path.of("")));
                         sources.put(targetPath.resolve(targetFilename), targetContent);
                     }
@@ -102,7 +101,9 @@ public class Yaml2JsonCommand implements CompletingExecutable {
             throw new RuntimeException(e);
         }
         log.info(() -> "Found " + sources.size() + " files to convert");
-        return completedStage(sources.keySet().stream().map(key -> write(key, sources.get(key))).collect(Collectors.toList()));
+        return completedStage(sources.keySet().stream()
+                .map(key -> write(key, sources.get(key)))
+                .collect(Collectors.toList()));
     }
 
     private Path write(Path file, String content) {
@@ -111,7 +112,7 @@ public class Yaml2JsonCommand implements CompletingExecutable {
                 try {
                     Files.createDirectories(file.getParent());
                 } catch (final IOException e) {
-                    throw new IllegalStateException("Unable to create parent directories: '" + file + "'", e);
+                    throw new IllegalStateException("Unable to create parent directories: \'" + file + "\'", e);
                 }
             }
             Files.writeString(file, content);
@@ -130,4 +131,24 @@ public class Yaml2JsonCommand implements CompletingExecutable {
                 return Stream.empty();
         }
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.yaml2json.input",
+                    defaultValue = "\"/dev/null\"",
+                    documentation = "The directory path to read yaml files to convert.")
+            String input,
+
+            @Property(
+                    value = "bundlebee.yaml2json.output",
+                    defaultValue = "\"/dev/null\"",
+                    documentation = "The directory path to write the generated json files.")
+            String output,
+
+            @Property(
+                    value = "bundlebee.yaml2json.logDescriptorOnParsingError",
+                    defaultValue = "true",
+                    documentation = "Should YAML/JSON be logged when it can't be parsed.")
+            boolean logDescriptorOnParsingError) {}
 }

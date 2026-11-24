@@ -15,86 +15,64 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.CompletingExecutable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.kube.KubeClient;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import io.yupiik.bundlebee.core.service.AlveolusHandler;
-import io.yupiik.bundlebee.core.service.ArchiveReader;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-import javax.json.JsonObject;
-import javax.json.spi.JsonProvider;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-import java.util.function.Supplier;
-
 import static io.yupiik.bundlebee.lang.CompletionFutures.all;
 import static io.yupiik.bundlebee.lang.CompletionFutures.chain;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
-@Log
-@Dependent
+import io.yupiik.bundlebee.core.command.CompletingExecutable;
+import io.yupiik.bundlebee.core.kube.KubeClient;
+import io.yupiik.bundlebee.core.service.AlveolusHandler;
+import io.yupiik.bundlebee.core.service.ArchiveReader;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletionStage;
+import java.util.function.Supplier;
+import java.util.logging.Logger;
+
+@DefaultScoped
+@Command(
+        name = "run",
+        description =
+                "Tries to run the recipe as plain forks on the host. In this mode, Bundlebee is used as the orchestrator. "
+                        + "It is highly recommended to only do that with application matching the `bundlebee` command environment.")
 public class RunCommand extends BaseLabelEnricherCommand implements CompletingExecutable {
-    @Inject
-    @Description("Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. " +
-            "If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, " +
-            "this will default to it instead of using classpath deployment.")
-    @ConfigProperty(name = "bundlebee.run.alveolus", defaultValue = "auto")
-    private String alveolus;
+    private final Logger log = Logger.getLogger(RunCommand.class.getName());
 
-    @Inject
-    @Description("Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. " +
-            "Ignored if set to `skip`.")
-    @ConfigProperty(name = "bundlebee.run.manifest", defaultValue = "skip")
-    private String manifest;
+    public RunCommand(
+            final Options options,
+            KubeClient kube,
+            ArchiveReader archives,
+            io.yupiik.bundlebee.core.service.LabelSanitizerService labelSanitizerService,
+            io.yupiik.bundlebee.core.service.VersioningService versioningService,
+            io.yupiik.bundlebee.core.service.AlveolusHandler visitor) {
+        super(labelSanitizerService, versioningService, visitor);
+        this.alveolus = options.alveolus();
+        this.manifest = options.manifest();
+        this.from = options.from();
+        this.useChainInsteadOfAll = options.useChainInsteadOfAll();
+        this.awaitTimeout = options.awaitTimeout();
+        this.excludedDescriptors = options.excludedDescriptors();
+        this.excludedLocations = options.excludedLocations();
+        this.kube = kube;
+        this.archives = archives;
+    }
 
-    @Inject
-    @Description("Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath.")
-    @ConfigProperty(name = "bundlebee.run.from", defaultValue = "auto")
-    private String from;
-
-    @Inject
-    @Description("" +
-            "If `true`, each descriptor installation awaits previous ones instead of being concurrent. " +
-            "Enable an easier debugging for errors.")
-    @ConfigProperty(name = "bundlebee.run.useChainInsteadOfAll", defaultValue = "false")
-    private boolean useChainInsteadOfAll;
-
-    @Inject
-    @Description("" +
-            "For descriptors with `await` = `true` the max duration the test can last.")
-    @ConfigProperty(name = "bundlebee.run.descriptorAwaitTimeout", defaultValue = "60000")
-    private long awaitTimeout;
-
-    @Inject
-    @Description("" +
-            "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. " +
-            "Note that using this setting, location is set to `*` so only the name is matched.")
-    @ConfigProperty(name = "bundlebee.run.excludedDescriptors", defaultValue = "none")
-    private String excludedDescriptors;
-
-    @Inject
-    @Description("" +
-            "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated.")
-    @ConfigProperty(name = "bundlebee.run.excludedLocations", defaultValue = "none")
-    private String excludedLocations;
-
-    @Inject
-    private KubeClient kube;
-
-    @Inject
-    private ArchiveReader archives;
-
-    @Inject
-    @BundleBee
-    private JsonProvider provider;
+    private final String alveolus;
+    private final String manifest;
+    private final String from;
+    private final boolean useChainInsteadOfAll;
+    private final long awaitTimeout;
+    private final String excludedDescriptors;
+    private final String excludedLocations;
+    private final KubeClient kube;
+    private final ArchiveReader archives;
 
     @Override
     public String name() {
@@ -103,14 +81,13 @@ public class RunCommand extends BaseLabelEnricherCommand implements CompletingEx
 
     @Override
     public String description() {
-        return "Tries to run the recipe as plain forks on the host. In this mode, Bundlebee is used as the orchestrator. " +
-                "It is highly recommended to only do that with application matching the `bundlebee` command environment.";
+        return "Tries to run the recipe as plain forks on the host. In this mode, Bundlebee is used as the orchestrator. "
+                + "It is highly recommended to only do that with application matching the `bundlebee` command environment.";
     }
 
     // $ mvnDebug bundlebee:run -Dbundlebee.version=1.0.14-SNAPSHOT -Dbundlebee.run.alveolus=all
-    private void doRun(final List<JsonObject> collector) {
-        final var grouped = collector.stream()
-                .collect(groupingBy(it -> it.getString("kind")));
+    private void doRun(final List<Map<String, Object>> collector) {
+        final var grouped = collector.stream().collect(groupingBy(it -> (String) it.get("kind")));
         final var configs = grouped.remove("ConfigMap");
         final var deployments = grouped.remove("Deployment");
         final var crons = grouped.remove("CronJob");
@@ -121,10 +98,10 @@ public class RunCommand extends BaseLabelEnricherCommand implements CompletingEx
         if (!grouped.isEmpty()) {
             throw new IllegalStateException("Run command is only able to handle ConfigMap and Deployment: " + grouped);
         }
-
         // TBD:
         // 1. extract the containers (using commons-compress in optional mode?)
-        // 2. for each deployment/cronjob/job resolve the configs/volumes, mount what is needed + compute the env+command
+        // 2. for each deployment/cronjob/job resolve the configs/volumes, mount what is needed + compute the
+        // env+command
         // 3. execute/schedule what is needed for 2
         // 4. run 2 with healthcheck guard
         // 5. setup a global proxy to handle services
@@ -133,7 +110,8 @@ public class RunCommand extends BaseLabelEnricherCommand implements CompletingEx
 
     @Override
     public boolean hidden() {
-        return true; // not yet implemented
+        // not yet implemented
+        return true;
     }
 
     @Override
@@ -141,29 +119,38 @@ public class RunCommand extends BaseLabelEnricherCommand implements CompletingEx
         return doExecute(from, manifest, alveolus, archives.newCache());
     }
 
-    public CompletionStage<?> doExecute(final String from, final String manifest, final String alveolus,
-                                        final ArchiveReader.Cache cache) {
-        final var collector = new ArrayList<JsonObject>();
-        return visitor
-                .findRootAlveoli(from, manifest, alveolus, null)
-                .thenApply(alveoli -> alveoli.stream().map(it -> it.exclude(excludedLocations, excludedDescriptors)).collect(toList()))
-                .thenCompose(alveoli -> useChainInsteadOfAll ?
-                        chain(alveoli.stream()
-                                .map(it -> (Supplier<CompletionStage<?>>) () -> doExecute(cache, it, collector))
-                                .iterator(), true) :
-                        all(
+    public CompletionStage<?> doExecute(
+            final String from, final String manifest, final String alveolus, final ArchiveReader.Cache cache) {
+        final var collector = new ArrayList<Map<String, Object>>();
+        return visitor.findRootAlveoli(from, manifest, alveolus, null)
+                .thenApply(alveoli -> alveoli.stream()
+                        .map(it -> it.exclude(excludedLocations, excludedDescriptors))
+                        .collect(toList()))
+                .thenCompose(alveoli -> useChainInsteadOfAll
+                        ? chain(
                                 alveoli.stream()
-                                        .map(it -> doExecute(cache, it, collector))
-                                        .collect(toList()), toList(),
+                                        .map(it -> (Supplier<CompletionStage<?>>) () -> doExecute(cache, it, collector))
+                                        .iterator(),
                                 true)
+                        : all(
+                                        alveoli.stream()
+                                                .map(it -> doExecute(cache, it, collector))
+                                                .collect(toList()),
+                                        toList(),
+                                        true)
                                 .thenApply(ignored -> null))
                 .thenRun(() -> doRun(collector));
     }
 
-    public CompletionStage<?> doExecute(final ArchiveReader.Cache cache, final AlveolusHandler.ManifestAndAlveolus it,
-                                        final List<JsonObject> collector) {
+    public CompletionStage<?> doExecute(
+            final ArchiveReader.Cache cache,
+            final AlveolusHandler.ManifestAndAlveolus it,
+            final List<Map<String, Object>> collector) {
         return visitor.executeOnceOnAlveolus(
-                "Running", it.getManifest(), it.getAlveolus(), null,
+                "Running",
+                it.getManifest(),
+                it.getAlveolus(),
+                null,
                 (ctx, desc) -> kube.forDescriptor("Running", desc.getContent(), desc.getExtension(), json -> {
                     synchronized (collector) {
                         collector.add(json);
@@ -172,6 +159,63 @@ public class RunCommand extends BaseLabelEnricherCommand implements CompletingEx
                     return completedFuture(json);
                 }),
                 cache,
-                desc -> completedFuture(null), "ran", null);
+                desc -> completedFuture(null),
+                "ran",
+                null);
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.run.alveolus",
+                    defaultValue = "\"auto\"",
+                    documentation =
+                            "Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. "
+                                    + "If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, "
+                                    + "this will default to it instead of using classpath deployment.")
+            String alveolus,
+
+            @Property(
+                    value = "bundlebee.run.manifest",
+                    defaultValue = "\"skip\"",
+                    documentation =
+                            "Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. "
+                                    + "Ignored if set to `skip`.")
+            String manifest,
+
+            @Property(
+                    value = "bundlebee.run.from",
+                    defaultValue = "\"auto\"",
+                    documentation =
+                            "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath.")
+            String from,
+
+            @Property(
+                    value = "bundlebee.run.useChainInsteadOfAll",
+                    defaultValue = "false",
+                    documentation =
+                            "If `true`, each descriptor installation awaits previous ones instead of being concurrent. "
+                                    + "Enable an easier debugging for errors.")
+            boolean useChainInsteadOfAll,
+
+            @Property(
+                    value = "bundlebee.run.descriptorAwaitTimeout",
+                    defaultValue = "60000L",
+                    documentation = "For descriptors with `await` = `true` the max duration the test can last.")
+            long awaitTimeout,
+
+            @Property(
+                    value = "bundlebee.run.excludedDescriptors",
+                    defaultValue = "\"none\"",
+                    documentation =
+                            "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. "
+                                    + "Note that using this setting, location is set to `*` so only the name is matched.")
+            String excludedDescriptors,
+
+            @Property(
+                    value = "bundlebee.run.excludedLocations",
+                    defaultValue = "\"none\"",
+                    documentation =
+                            "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated.")
+            String excludedLocations) {}
 }

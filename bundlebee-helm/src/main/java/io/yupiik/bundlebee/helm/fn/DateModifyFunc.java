@@ -15,21 +15,18 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Date
-//metadata:end
+// metadata:end
 @Description("Modifies a date by a Go-style duration")
 public class DateModifyFunc implements HelmFunction {
     @Override

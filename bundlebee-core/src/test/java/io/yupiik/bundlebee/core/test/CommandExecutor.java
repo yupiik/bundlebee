@@ -15,23 +15,25 @@
  */
 package io.yupiik.bundlebee.core.test;
 
-import org.talend.sdk.component.junit.http.api.HttpApiHandler;
-
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
+import org.talend.sdk.component.junit.http.api.HttpApiHandler;
 
 public class CommandExecutor {
+
     public String wrap(final HttpApiHandler<?> mock, final Level level, final Runnable task) {
         final var logger = Logger.getLogger("io.yupiik.bundlebee.core");
         final var oldLevel = logger.getLevel();
         logger.setLevel(level);
         final var content = new StringBuilder();
         final var handler = new Handler() {
+
             {
                 setFormatter(new Formatter() {
+
                     @Override
                     public String format(final LogRecord record) {
                         return record.getMessage();
@@ -41,9 +43,9 @@ public class CommandExecutor {
 
             @Override
             public void publish(final LogRecord record) {
-                if ("io.yupiik.bundlebee.core.kube.KubeClient".equals(record.getLoggerName()) &&
-                        record.getMessage() != null &&
-                        record.getMessage().startsWith("java.net.ConnectException")) {
+                if ("io.yupiik.bundlebee.core.kube.KubeClient".equals(record.getLoggerName())
+                        && record.getMessage() != null
+                        && record.getMessage().startsWith("java.net.ConnectException")) {
                     return;
                 }
                 content.append(getFormatter().format(record)).append('\n');

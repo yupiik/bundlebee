@@ -16,37 +16,39 @@
 package io.yupiik.bundlebee.helm;
 
 import io.yupiik.bundlebee.lang.spi.NamespaceProvider;
-import lombok.extern.java.Log;
-import org.yaml.snakeyaml.Yaml;
-
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionStage;
-import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Orchestrates Helm chart loading and rendering.
  * This is the main entry point for consuming Helm charts in BundleBee.
  */
-@Log
-@Dependent
+@DefaultScoped
 public class HelmRenderer {
+    private static final Pattern VALUE_PATH_SEPARATOR = Pattern.compile("\\.");
 
-    @Inject
-    private HelmFunctionProducer functionProducer;
-
-    @Inject
-    private HelmChartLoader chartLoader;
-
-    @Inject
-    private NamespaceProvider namespaceProvider;
-
+    private final Logger log = Logger.getLogger(HelmRenderer.class.getName());
+    private final HelmFunctionRegistry functionProducer;
+    private final HelmChartLoader chartLoader;
+    private final NamespaceProvider namespaceProvider;
     private final HelmHookSorter hookSorter = new HelmHookSorter(new Yaml());
+
+    public HelmRenderer(
+            final HelmFunctionRegistry functionProducer,
+            final HelmChartLoader chartLoader,
+            final NamespaceProvider namespaceProvider) {
+        this.functionProducer = functionProducer;
+        this.chartLoader = chartLoader;
+        this.namespaceProvider = namespaceProvider;
+    }
 
     /**
      * Render a Helm chart and return the list of rendered YAML documents.
@@ -57,8 +59,11 @@ public class HelmRenderer {
      * @param releaseNamespace release namespace for the Helm context
      * @return a future resolving to the list of rendered YAML strings, one per template file
      */
-    public CompletionStage<List<String>> render(final String chartPath, final Map<String, String> placeholders,
-                                                 final String releaseName, final String releaseNamespace) {
+    public CompletionStage<List<String>> render(
+            final String chartPath,
+            final Map<String, String> placeholders,
+            final String releaseName,
+            final String releaseNamespace) {
         return render(chartPath, placeholders, releaseName, releaseNamespace, true, null);
     }
 
@@ -73,42 +78,65 @@ public class HelmRenderer {
      * @param ignoredDescriptors  list of template paths to ignore
      * @return a future resolving to the list of rendered YAML strings, one per template file
      */
-    public CompletionStage<List<String>> render(final String chartPath, final Map<String, String> placeholders,
-                                                 final String releaseName, final String releaseNamespace,
-                                                 final Boolean resolveDependencies, final List<String> ignoredDescriptors) {
-        return chartLoader.load(Path.of(chartPath), null, null, resolveDependencies, ignoredDescriptors, true)
+    public CompletionStage<List<String>> render(
+            final String chartPath,
+            final Map<String, String> placeholders,
+            final String releaseName,
+            final String releaseNamespace,
+            final Boolean resolveDependencies,
+            final List<String> ignoredDescriptors) {
+        return chartLoader
+                .load(Path.of(chartPath), null, null, resolveDependencies, ignoredDescriptors, true)
                 .thenApply(chart -> {
                     final var functions = functionProducer.getFunctions();
                     final var renderer = new HelmGoTemplateRenderer(functions);
-
                     // Merge chart values with placeholders
                     final var values = buildValues(chart.getValues(), placeholders);
-
                     // Build Helm context
                     final var context = new LinkedHashMap<String, Object>();
                     context.put("Values", values);
-                    context.put("Release", Map.of(
-                            "Name", releaseName != null ? releaseName : (chart.getName() != null ? chart.getName() : "RELEASE-NAME"),
-                            "Namespace", releaseNamespace != null ? releaseNamespace : namespaceProvider.namespace(),
-                            "IsInstall", true,
-                            "IsUpgrade", false,
-                            "Service", "Helm",
-                            "Revision", "1"));
-                    context.put("Chart", Map.of(
-                            "Name", chart.getName(),
-                            "Version", chart.getVersion(),
-                            "AppVersion", chart.getAppVersion()));
-                    context.put("Capabilities", Map.of(
-                            "KubeVersion", Map.of(
-                                    "Version", "v1.28.0",
-                                    "Major", "1",
-                                    "Minor", "28",
-                                    "GitCommit", "unknown",
-                                    "GitTreeState", "clean")));
-                    context.put("Template", Map.of(
-                            "Name", "",
-                            "BasePath", ""));
-
+                    context.put(
+                            "Release",
+                            Map.of(
+                                    "Name",
+                                    releaseName != null
+                                            ? releaseName
+                                            : (chart.getName() != null ? chart.getName() : "RELEASE-NAME"),
+                                    "Namespace",
+                                    releaseNamespace != null ? releaseNamespace : namespaceProvider.namespace(),
+                                    "IsInstall",
+                                    true,
+                                    "IsUpgrade",
+                                    false,
+                                    "Service",
+                                    "Helm",
+                                    "Revision",
+                                    "1"));
+                    context.put(
+                            "Chart",
+                            Map.of(
+                                    "Name",
+                                    chart.getName(),
+                                    "Version",
+                                    chart.getVersion(),
+                                    "AppVersion",
+                                    chart.getAppVersion()));
+                    context.put(
+                            "Capabilities",
+                            Map.of(
+                                    "KubeVersion",
+                                    Map.of(
+                                            "Version",
+                                            "v1.28.0",
+                                            "Major",
+                                            "1",
+                                            "Minor",
+                                            "28",
+                                            "GitCommit",
+                                            "unknown",
+                                            "GitTreeState",
+                                            "clean")));
+                    context.put("Template", Map.of("Name", "", "BasePath", ""));
                     // Parse all templates
                     final var allNodes = new LinkedHashMap<String, List<HelmGoTemplateNode>>();
                     for (final var entry : chart.getTemplates().entrySet()) {
@@ -116,14 +144,12 @@ public class HelmRenderer {
                         final var nodes = new HelmGoTemplateParser(tokens).parse();
                         allNodes.put(entry.getKey(), nodes);
                     }
-
                     // Register defines from _helpers.tpl (main chart and subcharts)
                     for (final var entry : allNodes.entrySet()) {
                         if (entry.getKey().endsWith("_helpers.tpl")) {
                             renderer.registerDefines(entry.getValue());
                         }
                     }
-
                     // Render each template
                     final var results = new ArrayList<String>();
                     for (final var entry : allNodes.entrySet()) {
@@ -137,10 +163,10 @@ public class HelmRenderer {
                                 results.add(trimmed);
                             }
                         } catch (final Exception e) {
-                            throw new RuntimeException("Failed to render template '" + entry.getKey() + "': " + e.getMessage(), e);
+                            throw new RuntimeException(
+                                    "Failed to render template \'" + entry.getKey() + "\': " + e.getMessage(), e);
                         }
                     }
-
                     return hookSorter.sort(results);
                 });
     }
@@ -148,13 +174,14 @@ public class HelmRenderer {
     /**
      * Render a Helm chart using descriptor configuration.
      */
-    public CompletionStage<List<String>> render(final String chartPath, final Map<String, String> placeholders,
-                                                 final String releaseName) {
+    public CompletionStage<List<String>> render(
+            final String chartPath, final Map<String, String> placeholders, final String releaseName) {
         return render(chartPath, placeholders, releaseName, null);
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> buildValues(final Map<String, Object> chartValues, final Map<String, String> placeholders) {
+    private Map<String, Object> buildValues(
+            final Map<String, Object> chartValues, final Map<String, String> placeholders) {
         final var result = new LinkedHashMap<String, Object>();
         if (chartValues != null) {
             result.putAll(chartValues);
@@ -169,7 +196,7 @@ public class HelmRenderer {
 
     @SuppressWarnings("unchecked")
     private void setNestedValue(final Map<String, Object> map, final String key, final String value) {
-        final var parts = key.split("\\.");
+        final var parts = VALUE_PATH_SEPARATOR.split(key);
         Map<String, Object> current = map;
         for (int i = 0; i < parts.length - 1; i++) {
             final var existing = current.get(parts[i]);

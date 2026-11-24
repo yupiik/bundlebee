@@ -15,31 +15,34 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.service.Maven;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
+import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.bundlebee.core.service.Maven;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
 
-import static java.util.concurrent.CompletableFuture.completedFuture;
-
-@Log
-@Dependent
+@DefaultScoped
+@Command(
+        name = "create-master-password",
+        description = "Generate a master password if none exist (in `~/.m2/settings-security.xml`)")
 public class MavenMasterPasswordCommand implements Executable {
-    @Inject
-    @Description("Master password value, if `auto` it will be generated.")
-    @ConfigProperty(name = "bundlebee.create-master-password.password", defaultValue = "auto")
-    private String password;
+    private final Logger log = Logger.getLogger(MavenMasterPasswordCommand.class.getName());
 
-    @Inject
-    private Maven maven;
+    public MavenMasterPasswordCommand(final Options options, Maven maven) {
+        this.password = options.password();
+        this.maven = maven;
+    }
+
+    private final String password;
+    private final Maven maven;
 
     @Override
     public String name() {
@@ -59,20 +62,25 @@ public class MavenMasterPasswordCommand implements Executable {
             log.warning(() -> securityXml + " already exists, skipping");
             return completedFuture(false);
         }
-
         final var value = maven.createPassword(password, "settings.security");
         log.info(() -> "Created master password: " + value);
         try {
-            Files.writeString(securityXml, "" +
-                    "<settingsSecurity>\n" +
-                    "  <master>" + value + "</master>\n" +
-                    "</settingsSecurity>\n" +
-                    "", StandardOpenOption.CREATE);
+            Files.writeString(
+                    securityXml,
+                    "<settingsSecurity>\n" + "  <master>" + value + "</master>\n" + "</settingsSecurity>\n" + "",
+                    StandardOpenOption.CREATE);
             log.info(() -> "Created " + securityXml);
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
-
         return completedFuture(value);
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.create-master-password.password",
+                    defaultValue = "\"auto\"",
+                    documentation = "Master password value, if `auto` it will be generated.")
+            String password) {}
 }

@@ -15,20 +15,20 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.descriptor.Manifest;
-import org.apache.openwebbeans.junit5.Cdi;
-import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Cdi
+import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.fusion.testing.Fusion;
+import io.yupiik.fusion.testing.FusionSupport;
+import org.junit.jupiter.api.Test;
+
+@FusionSupport
 class VersioningServiceTest {
-    @Inject
+
+    @Fusion
     private VersioningService service;
 
     @Test
@@ -60,29 +60,34 @@ class VersioningServiceTest {
 
     @Test
     void findVersionFromVersion() {
-        final var alveolus = new Manifest.Alveolus();
-        alveolus.setVersion("1.2.3");
+        final var alveolus = new Manifest.Alveolus(null, null, "1.2.3", null, null, false, null, null, null);
         assertEquals("1.2.3", service.findVersion(alveolus));
     }
 
     @Test
     void findVersionFromName() {
-        final var alveolus = new Manifest.Alveolus();
-        alveolus.setName("a:b:1.2.3");
+        final var alveolus = new Manifest.Alveolus(null, "a:b:1.2.3", null, null, null, false, null, null, null);
         assertEquals("1.2.3", service.findVersion(alveolus));
     }
 
     @Test
     void findVersionFromNameWithClassifier() {
-        final var alveolus = new Manifest.Alveolus();
-        alveolus.setName("a:b:1.2.3:jar:bundlebee");
+        final var alveolus =
+                new Manifest.Alveolus(null, "a:b:1.2.3:jar:bundlebee", null, null, null, false, null, null, null);
         assertEquals("1.2.3", service.findVersion(alveolus));
     }
 
     @Test
     void missingVersion() {
-        final var alveolus = new Manifest.Alveolus();
-        alveolus.setName("a:b");
+        final var alveolus = new Manifest.Alveolus(null, "a:b", null, null, null, false, null, null, null);
         assertThrows(IllegalArgumentException.class, () -> service.findVersion(alveolus));
+    }
+
+    @Test
+    void trailingNameSeparators() {
+        final var versioned = new Manifest.Alveolus(null, "a:b:1.2.3::", null, null, null, false, null, null, null);
+        assertEquals("1.2.3", service.findVersion(versioned));
+        final var unversioned = new Manifest.Alveolus(null, "a:b::", null, null, null, false, null, null, null);
+        assertThrows(IllegalArgumentException.class, () -> service.findVersion(unversioned));
     }
 }

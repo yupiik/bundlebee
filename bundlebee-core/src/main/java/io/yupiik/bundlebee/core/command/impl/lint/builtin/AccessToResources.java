@@ -15,13 +15,13 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
+import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
+import static java.util.Optional.ofNullable;
+import static java.util.stream.Collectors.toList;
+
 import io.yupiik.bundlebee.core.command.impl.lint.ContextualLintError;
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
 import io.yupiik.bundlebee.core.lang.Tuple2;
-
-import javax.json.JsonObject;
-import javax.json.JsonString;
-import javax.json.JsonValue;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -30,22 +30,21 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
-import static javax.json.JsonValue.EMPTY_JSON_ARRAY;
-import static javax.json.JsonValue.ValueType.STRING;
-
 public abstract class AccessToResources extends CheckByKind {
+
     protected static final Tuple2<List<String>, List<String>> EMPTY_TUPLE2 = new Tuple2<>(List.of(), List.of());
 
     private final Set<String> resources;
+
     private final Set<String> verb;
 
     // state
     private final Map<String, LintableDescriptor> roles = new ConcurrentHashMap<>();
+
     private final Map<String, LintableDescriptor> clusterRoles = new ConcurrentHashMap<>();
+
     private final Collection<LintableDescriptor> roleBindings = new CopyOnWriteArrayList<>();
+
     private final Collection<LintableDescriptor> clusterRoleBindings = new CopyOnWriteArrayList<>();
 
     protected AccessToResources(final Set<String> resources, final Set<String> verb, final Set<String> objectKinds) {
@@ -55,7 +54,8 @@ public abstract class AccessToResources extends CheckByKind {
     }
 
     @Override
-    public boolean accept(final LintableDescriptor descriptor) { // capture role related descriptors
+    public boolean accept(final LintableDescriptor descriptor) {
+        // capture role related descriptors
         try {
             switch (descriptor.kind()) {
                 case "Role":
@@ -80,10 +80,12 @@ public abstract class AccessToResources extends CheckByKind {
 
     @Override
     public Stream<LintError> validateSync(final LintableDescriptor descriptor) {
-        return Stream.empty(); // validation done in after all to ensure we have roles
+        // validation done in after all to ensure we have roles
+        return Stream.empty();
     }
 
-    @Override // todo: handle aggregated roles by using kube client *if needed*
+    // todo: handle aggregated roles by using kube client *if needed*
+    @Override
     public Stream<ContextualLintError> afterAllSync() {
         return Stream.concat(clusterRoleBindings.stream(), roleBindings.stream())
                 .flatMap(this::validateBinding);
@@ -91,31 +93,30 @@ public abstract class AccessToResources extends CheckByKind {
 
     // desc.getString("namespace", "") + ":" + desc.getString("name")
     private Stream<ContextualLintError> validateBinding(final LintableDescriptor descriptor) {
-        final var ref = descriptor.getDescriptor().getJsonObject("roleRef");
-        if (ref == null) {
+        if (!(descriptor.getDescriptor().get("roleRef") instanceof Map<?, ?> ref)) {
             return Stream.empty();
         }
-
-        final var apiGroup = ref.getString("apiGroup", "");
+        final var apiGroup = (ref.get("apiGroup") instanceof String apiGroupValue ? apiGroupValue : "");
         if (!"rbac.authorization.k8s.io".equals(apiGroup)) {
-            return Stream.empty(); // unknown, not current validation, skip
+            // unknown, not current validation, skip
+            return Stream.empty();
         }
-
-        final var name = ref.getString("name", "");
+        final var name = (ref.get("name") instanceof String nameValue ? nameValue : "");
         if (name.isBlank()) {
-            return Stream.empty(); // unknown, not current validation, skip
+            // unknown, not current validation, skip
+            return Stream.empty();
         }
-
-        final var kind = ref.getString("kind", "");
+        final var kind = (ref.get("kind") instanceof String kindValue ? kindValue : "");
         if (kind.isBlank() || !("ClusterRole".equals(kind) || "Role".equals(kind))) {
-            return Stream.empty(); // unknown, not current validation, skip
+            // unknown, not current validation, skip
+            return Stream.empty();
         }
-
         switch (kind) {
             case "ClusterRole": {
                 final var desc = clusterRoles.get(name);
                 if (desc == null) {
-                    lazyLogger().warning("ClusterRole '" + name + "' is assumed already deployed, skipping its validation");
+                    lazyLogger()
+                            .warning("ClusterRole '" + name + "' is assumed already deployed, skipping its validation");
                     return Stream.empty();
                 }
                 return validateRole(descriptor, desc.getDescriptor());
@@ -133,37 +134,46 @@ public abstract class AccessToResources extends CheckByKind {
         }
     }
 
-    private Stream<ContextualLintError> validateRole(final LintableDescriptor binding, final JsonObject descriptor) {
-        return ofNullable(descriptor.getJsonArray("rules"))
+    private Stream<ContextualLintError> validateRole(
+            final LintableDescriptor binding, final Map<String, Object> descriptor) {
+        return ofNullable((descriptor.get("rules") instanceof List<?> rulesValue ? rulesValue : List.of()))
                 .map(rules -> rules.stream()
-                        .map(JsonValue::asJsonObject)
-                        .filter(r -> "".equals(r.getString("apiGroups", ""))) // for now we only handle default apiGroups
+                        .filter(Map.class::isInstance)
+                        .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                        .filter( // for now we only handle default apiGroups
+                                r -> !r.containsKey("apiGroups")
+                                        || (r.get("apiGroups") instanceof List<?> apiGroupsValue
+                                                        ? apiGroupsValue
+                                                        : List.of())
+                                                .stream().anyMatch(""::equals))
                         .map(r -> {
-                            final var resources = ofNullable(r.getJsonArray("resources")).orElse(EMPTY_JSON_ARRAY);
-                            final var verbs = ofNullable(r.getJsonArray("verbs")).orElse(EMPTY_JSON_ARRAY);
-
+                            final var resources =
+                                    (r.get("resources") instanceof List<?> resourcesValue ? resourcesValue : List.of());
+                            final var verbs = (r.get("verbs") instanceof List<?> verbsValue ? verbsValue : List.of());
                             final var filteredVerbs = verbs.stream()
-                                    .filter(it -> it.getValueType() == STRING)
-                                    .map(it -> ((JsonString) it).getString())
+                                    .filter(it -> it instanceof String)
+                                    .map(it -> ((String) it))
                                     .filter(this.verb::contains)
                                     .collect(toList());
                             if (filteredVerbs.isEmpty()) {
                                 return EMPTY_TUPLE2;
                             }
-
                             final var filteredResources = resources.stream()
-                                    .filter(it -> it.getValueType() == STRING)
-                                    .map(it -> ((JsonString) it).getString())
+                                    .filter(it -> it instanceof String)
+                                    .map(it -> ((String) it))
                                     .filter(this.resources::contains)
                                     .collect(toList());
                             return new Tuple2<>(filteredVerbs, filteredResources);
                         })
-                        .filter((Tuple2<List<String>, List<String>> it) -> !it.getFirst().isEmpty() && !it.getSecond().isEmpty())
+                        .filter((Tuple2<List<String>, List<String>> it) ->
+                                !it.first().isEmpty() && !it.second().isEmpty())
                         .map(it -> new ContextualLintError(
                                 WARNING,
-                                binding.getDescriptor().getString("kind") + " '" + binding.name() + "' " +
-                                        "enables to " + String.join(",", it.getFirst()) + " " + String.join(", ", it.getSecond()),
-                                binding.getAlveolus(), binding.getName())))
+                                (binding.getDescriptor().get("kind") instanceof String kindValue ? kindValue : null)
+                                        + " '" + binding.name() + "' " + "enables to " + String.join(",", it.first())
+                                        + " " + String.join(", ", it.second()),
+                                binding.getAlveolus(),
+                                binding.getName())))
                 .orElseGet(Stream::empty);
     }
 }

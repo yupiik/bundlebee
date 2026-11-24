@@ -15,22 +15,19 @@
  */
 package io.yupiik.bundlebee.documentation;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.java.Log;
-import org.apache.xbean.finder.IAnnotationFinder;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
+import static java.util.function.Function.identity;
+import static java.util.stream.Collectors.joining;
 
+import io.yupiik.bundlebee.core.service.ParameterExtractor;
+import io.yupiik.fusion.framework.api.ConfiguringContainer;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
+import java.util.logging.Logger;
 
-import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.joining;
-
-@Log
-@RequiredArgsConstructor
 public class ConfigurationGenerator implements Runnable {
+    private final Logger log = Logger.getLogger(ConfigurationGenerator.class.getName());
     protected final Path sourceBase;
     protected final Map<String, String> configuration;
 
@@ -38,28 +35,39 @@ public class ConfigurationGenerator implements Runnable {
     public void run() {
         final var module = configuration.get("module");
         final var exclude = configuration.get("exclude");
-        try {
-            final String lines = generate(exclude, new FinderFactory(configuration).finder());
+        try (final var container = ConfiguringContainer.of().start();
+                final var extractor = container.lookup(ParameterExtractor.class)) {
+            final String lines = generate(exclude, extractor.instance().metadata());
             final var output = sourceBase
                     .resolve("content/_partials/generated/documentation")
                     .resolve(module.replace(".*", "") + ".adoc");
             java.nio.file.Files.createDirectories(output.getParent());
             java.nio.file.Files.writeString(
-                    output,
-                    lines.isEmpty() ? "No configuration yet." : lines,
-                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                    output, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             log.info("Created " + output);
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private String generate(final String exclude, final IAnnotationFinder finder) {
+    private String generate(final String exclude, final Map<String, Object> metadata) {
         final var formatter = new DocEntryFormatter();
-        return finder.findAnnotatedFields(ConfigProperty.class).stream()
-                .filter(it -> exclude == null || !it.getDeclaringClass().getName().startsWith(exclude))
-                .map(it -> formatter.format(it, identity()))
-                .sorted() // by key name to ensure it is deterministic
-                .collect(joining("\n\n"));
+        final var result = // by key name to ensure it is deterministic
+                JsonSupport.array(metadata, "globalOptions").stream()
+                        .map(JsonSupport::object)
+                        .filter(it -> exclude == null
+                                || !JsonSupport.string(it, "name").startsWith(exclude))
+                        .map(it -> formatter.format(it, identity()))
+                        .sorted()
+                        .collect(joining("\n\n"));
+        if (result.isBlank()) {
+            throw new IllegalStateException("No configuration metadata after exclusion: " + exclude);
+        }
+        return result;
+    }
+
+    public ConfigurationGenerator(final Path sourceBase, final Map<String, String> configuration) {
+        this.sourceBase = sourceBase;
+        this.configuration = configuration;
     }
 }

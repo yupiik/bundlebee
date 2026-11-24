@@ -15,21 +15,22 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
-import io.yupiik.bundlebee.core.configuration.Description;
-
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.IntStream.rangeClosed;
 
-@Dependent
-//metadata:start
+import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.regex.Pattern;
+
+@DefaultScoped
+// metadata:start
 // category = String
-//metadata:end
+// metadata:end
 @Description("Indents every line and prepends a newline")
 public class NindentFunc implements HelmFunction {
+    private static final Pattern NEWLINE = Pattern.compile("\n");
+
     @Override
     public String name() {
         return "nindent";
@@ -42,7 +43,7 @@ public class NindentFunc implements HelmFunction {
         }
         final var spaces = toInt(args[0]);
         final var prefix = rangeClosed(1, spaces).mapToObj(i -> " ").collect(joining());
-        final var lines = args[1].toString().split("\n", -1);
+        final var lines = NEWLINE.split(args[1].toString(), -1);
         final var sb = new StringBuilder("\n");
         for (int i = 0; i < lines.length; i++) {
             if (i > 0) {

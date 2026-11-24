@@ -15,15 +15,11 @@
  */
 package io.yupiik.bundlebee.core.http;
 
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.bundlebee.core.lang.ConfigHolder;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Produces;
-import javax.inject.Inject;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import io.yupiik.fusion.framework.build.api.lifecycle.Destroy;
+import io.yupiik.fusion.framework.build.api.lifecycle.Init;
+import io.yupiik.fusion.framework.build.api.scanning.Bean;
+import io.yupiik.fusion.httpclient.core.DelegatingHttpClient;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -37,39 +33,45 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
-public class HttpClientProducer implements ConfigHolder {
-    @Inject
-    @Description("How many threads are allocated to async HTTP client, negative or zero value means to use common pool.")
-    @ConfigProperty(name = "bundlebee.httpclient.threads", defaultValue = "-1")
+public class HttpClientProducer {
+
+    private HttpClient client;
+
+    private final HttpClientConfiguration configuration;
+
+    public HttpClientProducer(final HttpClientConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
+    @Init
+    protected void init() {
+        this.threads = configuration.threads();
+        this.forcedHttpVersion = configuration.forcedHttpVersion();
+        this.connectTimeout = configuration.connectTimeout();
+        this.followRedirects = configuration.followRedirects();
+    }
+
     private int threads;
 
-    @Inject
-    @Description("The HTTP client version, `none` mean the JVM default (v2), `HTTP_1_1` v1.1 and `HTTP_2` v2.0.")
-    @ConfigProperty(name = "bundlebee.httpclient.forcedHttpVersion", defaultValue = "none")
     private String forcedHttpVersion;
 
-    @Inject
-    @Description("The HTTP client connect timeout (in java Duration format), `none` can be used to ignore this setting.")
-    @ConfigProperty(name = "bundlebee.httpclient.connectTimeout", defaultValue = "none")
     private String connectTimeout;
 
-    @Inject
-    @Description("The HTTP client redirect policy. Default to `NORMAL`, can be set to `ALWAYS` or `NEVER`.")
-    @ConfigProperty(name = "bundlebee.httpclient.followRedirects", defaultValue = "NORMAL")
     private String followRedirects;
 
-    @Produces
-    @BundleBee
+    @Bean
     @ApplicationScoped
     public HttpClient httpClient() {
-        final var executor = threads <= 0 && !isMaven() ?
-                ForkJoinPool.commonPool() :
-                Executors.newFixedThreadPool(Math.max(1, threads), new ThreadFactory() {
+        final var executor = threads <= 0 && !isMaven()
+                ? ForkJoinPool.commonPool()
+                : Executors.newFixedThreadPool(Math.max(1, threads), new ThreadFactory() {
+
                     private final AtomicInteger counter = new AtomicInteger();
 
                     @Override
                     public Thread newThread(final Runnable r) {
-                        final var thread = new Thread(r, HttpClientProducer.class.getName() + "-" + counter.incrementAndGet());
+                        final var thread =
+                                new Thread(r, HttpClientProducer.class.getName() + "-" + counter.incrementAndGet());
                         thread.setContextClassLoader(HttpClientProducer.class.getClassLoader());
                         return thread;
                     }
@@ -84,25 +86,32 @@ public class HttpClientProducer implements ConfigHolder {
         if (followRedirects != null && !followRedirects.isBlank()) {
             builder.followRedirects(HttpClient.Redirect.valueOf(followRedirects));
         }
-        return new DelegatingClient(builder.build()) {
+        return client = new DelegatingHttpClient(builder.build()) {
+
             @Override
-            public <T> CompletableFuture<HttpResponse<T>> sendAsync(final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler) {
-                return delegate.sendAsync(request, responseBodyHandler)
-                        // enforce the right classloader
-                        .whenCompleteAsync((r, t) -> {
-                        }, delegate.executor().orElseGet(ForkJoinPool::commonPool));
+            public <T> CompletableFuture<HttpResponse<T>> sendAsync(
+                    final HttpRequest request, final HttpResponse.BodyHandler<T> responseBodyHandler) {
+                return // enforce the right classloader
+                delegate.sendAsync(request, responseBodyHandler)
+                        .whenCompleteAsync((r, t) -> {}, delegate.executor().orElseGet(ForkJoinPool::commonPool));
             }
         };
     }
 
     private boolean isMaven() {
-        return getClass().getClassLoader() != null &&
-                getClass().getClassLoader().getClass() != null &&
-                "org.codehaus.plexus.classworlds.realm.ClassRealm".equals(getClass().getClassLoader().getClass().getName());
+        return getClass().getClassLoader() != null
+                && getClass().getClassLoader().getClass() != null
+                && "org.codehaus.plexus.classworlds.realm.ClassRealm"
+                        .equals(getClass().getClassLoader().getClass().getName());
     }
 
-    public void release(@Disposes @BundleBee final HttpClient client) {
-        if (threads <= 0) {
+    @Destroy
+    public void release() {
+        final var client = this.client;
+        if (client == null) {
+            return;
+        }
+        if (client.executor().orElse(null) == ForkJoinPool.commonPool()) {
             return;
         }
         final var es = ExecutorService.class.cast(client.executor().orElseThrow());

@@ -15,47 +15,47 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-import lombok.RequiredArgsConstructor;
+import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.ERROR;
+import static java.util.stream.Collectors.toMap;
 
-import javax.json.JsonPointer;
-import javax.json.JsonValue;
-import javax.json.spi.JsonProvider;
+import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import io.yupiik.fusion.json.pointer.GenericJsonPointer;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.ERROR;
-import static java.util.stream.Collectors.toMap;
-
 public abstract class CheckValue extends CheckByKind {
-    private static final JsonProvider PROVIDER = JsonProvider.provider();
-
     protected final Map<String, Ptr> pointers;
     protected final Map<String, Condition> conditions;
     protected final boolean ignoreIfMissing;
 
-    protected CheckValue(final Set<String> supportedKinds, final Map<String, String> jsonPointers,
-                         final boolean ignoreIfMissing) {
+    protected CheckValue(
+            final Set<String> supportedKinds, final Map<String, String> jsonPointers, final boolean ignoreIfMissing) {
         this(supportedKinds, jsonPointers, null, ignoreIfMissing);
     }
 
-    protected CheckValue(final Set<String> supportedKinds, final Map<String, String> jsonPointers,
-                         final Map<String, Condition> conditions) {
+    protected CheckValue(
+            final Set<String> supportedKinds,
+            final Map<String, String> jsonPointers,
+            final Map<String, Condition> conditions) {
         this(supportedKinds, jsonPointers, conditions, false);
     }
 
-    protected CheckValue(final Set<String> supportedKinds, final Map<String, String> jsonPointers,
-                         final Map<String, Condition> conditions, final boolean ignoreIfMissing) {
+    protected CheckValue(
+            final Set<String> supportedKinds,
+            final Map<String, String> jsonPointers,
+            final Map<String, Condition> conditions,
+            final boolean ignoreIfMissing) {
         super(supportedKinds);
-        this.pointers = jsonPointers.entrySet().stream().collect(toMap(Map.Entry::getKey, e -> new Ptr(e.getValue(), PROVIDER.createPointer(e.getValue()))));
+        this.pointers = jsonPointers.entrySet().stream()
+                .collect(toMap(Map.Entry::getKey, e -> new Ptr(e.getValue(), new GenericJsonPointer(e.getValue()))));
         this.conditions = conditions;
         this.ignoreIfMissing = ignoreIfMissing;
         if (this.conditions != null) {
             this.conditions.values().stream()
                     .filter(it -> it.pointer != null)
-                    .forEach(v -> v.jsonPointer = PROVIDER.createPointer(v.pointer));
+                    .forEach(v -> v.jsonPointer = new GenericJsonPointer(v.pointer));
         }
     }
 
@@ -65,35 +65,31 @@ public abstract class CheckValue extends CheckByKind {
         final var ptr = pointers.get(kind);
         try {
             final var value = getValue(descriptor, ptr);
-            if (value == null) { // ignore if missing
+            if (value == null) {
+                // ignore if missing
                 return Stream.empty();
             }
-
             if (conditions == null) {
                 return doValidate(descriptor, value);
             }
-
             if (shouldSkip(kind, descriptor)) {
                 return Stream.empty();
             }
-
             return doValidate(descriptor, value);
         } catch (final RuntimeException re) {
             if (shouldSkip(kind, descriptor)) {
                 return Stream.empty();
             }
-
             if (ignoreError(descriptor)) {
                 return Stream.empty();
             }
-
-            return Stream.of(new LintError(ERROR, "No '" + ptr.ptr + "' in '" + descriptor.getName() + "'"));
+            return Stream.of(new LintError(ERROR, "No \'" + ptr.ptr + "\' in \'" + descriptor.getName() + "\'"));
         }
     }
 
-    private JsonValue getValue(final LintableDescriptor descriptor, final Ptr ptr) {
+    private Object getValue(final LintableDescriptor descriptor, final Ptr ptr) {
         try {
-            return ptr.pointer.getValue(descriptor.getDescriptor());
+            return ptr.pointer.apply(descriptor.getDescriptor());
         } catch (final RuntimeException re) {
             if (ignoreIfMissing) {
                 return null;
@@ -105,10 +101,13 @@ public abstract class CheckValue extends CheckByKind {
     private boolean shouldSkip(final String kind, final LintableDescriptor descriptor) {
         final var condition = conditions == null ? null : conditions.get(kind);
         try {
-            return condition != null && !condition.tester.test(
-                    condition.jsonPointer == null ? null : condition.jsonPointer.getValue(descriptor.getDescriptor()));
+            return condition != null
+                    && !condition.tester.test(
+                            condition.jsonPointer == null
+                                    ? null
+                                    : condition.jsonPointer.apply(descriptor.getDescriptor()));
         } catch (final RuntimeException re) {
-            return !condition.tester.test(JsonValue.NULL);
+            return !condition.tester.test(null);
         }
     }
 
@@ -116,26 +115,30 @@ public abstract class CheckValue extends CheckByKind {
         return false;
     }
 
-    protected abstract Stream<LintError> doValidate(LintableDescriptor descriptor, JsonValue value);
+    protected abstract Stream<LintError> doValidate(LintableDescriptor descriptor, Object value);
 
-    @RequiredArgsConstructor
     protected static class Ptr {
         private final String ptr;
-        private final JsonPointer pointer;
+        private final GenericJsonPointer pointer;
+
+        public Ptr(final String ptr, final GenericJsonPointer pointer) {
+            this.ptr = ptr;
+            this.pointer = pointer;
+        }
     }
 
-    @RequiredArgsConstructor
     protected static class Condition {
-        public static final Condition IGNORE_IF_MISSING = new Condition(
-                "/", v -> v != null && v.getValueType() != JsonValue.ValueType.NULL);
-
+        public static final Condition IGNORE_IF_MISSING = new Condition("/", v -> v != null);
         // value to test and pass to tester, if null, tester will get null as input
         private final String pointer;
-
         // returns true if should fail on missing pointer value
-        private final Predicate<JsonValue> tester;
-
+        private final Predicate<Object> tester;
         // internal
-        private JsonPointer jsonPointer;
+        private GenericJsonPointer jsonPointer;
+
+        public Condition(final String pointer, final Predicate<Object> tester) {
+            this.pointer = pointer;
+            this.tester = tester;
+        }
     }
 }

@@ -17,12 +17,13 @@ package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
 import io.yupiik.bundlebee.core.command.impl.lint.SynchronousLintingCheck;
-
-import javax.enterprise.context.Dependent;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.Map;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class UseNamespace implements SynchronousLintingCheck {
+
     @Override
     public String name() {
         return "use-namespace";
@@ -30,9 +31,9 @@ public class UseNamespace implements SynchronousLintingCheck {
 
     @Override
     public String description() {
-        return "Indicates when a resource is deployed to the default namespace.  \n" +
-                "CIS Benchmark 5.7.1: Create administrative boundaries between resources using namespaces.\n" +
-                "CIS Benchmark 5.7.4: The default namespace should not be used.";
+        return "Indicates when a resource is deployed to the default namespace.  \n"
+                + "CIS Benchmark 5.7.1: Create administrative boundaries between resources using namespaces.\n"
+                + "CIS Benchmark 5.7.4: The default namespace should not be used.";
     }
 
     @Override
@@ -47,13 +48,12 @@ public class UseNamespace implements SynchronousLintingCheck {
 
     @Override
     public Stream<LintError> validateSync(final LintableDescriptor descriptor) {
-        final var metadata = descriptor.getDescriptor().getJsonObject("metadata");
-        if (metadata == null) {
+        if (!(descriptor.getDescriptor().get("metadata") instanceof Map<?, ?> metadata)) {
             return Stream.empty();
         }
-        final var value = metadata.getString("namespace", "");
-        return "default".equals(value) ?
-                Stream.of(new LintError(LintError.LintLevel.ERROR, "'default' namespace is used")) :
-                Stream.empty();
+        final var value = (metadata.get("namespace") instanceof String namespaceValue ? namespaceValue : "");
+        return "default".equals(value)
+                ? Stream.of(new LintError(LintError.LintLevel.ERROR, "'default' namespace is used"))
+                : Stream.empty();
     }
 }

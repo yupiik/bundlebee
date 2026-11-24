@@ -32,19 +32,19 @@ Now create a plugin docker image:
 ----
 include::content/_partials/argocd.dockerfile[]
 ----
-<.> Ensure to adjust the version you want to use at your needs,
+<.> Copy the locally built `bundlebee-core/target/bundlebee-core-2.0.0-SNAPSHOT-fat.jar` into the Docker build directory as `bundlebee.jar`; snapshots are not downloadable from Maven Central.
 <.> Ensure to add the plugin configuration we just created locally in previous step (target location is required by the entry point).
 
 TIP: you can also use the native version of BundleBee but this requires some more knowledge about the Java native dependencies (`apk add --no-cache zlib libstdc++ gcompat` for alpine for example).
 
-The launching script will be something like:
+Save the launching script as `bundlebee.plugin.sh`:
 
 [source,bash]
 ----
 include::content/_partials/argocd.bundlebee.sh[]
 ----
 
-And the discovery script will be something like:
+Save the placeholder discovery script as `bundlebee.placeholders.sh`:
 
 [source,bash]
 ----

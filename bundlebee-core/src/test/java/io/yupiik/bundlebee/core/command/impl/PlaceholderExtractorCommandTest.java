@@ -15,64 +15,57 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.BundleBee;
-import io.yupiik.bundlebee.core.test.BundleBeeExtension;
-import io.yupiik.bundlebee.core.test.CommandExecutor;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
-
-import java.util.List;
-
 import static java.util.logging.Level.INFO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.yupiik.bundlebee.core.BundleBee;
+import io.yupiik.bundlebee.core.test.BundleBeeExtension;
+import io.yupiik.bundlebee.core.test.CommandExecutor;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+
 class PlaceholderExtractorCommandTest {
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
     @Test
     void extract(final CommandExecutor executor) {
-        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
-                "placeholder-extract", "--alveolus", "ApplyCommandTest.fromTemplate"));
-        assertEquals("" +
-                "JSON\n" +
-                "{\"items\":[{\"name\":\"ApplyCommandTest.fromTemplate.port\",\"description\":\"ApplyCommandTest.fromTemplate.port\",\"defaultValue\":\"9090\",\"required\":false,\"defaultValues\":[\"9090\"]},{\"name\":\"some.placeholder1\",\"description\":\"some.placeholder1\",\"defaultValue\":\"with defaultvalue\",\"required\":false,\"defaultValues\":[\"with defaultvalue\"]},{\"name\":\"some.placeholder2\",\"description\":\"some.placeholder2\",\"defaultValue\":\"with defaultvalue 2\",\"required\":false,\"defaultValues\":[\"with defaultvalue 2\"]}]}\n" +
-                "\n" +
-                "Sample\n" +
-                "# HELP: ApplyCommandTest.fromTemplate.port\n" +
-                "# ApplyCommandTest.fromTemplate.port = 9090\n" +
-                "\n" +
-                "# HELP: some.placeholder1\n" +
-                "# some.placeholder1 = with defaultvalue\n" +
-                "\n" +
-                "# HELP: some.placeholder2\n" +
-                "# some.placeholder2 = with defaultvalue 2\n" +
-                "\n" +
-                "Completion\n" +
-                "ApplyCommandTest.fromTemplate.port = ApplyCommandTest.fromTemplate.port\n" +
-                "some.placeholder1 = some.placeholder1\n" +
-                "some.placeholder2 = some.placeholder2\n" +
-                "\n" +
-                "Doc\n" +
-                "`ApplyCommandTest.fromTemplate.port`::\n" +
-                "Default: `9090`.\n" +
-                "\n" +
-                "\n" +
-                "`some.placeholder1`::\n" +
-                "Default: `with defaultvalue`.\n" +
-                "\n" +
-                "\n" +
-                "`some.placeholder2`::\n" +
-                "Default: `with defaultvalue 2`.\n" +
-                "\n" +
-                "", logs);
+        final var logs = executor.wrap(
+                null,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "placeholder-extract",
+                                "--bundlebee-placeholder-extract-alveolus",
+                                "ApplyCommandTest.fromTemplate"));
+        assertEquals(
+                "JSON\n"
+                        + "{\"items\":[{\"name\":\"ApplyCommandTest.fromTemplate.port\",\"description\":\"ApplyCommandTest.fromTemplate.port\",\"defaultValue\":\"9090\",\"required\":false,\"defaultValues\":[\"9090\"]},{\"name\":\"some.placeholder1\",\"description\":\"some.placeholder1\",\"defaultValue\":\"with defaultvalue\",\"required\":false,\"defaultValues\":[\"with defaultvalue\"]},{\"name\":\"some.placeholder2\",\"description\":\"some.placeholder2\",\"defaultValue\":\"with defaultvalue 2\",\"required\":false,\"defaultValues\":[\"with defaultvalue 2\"]}]}\n"
+                        + "\n" + "Sample\n" + "# HELP: ApplyCommandTest.fromTemplate.port\n"
+                        + "# ApplyCommandTest.fromTemplate.port = 9090\n" + "\n" + "# HELP: some.placeholder1\n"
+                        + "# some.placeholder1 = with defaultvalue\n" + "\n" + "# HELP: some.placeholder2\n"
+                        + "# some.placeholder2 = with defaultvalue 2\n" + "\n" + "Completion\n"
+                        + "ApplyCommandTest.fromTemplate.port = ApplyCommandTest.fromTemplate.port\n"
+                        + "some.placeholder1 = some.placeholder1\n" + "some.placeholder2 = some.placeholder2\n" + "\n"
+                        + "Doc\n" + "`ApplyCommandTest.fromTemplate.port`::\n" + "Default: `9090`.\n" + "\n" + "\n"
+                        + "`some.placeholder1`::\n" + "Default: `with defaultvalue`.\n" + "\n" + "\n"
+                        + "`some.placeholder2`::\n" + "Default: `with defaultvalue 2`.\n" + "\n" + "",
+                logs);
     }
 
     @Test
     void extractHelmValues(final CommandExecutor executor) {
-        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
-                "placeholder-extract", "--alveolus", "ApplyCommandTest.helm"));
+        final var logs = executor.wrap(
+                null,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "placeholder-extract",
+                                "--bundlebee-placeholder-extract-alveolus",
+                                "ApplyCommandTest.helm"));
         assertTrue(logs.contains("\"name\":\"replicaCount\""), logs);
         assertTrue(logs.contains("\"defaultValue\":\"1\""), logs);
         assertTrue(logs.contains("\"name\":\"image.repository\""), logs);
@@ -84,18 +77,22 @@ class PlaceholderExtractorCommandTest {
 
     @Test
     void helmValuesSeenByObserver(final CommandExecutor executor) {
-        final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch(
-                "placeholder-extract", "--alveolus", "ApplyCommandTest.helm"));
-
-        // The OnPlaceholder event is fired via CDI Event<OnPlaceholder>.fire() for each helm value.yaml leaf.
-        // The PlaceholderSpy (CDI @Observes) receives all events and forwards to registered consumers.
+        final var logs = executor.wrap(
+                null,
+                INFO,
+                () -> new BundleBee()
+                        .launch(
+                                "placeholder-extract",
+                                "--bundlebee-placeholder-extract-alveolus",
+                                "ApplyCommandTest.helm"));
+        // The OnPlaceholder event is fired via CDI Emitter.emit() for each helm value.yaml leaf.
+        // The PlaceholderSpy (CDI @OnEvent) receives all events and forwards to registered consumers.
         // The command's JSON output is produced from the collector that consumes spy-forwarded events,
         // so its presence proves the CDI observer saw the helm leaf values.
-        final var expectedLeafValues = List.of(
-                "replicaCount", "image.repository", "image.tag", "image.pullPolicy");
+        final var expectedLeafValues = List.of("replicaCount", "image.repository", "image.tag", "image.pullPolicy");
         for (final var name : expectedLeafValues) {
-            assertTrue(logs.contains("\"name\":\"" + name + "\""),
-                    "CDI observer should see '" + name + "' in: " + logs);
+            assertTrue(
+                    logs.contains("\"name\":\"" + name + "\""), "CDI observer should see '" + name + "' in: " + logs);
         }
         assertTrue(logs.contains("\"defaultValue\":\"1\""), "replicaCount default=1");
         assertTrue(logs.contains("\"defaultValue\":\"nginx\""), "image.repository default=nginx");

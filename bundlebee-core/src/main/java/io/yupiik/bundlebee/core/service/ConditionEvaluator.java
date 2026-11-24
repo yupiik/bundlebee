@@ -15,42 +15,46 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.descriptor.Manifest;
-import org.eclipse.microprofile.config.Config;
+import static java.util.Optional.ofNullable;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
+import io.yupiik.bundlebee.core.descriptor.Manifest;
+import io.yupiik.fusion.framework.api.configuration.Configuration;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-import static java.util.Optional.ofNullable;
-
 @ApplicationScoped
 public class ConditionEvaluator implements Predicate<Manifest.Conditions> {
-    @Inject
-    private Config config;
+
+    public ConditionEvaluator(final Configuration config) {
+        this.config = config;
+    }
+
+    private final Configuration config;
 
     @Override
     public boolean test(final Manifest.Conditions conditions) {
-        return conditions == null ||
-                toOperator(conditions.getOperator(), ofNullable(conditions.getConditions())
-                        .stream()
-                        .flatMap(Collection::stream)
-                        .map(this::evaluate));
+        return conditions == null
+                || toOperator(
+                        conditions.operator(),
+                        ofNullable(conditions.conditions()).stream()
+                                .flatMap(Collection::stream)
+                                .map(this::evaluate));
     }
 
     private boolean evaluate(final Manifest.Condition condition) {
-        final var evaluationResult = condition.getKey() == null || condition.getKey().isBlank() ||
-                Objects.equals(toValue(condition.getValue()), read(condition.getType(), condition.getKey()));
-        return condition.isNegate() != evaluationResult;
+        final var evaluationResult = condition.key() == null
+                || condition.key().isBlank()
+                || Objects.equals(toValue(condition.value()), read(condition.type(), condition.key()));
+        return condition.negate() != evaluationResult;
     }
 
     private String read(final Manifest.ConditionType type, final String key) {
-        return Manifest.ConditionType.SYSTEM_PROPERTY == type ?
-                config.getOptionalValue(key, String.class).orElse("") :
-                ofNullable(System.getenv(key)).orElse("");
+        return Manifest.ConditionType.SYSTEM_PROPERTY == type
+                ? config.get(key).orElse("")
+                : ofNullable(System.getenv(key)).orElse("");
     }
 
     private String toValue(final String value) {

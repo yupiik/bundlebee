@@ -1,0 +1,261 @@
+= Migrating to BundleBee 2
+:minisite-index: 1100
+:minisite-index-title: Migration to 2.0
+:minisite-index-description: Upgrade the runtime, configuration and extensions to Fusion.
+:minisite-index-icon: exchange-alt
+
+BundleBee `2.0.0-SNAPSHOT` keeps Java 17 as its runtime baseline and uses Yupiik Fusion `1.2.1-SNAPSHOT`.
+Building BundleBee from source requires Java 21 or 25 for the Spotless/Palantir formatting tooling; application code is still compiled with `--release 17`.
+The CLI and the Maven plugin still deploy the same manifests and alveoli; the major change is the Java extension and embedding runtime.
+This is a snapshot version, not a published stable release.
+
+== Upgrade checklist
+
+* Install Java 17 or later for the CLI, Maven and embedded callers.
+* Align all BundleBee modules and the Maven plugin on the same version.
+* Rebuild Java extensions against BundleBee 2 and the Fusion annotation processor.
+* Remove CDI descriptors, MicroProfile Config providers and JSON-P/JSON-B dependencies added only for BundleBee extensions.
+* Run `bundlebee help` and your deployment's dry-run checks before applying to a cluster.
+
+Existing `bundlebee/manifest.json` files, descriptor placeholders and command-line option names are not Java extension registration mechanisms and do not need to be converted to Fusion annotations.
+Keep your configuration keys unchanged unless an individual command documents a change.
+The xref:commands.adoc[command reference] and xref:user-configuration.adoc[configuration guide] describe the available options.
+
+== Dependency injection and lifecycle
+
+CDI scopes, producer methods, observers and portable extensions no longer register components in BundleBee.
+Use Fusion scopes and constructor injection, and compile extension modules with the Fusion processor enabled.
+Fusion generates the bean and module metadata at build time; classes are not discovered by scanning CDI annotations at runtime.
+Do not depend on a public no-argument command constructor for discovery, help text or documentation generation.
+See xref:extensions.adoc[Writing extensions] for the new extension model.
+
+== Configuration
+
+Replace MicroProfile `Config` and `ConfigSource` integrations with Fusion `Configuration` and `ConfigurationSource`.
+A Fusion source implements `String get(String key)` and returns `null` when it has no value.
+Configuration intended for one embedded execution must be supplied to that execution, not installed in static mutable state or JVM-wide system properties.
+This is particularly important for Maven reactor builds and long-running embedded applications.
+The Maven integration evaluates expressions against the current mojo's session and execution only; it does not publish a process-wide expression evaluator.
+
+=== Shared typed configuration
+
+Shared settings now have one generated configuration root, `bundlebee`, composed from the same typed HTTP, Maven and Kubernetes records injected into services.
+Kubernetes transport and deployment settings are disjoint subgroups composed at the same `bundlebee.kube` prefix, not at a new `deployment` prefix.
+Help, completion, documentation and Maven option generation consume the generated leaf metadata rather than a separate option catalog.
+Existing documented leaf keys and defaults are retained, except for the canonical names listed below.
+
+[options="header"]
+|===
+|Legacy key |Canonical key |Migration
+|`kubeconfig` |`bundlebee.kube.kubeconfig` |Use `--bundlebee-kube-kubeconfig` in canonical Fusion CLI syntax.
+|`bundlebee.maven.http.connectTimeout` |`bundlebee.maven.http.timeout` |This value is an HTTP request timeout in milliseconds, not a connection-establishment timeout.
+|===
+
+Update properties files and embedded configuration maps to use the canonical keys.
+A core configuration source retains `bundlebee.maven.http.connectTimeout` as a fallback for ordinary Fusion containers as well as the launcher.
+When both Maven timeout names are supplied, `bundlebee.maven.http.timeout` wins regardless of source priority; priority still determines the value within each name.
+The existing launcher/Kubernetes compatibility alias `kubeconfig` retains its existing precedence, so avoid configuring both kubeconfig names.
+The actual HTTP connection-establishment timeout remains `bundlebee.httpclient.connectTimeout` and uses an ISO-8601 duration.
+Java integrations must rebuild against the nested `GlobalConfiguration` record; service constructors still accept `HttpClientConfiguration`, `MavenConfiguration`, `KubernetesConfiguration` and `DeploymentConfiguration`, and those records retain their existing accessor and constructor contracts.
+The subgroup records are no longer independent configuration roots: Fusion-generated producer beans expose them from `GlobalConfiguration`, with no dependency on generated implementation class names.
+
+== Maven XML security
+
+BundleBee rejects `DOCTYPE` declarations in POM files, `settings.xml`, `settings-security.xml` and repository metadata.
+External entities, external DTD/schema access and XInclude processing are disabled.
+Replace DTD-defined entity references with literal values and remove the `DOCTYPE` declaration before upgrading.
+Custom JAXP providers must support these security restrictions; BundleBee fails initialization instead of using an insecure parser when they cannot be applied.
+Invalid repository metadata retains the existing version-resolution fallback behavior.
+
+== JSON extensions
+
+JSON-P `JsonObject` and `JsonArray` values become generic Java trees: `Map<String, Object>` and `List<Object>`.
+Strings, booleans, numbers and `null` retain their JSON meaning.
+Use Fusion `JsonMapper.fromString(Object.class, text)` and `JsonMapper.toString(value)` for generic trees.
+Do not use `Map.toString()` as a JSON serializer.
+Use generated Fusion codecs for typed models rather than JSON-B field introspection or Johnzon-specific settings.
+A mapper created by your code must be closed when no longer needed; do not close a mapper owned by the container.
+
+== Embedding
+
+Use the supported `BundleBee` launcher rather than constructing commands or starting a CDI container yourself.
+Keep per-run overrides local to the invocation and propagate launch failures to the calling application.
+The executable entry point remains `io.yupiik.bundlebee.core.BundleBee`, but dispatch, option resolution and CLI errors now come from Fusion `CliAwaiter` and its generated `CliCommand` descriptors.
+For example, use `apply --bundlebee-apply-alveolus my-app --bundlebee-kube-dryRun true`.
+The command-relative alias `--alveolus` remains supported for `bundlebee.apply.alveolus`.
+Fusion replaces dots with hyphens in CLI names and preserves case: `bundlebee.apply.injectTimestamp` becomes `--bundlebee-apply-injectTimestamp`.
+Configuration keys in properties files and the embedding override map use dotted names.
+
+=== Kubernetes connectivity
+
+Kubernetes transport now uses Fusion's Kubernetes client, with typed configuration rooted at `bundlebee.kube`.
+Existing connectivity and HTTP policy keys retain this prefix, including `api`, `token`, `validateSSL`, `dryRun`, and `verbose`.
+For example, `bundlebee.kube.dryRun` is exposed as `--bundlebee-kube-dryRun` by Fusion CLI.
+The typed kubeconfig setting is `bundlebee.kube.kubeconfig`.
+Deployment settings, such as resource mappings and apply behavior, remain under `bundlebee.kube.*`.
+Consult the generated configuration reference for the complete list.
+
+Fusion handles kubeconfig context selection, bearer tokens, token files, exec credentials, TLS certificates, namespace discovery, and kubeconfig username/password Basic authentication.
+Basic authentication requires the locally patched `1.2.1-SNAPSHOT` built from the validation worktree until the upstream change is released.
+BundleBee retains its deployment operations, dry-run policy, HTTP logging, rate limiting, and request events around the Fusion client.
+
+=== CLI behavior changes
+
+* Options use command/value pairs and require explicit values, including booleans.
+* Repeated options retain the last value, including values containing commas.
+* List properties use Fusion's list conversion; see the compatibility verification report for remaining edge-case coverage.
+* `--config-file path` and `--config-file=path` remain supported, including before the command.
+* Missing and unknown commands fall back to BundleBee help.
+* Use `bundlebee version` to print the version; the valueless `--version` flag is rejected in v2 instead of falling back to help.
+* Run `help` or `help --command <name>` for command usage.
+* The existing `completion` command retains its `comp.line`, `comp.point` and `useLogger` inputs for shell integration.
+
+`BundleBee.launch(String[], Map<String, String>)` copies invocation-local overrides without changing JVM properties.
+`BundleBee.launch(String[], ConfigurationSource)` retains lazy source evaluation, which the Maven integration uses for descriptor placeholders.
+CLI options now override every source, including shared typed settings; files and ArgoCD parameters no longer override colliding CLI options.
+The order is CLI, embedding overrides, ArgoCD parameters, the explicit configuration file, JVM system properties, environment variables, then `~/.bundlebeerc` (highest first).
+In particular, `.bundlebeerc` now provides defaults below system properties and environment variables instead of overriding them.
+Fusion orders registered `ConfigurationSource` beans before its built-in sources; BundleBee uses this native ordering for embedding, Argo and the explicit file, and registers alias-aware system/environment sources ahead of the independent rc source.
+These wrappers normalize dotted JVM properties for generated CLI lookups, which use dashed option names; Fusion's built-in sources alone do not provide that alias mapping.
+Embedding, Argo and file precedence is an explicit launcher policy, not an additional user requirement or a special Fusion source-name convention.
+The Argo input still uses the typed `@JsonModel` decoder, and decoded parameters are immutable and invocation-local.
+Neither file is modified or copied into JVM properties.
+Both overloads wait for asynchronous command execution, propagate failures, and restore the interrupt flag if waiting is interrupted.
+
+=== Operator resource arguments
+
+The operator now starts one Fusion container and adapts `Operator<AlveoliResource>` from `fusion-kubernetes-operator-base`.
+BundleBee appends a fallback `MapConfigSource` setting `operator.enabled=false`, even when Fusion's own default is `true`, so metadata generators and core CLI containers do not start watches, construct operator HTTP clients or bind probes merely because the operator is on the classpath.
+The fallback is added through `ConfigurationRegistration` after Fusion's built-in system, environment and secret-directory sources, not registered as an authoritative configuration-source bean.
+The operator entry point is now `io.yupiik.fusion.framework.api.main.Launcher`; the BundleBee-specific `BundlebeeOperator` entry point has been removed.
+An operator Fusion module excludes the CLI awaiter when Launcher's `ArgsConfigSource` bean is registered, so Launcher awaits the operator rather than dispatching a CLI command; `BundleBee.launch` retains CLI dispatch and command metadata remains available in both paths.
+Launcher arguments take precedence over JVM system properties and environment variables, and all these explicit settings take precedence over the disabled fallback.
+The supplied deployment explicitly sets `OPERATOR_ENABLED=true` and `FUSION_LAUNCHER_USEHOOK=true` to start the operator and close the container on JVM shutdown.
+Applications starting the operator themselves must explicitly set `operator.enabled=true` (or `OPERATOR_ENABLED=true`) and enable `fusion.launcher.useHook=true` when using Launcher for a long-running process.
+The image retains its JVM logging-manager, handler and JSON formatter settings; when launching Java directly, supply those JVM settings explicitly if the same logging behavior is required.
+Until these changes are released, the locally installed `fusion-kubernetes-operator-base:1.2.1-SNAPSHOT` must include both the opt-in lifecycle and the watch-recovery fixes.
+An unpatched artifact with the same snapshot version eagerly resolves runtime settings even when disabled and does not provide the recovery behavior described below.
+Keep these fixes in the Fusion checkout used for normal builds, not only in a temporary validation worktree.
+Building an unpatched checkout can overwrite the local snapshot with the same version.
+Build only the patched module with `mvn -f /path/to/patched-fusion/fusion-kubernetes-operator-base/pom.xml clean install`, without `-am`, to retain the other locally patched Fusion dependencies.
+`ADDED` and `MODIFIED` invoke `ApplyCommand.execute(executionId)` directly; `DELETED` invokes `DeleteCommand.execute(executionId)`.
+Modified resources are reapplied without deleting first or implicitly pruning removed descriptors.
+The shared startup Kubernetes client, scheduler and services survive individual commands; no subprocess or nested container is created for a custom resource.
+
+Operator `spec.args` retains arbitrary recipe placeholder names such as `--message hello` with `{{message}}`; no `custom.*` migration is needed.
+Generated metadata identifies actual `apply`/`delete` command options and their aliases.
+Other non-reserved keys are copied into a separate invocation-owned substitution map, not a Fusion configuration source, so they cannot change Kubernetes credentials, endpoints or service startup configuration.
+Global configuration keys and aliases, reserved configuration namespaces, bootstrap options and options belonging only to another command are rejected before execution.
+Each event has an isolated map, including concurrent events, and placeholder names are matched exactly rather than normalized as CLI aliases.
+The embedding API `BundleBee.launch(String[], ConfigurationSource, Map<String, String>)` exposes this placeholder-only channel separately from trusted configuration overrides.
+The operator itself registers placeholders with `SubstitutorProducer.setInvocationPlaceholders(executionId, map)`, joins asynchronous command execution before closing its lookup, and clears placeholders in `finally`.
+
+There are no legacy operator configuration adapters; update startup configuration explicitly.
+
+[cols="2,2,3",options="header"]
+|===
+|BundleBee 1 setting or behavior |BundleBee 2 setting or behavior |Migration
+|`bundlebee.operator.storage` / `BUNDLEBEE_OPERATOR_STORAGE` |`operator.storage` / `OPERATOR_STORAGE` |No default directory; explicitly configure and mount a writable directory to retain the processed resource inventory.
+|Legacy operator watch namespace configuration |`bundlebee.operator.namespaces` / `BUNDLEBEE_OPERATOR_NAMESPACES` |Set the comma-separated watch namespace list explicitly; default is `default`.
+|Legacy event loop and health listener settings |`operator.event-thread-count`, `operator.use-bookmarks`, `operator.probe-port` |Use the operator base keys; defaults are `1`, `true` and `8081`; disable probes with a negative port.
+|Separate watch and command connectivity |Shared `bundlebee.kube.*` startup configuration |Keep BundleBee connectivity keys; `operator.kubernetes.*` is not a second connection channel in this application.
+|Legacy event state |Operator-base inventory JSON |The processed inventory is retained in `<storage>/alveoli.items`, or `<storage>/alveoli-<namespace>.items` when multiple namespaces are watched; startup always lists current API state instead of resuming a persisted cursor.
+|One-shot watch |List/watch with reconnect |Resource versions are opaque and kept in memory; normal EOF and transport errors reconnect, and HTTP or watch-event `410` discards the expired token and relists.
+|Command failure or shutdown |Fail-closed watch and bounded drain |A callback failure stops the affected watch and marks it unready, requiring a restart instead of silently advancing past failed work; shutdown cancels watches/reconnects and gives callbacks up to five seconds to drain before interrupting operator workers.
+|===
+
+See xref:operator.adoc[Operator configuration] for the option boundary and recipe trust requirements.
+
+[#script-bean-lookup]
+== Script bean lookup
+
+JSR223 scripts retain `lookupByType` for Fusion bean class lookup.
+The `lookupByName` binding has been removed in favor of `lookupByType`; arbitrary CDI names are no longer resolved.
+This is a Java extension compatibility break, not a transparent equivalent of the old lookup.
+For example, this BundleBee 1 extension and descriptor recipe are incompatible with the Fusion runtime:
+
+[source,java]
+----
+@Named("releaseValues")
+@ApplicationScoped
+public class ReleaseValues {
+    public String channel() {
+        return "stable";
+    }
+}
+----
+
+[source,yaml]
+----
+channel: "{{jsr223:lookupByName.apply('releaseValues').channel();}}"
+----
+
+The old `BeanManager.getBeans("releaseValues")` resolved the CDI name independently of the bean class name.
+Fusion's supported lookup API resolves Java types and provides no equivalent arbitrary-name lookup.
+Adding a CDI `@Named` annotation or `beans.xml` to an extension does not restore this behavior.
+
+Rebuild `com.acme.ReleaseValues` using Fusion scopes and the processor, then change the recipe to `{{jsr223:lookupByType.apply(Java.type('com.acme.ReleaseValues').class).channel();}}` for a JavaScript engine supporting Java interop.
+BundleBee 2 does not provide an alias registry or a CDI compatibility container.
+
+For multiple legacy named beans of the same Java type, merely replacing each name with that type is not equivalent.
+Resolve that extension design explicitly before migrating; do not assume a class-name lookup will distinguish the old aliases.
+Scripts referring to `lookupByName` now fail because that binding is absent; migrate them to the type-based lookup.
+Lookup handles remain valid during script evaluation and string conversion and are closed afterwards, including when evaluation fails.
+
+JavaScript is not bundled with Java 17 or later, and Nashorn is a test-only core dependency, not a shipped CLI engine.
+Install a JSR223 implementation and its runtime dependencies on the actual execution classpath before validating script recipes.
+The executable script tests cover Nashorn 15.4 with extension `js`, name `javascript`, MIME type `application/javascript`, language comments, file scripts and missing-engine failures; they do not establish compatibility with other engines.
+See xref:extensions.adoc[Writing Java extensions] for generated registration, synchronous observer semantics and scripting lifecycle rules.
+
+== Apply state tracking correction
+
+When `bundlebee.apply.trackState=true` and an explicit alveolus is selected, BundleBee reads the inventory from the Secret's `data.state` field.
+This intentionally fixes the BundleBee 1 reader, which looked for a top-level `state` field despite writing `data.state`.
+State tracking is still disabled by default.
+
+The stored version-1 inventory accepts existing path-only entries and adds optional per-resource `status` and `httpStatus` fields.
+An absent status means the last apply succeeded; other statuses are `APPLY_FAILED`, `PENDING_DELETION`, and `DELETE_FAILED`.
+The original `State.Resource(String path)` Java constructor remains available.
+Response bodies and credentials are not copied into failure status fields.
+
+Before stale-resource cleanup, BundleBee saves a checkpoint containing the applied inventory and resources still awaiting deletion.
+If checkpoint persistence fails, no cleanup is attempted.
+Partial apply failures are recorded without pruning previous resources, and the command fails.
+`skipStaledResourceDeletion=true` retains pending resources so cleanup can be retried by a later execution.
+
+Cleanup retains resources until absence is confirmed by HTTP 404, including a GET after an acknowledged DELETE when finalizers may still retain the object.
+Pending deletions remain in state; HTTP and transport failures are flagged, persisted, and propagated to CLI or Maven callers.
+If the final state write fails, the earlier checkpoint permits a safe retry, including an already-missing resource.
+Malformed or unsupported state fails before applying resources rather than silently overwriting the inventory.
+Stored cleanup URLs must remain within the configured Kubernetes API origin and base path; foreign origins are rejected before credentials or requests are sent.
+
+== Lombok removal
+
+BundleBee no longer requires Lombok to compile its sources.
+Mutable events retain explicit constructors, bean accessors and setters where required by interception.
+Value implementations use ordinary Java equality and hashing; exact numeric hash codes are not a compatibility contract.
+`Tuple2` is now a record with `first()` and `second()` accessors, record equality and record string representation.
+Extensions using Lombok themselves must declare their own dependency and annotation processor instead of inheriting them from the BundleBee build.
+
+== Java extension API cleanup
+
+BundleBee 2 removes deprecated overloads rather than retaining compatibility bridges.
+Pass the execution ID explicitly through substitutions, events, archive loading and manifest processing; pass `null` only for work that genuinely has no execution context.
+Do not replace execution-ID propagation with thread-local state, since asynchronous callbacks can run on different threads.
+
+[cols="1,2",options="header"]
+|===
+|Old API or assumption |Migration
+|`Executable.completer()` and `Executable.Completer` |Implement `CompletingExecutable.complete(Map<String, String>, String)` for option-value completion; ordinary commands need no completion method.
+|`CompletionService.Command.getCompleter()` |Call `CompletionService.Command.complete(options, optionName)`.
+|`Tuple2.getFirst()` and `getSecond()` |Use record accessors `first()` and `second()`; subclasses and `canEqual` overrides are no longer supported.
+|Substitution hooks and `replace` overloads without an execution ID |Use the retained ID-bearing overloads and propagate the supplied ID through recursive evaluation.
+|Deprecated event constructors without an execution ID |Use the constructor accepting an explicit execution ID.
+|Deprecated manifest, archive and alveolus methods without an execution ID |Use the corresponding explicit-ID methods.
+|Maven `BaseMojo.doExecute()` override |Override `doExecute(ConfigurationSource)` and keep the source local to the invocation.
+|`ParameterExtractor.loadMetadata()` |At the generator entry point, own a Fusion container and its `ParameterExtractor` lookup with try-with-resources, then call instance `metadata()`.
+|Null elements in typed Manifest or SARIF model lists |Provide non-null entries; typed list snapshots now reject null elements at construction while retaining a nullable list reference.
+|===
+
+Dynamic JSON values, including null elements in JSON arrays and dynamic patch data, remain distinct from typed model lists.
+Completion implementations can return lazy streams, but callers must consume and close those streams before closing the command lookup that owns their dependencies.

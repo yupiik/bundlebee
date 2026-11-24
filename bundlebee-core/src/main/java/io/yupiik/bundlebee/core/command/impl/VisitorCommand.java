@@ -15,32 +15,32 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static io.yupiik.bundlebee.lang.CompletionFutures.all;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.stream.Collectors.toList;
+
 import io.yupiik.bundlebee.core.command.CompletingExecutable;
 import io.yupiik.bundlebee.core.descriptor.Manifest;
 import io.yupiik.bundlebee.core.service.AlveolusHandler;
 import io.yupiik.bundlebee.core.service.ArchiveReader;
-import lombok.Data;
-
-import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.lang.CompletionFutures.all;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.stream.Collectors.toList;
-
 public abstract class VisitorCommand implements CompletingExecutable {
-    @Inject
-    private AlveolusHandler visitor;
+    protected VisitorCommand(AlveolusHandler visitor, ArchiveReader archives) {
+        this.visitor = visitor;
+        this.archives = archives;
+    }
 
-    @Inject
-    private ArchiveReader archives;
+    private final AlveolusHandler visitor;
+    private final ArchiveReader archives;
 
     @Override
     public Stream<String> complete(final Map<String, String> options, final String optionName) {
@@ -62,37 +62,44 @@ public abstract class VisitorCommand implements CompletingExecutable {
         return "Diff an alveolus against a running cluster.";
     }
 
-    /**
-     * @deprecated ensure to pass an id or explicitly {@code null}.
-     */
-    @Deprecated
-    protected CompletionStage<Collected> doExecute(final String from, final String manifest,
-                                                   final String alveolus, final String descriptorFilter) {
-        return doExecute(from, manifest, alveolus, descriptorFilter, null);
-    }
-
-    protected CompletionStage<Collected> doExecute(final String from, final String manifest,
-                                                   final String alveolus, final String descriptorFilter,
-                                                   final String id) {
+    protected CompletionStage<Collected> doExecute(
+            final String from,
+            final String manifest,
+            final String alveolus,
+            final String descriptorFilter,
+            final String id) {
         final var cache = archives.newCache();
         final var collected = new Collected();
         final var filter = createDescriptorFilter(descriptorFilter);
-        return visitor
-                .findRootAlveoli(from, manifest, alveolus, id)
+        return visitor.findRootAlveoli(from, manifest, alveolus, id)
                 .thenCompose(alveoli -> all(
                         alveoli.stream()
                                 .map(it -> visitor.executeOnceOnAlveolus(
-                                        null, it.getManifest(), it.getAlveolus(), null,
+                                        null,
+                                        it.getManifest(),
+                                        it.getAlveolus(),
+                                        null,
                                         (ctx, desc) -> {
-                                            if (filter.test(desc.getConfiguration().getName())) {
-                                                collected.alveoli.putIfAbsent(ctx.getAlveolus().getName(), ctx.getAlveolus());
-                                                collected.descriptors.computeIfAbsent(ctx.getAlveolus().getName(), k -> new ArrayList<>())
+                                            if (filter.test(
+                                                    desc.getConfiguration().name())) {
+                                                collected.alveoli.putIfAbsent(
+                                                        ctx.getAlveolus().name(), ctx.getAlveolus());
+                                                collected
+                                                        .descriptors
+                                                        .computeIfAbsent(
+                                                                ctx.getAlveolus()
+                                                                        .name(),
+                                                                k -> new ArrayList<>())
                                                         .add(desc);
                                             }
                                             return completedFuture(true);
                                         },
-                                        cache, null, "inspected", id))
-                                .collect(toList()), toList(),
+                                        cache,
+                                        null,
+                                        "inspected",
+                                        id))
+                                .collect(toList()),
+                        toList(),
                         true))
                 .thenApply(ok -> collected);
     }
@@ -107,9 +114,44 @@ public abstract class VisitorCommand implements CompletingExecutable {
         return descriptor::equals;
     }
 
-    @Data
     protected static class Collected {
         private final Map<String, List<AlveolusHandler.LoadedDescriptor>> descriptors = new ConcurrentHashMap<>();
         private final Map<String, Manifest.Alveolus> alveoli = new ConcurrentHashMap<>();
+
+        public Collected() {}
+
+        public Map<String, List<AlveolusHandler.LoadedDescriptor>> getDescriptors() {
+            return this.descriptors;
+        }
+
+        public Map<String, Manifest.Alveolus> getAlveoli() {
+            return this.alveoli;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == this) {
+                return true;
+            }
+            return o instanceof VisitorCommand.Collected other
+                    && other.canEqual(this)
+                    && Objects.equals(getDescriptors(), other.getDescriptors())
+                    && Objects.equals(getAlveoli(), other.getAlveoli());
+        }
+
+        protected boolean canEqual(final Object other) {
+            return other instanceof VisitorCommand.Collected;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(getDescriptors(), getAlveoli());
+        }
+
+        @Override
+        public String toString() {
+            return "VisitorCommand.Collected(descriptors=" + this.getDescriptors() + ", alveoli=" + this.getAlveoli()
+                    + ")";
+        }
     }
 }

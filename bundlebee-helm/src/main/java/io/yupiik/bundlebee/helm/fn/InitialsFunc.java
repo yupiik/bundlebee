@@ -15,19 +15,19 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.regex.Pattern;
 
-import javax.enterprise.context.Dependent;
-
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = String
-//metadata:end
+// metadata:end
 @Description("Extracts initials from a string")
 public class InitialsFunc implements HelmFunction {
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
+
     @Override
     public String name() {
         return "initials";
@@ -38,7 +38,7 @@ public class InitialsFunc implements HelmFunction {
         if (args.length == 0 || args[0] == null) {
             return "";
         }
-        final var words = args[0].toString().split("\\s+");
+        final var words = WHITESPACE.split(args[0].toString());
         final var sb = new StringBuilder();
         for (final var word : words) {
             if (!word.isEmpty()) {

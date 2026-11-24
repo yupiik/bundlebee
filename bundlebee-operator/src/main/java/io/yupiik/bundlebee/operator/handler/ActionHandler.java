@@ -15,76 +15,41 @@
  */
 package io.yupiik.bundlebee.operator.handler;
 
-import io.yupiik.bundlebee.core.cli.Args;
-import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.command.impl.ApplyCommand;
-import io.yupiik.bundlebee.core.command.impl.DeleteCommand;
-import io.yupiik.bundlebee.operator.configuration.ThreadLocalConfigSource;
-import io.yupiik.bundlebee.operator.model.Event;
+import static java.util.Locale.ROOT;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.inject.Provider;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
+import io.yupiik.bundlebee.operator.model.AlveoliResource;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
-
-import static java.util.Locale.ROOT;
-import static java.util.logging.Level.SEVERE;
 
 @ApplicationScoped
 public class ActionHandler {
     private final Logger logger = Logger.getLogger(getClass().getName());
+    private final CommandRunner runner;
 
-    @Inject
-    private Provider<DeleteCommand> deleteCommandProvider;
+    public ActionHandler(final CommandRunner runner) {
+        this.runner = runner;
+    }
 
-    @Inject
-    private Provider<ApplyCommand> applyCommandProvider;
-
-    @Inject
-    private ThreadLocalConfigSource threadLocalConfigSource;
-
-    public void onEvent(final String type, final Event.AlveoliObject obj) {
+    public void onEvent(final String type, final AlveoliResource obj) {
+        final String command;
         switch (type.toUpperCase(ROOT)) {
             case "DELETED":
-                logger.info(() -> "[D] Deleting '" + obj.getMetadata().getName() + "'");
-                execute("delete", deleteCommandProvider, obj);
+                command = "delete";
                 break;
             case "ADDED":
-                logger.info(() -> "[A] Applying '" + obj.getMetadata().getName() + "'");
-                execute("apply", applyCommandProvider, obj);
-                break;
             case "MODIFIED":
-                logger.info(() -> "[U] Updating '" + obj.getMetadata().getName() + "'");
-                // NOTE on modified:
-                // strictly speaking we just relaunch apply command on modify
-                // IMPORTANT/TODO: review the resources associated to previous deployment and delete the ones no more in the recipe
-                execute("apply", applyCommandProvider, obj);
+                // Reapply modified recipes; removed resources are not pruned.
+                command = "apply";
                 break;
             default:
                 logger.warning("[E] Unknown event: type=" + type);
+                return;
         }
-    }
-
-    private void execute(final String cmd, final Provider<? extends Executable> provider, final Event.AlveoliObject obj) {
-        threadLocalConfigSource.forConfiguration(toConf(cmd, obj), () -> {
-            try {
-                return provider.get().execute().toCompletableFuture().get();
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(e);
-            } catch (final ExecutionException e) {
-                logger.log(SEVERE, e, e::getMessage);
-                throw new IllegalStateException(e);
-            }
-        });
-    }
-
-    private Map<String, String> toConf(final String cmd, final Event.AlveoliObject obj) {
-        return obj.getSpec() == null || obj.getSpec().getArgs() == null || obj.getSpec().getArgs().isEmpty() ?
-                Map.of() :
-                Args.toProperties(cmd, Stream.concat(Stream.of(cmd), obj.getSpec().getArgs().stream()).toArray(String[]::new));
+        logger.info(() -> "Running '" + command + "' for '" + obj.metadata().name() + "'");
+        final var arguments =
+                obj.spec() == null || obj.spec().args() == null ? Stream.<String>empty() : obj.spec().args().stream();
+        final var commandArgs = Stream.concat(Stream.of(command), arguments).toArray(String[]::new);
+        runner.run(commandArgs);
     }
 }

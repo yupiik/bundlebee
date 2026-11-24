@@ -15,18 +15,19 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.regex.Pattern;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = String
-//metadata:end
+// metadata:end
 @Description("Trims given characters from both sides of a string")
 public class TrimAllFunc implements HelmFunction {
+    private static final Pattern WHITESPACE = Pattern.compile("\\s");
+
     @Override
     public String name() {
         return "trimAll";
@@ -37,6 +38,6 @@ public class TrimAllFunc implements HelmFunction {
         if (args.length == 0 || args[0] == null) {
             return "";
         }
-        return args[0].toString().replaceAll("\\s", "");
+        return WHITESPACE.matcher(args[0].toString()).replaceAll("");
     }
 }

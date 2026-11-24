@@ -15,27 +15,22 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import static java.util.stream.Collectors.toMap;
 
-import javax.enterprise.context.Dependent;
-import javax.json.JsonString;
-import javax.json.JsonValue;
+import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toMap;
-
-@Dependent
+@DefaultScoped
 public class MismatchingSelector extends CheckValue {
+
     public MismatchingSelector() {
         super(
-
                 Set.of("DeploymentConfig", "Deployment"),
-                Map.of(
-                        "DeploymentConfig", "/spec",
-                        "Deployment", "/spec"),
+                Map.of("DeploymentConfig", "/spec", "Deployment", "/spec"),
                 false);
     }
 
@@ -55,42 +50,39 @@ public class MismatchingSelector extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        final var root = value.asJsonObject();
-
-        var selector = root.getJsonObject("selector");
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        if (!(value instanceof Map<?, ?> root)) {
+            return Stream.of(new LintError(LintError.LintLevel.ERROR, "No /spec/selector found"));
+        }
+        var selector = (root.get("selector") instanceof Map<?, ?> selectorValue ? selectorValue : null);
         if (selector == null) {
             return Stream.of(new LintError(LintError.LintLevel.ERROR, "No /spec/selector found"));
         }
-        if ("Deployment".equals(descriptor.kind())) { // DeploymentConfig does not have this additional layer
-            selector = selector.getJsonObject("matchLabels");
+        if ("Deployment".equals(descriptor.kind())) {
+            // DeploymentConfig does not have this additional layer
+            selector = (selector.get("matchLabels") instanceof Map<?, ?> matchLabelsValue ? matchLabelsValue : null);
             if (selector == null) {
                 return Stream.of(new LintError(LintError.LintLevel.ERROR, "No /spec/selector/matchLabels found"));
             }
         }
-
-        final var template = root.getJsonObject("template");
-        if (template == null) {
+        if (!(root.get("template") instanceof Map<?, ?> template)) {
             return Stream.of(new LintError(LintError.LintLevel.ERROR, "No /spec/template found"));
         }
-
-        final var metadata = template.getJsonObject("metadata");
-        if (metadata == null) {
+        if (!(template.get("metadata") instanceof Map<?, ?> metadata)) {
             return Stream.of(new LintError(LintError.LintLevel.ERROR, "No /spec/template/metadata found"));
         }
-
-        final var labels = metadata.getJsonObject("labels");
-        if (labels == null) {
+        if (!(metadata.get("labels") instanceof Map<?, ?> labels)) {
             return Stream.of(new LintError(LintError.LintLevel.ERROR, "No /spec/template/metadata/labels found"));
         }
-
         final var missing = selector.entrySet().stream()
-                .filter(it -> it.getValue().getValueType() == JsonValue.ValueType.STRING)
+                .filter(it -> it.getValue() instanceof String)
                 .filter(it -> !Objects.equals(it.getValue(), labels.get(it.getKey())))
-                .collect(toMap(Map.Entry::getKey, it -> ((JsonString) it.getValue()).getString()));
+                .collect(toMap(Map.Entry::getKey, it -> ((String) it.getValue())));
         if (missing.isEmpty()) {
             return Stream.empty();
         }
-        return Stream.of(new LintError(LintError.LintLevel.ERROR, "Selector does not match pod template, missing expected labels: " + missing));
+        return Stream.of(new LintError(
+                LintError.LintLevel.ERROR,
+                "Selector does not match pod template, missing expected labels: " + missing));
     }
 }

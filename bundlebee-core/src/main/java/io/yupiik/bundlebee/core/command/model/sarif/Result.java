@@ -15,23 +15,18 @@
  */
 package io.yupiik.bundlebee.core.command.model.sarif;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.json.bind.annotation.JsonbProperty;
-import javax.json.bind.annotation.JsonbPropertyOrder;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonbPropertyOrder({"level", "text", "ruleId", "ruleIndex", "locations"})
-public class Result {
-    @JsonbProperty
-    private String level;
-    private Text text;
-    private String ruleId;
-    private Integer ruleIndex;
-    private List<CompleteLocation> locations;
+@JsonModel
+public record Result(
+        @JsonProperty(order = 0) String level,
+        @JsonProperty(order = 1) Text text,
+        @JsonProperty(order = 2) String ruleId,
+        @JsonProperty(order = 3) Integer ruleIndex,
+        @JsonProperty(order = 4) List<CompleteLocation> locations) {
+    public Result {
+        locations = locations == null ? null : List.copyOf(locations);
+    }
 }

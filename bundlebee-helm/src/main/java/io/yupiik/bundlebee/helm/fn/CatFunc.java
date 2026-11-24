@@ -15,18 +15,14 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-import static java.util.stream.Collectors.joining;
-
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = String
-//metadata:end
+// metadata:end
 @Description("Concatenates multiple strings with spaces")
 public class CatFunc implements HelmFunction {
     @Override

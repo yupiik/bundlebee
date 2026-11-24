@@ -15,6 +15,9 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static java.util.logging.Level.INFO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.yupiik.bundlebee.core.BundleBee;
 import io.yupiik.bundlebee.core.test.BundleBeeExtension;
 import io.yupiik.bundlebee.core.test.CommandExecutor;
@@ -24,27 +27,48 @@ import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static java.util.logging.Level.INFO;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 class CodecCommandsTest {
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
-    private final Codec codec = new SimpleCodec(SimpleCodecConfiguration.builder().masterPassword("test").build());
+    private final Codec codec = new SimpleCodec(
+            SimpleCodecConfiguration.builder().masterPassword("test").build());
 
     @Test
     void cipher(final CommandExecutor executor) {
         final var clearValue = "foo";
-        assertEquals(clearValue, codec.decrypt(executor.wrap(null, INFO, () -> new BundleBee()
-                .launch("cipher", "--masterPassword", "test", "--value", clearValue)).strip()));
+        assertEquals(
+                clearValue,
+                codec.decrypt(executor.wrap(
+                                null,
+                                INFO,
+                                () -> new BundleBee()
+                                        .launch(
+                                                "cipher",
+                                                "--bundlebee-cipher-masterPassword",
+                                                "test",
+                                                "--bundlebee-cipher-value",
+                                                clearValue))
+                        .strip()));
     }
 
     @Test
     void decipher(final CommandExecutor executor) {
         final var clearValue = "foo";
         final var ciphered = codec.encrypt(clearValue);
-        assertEquals(clearValue, executor.wrap(null, INFO, () -> new BundleBee()
-                .launch("decipher", "--masterPassword", "test", "--value", ciphered)).strip());
+        assertEquals(
+                clearValue,
+                executor.wrap(
+                                null,
+                                INFO,
+                                () -> new BundleBee()
+                                        .launch(
+                                                "decipher",
+                                                "--bundlebee-decipher-masterPassword",
+                                                "test",
+                                                "--bundlebee-decipher-value",
+                                                ciphered))
+                        .strip());
     }
 }

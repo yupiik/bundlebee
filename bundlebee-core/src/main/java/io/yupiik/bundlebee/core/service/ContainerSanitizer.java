@@ -15,45 +15,33 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import lombok.extern.java.Log;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.inject.Inject;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonException;
-import javax.json.JsonObject;
-import javax.json.JsonStructure;
-import javax.json.JsonValue;
-import javax.json.spi.JsonProvider;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collector;
-import java.util.stream.Stream;
-
 import static java.util.logging.Level.FINEST;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
-@Log
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import io.yupiik.fusion.json.pointer.GenericJsonPointer;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.logging.Logger;
+import java.util.stream.Stream;
+
 @ApplicationScoped
 public class ContainerSanitizer {
-    @Inject
-    @BundleBee
-    private JsonProvider jsonProvider;
-
-    @Inject
-    @BundleBee
-    private JsonBuilderFactory jsonBuilderFactory;
+    private final Logger log = Logger.getLogger(ContainerSanitizer.class.getName());
 
     public boolean canSanitizeCpuResource(final String kindLowerCased) {
-        return "cronjobs".equals(kindLowerCased) || "deployments".equals(kindLowerCased) ||
-                "daemonsets".equals(kindLowerCased) || "pods".equals(kindLowerCased) || "jobs".equals(kindLowerCased);
+        return "cronjobs".equals(kindLowerCased)
+                || "deployments".equals(kindLowerCased)
+                || "daemonsets".equals(kindLowerCased)
+                || "pods".equals(kindLowerCased)
+                || "jobs".equals(kindLowerCased);
     }
 
     // for first installation if cpu value is null then it is considered as being 0 - merge patch are ok after
-    public JsonObject dropCpuResources(final String kind, final JsonObject preparedDesc) {
+    public Map<String, Object> dropCpuResources(final String kind, final Map<String, Object> preparedDesc) {
         final String containersParentPointer;
         switch (kind) {
             case "deployments":
@@ -68,100 +56,93 @@ public class ContainerSanitizer {
                 containersParentPointer = "/spec";
                 break;
             default:
-                containersParentPointer = null;
+                return preparedDesc;
         }
-
         return replaceIfPresent(
                 replaceIfPresent(preparedDesc, containersParentPointer, "initContainers", this::dropKnownNulls),
-                containersParentPointer, "containers", this::dropKnownNulls);
+                containersParentPointer,
+                "containers",
+                this::dropKnownNulls);
     }
 
-    private JsonValue dropKnownNulls(final JsonObject container) {
+    private Object dropKnownNulls(final Map<String, Object> container) {
         return dropIfNull(
-                dropNullsCpu(container),
-                // this is important cause there is no default which can inherit the parent otherwise
-                "args", "command");
+                dropNullsCpu(container), // this is important cause there is no default which can inherit the parent
+                // otherwise
+                "args",
+                "command");
     }
 
-    private JsonObject dropIfNull(final JsonObject container, final String... keys) {
-        final var toRemove = Stream.of(keys).filter(it -> {
-            final var jsonValue = container.get(it);
-            return jsonValue != null && jsonValue.getValueType() == JsonValue.ValueType.NULL;
-        }).collect(toList());
+    private Map<String, Object> dropIfNull(final Map<String, Object> container, final String... keys) {
+        final var toRemove = Stream.of(keys)
+                .filter(it -> {
+                    final var jsonValue = container.get(it);
+                    return container.containsKey(it) && jsonValue == null;
+                })
+                .collect(toList());
         if (toRemove.isEmpty()) {
             return container;
         }
-        return jsonBuilderFactory
-                .createObjectBuilder(container.entrySet().stream()
-                        .filter(it -> !toRemove.contains(it.getKey()))
-                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .build();
+        final var result = new LinkedHashMap<>(container);
+        toRemove.forEach(result::remove);
+        return result;
     }
 
-    private JsonObject dropNullsCpu(final JsonObject container) {
+    private Map<String, Object> dropNullsCpu(final Map<String, Object> container) {
         final var resources = container.get("resources");
-        if (resources == null) {
+        if (!(resources instanceof Map<?, ?> resourcesObj)) {
             return container;
         }
-
-        final var resourcesObj = resources.asJsonObject();
         if (!resourcesObj.containsKey("requests") && !resourcesObj.containsKey("limits")) {
             return container;
         }
-
-        final var builder = jsonBuilderFactory.createObjectBuilder(resourcesObj.entrySet().stream()
-                .filter(it -> !"requests".equals(it.getKey()) && !"limits".equals(it.getKey()))
-                .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)));
-        Stream.of("requests", "limits")
-                .filter(resourcesObj::containsKey)
-                .forEach(k -> {
-                    final var subObj = resourcesObj.get(k).asJsonObject();
-                    if (!JsonValue.NULL.equals(subObj.get("cpu"))) {
-                        builder.add(k, subObj);
-                    } else {
-                        final var value = jsonBuilderFactory.createObjectBuilder(subObj
-                                        .entrySet().stream()
-                                        .filter(it -> !"cpu".equals(it.getKey()))
-                                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                                .build();
-                        if (!value.isEmpty()) {
-                            builder.add(k, value);
-                        }
-                    }
-                });
-        return jsonBuilderFactory.createObjectBuilder(container.entrySet().stream()
-                        .filter(it -> !"resources".equals(it.getKey()))
-                        .collect(toMap(Map.Entry::getKey, Map.Entry::getValue)))
-                .add("resources", builder)
-                .build();
+        final var builder = new LinkedHashMap<Object, Object>(resourcesObj);
+        for (final var key : List.of("requests", "limits")) {
+            if (resourcesObj.get(key) instanceof Map<?, ?> subObj && subObj.get("cpu") == null) {
+                final var value = new LinkedHashMap<>(subObj);
+                value.remove("cpu");
+                if (value.isEmpty()) {
+                    builder.remove(key);
+                } else {
+                    builder.put(key, value);
+                }
+            }
+        }
+        final var result = new LinkedHashMap<>(container);
+        result.put("resources", builder);
+        return result;
     }
 
-    private JsonValue dropKnownNulls(final JsonValue jsonValue) {
-        try {
-            return jsonValue.asJsonArray().stream()
-                    .map(JsonValue::asJsonObject)
-                    .map(this::dropKnownNulls)
-                    .collect(Collector.of(jsonBuilderFactory::createArrayBuilder, JsonArrayBuilder::add, JsonArrayBuilder::addAll))
-                    .build();
-        } catch (final RuntimeException re) {
-            log.log(FINEST, re, () -> "Can't check null cpu resources: " + re.getMessage());
+    private Object dropKnownNulls(final Object jsonValue) {
+        if (!(jsonValue instanceof List<?> containers)) {
             return jsonValue;
         }
+        final var result = new ArrayList<Object>(containers.size());
+        for (final var item : containers) {
+            if (item instanceof Map<?, ?> container
+                    && container.keySet().stream().allMatch(String.class::isInstance)) {
+                @SuppressWarnings("unchecked")
+                final var typed = (Map<String, Object>) container;
+                result.add(dropKnownNulls(typed));
+            } else {
+                result.add(item);
+            }
+        }
+        return result;
     }
 
-    private <T extends JsonStructure> T replaceIfPresent(final T source,
-                                                         final String parentPtr, final String name,
-                                                         final Function<JsonValue, JsonValue> fn) {
+    private <T extends Object> T replaceIfPresent(
+            final T source, final String parentPtr, final String name, final Function<Object, Object> fn) {
         final var rawPtr = parentPtr + '/' + name;
-        final var ptr = jsonProvider.createPointer(rawPtr);
+        final var ptr = new GenericJsonPointer(rawPtr);
         try {
-            final var value = ptr.getValue(source);
+            final var value = ptr.apply(source);
             final var changed = fn.apply(value);
             if (value == changed) {
                 return source;
             }
-            return ptr.replace(source, changed);
-        } catch (final JsonException je) {
+            return (T) ptr.add(source, changed);
+        } catch (final IllegalArgumentException | IllegalStateException je) {
             log.log(FINEST, je, je::getMessage);
             return source;
         }

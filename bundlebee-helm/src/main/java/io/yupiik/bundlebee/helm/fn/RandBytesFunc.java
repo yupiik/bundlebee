@@ -15,19 +15,16 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Crypto
-//metadata:end
+// metadata:end
 @Description("Generates random bytes as a Base64 string")
 public class RandBytesFunc implements HelmFunction {
     private final SecureRandom random = new SecureRandom();

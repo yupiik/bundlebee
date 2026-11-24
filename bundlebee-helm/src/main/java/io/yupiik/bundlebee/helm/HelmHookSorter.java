@@ -15,13 +15,12 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import org.yaml.snakeyaml.Yaml;
-
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * Sorts rendered Helm YAML documents based on hook annotations and kind.
@@ -49,47 +48,48 @@ public class HelmHookSorter {
 
     // Helm's InstallOrder for sorting regular resources
     private static final String[] INSTALL_ORDER = {
-            "PriorityClass",
-            "Namespace",
-            "NetworkPolicy",
-            "ResourceQuota",
-            "LimitRange",
-            "PodSecurityPolicy",
-            "PodDisruptionBudget",
-            "ServiceAccount",
-            "Secret",
-            "SecretList",
-            "ConfigMap",
-            "StorageClass",
-            "PersistentVolume",
-            "PersistentVolumeClaim",
-            "CustomResourceDefinition",
-            "ClusterRole",
-            "ClusterRoleList",
-            "ClusterRoleBinding",
-            "ClusterRoleBindingList",
-            "Role",
-            "RoleList",
-            "RoleBinding",
-            "RoleBindingList",
-            "Service",
-            "DaemonSet",
-            "Pod",
-            "ReplicationController",
-            "ReplicaSet",
-            "Deployment",
-            "HorizontalPodAutoscaler",
-            "StatefulSet",
-            "Job",
-            "CronJob",
-            "IngressClass",
-            "Ingress",
-            "APIService",
-            "MutatingWebhookConfiguration",
-            "ValidatingWebhookConfiguration",
+        "PriorityClass",
+        "Namespace",
+        "NetworkPolicy",
+        "ResourceQuota",
+        "LimitRange",
+        "PodSecurityPolicy",
+        "PodDisruptionBudget",
+        "ServiceAccount",
+        "Secret",
+        "SecretList",
+        "ConfigMap",
+        "StorageClass",
+        "PersistentVolume",
+        "PersistentVolumeClaim",
+        "CustomResourceDefinition",
+        "ClusterRole",
+        "ClusterRoleList",
+        "ClusterRoleBinding",
+        "ClusterRoleBindingList",
+        "Role",
+        "RoleList",
+        "RoleBinding",
+        "RoleBindingList",
+        "Service",
+        "DaemonSet",
+        "Pod",
+        "ReplicationController",
+        "ReplicaSet",
+        "Deployment",
+        "HorizontalPodAutoscaler",
+        "StatefulSet",
+        "Job",
+        "CronJob",
+        "IngressClass",
+        "Ingress",
+        "APIService",
+        "MutatingWebhookConfiguration",
+        "ValidatingWebhookConfiguration",
     };
 
     private static final Map<String, Integer> KIND_ORDER;
+
     static {
         KIND_ORDER = new HashMap<>(INSTALL_ORDER.length);
         for (int i = 0; i < INSTALL_ORDER.length; i++) {
@@ -123,8 +123,7 @@ public class HelmHookSorter {
             sortable.add(new SortableDocument(trimmed, extractInfo(trimmed), i));
         }
 
-        sortable.sort(Comparator
-                .comparingInt((SortableDocument d) -> d.info.group)
+        sortable.sort(Comparator.comparingInt((SortableDocument d) -> d.info.group)
                 .thenComparingInt(d -> d.info.weight)
                 .thenComparing(d -> d.info.hookType, Comparator.nullsFirst(Comparator.naturalOrder()))
                 .thenComparingInt(d -> kindOrder(d.info.kind))
@@ -206,7 +205,8 @@ public class HelmHookSorter {
         private final int group;
         private final String kind;
 
-        private DocumentInfo(final boolean isHook, final String hookType, final int weight, final int group, final String kind) {
+        private DocumentInfo(
+                final boolean isHook, final String hookType, final int weight, final int group, final String kind) {
             this.isHook = isHook;
             this.hookType = hookType;
             this.weight = weight;
@@ -231,4 +231,3 @@ public class HelmHookSorter {
         }
     }
 }
-

@@ -15,31 +15,36 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.inject.Disposes;
-import javax.enterprise.inject.Produces;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import io.yupiik.fusion.framework.build.api.lifecycle.Destroy;
+import io.yupiik.fusion.framework.build.api.order.Order;
+import io.yupiik.fusion.framework.build.api.scanning.Bean;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 @ApplicationScoped
 public class Scheduler {
-    @Produces
-    @BundleBee
+    private ScheduledExecutorService scheduler;
+
+    @Bean
     @ApplicationScoped
+    @Order(500) // Fall back to this scheduler when the host application does not provide one.
     public ScheduledExecutorService scheduledExecutorService() {
-        return Executors.newSingleThreadScheduledExecutor(r -> {
+        return scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             final var thread = new Thread(r, Scheduler.class.getName());
             thread.setContextClassLoader(Scheduler.class.getClassLoader());
             return thread;
         });
     }
 
-    public void release(@Disposes @BundleBee final ScheduledExecutorService scheduledExecutorService) {
+    @Destroy
+    public void release() {
+        final var scheduledExecutorService = scheduler;
+        if (scheduledExecutorService == null) {
+            return;
+        }
         scheduledExecutorService.shutdownNow();
         try {
             scheduledExecutorService.awaitTermination(1, SECONDS);

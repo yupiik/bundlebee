@@ -16,31 +16,38 @@
 package io.yupiik.bundlebee.core.service;
 
 import io.yupiik.bundlebee.core.descriptor.Manifest;
-
-import javax.enterprise.context.ApplicationScoped;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import java.util.regex.Pattern;
 
 @ApplicationScoped
 public class RequirementService {
+    private static final Pattern VERSION_SEPARATOR = Pattern.compile("\\.");
+
     public void checkRequirements(final Manifest manifest) {
-        if (manifest.getRequirements() == null) {
+        if (manifest.requirements() == null) {
             return;
         }
-        manifest.getRequirements().forEach(this::check);
+        manifest.requirements().forEach(this::check);
     }
 
     private void check(final Manifest.Requirement requirement) {
-        if (requirement.getMinBundlebeeVersion() != null && !requirement.getMinBundlebeeVersion().isBlank() &&
-                !compareVersion(requirement.getMinBundlebeeVersion(), true)) {
-            throw new IllegalArgumentException("Invalid bundlebee version: " + getBundlebeeVersion() + " expected-min=" + requirement.getMinBundlebeeVersion());
+        if (requirement.minBundlebeeVersion() != null
+                && !requirement.minBundlebeeVersion().isBlank()
+                && !compareVersion(requirement.minBundlebeeVersion(), true)) {
+            throw new IllegalArgumentException("Invalid bundlebee version: " + getBundlebeeVersion() + " expected-min="
+                    + requirement.minBundlebeeVersion());
         }
-        if (requirement.getMaxBundlebeeVersion() != null && !requirement.getMaxBundlebeeVersion().isBlank() &&
-                !compareVersion(requirement.getMaxBundlebeeVersion(), false)) {
-            throw new IllegalArgumentException("Invalid bundlebee version: " + getBundlebeeVersion() + " expected-max=" + requirement.getMaxBundlebeeVersion());
+        if (requirement.maxBundlebeeVersion() != null
+                && !requirement.maxBundlebeeVersion().isBlank()
+                && !compareVersion(requirement.maxBundlebeeVersion(), false)) {
+            throw new IllegalArgumentException("Invalid bundlebee version: " + getBundlebeeVersion() + " expected-max="
+                    + requirement.maxBundlebeeVersion());
         }
-        if (requirement.getForbiddenVersions() != null) {
-            requirement.getForbiddenVersions().forEach(version -> {
+        if (requirement.forbiddenVersions() != null) {
+            requirement.forbiddenVersions().forEach(version -> {
                 if (compareVersion(version, null)) {
-                    throw new IllegalArgumentException("Invalid bundlebee version: " + getBundlebeeVersion() + " forbidden=" + requirement.getForbiddenVersions());
+                    throw new IllegalArgumentException("Invalid bundlebee version: " + getBundlebeeVersion()
+                            + " forbidden=" + requirement.forbiddenVersions());
                 }
             });
         }
@@ -60,15 +67,15 @@ public class RequirementService {
     private boolean compareVersion(final String version, final Boolean expectNegative) {
         final var expected = sanitize(version);
         final var actual = sanitize(getBundlebeeVersion());
-        final var expectedSegments = expected.split("\\.");
-        final var actualSegments = actual.split("\\.");
+        final var expectedSegments = VERSION_SEPARATOR.split(expected);
+        final var actualSegments = VERSION_SEPARATOR.split(actual);
         final int segmentLoopLength = Math.min(expectedSegments.length, actualSegments.length);
         for (int i = 0; i < segmentLoopLength; i++) {
             final var exp = expectedSegments[i];
-            if ("*".equals(exp)) { // TODO: suffix instead of the whole value? it is harder to configure then
+            if ("*".equals(exp)) {
+                // TODO: suffix instead of the whole value? it is harder to configure then
                 continue;
             }
-
             final var act = actualSegments[i];
             if (exp.equals(act)) {
                 continue;
@@ -87,7 +94,7 @@ public class RequirementService {
                 return false;
             }
         }
-        return expectedSegments.length < actualSegments.length || // assume wildcard so it matches for the missing segment
-                expectedSegments.length == actualSegments.length;
+        return // assume wildcard so it matches for the missing segment
+        expectedSegments.length < actualSegments.length || expectedSegments.length == actualSegments.length;
     }
 }

@@ -15,18 +15,17 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import org.apache.openwebbeans.junit5.Cdi;
-import org.junit.jupiter.api.Test;
-
-import javax.inject.Inject;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Cdi
-class LabelSanitizerServiceTest {
-    @Inject
-    private LabelSanitizerService service;
+import io.yupiik.fusion.testing.Fusion;
+import io.yupiik.fusion.testing.FusionSupport;
+import org.junit.jupiter.api.Test;
 
+@FusionSupport
+class LabelSanitizerServiceTest {
+
+    @Fusion
+    private LabelSanitizerService service;
 
     @Test
     void valid() {
@@ -34,5 +33,14 @@ class LabelSanitizerServiceTest {
         assertEquals("groupId_artifactId_version", service.sanitize("groupId__artifactId__version"));
         assertEquals("groupId_artifactId_version", service.sanitize("groupId/artifactId/version"));
         assertEquals("com.company_my-component_1.0.0", service.sanitize("com.company:my-component:1.0.0"));
+    }
+
+    @Test
+    void preservesExistingGroupingAndAsciiCharacterRules() {
+        assertEquals("", service.sanitize(""));
+        assertEquals("a.-_9Z", service.sanitize("a.-_9Z"));
+        assertEquals("_", service.sanitize(" /:$\\\t\n"));
+        assertEquals("a__b", service.sanitize("a____b"));
+        assertEquals("a_b", service.sanitize("a\u00e9b"));
     }
 }

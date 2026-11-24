@@ -15,15 +15,8 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import io.yupiik.bundlebee.core.command.Executable;
-import lombok.extern.java.Log;
-
-import javax.enterprise.context.Dependent;
-import java.util.concurrent.CompletionStage;
-
-import static java.util.concurrent.CompletableFuture.completedFuture;
-
 final class Constants {
+
     static final String VERSION = "${project.version}";
 
     private Constants() {

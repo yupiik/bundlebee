@@ -15,29 +15,20 @@
  */
 package io.yupiik.bundlebee.core.command.model.sarif;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.json.bind.annotation.JsonbProperty;
-import javax.json.bind.annotation.JsonbPropertyOrder;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class Tool {
-    @JsonbProperty
-    private Driver driver;
+@JsonModel
+public record Tool(@JsonProperty(order = 0) Driver driver) {
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @JsonbPropertyOrder({"name", "informationUri", "rules"})
-    public static class Driver {
-        @JsonbProperty
-        private String name;
-        private String informationUri;
-        private List<Rule> rules;
+    @JsonModel
+    public record Driver(
+            @JsonProperty(order = 0) String name,
+            @JsonProperty(order = 1) String informationUri,
+            @JsonProperty(order = 2) List<Rule> rules) {
+        public Driver {
+            rules = rules == null ? null : List.copyOf(rules);
+        }
     }
 }

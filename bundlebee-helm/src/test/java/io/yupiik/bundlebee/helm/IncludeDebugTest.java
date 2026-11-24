@@ -15,23 +15,23 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import io.yupiik.bundlebee.helm.fn.*;
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.yupiik.bundlebee.helm.fn.ContainsFunc;
+import io.yupiik.bundlebee.helm.fn.DefaultFunc;
+import io.yupiik.bundlebee.helm.fn.TrimSuffixFunc;
+import io.yupiik.bundlebee.helm.fn.TruncFunc;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 class IncludeDebugTest {
 
     @Test
     void debugSimpleInclude() throws Exception {
         final var functionsMap = new LinkedHashMap<String, HelmFunction>();
-        for (final var fn : List.<HelmFunction>of(
-                new DefaultFunc(), new TrimSuffixFunc(), new TruncFunc()
-        )) {
+        for (final var fn : List.<HelmFunction>of(new DefaultFunc(), new TrimSuffixFunc(), new TruncFunc())) {
             functionsMap.put(fn.name(), fn);
         }
 
@@ -39,8 +39,7 @@ class IncludeDebugTest {
 
         // Register a simple define: "test.name" -> outputs .Chart.Name
         final var lexer = new HelmGoTemplateLexer();
-        final var helpersTokens = lexer.tokenize(
-                "{{- define \"test.name\" -}}{{ .Chart.Name }}{{- end }}");
+        final var helpersTokens = lexer.tokenize("{{- define \"test.name\" -}}{{ .Chart.Name }}{{- end }}");
         final var helpersNodes = new HelmGoTemplateParser(helpersTokens).parse();
         renderer.registerDefines(helpersNodes);
 
@@ -68,9 +67,7 @@ class IncludeDebugTest {
     @Test
     void debugNestedInclude() throws Exception {
         final var functionsMap = new LinkedHashMap<String, HelmFunction>();
-        for (final var fn : List.<HelmFunction>of(
-                new DefaultFunc(), new TrimSuffixFunc(), new TruncFunc()
-        )) {
+        for (final var fn : List.<HelmFunction>of(new DefaultFunc(), new TrimSuffixFunc(), new TruncFunc())) {
             functionsMap.put(fn.name(), fn);
         }
 
@@ -78,9 +75,8 @@ class IncludeDebugTest {
         final var lexer = new HelmGoTemplateLexer();
 
         // Register two defines
-        final var helpersTokens = lexer.tokenize(
-                "{{- define \"inner\" -}}{{ .Chart.Name }}{{- end }}" +
-                "{{- define \"outer\" -}}{{ include \"inner\" . }}{{- end }}");
+        final var helpersTokens = lexer.tokenize("{{- define \"inner\" -}}{{ .Chart.Name }}{{- end }}"
+                + "{{- define \"outer\" -}}{{ include \"inner\" . }}{{- end }}");
         final var helpersNodes = new HelmGoTemplateParser(helpersTokens).parse();
         renderer.registerDefines(helpersNodes);
 
@@ -100,10 +96,8 @@ class IncludeDebugTest {
     @Test
     void debugPolarisFullname() throws Exception {
         final var functionsMap = new LinkedHashMap<String, HelmFunction>();
-        for (final var fn : List.<HelmFunction>of(
-                new DefaultFunc(), new TrimSuffixFunc(), new TruncFunc(),
-                new ContainsFunc()
-        )) {
+        for (final var fn :
+                List.<HelmFunction>of(new DefaultFunc(), new TrimSuffixFunc(), new TruncFunc(), new ContainsFunc())) {
             functionsMap.put(fn.name(), fn);
         }
 
@@ -111,19 +105,18 @@ class IncludeDebugTest {
         final var lexer = new HelmGoTemplateLexer();
 
         // Simplified polaris.fullname
-        final var helpersTokens = lexer.tokenize(
-                "{{- define \"polaris.fullname\" -}}\n" +
-                "{{- if .Values.fullnameOverride }}\n" +
-                "{{- .Values.fullnameOverride | trunc 63 | trimSuffix \"-\" }}\n" +
-                "{{- else }}\n" +
-                "{{- $name := default .Chart.Name .Values.nameOverride }}\n" +
-                "{{- if contains $name .Release.Name }}\n" +
-                "{{- .Release.Name | trunc 63 | trimSuffix \"-\" }}\n" +
-                "{{- else }}\n" +
-                "{{- .Release.Name }}-{{ $name }}\n" +
-                "{{- end }}\n" +
-                "{{- end }}\n" +
-                "{{- end }}");
+        final var helpersTokens =
+                lexer.tokenize("{{- define \"polaris.fullname\" -}}\n" + "{{- if .Values.fullnameOverride }}\n"
+                        + "{{- .Values.fullnameOverride | trunc 63 | trimSuffix \"-\" }}\n"
+                        + "{{- else }}\n"
+                        + "{{- $name := default .Chart.Name .Values.nameOverride }}\n"
+                        + "{{- if contains $name .Release.Name }}\n"
+                        + "{{- .Release.Name | trunc 63 | trimSuffix \"-\" }}\n"
+                        + "{{- else }}\n"
+                        + "{{- .Release.Name }}-{{ $name }}\n"
+                        + "{{- end }}\n"
+                        + "{{- end }}\n"
+                        + "{{- end }}");
         final var helpersNodes = new HelmGoTemplateParser(helpersTokens).parse();
         renderer.registerDefines(helpersNodes);
 

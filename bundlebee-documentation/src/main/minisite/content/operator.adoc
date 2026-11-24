@@ -6,16 +6,24 @@ Bundlebee operator provides a Kubernetes operator which creates a custom resourc
 This way you can deploy directly an alveolus and the operator will take care to deploy it.
 Similarly, if you delete the alveolus, the operator will delete it all.
 
-IMPORTANT: in current version there is no catch up logic so if the deletion fails you should re-run it or finish to clean up the data manually (this is on the roadmap).
+IMPORTANT: Failed command callbacks are logged and subsequent events continue, but failed deployments and deletions are not automatically retried.
+Reapply the custom resource or complete cleanup manually when a command fails.
+
+The operator uses one long-lived Fusion application container and Fusion's Kubernetes operator base.
+Added resources invoke BundleBee `apply`, modified resources invoke `apply` again without an implicit delete, and deleted resources invoke `delete`.
+Modifications do not implicitly prune descriptors removed from the recipe.
+Commands execute directly in the application container, sharing the startup Kubernetes client, scheduler and services; no process or nested container is created per resource.
 
 == Installation
 
-WARNING: as of today, the image is not yet available on docker hub (>= 1.0.14) so you will need to build it yourself.
-This can be done 1. cloning the project, 2. building it with `mvn install -DskipTests -Pdocker`, 3. push the `yupiik/bundlebee/operator:<version>` on your kubernetes image registry.
+For `2.0.0-SNAPSHOT`, build and install the reactor locally before building the operator image.
+The operator POM provides a Jib `dockerBuild` goal for a local image; do not assume an unreleased snapshot image is available from a registry.
+Use your own registry and matching deployment image configuration when distributing that image to a cluster.
 
 You can install the Bundlebee operator using bundlebee client on your machine
 (or the maven plugin/fat jar if you prefer):
-`bundlebee --from io.yupiik:bundlebee-operator:<version> --alveolis io.yupiik:bundlebee-operator:<version`.
+`bundlebee apply --from io.yupiik:bundlebee-operator:2.0.0-SNAPSHOT --alveolus io.yupiik:bundlebee-operator:2.0.0-SNAPSHOT`.
+The snapshot artifact must already be installed in the local Maven repository or available from a configured snapshot repository.
 
 The bundlebee alveolus installation supports the following configuration:
 
@@ -30,18 +38,54 @@ You can also desire to customize the roles affected to the `ServiceAccount` moun
 == Configuration
 
 The operator configuration is globally the same than standard Bundlebee with a small difference: the global configuration is configured once - in the `Deployment` of the installation part - and only command configuration can be set in the `Alveolus` descriptors.
+The operator validates `spec.args` against the generated Fusion metadata for the selected command (`apply` for added/modified events, `delete` for deleted events) before executing it.
+Use explicit `--option value` pairs; short command options (for example `--alveolus`) and their full dotted or dashed aliases are supported.
+Positional commands, equals-form arguments, global options (including Kubernetes credentials and endpoints), configuration-file loading, and options belonging only to another command are rejected.
+The literal `--config-file` and tokens starting with `--config-file=` remain forbidden as values as well as options.
+
+Arbitrary recipe placeholder names remain supported: pass `--message hello` and reference `{{message}}` in the recipe; no `custom.*` prefix or recipe rename is required.
+Unknown non-reserved keys go into an invocation-owned placeholder-only map, never into Fusion configuration or service startup settings.
+Placeholder keys are exact: `--recipe.message` supplies `{{recipe.message}}`, not `{{recipe-message}}`.
+Known command options remain actual CLI options; reserved BundleBee/Fusion configuration namespaces, global aliases, JVM/bootstrap keys and other-command options are rejected rather than treated as placeholders.
+Execution-context (manifest) placeholders take precedence over invocation placeholders, which take precedence over the normal configuration fallback; built-in substitution functions retain their existing behavior.
+Each event has its own command and placeholder overrides; these do not change the operator's startup configuration or subsequent events.
+The operator allocates an execution ID, registers that event's placeholders, waits for asynchronous execution before closing the command lookup, and clears the invocation placeholders in a `finally` block.
+
+WARNING: This option boundary is not a sandbox for CR authors or recipes.
+The permitted `from`, `manifest`, and `alveolus` command options select recipes executed with the operator's credentials and process privileges.
+Recipes, interpolation, scripts, and extensions must be trusted; script-capable placeholders can execute code, and recipe data can influence resource targets and contents.
+Restrict who can create or modify `Alveolus` resources, trust the selected recipe sources and their dependencies, and grant the operator only the permissions it needs.
 
 === Global configuration
 
-BUNDLEBEE_OPERATOR_STORAGE::
-Where to store the internal operator state to not restart from scratch when restarting.
-Default value: `/opt/yupiik/state/bundlebee-operator`.
+The watch and commands both use the existing `bundlebee.kube.*` startup connectivity settings, including kubeconfig, namespace, TLS and credentials.
+Do not configure a separate `operator.kubernetes.*` connection: the application selects the BundleBee Kubernetes client instead of the operator base's default client.
+The Fusion operator lifecycle starts with the application container and stops watching before shared resources are closed.
+The image uses `io.yupiik.fusion.framework.api.main.Launcher` as its entry point and retains the JVM settings for Yupiik JUL logging with `StandardHandler` and JSON formatting.
+The supplied deployment explicitly sets `OPERATOR_ENABLED=true` and `FUSION_LAUNCHER_USEHOOK=true`; a plain Launcher or embedded container otherwise defaults to a disabled operator.
+Launcher CLI options override JVM system properties and environment variables, which override the disabled fallback.
+
+[cols="2,1,3",options="header"]
+|===
+|Startup key (environment variable) |Default |Meaning
+|`operator.enabled` (`OPERATOR_ENABLED`) |`false` |Explicitly enable watches and probes; the supplied deployment sets this to `true`.
+|`fusion.launcher.useHook` (`FUSION_LAUNCHER_USEHOOK`) |`false` |Close the Launcher container on JVM shutdown; the supplied deployment sets this to `true`.
+|`bundlebee.operator.namespaces` (`BUNDLEBEE_OPERATOR_NAMESPACES`) |`default` |Comma-separated namespaces containing `Alveolus` resources to watch; independent of the default namespace for deployed recipes.
+|`operator.storage` (`OPERATOR_STORAGE`) |Unset |Optional checkpoint directory; mount persistent storage if restart continuity is required.
+|`operator.use-bookmarks` (`OPERATOR_USE_BOOKMARKS`) |`true` |Request and checkpoint Kubernetes bookmark events.
+|`operator.event-thread-count` (`OPERATOR_EVENT_THREAD_COUNT`) |`1` |Event worker count; shared application services remain application-owned.
+|`operator.probe-port` (`OPERATOR_PROBE_PORT`) |`8081` |HTTP `/health` and `/metrics` listener; a negative value disables it explicitly.
+|===
+
+For embedding or tests, leave `operator.enabled=false` if no watch should start; setting `operator.await=false` alone does not disable startup or probes.
+Fusion Launcher awaits the enabled operator lifecycle until shutdown.
+See the operator subsection of xref:migration-2.adoc[the BundleBee 2 migration guide] for legacy key replacements and the checkpoint contract.
 
 include::content/_partials/generated/shared.env.configuration.adoc[]
 
 == Delete/Apply an alveolus
 
-To apply a custmo `Alveolus` you can write a descriptor like:
+To apply a custom `Alveolus` you can write a descriptor like:
 
 [source,yaml]
 ----
@@ -52,9 +96,9 @@ metadata: <3>
 spec:
   args: <4>
     - "--from"
-    - "io.yupiik.alveoli:elasticsearch-local:1.0.13"
+    - "io.yupiik.alveoli:elasticsearch-local:2.0.0-SNAPSHOT"
     - "--alveolus"
-    - "io.yupiik.alveoli:elasticsearch-local:1.0.13"
+    - "io.yupiik.alveoli:elasticsearch-local:2.0.0-SNAPSHOT"
 ----
 <.> Use `apiVersion` `bundlebee.yupiik.io/v1`,
 <.> Use `kind` `Alveolus`,
@@ -71,4 +115,3 @@ TIP: you can check <<commands/apply.configuration.adoc#, `apply` documentation t
 ----
 include::content/_partials/generated/operator.allinone.json[]
 ----
-

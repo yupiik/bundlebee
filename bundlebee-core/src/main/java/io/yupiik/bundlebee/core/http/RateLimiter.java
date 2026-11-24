@@ -15,19 +15,24 @@
  */
 package io.yupiik.bundlebee.core.http;
 
+import static java.util.stream.Collectors.toSet;
+
 import java.time.Clock;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static java.util.stream.Collectors.toSet;
-
 public class RateLimiter {
+
     private final int permits;
+
     private final int window;
+
     private final Clock clock;
+
     private final ConcurrentMap<Long, AtomicLong> counterPerWindow = new ConcurrentHashMap<>();
+
     private final AtomicBoolean cleaning = new AtomicBoolean();
 
     public RateLimiter(final int rateLimiterPermits, final int rateLimiterWindow, final Clock clock) {
@@ -45,10 +50,10 @@ public class RateLimiter {
     }
 
     public long before() {
-        if (permits == Integer.MAX_VALUE) { // "disabled"
+        if (permits == Integer.MAX_VALUE) {
+            // "disabled"
             return 0;
         }
-
         final long now = clock.instant().toEpochMilli();
         final long key = now / window;
         final var previousCounter = counterPerWindow.computeIfAbsent(key - 1, k -> new AtomicLong());
@@ -61,17 +66,16 @@ public class RateLimiter {
             }
             return nextWindow(key);
         }
-
         final double weightInWindow = (now - key * window) * 1. / window;
         final double count = previousCounterValue * (1 - weightInWindow) + windowCounter;
-        if (counterPerWindow.size() > 60 && cleaning.compareAndSet(false, true)) { // don't do it for each request
+        if (counterPerWindow.size() > 60 && cleaning.compareAndSet(false, true)) {
+            // don't do it for each request
             try {
                 cleanBuckets(key);
             } finally {
                 cleaning.set(false);
             }
         }
-
         if (count <= permits) {
             return 0;
         }
@@ -86,12 +90,11 @@ public class RateLimiter {
         // no-op in this impl, hook if we update the algorithm
     }
 
-    private void cleanBuckets(final long key) { // control memory usage, nothing more
+    private void cleanBuckets(final long key) {
+        // control memory usage, nothing more
         final var keys = counterPerWindow.keySet();
         if (keys.size() > 10) {
-            final var cleanedUp = keys.stream()
-                    .filter(l -> l < key - 2)
-                    .collect(toSet());
+            final var cleanedUp = keys.stream().filter(l -> l < key - 2).collect(toSet());
             if (!cleanedUp.isEmpty()) {
                 keys.removeAll(cleanedUp);
             }

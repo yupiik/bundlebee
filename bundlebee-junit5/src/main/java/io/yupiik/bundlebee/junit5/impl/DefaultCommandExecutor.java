@@ -15,35 +15,35 @@
  */
 package io.yupiik.bundlebee.junit5.impl;
 
+import static java.util.function.Function.identity;
+
 import io.yupiik.bundlebee.core.BundleBee;
 import io.yupiik.bundlebee.core.lang.Substitutor;
 import io.yupiik.bundlebee.junit5.CommandExecutor;
 import io.yupiik.bundlebee.junit5.LogCapturer;
 import io.yupiik.bundlebee.junit5.ValidateAlveolus;
-
+import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
 
-import static java.util.function.Function.identity;
-
 public class DefaultCommandExecutor implements CommandExecutor {
+    // JUL handlers are process-wide; serialize embedded invocations to prevent cross-capture.
+    private static final ReentrantLock EXECUTION_LOCK = new ReentrantLock();
     private final String[] command;
     private final LogCapturer logCapturer;
     private boolean executed;
 
-    public DefaultCommandExecutor(final ValidateAlveolus config, final String mockServer, final LogCapturer logCapturer) {
+    public DefaultCommandExecutor(
+            final ValidateAlveolus config, final String mockServer, final LogCapturer logCapturer) {
         final var interpolator = new Substitutor((k, v) -> System.getProperty(k));
         this.command = Stream.of(
                         Stream.of(config.command()),
-                        Stream.of(
-                                "--bundlebee.kube.api", mockServer,
-                                "--kubeconfig", "explicit"),
-                        Stream.of(config.options())
-                                .map(it -> interpolator.replace(it, null)),
-                        Stream.of(config.placeholders())
-                                .flatMap(it -> Stream.of("--" + it.key(), it.value())))
+                        Stream.of("--bundlebee-kube-api", mockServer, "--bundlebee-kube-kubeconfig", "explicit"),
+                        Stream.of(config.options()).map(it -> interpolator.replace(it, null)),
+                        Stream.of(config.placeholders()).flatMap(it -> Stream.of("--" + it.key(), it.value())))
                 .flatMap(identity())
                 .toArray(String[]::new);
         this.logCapturer = logCapturer;
@@ -51,6 +51,15 @@ public class DefaultCommandExecutor implements CommandExecutor {
 
     @Override
     public void run() {
+        EXECUTION_LOCK.lock();
+        try {
+            execute();
+        } finally {
+            EXECUTION_LOCK.unlock();
+        }
+    }
+
+    private void execute() {
         Runnable cleanup = null;
         if (logCapturer != null) {
             final var logger = Logger.getLogger("io.yupiik.bundlebee.core");
@@ -76,7 +85,7 @@ public class DefaultCommandExecutor implements CommandExecutor {
             cleanup = () -> logger.removeHandler(handler);
         }
         try {
-            BundleBee.main(command);
+            new BundleBee().launch(command.clone(), Map.of());
         } finally {
             executed = true;
             if (cleanup != null) {

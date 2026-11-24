@@ -1,0 +1,1256 @@
+[
+  {
+    "owner": "check-update",
+    "name": "bundlebee.check-update.repository",
+    "defaultValue": "https://repo.maven.apache.org/maven2",
+    "description": "Repository bundlebee is supposed to be, generally Apache Maven central."
+  },
+  {
+    "owner": "check-update",
+    "name": "bundlebee.check-update.groupId",
+    "defaultValue": "${project.groupId}",
+    "description": "Bundlebee binary groupId."
+  },
+  {
+    "owner": "check-update",
+    "name": "bundlebee.check-update.artifactId",
+    "defaultValue": "${project.artifactId}",
+    "description": "Bundlebee binary artifactId."
+  },
+  {
+    "owner": "check-update",
+    "name": "bundlebee.check-update.classifier",
+    "defaultValue": "Linux-amd64",
+    "description": "Bundlebee binary classifier."
+  },
+  {
+    "owner": "check-update",
+    "name": "bundlebee.check-update.type",
+    "defaultValue": "bin",
+    "description": "Bundlebee binary type (extension) in maven coordinates."
+  },
+  {
+    "owner": "check-update",
+    "name": "bundlebee.check-update.installLocation",
+    "defaultValue": "{{user.home}}/.yupiik/bundlebee/bin/bundlebee",
+    "description": "Where to install bundlebee if `update` is `true`."
+  },
+  {
+    "owner": "check-update",
+    "name": "bundlebee.check-update.update",
+    "defaultValue": "false",
+    "description": "If a new version is available, should it update `installLocation`."
+  },
+  {
+    "owner": "add-alveolus",
+    "name": "bundlebee.add-alveolus.manifest",
+    "defaultValue": "./bundlebee/manifest.json",
+    "description": "Manifest to add the aveolus inside."
+  },
+  {
+    "owner": "add-alveolus",
+    "name": "bundlebee.add-alveolus.alveolus",
+    "defaultValue": "<unset>",
+    "description": "Alveolus name."
+  },
+  {
+    "owner": "add-alveolus",
+    "name": "bundlebee.add-alveolus.image",
+    "defaultValue": "<unset>",
+    "description": "Deployment image."
+  },
+  {
+    "owner": "add-alveolus",
+    "name": "bundlebee.add-alveolus.type",
+    "defaultValue": "web",
+    "description": "Alveolus/template type. `web` will create a `ConfigMap`, `Deployment` and `Service`."
+  },
+  {
+    "owner": "add-alveolus",
+    "name": "bundlebee.add-alveolus.overwrite",
+    "defaultValue": "false",
+    "description": "If `false`, generated files already existing will be skipped."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.injectTimestamp",
+    "defaultValue": "true",
+    "description": "If `true`, a `bundlebee.timestamp` label will be injected into the descriptors with current date before applying the descriptor."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.injectBundleBeeMetadata",
+    "defaultValue": "true",
+    "description": "If `true`, `bundlebee.*` labels will be injected into the descriptors. This is required for rollback command to work."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.useChainInsteadOfAll",
+    "defaultValue": "false",
+    "description": "If `true`, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.skipGet",
+    "defaultValue": "false",
+    "description": "If `true`, the alveolus is installed without checking it already exists (assuming it doesn't) so some merge or sanitization logic is bypassed."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.trackState",
+    "defaultValue": "false",
+    "description": "If `true`, a secret named based on the alveolus name (`$name-bbs`) is stored and is used by the client to track the internal state of the installation. Note that it requires the client to have the permission to create a `Secret` even if the alveolus doesn't have any. Note that it doesn't work with `alveolus=auto` mode. The secret is stored in the globally configured namespace (default one if you do use a `kubeconfig` file)."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.skipStaledResourceDeletion",
+    "defaultValue": "false",
+    "description": "If `true` and `trackState` is `true`, staled resources are not deleted but just logged."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.descriptorAwaitTimeout",
+    "defaultValue": "60000",
+    "description": "For descriptors with `await` = `true` the max duration the test can last."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.excludedDescriptors",
+    "defaultValue": "none",
+    "description": "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. Note that using this setting, location is set to `*` so only the name is matched."
+  },
+  {
+    "owner": "apply",
+    "name": "bundlebee.apply.excludedLocations",
+    "defaultValue": "none",
+    "description": "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated."
+  },
+  {
+    "owner": "build",
+    "name": "bundlebee.build.dir",
+    "defaultValue": ".",
+    "description": "Project to build."
+  },
+  {
+    "owner": "build",
+    "name": "bundlebee.build.builddir",
+    "defaultValue": "target",
+    "description": "Project to build."
+  },
+  {
+    "owner": "build",
+    "name": "bundlebee.build.deployInLocalRepository",
+    "defaultValue": "true",
+    "description": "If `true` it will be added to your local maven repository."
+  },
+  {
+    "owner": "build",
+    "name": "bundlebee.build.group",
+    "defaultValue": "<unset>",
+    "description": "Bundle groupId."
+  },
+  {
+    "owner": "build",
+    "name": "bundlebee.build.artifact",
+    "defaultValue": "<unset>",
+    "description": "Bundle artifactId."
+  },
+  {
+    "owner": "build",
+    "name": "bundlebee.build.version",
+    "defaultValue": "<unset>",
+    "description": "Bundle version."
+  },
+  {
+    "owner": "cipher",
+    "name": "bundlebee.cipher.masterPassword",
+    "defaultValue": "<unset>",
+    "description": "Master password.."
+  },
+  {
+    "owner": "cipher",
+    "name": "bundlebee.cipher.value",
+    "defaultValue": "<unset>",
+    "description": "Value to cipher."
+  },
+  {
+    "owner": "completion",
+    "name": "bundlebee.completion.useLogger",
+    "defaultValue": "false",
+    "description": "If true logger will be used instead of stdout."
+  },
+  {
+    "owner": "completion",
+    "name": "comp.line",
+    "defaultValue": "<unset>",
+    "description": "Matches bash COMP_LINE environment variable, represents the current command line."
+  },
+  {
+    "owner": "completion",
+    "name": "comp.point",
+    "defaultValue": "-1",
+    "description": "Matches bash COMP_POINT environment variable, represents the index of the cursor position."
+  },
+  {
+    "owner": "decipher",
+    "name": "bundlebee.decipher.masterPassword",
+    "defaultValue": "<unset>",
+    "description": "Master password.."
+  },
+  {
+    "owner": "decipher",
+    "name": "bundlebee.decipher.value",
+    "defaultValue": "<unset>",
+    "description": "Value to decipher."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to rollback (in currently deployed version). When set to `auto`, it will look up all manifests found in the classpath (it is not recommended until you perfectly know what you do). If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.gracePeriodSeconds",
+    "defaultValue": "<unset>",
+    "description": "If set it will be added on REST calls to force a custom grace period (in seconds). Setting it to `0` enables to delete faster objects."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.awaitTimeout",
+    "defaultValue": "<unset>",
+    "description": "If an integer > 0, how long (ms) to await for the actual deletion of components, default does not await."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.descriptorAwaitTimeout",
+    "defaultValue": "60000",
+    "description": "For descriptors with `await` = `true` the max duration the test can last. It is per descriptor with await true and independent of `awaitTimeout`."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.apply.trackState",
+    "defaultValue": "false",
+    "description": "If `true` and a secret named based on the alveolus name (`$name-bbs`) exists, then it will be deleted."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.excludedDescriptors",
+    "defaultValue": "none",
+    "description": "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. Note that using this setting, location is set to `*` so only the name is matched."
+  },
+  {
+    "owner": "delete",
+    "name": "bundlebee.delete.excludedLocations",
+    "defaultValue": "none",
+    "description": "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.dir",
+    "defaultValue": ".",
+    "description": "Project to build."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.builddir",
+    "defaultValue": "target",
+    "description": "Where to build (for build/temp files)."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.deployInLocalRepository",
+    "defaultValue": "true",
+    "description": "If `true` it will be added to your local maven repository too."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.enableReUpload",
+    "defaultValue": "auto",
+    "description": "If `true` it enables to upload an artifact even if already present. When `auto` it enables it for snapshots but not for releases."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.nexusBaseApi",
+    "defaultValue": "skip",
+    "description": "If not `skip` it will deploy the artifact on a remote repository (nexus v2 or v3). Syntax must be a URL pointing to the REST API (base URL). If you don't set the userinfo (username:password) in the URL it will be looked up in your settings.xml - potentially ciphered - using the hostname as serverId until you force it with `--serverId`."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.nexusRepository",
+    "defaultValue": "auto",
+    "description": "Nexus repository. It is the repository name the artifact(s) will be uploaded to. If `auto`, it will be `maven-releases` if the version is a release one and `maven-snapshots` otherwise."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.serverId",
+    "defaultValue": "<unset>",
+    "description": "ServerId to lookup from your maven settings.xml for remote deployment if enabled (nexus authentication)."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.group",
+    "defaultValue": "<unset>",
+    "description": "Bundle groupId."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.artifact",
+    "defaultValue": "<unset>",
+    "description": "Bundle artifactId."
+  },
+  {
+    "owner": "deploy",
+    "name": "bundlebee.deploy.version",
+    "defaultValue": "<unset>",
+    "description": "Bundle version."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to inspect. When set to `auto`, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.descriptor",
+    "defaultValue": "<unset>",
+    "description": "If set only this descriptor is handled, not that you can use a regex if you make the value prefixed with `r/`. Note it generally only makes sense with verbose option."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.concurrency",
+    "defaultValue": "16",
+    "description": "Max concurrent requests to Kubernetes cluster. Value can't be less than `1`."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.ignoredPointers",
+    "defaultValue": "/metadata/annotations,/metadata/creationTimestamp,/metadata/deletionGracePeriodSeconds,/metadata/generation,/metadata/managedFields,/metadata/ownerReferences,/metadata/resourceVersion,/metadata/selfLink,/metadata/uid,/status,/metadata/labels/bundlebee.root.alveolus.name,/metadata/labels/bundlebee.root.alveolus.version,/metadata/labels/bundlebee.timestamp",
+    "description": "A list (comma separated values) of JSON-Pointer to ignore in the comparison of client/configured state and actual cluster state. Note that these ones will also affect `ignoreEmptyJsonObjectRemovals` since they are dropped before testing the value."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.customIgnoredPointers",
+    "defaultValue": "<unset>",
+    "description": "Same as `ignoredPointers` but enables to keep defaults."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.ignorableAttributes",
+    "defaultValue": "/dnsPolicy,/terminationMessagePath,/terminationMessagePolicy,/schedulerName,/terminationGracePeriodSeconds,/resourceVersion,/uid,/spec/hostPath/type,/spec/persistentVolumeReclaimPolicy,/spec/claimRef/kind,/spec/claimRef/apiVersion,/spec/volumeName,/spec/volumeMode,/fieldRef/apiVersion",
+    "description": "A list (comma separated values) of attribute to ignore if in the Kubernetes model but not in local descriptor (it is mainly fields with defaults). Note that they behave as relative path (`endsWith`) so you should start them with a `/` in general."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.customIgnorableAttributes",
+    "defaultValue": "<unset>",
+    "description": "Same as `ignorableAttributes` but enables to keep defaults."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.ignoreEmptyRemovals",
+    "defaultValue": "true",
+    "description": "Should a diff where the `op` is `remove` or `replace` and the associated `value` an empty JSON-Object/JSON-Array be ignored."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.formatted",
+    "defaultValue": "true",
+    "description": "Should JSON(-Diff) be formatted."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.showLocalSource",
+    "defaultValue": "false",
+    "description": "If `true`, the local location of the description will be added to the diff."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.ignoreNoDiffEntries",
+    "defaultValue": "true",
+    "description": "If `true`, the descriptors without any notable diff will be ignored from the report."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.maxDifferences",
+    "defaultValue": "-1",
+    "description": "If there are at least this number of differences then the build will fail, disabled if negative."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.diffType",
+    "defaultValue": "AUTO",
+    "description": "How to print the diff for each descriptor, `AUTO` means use `JSON-Patch` when there is a diff, `JSON` when a descriptor is missing and skip the content when it is the same. `JSON_PATCH` means always use `JSON-Patch` format. `JSON` means always show expected state."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.outputType",
+    "defaultValue": "LOG",
+    "description": "How to dump the diff, by default (`LOG`) it will print it but `FILE` will store it in a local file (using `dumpLocation`)."
+  },
+  {
+    "owner": "diff",
+    "name": "bundlebee.diff.dumpLocation",
+    "defaultValue": "target/bundlebee.diff",
+    "description": "Diff location when `outputType` is `FILE`."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.excludedDescriptors",
+    "defaultValue": "none",
+    "description": "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. Note that using this setting, location is set to `*` so only the name is matched."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.excludedLocations",
+    "defaultValue": "none",
+    "description": "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.output",
+    "defaultValue": "none",
+    "description": "Where to create helm chart."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.chart.name",
+    "defaultValue": "auto",
+    "description": "Helm chart name, if `auto` it will be the alveolus name if a single one is selected else it is `alveolus`."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.chart.description",
+    "defaultValue": "<unset>",
+    "description": "Helm chart description."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.chart.version",
+    "defaultValue": "<unset>",
+    "description": "Helm chart version."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.chart.appVersion",
+    "defaultValue": "<unset>",
+    "description": "Helm chart app version."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.chart.dropSnapshot",
+    "defaultValue": "true",
+    "description": "Should `-SNAPSHOT` be removed from the version if present."
+  },
+  {
+    "owner": "helm",
+    "name": "bundlebee.helm.placeholderDescriptions",
+    "defaultValue": "true",
+    "description": "An optional file path to a properties file where the keys are placeholders and the value some description to inject in `values.yaml`."
+  },
+  {
+    "owner": "help",
+    "name": "bundlebee.help.command",
+    "defaultValue": "<unset>",
+    "description": "Which command to show help for. If not set it will show all commands."
+  },
+  {
+    "owner": "help",
+    "name": "bundlebee.help.args",
+    "defaultValue": "true",
+    "description": "If `false` args are not shown, enable a lighter output."
+  },
+  {
+    "owner": "help",
+    "name": "bundlebee.help.shared",
+    "defaultValue": "true",
+    "description": "If `false` shared configuration (by all commands) is not shown."
+  },
+  {
+    "owner": "http",
+    "name": "bundlebee.http.method",
+    "defaultValue": "GET",
+    "description": "HTTP verb to use for the request."
+  },
+  {
+    "owner": "http",
+    "name": "bundlebee.http.payload",
+    "defaultValue": "",
+    "description": "HTTP payload to use for the request - skipped for method different from `PATCH`, `POST` and `PUT`."
+  },
+  {
+    "owner": "http",
+    "name": "bundlebee.http.headers",
+    "defaultValue": "Accept: application/json\nContent-Type: application/json",
+    "description": "Request HTTP headers (in properties format)."
+  },
+  {
+    "owner": "http",
+    "name": "bundlebee.http.path",
+    "defaultValue": "/api/",
+    "description": "HTTP request path (optionally with query parameters). You can use the absolute kubernetes URL but if the value does not start with a protocol (`http` or `https`) then it will be prefixed by the Kubernetes API base."
+  },
+  {
+    "owner": "http",
+    "name": "bundlebee.http.payloadOnly",
+    "defaultValue": "true",
+    "description": "If `true`, only the payload of the response will be logged if successful."
+  },
+  {
+    "owner": "http",
+    "name": "bundlebee.http.failOnError",
+    "defaultValue": "true",
+    "description": "If `true`, an exception if thrown if the status is not between 200 and 299 (making the execution a failure)."
+  },
+  {
+    "owner": "inspect",
+    "name": "bundlebee.inspect.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to inspect. When set to `auto`, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "inspect",
+    "name": "bundlebee.inspect.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "inspect",
+    "name": "bundlebee.inspect.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "inspect",
+    "name": "bundlebee.inspect.descriptor",
+    "defaultValue": "<unset>",
+    "description": "If set only this descriptor is logged, not that you can use a regex if you make the value prefixed with `r/`. Note it generally only makes sense with verbose option."
+  },
+  {
+    "owner": "inspect",
+    "name": "bundlebee.inspect.verbose",
+    "defaultValue": "false",
+    "description": "If `true`, descriptors are logged too."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to inspect. When set to `auto`, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.failLevel",
+    "defaultValue": "ERROR",
+    "description": "If `true`, an exception is throw if there is at least one error."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.ignoredAlveoli",
+    "defaultValue": "-",
+    "description": "Comma separated list of alveoli names to ignore."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.ignoredDescriptors",
+    "defaultValue": "-",
+    "description": "Comma separated list of descriptors to ignore."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.ignoredRules",
+    "defaultValue": "-",
+    "description": "Comma separated list of rules to ignore (simple class name for built-in ones and check name for the others)."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.forcedRules",
+    "defaultValue": "all",
+    "description": "Comma separated list of rules to use (others being ignored). `all` means use all discovered rules and `none` skip them all (useful as a toggle/bypass mode)."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.showRemediation",
+    "defaultValue": "false",
+    "description": "Should remediation be shown (it is verbose so skipped by default)."
+  },
+  {
+    "owner": "lint",
+    "name": "bundlebee.lint.output",
+    "defaultValue": "false",
+    "description": "If not `false`, the path of the output in link:https://github.com/microsoft/sarif-tutorials[SARIF] format (JSON)."
+  },
+  {
+    "owner": "list-alveoli",
+    "name": "bundlebee.list-alveoli.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "list-alveoli",
+    "name": "bundlebee.list-alveoli.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "list-alveoli",
+    "name": "bundlebee.list-alveoli.output",
+    "defaultValue": "logger",
+    "description": "`logger` means the standard bundlebee logging output stream else it is considered as a file path. Note that if you end the filename with `.json` it will be formatted as json else just readable text."
+  },
+  {
+    "owner": "create-master-password",
+    "name": "bundlebee.create-master-password.password",
+    "defaultValue": "auto",
+    "description": "Master password value, if `auto` it will be generated."
+  },
+  {
+    "owner": "cipher-password",
+    "name": "bundlebee.cipher-password.password",
+    "defaultValue": "auto",
+    "description": "Password value to cipher (`auto` generates a random one)."
+  },
+  {
+    "owner": "new",
+    "name": "bundlebee.new.group",
+    "defaultValue": "<unset>",
+    "description": "Bundle groupId."
+  },
+  {
+    "owner": "new",
+    "name": "bundlebee.new.artifact",
+    "defaultValue": "<unset>",
+    "description": "Bundle artifactId."
+  },
+  {
+    "owner": "new",
+    "name": "bundlebee.new.version",
+    "defaultValue": "1.0.0",
+    "description": "Bundle version."
+  },
+  {
+    "owner": "new",
+    "name": "bundlebee.new.dir",
+    "defaultValue": "<unset>",
+    "description": "Where to create the project. If not set it will use the artifact value in current folder."
+  },
+  {
+    "owner": "new",
+    "name": "bundlebee.new.skipSamples",
+    "defaultValue": "false",
+    "description": "By default a sample alveolus with a config map is generated, if `false` it will be skipped."
+  },
+  {
+    "owner": "new",
+    "name": "bundlebee.new.skipPom",
+    "defaultValue": "false",
+    "description": "If `true` no pom.xml is generated."
+  },
+  {
+    "owner": "new",
+    "name": "bundlebee.new.force",
+    "defaultValue": "false",
+    "description": "If `true` the execution runs even if dir already exists."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to inspect. When set to `auto`, it will look for all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.descriptor",
+    "defaultValue": "<unset>",
+    "description": "If set only this descriptor is handled, not that you can use a regex if you make the value prefixed with `r/`. Note it generally only makes sense with verbose option."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.outputType",
+    "defaultValue": "LOG",
+    "description": "How to dump the placeholders, by default (`LOG`) it will print it but `FILE` will store it in a local file (using `dumpLocation`)."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.dumpLocation",
+    "defaultValue": "target/bundlebee_extract",
+    "description": "Extraction location (directory) when `outputType` is `FILE`."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.propertiesFilename",
+    "defaultValue": "placeholders.properties",
+    "description": "Properties filename (relative to `dumpLocation`) when `outputType` is `FILE`. Ignores properties extraction if value is `skip`."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.jsonFilename",
+    "defaultValue": "placeholders.json",
+    "description": "JSON filename (relative to `dumpLocation`) when `outputType` is `FILE`. Ignores JSON dump if value is `skip`."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.completionFilename",
+    "defaultValue": "placeholders.completion.properties",
+    "description": "Completion properties filename - see https://github.com/rmannibucau/vscode-properties-custom-completion - (relative to `dumpLocation`) when `outputType` is `FILE`. Ignores this extraction if value is `skip`."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.docFilename",
+    "defaultValue": "placeholders.adoc",
+    "description": "Asciidoc filename (relative to `dumpLocation`) when `outputType` is `FILE`. Ignores this extraction if value is `skip`."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.descriptions",
+    "defaultValue": "src/bundlebee/descriptions.properties",
+    "description": "Properties file locations which contain key=the placeholder and value=the placeholder description."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.ignoredPlaceholders",
+    "defaultValue": "service..*",
+    "description": "List of placeholders or prefixes (ended with `.*`) to ignore. This is common for templates placeholders which don't need documentation since they are wired in the manifest in general."
+  },
+  {
+    "owner": "placeholder-extract",
+    "name": "bundlebee.placeholder-extract.failOnInvalidDescription",
+    "defaultValue": "false",
+    "description": "Should documentation generation fail on missing/unexpected placeholder description."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.injectTimestamp",
+    "defaultValue": "true",
+    "description": "If `true`, a `bundlebee.timestamp` label will be injected into the descritors with current date before applying the descriptor."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.injectBundleBeeMetadata",
+    "defaultValue": "true",
+    "description": "If `true`, `bundlebee.*` labels will be injected into the descriptors. This is required for rollback command to work."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.useChainInsteadOfAll",
+    "defaultValue": "false",
+    "description": "If `true`, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.descriptorAwaitTimeout",
+    "defaultValue": "60000",
+    "description": "For descriptors with `await` = `true` the max duration the test can last."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.excludedDescriptors",
+    "defaultValue": "none",
+    "description": "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. Note that using this setting, location is set to `*` so only the name is matched."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.excludedLocations",
+    "defaultValue": "none",
+    "description": "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.output",
+    "defaultValue": "<unset>",
+    "description": "If set, represents where to dump processed descriptors. Note that `stdout` enables to log on `System.out` (java `stdout`) directly - useful for ArgoCD for example. In this case formatting and `concat` are skipped."
+  },
+  {
+    "owner": "process",
+    "name": "bundlebee.process.concat",
+    "defaultValue": "<unset>",
+    "description": "Should all descriptors be concatenated in a single file - output."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.previousAlveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to install as rollback."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.previousManifest",
+    "defaultValue": "skip",
+    "description": "Same as `manifest` but for the previous alveolus to install."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.previousFrom",
+    "defaultValue": "auto",
+    "description": "Same as `from` but for the previous alveolus to install."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to rollback (in currently deployed version). When set to `auto`, it will look up all manifests found in the classpath (it is not recommended until you perfectly know what you do). If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to find the alveolus. This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.gracePeriodSeconds",
+    "defaultValue": "<unset>",
+    "description": "If set it will be added on REST calls to force a custom grace period (in seconds). Setting it to `0` enables to delete faster objects."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.awaitTimeout",
+    "defaultValue": "120000",
+    "description": "If an integer > 0, how long (ms) to await for the actual deletion of components - before redeploying."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.pause",
+    "defaultValue": "0",
+    "description": "A pause (in ms) between delete and apply phases, this can some environment to release all resources related to deleted components."
+  },
+  {
+    "owner": "rollback",
+    "name": "bundlebee.rollback.useMavenVersioning",
+    "defaultValue": "true",
+    "description": "If `true`, and previous alveolus is not defined on the CLI, we will query the release repository to find available versions. If the alveolus name does not match `<groupId>:<artifactId>:<version>[:<type>:<classifier>]` pattern then a heuristic is used instead."
+  },
+  {
+    "owner": "run",
+    "name": "bundlebee.run.alveolus",
+    "defaultValue": "auto",
+    "description": "Alveolus name to deploy. When set to `auto`, it will deploy all manifests found in the classpath. If you set manifest option, alveolus is set to `auto` and there is a single alveolus in it, this will default to it instead of using classpath deployment."
+  },
+  {
+    "owner": "run",
+    "name": "bundlebee.run.manifest",
+    "defaultValue": "skip",
+    "description": "Manifest to load to start to deploy (a file path or inline). This optional setting mainly enables to use dependencies easily. Ignored if set to `skip`."
+  },
+  {
+    "owner": "run",
+    "name": "bundlebee.run.from",
+    "defaultValue": "auto",
+    "description": "Root dependency to download to get the manifest. If set to `auto` it is assumed to be present in current classpath."
+  },
+  {
+    "owner": "run",
+    "name": "bundlebee.run.useChainInsteadOfAll",
+    "defaultValue": "false",
+    "description": "If `true`, each descriptor installation awaits previous ones instead of being concurrent. Enable an easier debugging for errors."
+  },
+  {
+    "owner": "run",
+    "name": "bundlebee.run.descriptorAwaitTimeout",
+    "defaultValue": "60000",
+    "description": "For descriptors with `await` = `true` the max duration the test can last."
+  },
+  {
+    "owner": "run",
+    "name": "bundlebee.run.excludedDescriptors",
+    "defaultValue": "none",
+    "description": "Enables to exclude descriptors from the command line. `none` to ignore. Value is comma separated. Note that using this setting, location is set to `*` so only the name is matched."
+  },
+  {
+    "owner": "run",
+    "name": "bundlebee.run.excludedLocations",
+    "defaultValue": "none",
+    "description": "Enables to exclude locations (descriptor is set to `*`) from the command line. `none` to ignore. Value is comma separated."
+  },
+  {
+    "owner": "versions",
+    "name": "bundlebee.versions.group",
+    "defaultValue": "<unset>",
+    "description": "Bundle groupId."
+  },
+  {
+    "owner": "versions",
+    "name": "bundlebee.versions.artifact",
+    "defaultValue": "<unset>",
+    "description": "Bundle artifactId."
+  },
+  {
+    "owner": "yaml2json",
+    "name": "bundlebee.yaml2json.input",
+    "defaultValue": "/dev/null",
+    "description": "The directory path to read yaml files to convert."
+  },
+  {
+    "owner": "yaml2json",
+    "name": "bundlebee.yaml2json.output",
+    "defaultValue": "/dev/null",
+    "description": "The directory path to write the generated json files."
+  },
+  {
+    "owner": "yaml2json",
+    "name": "bundlebee.yaml2json.logDescriptorOnParsingError",
+    "defaultValue": "true",
+    "description": "Should YAML/JSON be logged when it can't be parsed."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.httpclient.threads",
+    "defaultValue": "-1",
+    "description": "How many threads are allocated to async HTTP client, negative or zero value means to use common pool."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.httpclient.forcedHttpVersion",
+    "defaultValue": "none",
+    "description": "The HTTP client version, `none` mean the JVM default (v2), `HTTP_1_1` v1.1 and `HTTP_2` v2.0."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.httpclient.connectTimeout",
+    "defaultValue": "none",
+    "description": "The HTTP client connect timeout (in java Duration format), `none` can be used to ignore this setting."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.httpclient.followRedirects",
+    "defaultValue": "NORMAL",
+    "description": "The HTTP client redirect policy. Default to `NORMAL`, can be set to `ALWAYS` or `NEVER`."
+  },
+  {
+    "owner": "@global",
+    "name": "kubeconfig",
+    "defaultValue": "auto",
+    "description": "Kubeconfig location. If set to `auto` it will try to guess from your `$HOME/.kube/config` file until you set it so `explicit` where it will use other `bundlebee.kube` properties to create the client. The content can also be set inline!"
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.http.timeout",
+    "defaultValue": "60000",
+    "description": "HTTP timeout in ms, ignored if <= 0."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.api",
+    "defaultValue": "http://localhost:8080",
+    "description": "When kubeconfig is not set the base API endpoint."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.token",
+    "defaultValue": "<unset>",
+    "description": "When `kubeconfig` is set to `explicit`, the bearer token to use (if set)."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.context",
+    "defaultValue": "<unset>",
+    "description": "When kubeconfig (explicit or not) is used, the context to use. If not set it is taken from the kubeconfig itself."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.proxy.host",
+    "defaultValue": "<unset>",
+    "description": "If a proxy is needed to contact the target cluster API, its host, ignore if not set."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.proxy.port",
+    "defaultValue": "3128",
+    "description": "If a proxy is needed to contact the target cluster API, its port."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.proxy.username",
+    "defaultValue": "<unset>",
+    "description": "If a proxy is needed to contact the target cluster API, its username if it needs an authentication (take care the JVM can nee `-Djdk.http.auth.tunneling.disabledSchemes=` options)."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.proxy.password",
+    "defaultValue": "<unset>",
+    "description": "If a proxy is needed to contact the target cluster API, its password if it needs an authentication (take care the JVM can nee `-Djdk.http.auth.tunneling.disabledSchemes=` options)."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.proxy.setProxySystemProperties",
+    "defaultValue": "true",
+    "description": "If a proxy is configured to use authentication, automatically set `-Djdk.http.auth.tunneling.disabledSchemes=`, note that setting it on the JVM is still more reliable depending how you run bundlebee (in particular with maven or embed). Important: the system property is \"leaked\", ie it is not cleaned up to limit side effect in concurrent mode."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.validateSSL",
+    "defaultValue": "true",
+    "description": "Should SSL connector be validated or not."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.namespace",
+    "defaultValue": "default",
+    "description": "When kubeconfig is not set the namespace to use."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.verbose",
+    "defaultValue": "false",
+    "description": "If `true` http requests/responses to Kubernetes will be logged."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.dryRun",
+    "defaultValue": "false",
+    "description": "If `true` http requests/responses are skipped. Note that dry run implies verbose=true for the http client. Note that as of today, all responses are mocked by a HTTP 200 and an empty JSON payload."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.skipDryRunForGet",
+    "defaultValue": "false",
+    "description": "If `true` GET http requests are not skipped when `dryRun` is true."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.rateLimiter.enabled",
+    "defaultValue": "false",
+    "description": "Should HTTP client requests be limited and HTTP 427 responses be handled."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.rateLimiter.permits",
+    "defaultValue": "100",
+    "description": "How many calls can be done if rate limiting is enabled. Note that setting it to `Integer.MAX_VALUE` will disable the client rate limiting and only enable server one."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.rateLimiter.window",
+    "defaultValue": "1000",
+    "description": "Rate limiting window duration in milliseconds (default being 1 second)."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.fieldValidation",
+    "defaultValue": "Strict",
+    "description": "`fieldValidation` - server side validation - value when applying a descriptor, values can be `Strict`, `Warn` pr `Ignore`. Note that using `skip` will ignore the query parameter."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.resourceMapping",
+    "defaultValue": "",
+    "description": "Enables to define resource mapping, syntax uses propeties one: `<lowercased resource kind>s = /apis/....`."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.skipUpdateForKinds",
+    "defaultValue": "PersistentVolumeClaim",
+    "description": "List of _kind_ of descriptors updates can be skipped, it is often useful for `PersistentVolumeClaim`."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.logDescriptorOnParsingError",
+    "defaultValue": "true",
+    "description": "Should YAML/JSON be logged when it can't be parsed."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.filters.statefuleset.spec.allowed",
+    "defaultValue": "replicas,template,updateStrategy,persistentVolumeClaimRetentionPolicy,minReadySeconds,serviceName,selector",
+    "description": "The attributes to keep from `StatefulSet` (`spec` children) descriptor on updates."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.implicitlyDroppedAttributes",
+    "defaultValue": "/$schema|/$bundlebeeIgnoredLintingRules",
+    "description": "Enables to tolerate custom attributes in the descriptors. Typically used to drop `/$schema` attribute which enables a nice completion in editors. Values are `|` delimited and are either a JSON-Pointer (wrapped in a remove JSON-Patch) or directly a JSON-Patch. Using `none` ignores this processing."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.putOnUpdate",
+    "defaultValue": "false",
+    "description": "By default a descriptor update is done using `PATCH` with strategic merge patch logic, if set to `true` it will use a plain `PUT`. Note that `io.yupiik.bundlebee/putOnUpdate` annotations can be set to `true` to force that in the descriptor itself."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.force",
+    "defaultValue": "false",
+    "description": "By default a descriptor update is done using `PATCH` with strategic merge patch logic, if set to `true` it will use a plain `PUT`. Note that `io.yupiik.bundlebee/putOnUpdate` annotations can be set to `true` to force that in the descriptor itself and for cases it is not enough, you can set `force` to `true` to delete the descriptor before applying it again (move from clusterip to nodeport or the opposite in a serice for ex). Note that you can set it to `true` in a descriptor annotation `io.yupiik.bundlebee/force` too to not be global."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.defaultPropagationPolicy",
+    "defaultValue": "Foreground",
+    "description": "Default value for deletions of `propagationPolicy`. Values can be `Orphan`, `Foreground` and `Background`."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.customMetadataInjectionPoint",
+    "defaultValue": "labels",
+    "description": "When using custom metadata (bundlebee ones or timestamp to force a rollout), where to inject them. Default uses labels since it enables to query them later on but you can switch it to annotations."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.kube.patchContentType",
+    "defaultValue": "application/strategic-merge-patch+json",
+    "description": "Default header value for `PATCH` `content-type` requests header. It uses strategic merge patch algorithm but in some cases you just want to use `application/json` or (better) `application/merge-patch+json`. Annotation `io.yupiik.bundlebee/patchContentType` is also supported."
+  },
+  {
+    "owner": "@internal",
+    "name": "bundlebee.awaiter.retryInterval",
+    "defaultValue": "500",
+    "description": "How often to retry for a descriptor condition. Increasing it will reduce the pressure on the Kubernetes REST API (rate limiting for example)."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.http.connectTimeout",
+    "defaultValue": "30000",
+    "description": "When fetching a dependency using HTTP, the connection timeout for this dependency."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.cache",
+    "defaultValue": "auto",
+    "description": "Where to cache maven dependencies. If set to `auto`, tries to read the system property `maven.repo.local` then the `settings.xml` `localRepository` and finally it would fallback on `$HOME/.m2/repository`."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.preferCustomSettingsXml",
+    "defaultValue": "true",
+    "description": "If `false` we first try to read `settings.xml` file(s) in `cache` location before the default one."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.forceCustomSettingsXml",
+    "defaultValue": "false",
+    "description": "If `true` we only use `cache` value and never fallback on default maven settings.xml location."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.repositories.release",
+    "defaultValue": "https://repo.maven.apache.org/maven2/",
+    "description": "Default release repository."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.repositories.snapshot",
+    "defaultValue": "<unset>",
+    "description": "Default snapshot repository, not set by default."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.repositories.httpHeaders",
+    "defaultValue": "<unset>",
+    "description": "Properties to define the headers to set per repository, syntax is `host1=headerName headerValue` and it supports as much lines as used repositories. Note that you can use maven `~/.m2/settings.xml` servers (potentially ciphered) username/password pairs. In this last case the server id must be `bundlebee.<server host>`. Still in settings.xml case, if the username is null the password value is used as raw `Authorization` header else username/password is encoded as a basic header."
+  },
+  {
+    "owner": "@global",
+    "name": "bundlebee.maven.repositories.downloads.enabled",
+    "defaultValue": "false",
+    "description": "Enable the download, i.e. ensure it runs only with local maven repository."
+  }
+]

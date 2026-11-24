@@ -15,20 +15,15 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
-import java.time.Instant;
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Date
-//metadata:end
+// metadata:end
 @Description("Formats a date with a specific timezone")
 public class DateInZoneFunc implements HelmFunction {
     @Override

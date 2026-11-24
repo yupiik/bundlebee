@@ -16,14 +16,14 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonObject;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class LivenessProbeImage extends ContainerValueValidator {
+
     public LivenessProbeImage() {
         super(Set.of("Deployment"));
     }
@@ -44,9 +44,8 @@ public class LivenessProbeImage extends ContainerValueValidator {
     }
 
     @Override
-    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
-        final var probe = container.getJsonObject("livenessProbe");
-        if (probe == null) {
+    protected Stream<LintError> validate(final Map<?, ?> container, final LintableDescriptor descriptor) {
+        if (!(container.get("livenessProbe") instanceof Map<?, ?> probe)) {
             return Stream.of(new LintError(LintError.LintLevel.ERROR, "No liveness probe"));
         }
         return Stream.empty();

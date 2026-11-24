@@ -15,22 +15,18 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoField;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Date
-//metadata:end
+// metadata:end
 @Description("Formats a date using a Go-style layout")
 public class DateFunc implements HelmFunction {
     @Override
@@ -67,7 +63,8 @@ public class DateFunc implements HelmFunction {
     }
 
     static String formatWithLayout(final String layout, final ZonedDateTime zdt) {
-        final var formatter = DateTimeFormatter.ofPattern(goToJavaLayout(layout)).withZone(zdt.getZone());
+        final var formatter =
+                DateTimeFormatter.ofPattern(goToJavaLayout(layout)).withZone(zdt.getZone());
         return zdt.format(formatter);
     }
 

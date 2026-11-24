@@ -15,27 +15,29 @@
  */
 package io.yupiik.bundlebee.core.lang;
 
+import static java.util.Comparator.comparing;
+import static java.util.Locale.ROOT;
+import static java.util.Optional.ofNullable;
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.logging.Level.SEVERE;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.StreamSupport.stream;
+
+import io.yupiik.bundlebee.core.configuration.ThreadLocalConfigSource;
 import io.yupiik.bundlebee.core.event.OnPlaceholder;
-import io.yupiik.bundlebee.core.kube.HttpKubeClient;
 import io.yupiik.bundlebee.core.kube.KubeClient;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
 import io.yupiik.bundlebee.core.service.Maven;
+import io.yupiik.bundlebee.lang.spi.NamespaceProvider;
+import io.yupiik.fusion.framework.api.Instance;
+import io.yupiik.fusion.framework.api.RuntimeContainer;
+import io.yupiik.fusion.framework.api.configuration.Configuration;
+import io.yupiik.fusion.framework.api.event.Emitter;
+import io.yupiik.fusion.framework.api.scope.ApplicationScoped;
+import io.yupiik.fusion.framework.build.api.scanning.Bean;
+import io.yupiik.fusion.json.JsonMapper;
 import io.yupiik.tools.codec.simple.SimpleCodec;
 import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
-import lombok.Getter;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.Config;
-
-import javax.enterprise.context.ApplicationScoped;
-import javax.enterprise.event.Event;
-import javax.enterprise.inject.Produces;
-import javax.enterprise.inject.spi.Bean;
-import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
-import javax.json.JsonBuilderFactory;
-import javax.json.JsonObjectBuilder;
-import javax.json.JsonValue;
-import javax.json.spi.JsonProvider;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -49,8 +51,11 @@ import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Spliterator;
@@ -60,61 +65,74 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import java.util.stream.Collector;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
-import static java.util.Comparator.comparing;
-import static java.util.Locale.ROOT;
-import static java.util.Optional.ofNullable;
-import static java.util.concurrent.CompletableFuture.completedFuture;
-import static java.util.logging.Level.SEVERE;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.StreamSupport.stream;
-
-@Log
 @ApplicationScoped
 public class SubstitutorProducer {
-    @Inject
-    private KubeClient kubeClient;
+    private static final Pattern NEWLINE = Pattern.compile("\n");
+    private static final Pattern DOT = Pattern.compile("\\.");
+    private static final Pattern SLASH = Pattern.compile("/");
+    private final Logger log = Logger.getLogger(SubstitutorProducer.class.getName());
 
-    @Inject
-    @BundleBee
-    private JsonProvider json;
+    protected SubstitutorProducer() {
+        // Fusion application-scope proxy only; all service calls delegate to the initialized bean.
+        this(null, null, null, null, null, null, null);
+    }
 
-    @Inject
-    @BundleBee
-    private JsonBuilderFactory jsonBuilderFactory;
+    public SubstitutorProducer(
+            final JsonMapper jsonb,
+            final KubeClient kubeClient,
+            final Maven maven,
+            final RuntimeContainer container,
+            final Emitter onPlaceholderEvent,
+            final NamespaceProvider httpKubeClient,
+            final ThreadLocalConfigSource threadLocalConfigSource) {
+        this.kubeClient = kubeClient;
+        this.jsonb = jsonb;
+        this.maven = maven;
+        this.container = container;
+        this.onPlaceholderEvent = onPlaceholderEvent;
+        this.httpKubeClient = httpKubeClient;
+        this.threadLocalConfigSource = threadLocalConfigSource;
+    }
 
-    @Inject
-    private Maven maven;
-
-    @Inject
-    private BeanManager beanManager;
-
-    @Inject
-    private Event<OnPlaceholder> onPlaceholderEvent;
-
-    @Inject
-    private HttpKubeClient httpKubeClient;
-
-    @Deprecated // for backward compat only
-    private ThreadLocal<String> idHolder;
-
-    @Getter
+    private final KubeClient kubeClient;
+    private final JsonMapper jsonb;
+    private final Maven maven;
+    private final RuntimeContainer container;
+    private final Emitter onPlaceholderEvent;
+    private final NamespaceProvider httpKubeClient;
+    private final ThreadLocalConfigSource threadLocalConfigSource;
     private final Map<String, Map<String, String>> byIdContextualPlaceholders = new ConcurrentHashMap<>();
+    private volatile Map<String, String> invocationPlaceholders = Map.of();
+    private final Map<String, Map<String, String>> invocationPlaceholdersById = new ConcurrentHashMap<>();
 
-    @Produces
-    public Substitutor substitutor(final Config config) {
+    /** CLI-only defaults, configured before a standalone invocation starts. */
+    public void setInvocationPlaceholders(final Map<String, String> placeholders) {
+        invocationPlaceholders = Map.copyOf(placeholders);
+    }
+
+    /** Register immutable placeholder-only values for one execution, not configuration. */
+    public void setInvocationPlaceholders(final String executionId, final Map<String, String> placeholders) {
+        if (invocationPlaceholdersById.putIfAbsent(Objects.requireNonNull(executionId), Map.copyOf(placeholders))
+                != null) {
+            throw new IllegalStateException("Execution already registered: " + executionId);
+        }
+    }
+
+    public void clearInvocationPlaceholders(final String executionId) {
+        invocationPlaceholdersById.remove(executionId);
+        byIdContextualPlaceholders.remove(executionId);
+    }
+
+    @Bean
+    public Substitutor substitutor(final Configuration config) {
         final var self = new AtomicReference<Substitutor>();
-
-        final boolean hasOldOnPlaceholderExtensionPoint = has(
-                () -> getClass().getDeclaredMethod("onPlaceholder", String.class, String.class, String.class).getDeclaringClass() != SubstitutorProducer.class);
-        final boolean hasOldSubstitute = has(
-                () -> getClass().getDeclaredMethod("doSubstitute", AtomicReference.class, Config.class, String.class).getDeclaringClass() != SubstitutorProducer.class);
-        idHolder = hasOldOnPlaceholderExtensionPoint || hasOldSubstitute ? new ThreadLocal<>() : null;
-
         final var helpers = new HashMap<String, Function<Object, String>>();
         final var ref = new Substitutor(it -> doSubstitute(self, config, it, null)) {
             @Override
@@ -122,122 +140,89 @@ public class SubstitutorProducer {
                 return helpers;
             }
 
-            @Override // mainly handle backward compat and id propagation, could be ~2-3 lines without that
+            @Override
             protected String getOrDefault(final String varName, final String varDefaultValue, final String id) {
                 String value;
-
-                final var oldId = idHolder == null ? null : idHolder.get();
-                if (hasOldSubstitute) {
-                    idHolder.set(id);
-                }
                 try {
-                    try {
-                        value = ofNullable(doSubstitute(self, config, varName, id)).orElse(varDefaultValue);
-                    } catch (final RuntimeException re) {
-                        if (varDefaultValue != null) {
-                            value = varDefaultValue;
-                        } else {
-                            throw re;
-                        }
-                    }
-
-                    if (hasOldOnPlaceholderExtensionPoint) {
-                        idHolder.set(id);
-                        onPlaceholder(varName, varDefaultValue, value);
+                    value = ofNullable(doSubstitute(self, config, varName, id)).orElse(varDefaultValue);
+                } catch (final RuntimeException re) {
+                    if (varDefaultValue != null) {
+                        value = varDefaultValue;
                     } else {
-                        onPlaceholder(varName, varDefaultValue, value, id);
-                    }
-                } finally {
-                    if (idHolder != null) {
-                        if (oldId == null) {
-                            idHolder.remove();
-                        } else {
-                            idHolder.set(oldId);
-                        }
+                        throw re;
                     }
                 }
+                onPlaceholder(varName, varDefaultValue, value, id);
                 return value;
             }
         };
         self.set(ref);
-
-        // handlebars helpers
-        // - placeholder helper enables to get the standard placeholder behavior from a string
         helpers.put("placeholder", args -> {
-            final Object[] casted = (Object[]) args; // (key, execution id injected)
-            return self.get().replace(casted[0].toString(), casted[1].toString());
+            final Object[] casted = (Object[]) args;
+            return self.get().replace(casted[0].toString(), (String) casted[1]);
         });
-
         return ref;
     }
 
-    private boolean has(final ThrowingBooleanSupplier test) {
-        try {
-            return test.get();
-        } catch (final Throwable t) {
-            return false;
-        }
-    }
-
-    /**
-     * @deprecated ensure to pass use the flavor with an id as parameter otherwise some commands will be broken.
-     */
-    @Deprecated
-    protected void onPlaceholder(final String varName, final String varDefaultValue, final String value) {
-        onPlaceholder(varName, varDefaultValue, value, idHolder == null ? null : idHolder.get());
-    }
-
-    protected void onPlaceholder(final String varName, final String varDefaultValue, final String value, final String id) {
-        log.finest(() -> "Resolved '" + varName + "' to '" + value + "'");
+    protected void onPlaceholder(
+            final String varName, final String varDefaultValue, final String value, final String id) {
+        log.finest(() -> "Resolved \'" + varName + "\' to \'" + value + "\'");
         if (onPlaceholderEvent != null) {
-            onPlaceholderEvent.fire(new OnPlaceholder(varName, varDefaultValue, value, id));
+            onPlaceholderEvent.emit(new OnPlaceholder(varName, varDefaultValue, value, id));
         }
     }
 
-    /**
-     * @deprecated ensure to pass use the flavor with an id as parameter otherwise some commands will be broken.
-     */
-    @Deprecated
-    protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config, final String placeholder) {
-        return doSubstitute(self, config, placeholder, idHolder == null ? null : idHolder.get());
-    }
-
-    protected String doSubstitute(final AtomicReference<Substitutor> self, final Config config,
-                                  final String placeholder, final String id) {
+    protected String doSubstitute(
+            final AtomicReference<Substitutor> self,
+            final Configuration config,
+            final String placeholder,
+            final String id) {
         try {
             if (placeholder.equals("bundlebee-kubernetes-namespace")) {
                 return httpKubeClient.namespace();
             }
             if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs-content:")) {
                 final var delegate = doSubstitute(
-                        self, config,
-                        "bundlebee-directory-json-key-value-pairs:" + placeholder.substring("bundlebee-directory-json-key-value-pairs-content:".length()), id).strip();
-                return delegate.substring(1, delegate.length() - 1); // drop brackets
+                                self,
+                                config,
+                                "bundlebee-directory-json-key-value-pairs:"
+                                        + placeholder.substring(
+                                                "bundlebee-directory-json-key-value-pairs-content:".length()),
+                                id)
+                        .strip();
+                // drop brackets
+                return delegate.substring(1, delegate.length() - 1);
             }
-            if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs:")) { // enable easy injection of labels or more likely annotations
+            if (placeholder.startsWith("bundlebee-directory-json-key-value-pairs:")) {
+                // enable easy injection of labels or more likely annotations
                 final var directory = placeholder.substring("bundlebee-directory-json-key-value-pairs:".length());
-                // we support the pattern "/my/dir" and will take all subfiles or "/my/dir/*.ext" and will filter files by a glob pattern
+                // we support the pattern "/my/dir" and will take all subfiles or "/my/dir/*.ext" and will filter files
+                // by a glob pattern
                 final int lastSep = directory.lastIndexOf("/*");
-                try (final var dir = lastSep < 0 ?
-                        Files.newDirectoryStream(Path.of(directory)) :
-                        Files.newDirectoryStream(Path.of(directory.substring(0, lastSep)), directory.substring(lastSep + 1));
-                     final var stream = stream(Spliterators.spliteratorUnknownSize(dir.iterator(), Spliterator.DISTINCT), false)) {
-                    return stream
-                            .sorted(comparing(Path::getFileName))
+                try (var dir = lastSep < 0
+                                ? Files.newDirectoryStream(Path.of(directory))
+                                : Files.newDirectoryStream(
+                                        Path.of(directory.substring(0, lastSep)), directory.substring(lastSep + 1));
+                        var stream = stream(
+                                Spliterators.spliteratorUnknownSize(dir.iterator(), Spliterator.DISTINCT), false)) {
+                    return jsonb.toString(stream.sorted(comparing(Path::getFileName))
                             .collect(Collector.of(
-                                    jsonBuilderFactory::createObjectBuilder,
+                                    LinkedHashMap<String, String>::new,
                                     (builder, path) -> {
                                         try {
-                                            builder.add(
-                                                    path.getFileName().toString().replace("____", "/"),
+                                            builder.put(
+                                                    path.getFileName()
+                                                            .toString()
+                                                            .replace("____", "/"),
                                                     Files.readString(path));
                                         } catch (final IOException e) {
                                             throw new IllegalStateException(e);
                                         }
                                     },
-                                    JsonObjectBuilder::addAll,
-                                    JsonObjectBuilder::build))
-                            .toString();
+                                    (left, right) -> {
+                                        left.putAll(right);
+                                        return left;
+                                    })));
                 }
             }
             if (placeholder.startsWith("bundlebee-inline-file:")) {
@@ -246,9 +231,10 @@ public class SubstitutorProducer {
             }
             if (placeholder.startsWith("bundlebee-inlined-file:")) {
                 final var bytes = readResource(placeholder, "bundlebee-inlined-file:");
-                return bytes == null ? null : new String(bytes, StandardCharsets.UTF_8)
-                        // for json not using a space will cause }\n}\n... to be }} and break nested interpolation
-                        .replace("\n", " ");
+                return bytes == null
+                        ? null
+                        : // for json not using a space will cause }\n}\n... to be }} and break nested interpolation
+                        new String(bytes, StandardCharsets.UTF_8).replace("\n", " ");
             }
             if (placeholder.startsWith("bundlebee-base64-file:")) {
                 final var src = readResource(placeholder, "bundlebee-base64-file:");
@@ -259,17 +245,27 @@ public class SubstitutorProducer {
                 return src == null ? null : new String(Base64.getDecoder().decode(src), StandardCharsets.UTF_8);
             }
             if (placeholder.startsWith("bundlebee-base64:")) {
-                return Base64.getEncoder().encodeToString(placeholder.substring("bundlebee-base64:".length()).getBytes(StandardCharsets.UTF_8));
+                return Base64.getEncoder()
+                        .encodeToString(placeholder
+                                .substring("bundlebee-base64:".length())
+                                .getBytes(StandardCharsets.UTF_8));
             }
             if (placeholder.startsWith("bundlebee-base64-decode:")) {
-                return new String(Base64.getDecoder().decode(placeholder.substring("bundlebee-base64-decode:".length()).getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
+                return new String(
+                        Base64.getDecoder()
+                                .decode(placeholder
+                                        .substring("bundlebee-base64-decode:".length())
+                                        .getBytes(StandardCharsets.UTF_8)),
+                        StandardCharsets.UTF_8);
             }
             if (placeholder.startsWith("bundlebee-quote-escaped-inline-file:")) {
                 final var resource = readResource(placeholder, "bundlebee-quote-escaped-inline-file:");
-                return resource == null ? null : new String(resource, StandardCharsets.UTF_8)
-                        .replace("'", "\\'")
-                        .replace("\"", "\\\"")
-                        .replace("\n", "\\\\n");
+                return resource == null
+                        ? null
+                        : new String(resource, StandardCharsets.UTF_8)
+                                .replace("\'", "\\\'")
+                                .replace("\"", "\\\"")
+                                .replace("\n", "\\\\n");
             }
             if (placeholder.startsWith("bundlebee-json-inline-file:")) {
                 final var resource = readResource(placeholder, "bundlebee-json-inline-file:");
@@ -278,11 +274,11 @@ public class SubstitutorProducer {
                 }
                 // ensure nested interpolation is done before otherwise double escaping is way harder to handle
                 final var content = self.get().replace(new String(resource, StandardCharsets.UTF_8), id);
-                final var value = json.createValue(content).toString();
+                final var value = jsonb.toString(content);
                 return value.substring(1, value.length() - 1);
             }
             if (placeholder.startsWith("bundlebee-json-string:")) {
-                final var value = json.createValue(placeholder.substring("bundlebee-json-string:".length())).toString();
+                final var value = jsonb.toString(placeholder.substring("bundlebee-json-string:".length()));
                 return value.substring(1, value.length() - 1);
             }
         } catch (final IOException ioe) {
@@ -309,14 +305,15 @@ public class SubstitutorProducer {
                 final var text = placeholder.substring("bundlebee-digest:".length());
                 final int sep1 = text.indexOf(',');
                 final int sep2 = text.indexOf(',', sep1 + 1);
-                final var digest = MessageDigest.getInstance(text.substring(sep1 + 1, sep2).strip())
+                final var digest = MessageDigest.getInstance(
+                                text.substring(sep1 + 1, sep2).strip())
                         .digest(text.substring(sep2 + 1).strip().getBytes(StandardCharsets.UTF_8));
                 final var encoding = text.substring(0, sep1).strip();
                 switch (encoding.toLowerCase(ROOT)) {
                     case "base64":
                         return Base64.getEncoder().encodeToString(digest);
                     default:
-                        throw new IllegalArgumentException("Unknown encoding: '" + encoding + "'");
+                        throw new IllegalArgumentException("Unknown encoding: \'" + encoding + "\'");
                 }
             } catch (final NoSuchAlgorithmException e) {
                 throw new IllegalStateException(e);
@@ -348,15 +345,14 @@ public class SubstitutorProducer {
                     .orElse(null);
         }
         if (placeholder.startsWith("kubeconfig.cluster.") && placeholder.endsWith(".ip")) {
-            final var name = placeholder.substring("kubeconfig.cluster.".length(), placeholder.length() - ".ip".length());
-            return URI.create(
-                            kubeClient.getLoadedKubeConfig()
-                                    .getClusters().stream()
-                                    .filter(c -> Objects.equals(c.getName(), name))
-                                    .findFirst()
-                                    .orElseThrow(() -> new IllegalArgumentException("No cluster named '" + name + "' found"))
-                                    .getCluster()
-                                    .getServer())
+            final var name =
+                    placeholder.substring("kubeconfig.cluster.".length(), placeholder.length() - ".ip".length());
+            return URI.create(kubeClient.getLoadedKubeConfig().getClusters().stream()
+                            .filter(c -> Objects.equals(c.getName(), name))
+                            .findFirst()
+                            .orElseThrow(() -> new IllegalArgumentException("No cluster named \'" + name + "\' found"))
+                            .getCluster()
+                            .getServer())
                     .getHost();
         }
         if ("timestamp".equals(placeholder)) {
@@ -384,45 +380,56 @@ public class SubstitutorProducer {
                 return Scripts.execute(
                         script,
                         resourceContent == null ? null : placeholder.substring(placeholder.lastIndexOf('.') + 1),
-                        beanManager);
+                        container);
             } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         }
-
         // depending data key entry name we can switch the separator depending first one
         if (placeholder.startsWith("kubernetes.")) {
-            final var value = findKubernetesValue(placeholder, "\\.");
+            final var value = findKubernetesValue(placeholder, DOT);
             if (value != null) {
                 return value;
             }
         } else if (placeholder.startsWith("kubernetes/")) {
-            final var value = findKubernetesValue(placeholder, "/");
+            final var value = findKubernetesValue(placeholder, SLASH);
             if (value != null) {
                 return value;
             }
         }
-
+        // Descriptor preparation installs the merged manifest/dependency context on this thread.
+        // Read that channel directly: Configuration can also contain higher-priority global sources.
+        final var contextual = threadLocalConfigSource.get(placeholder);
+        if (contextual != null) {
+            return contextual;
+        }
         if (id != null) {
             final var custom = byIdContextualPlaceholders.get(id);
-            if (custom != null) {
+            if (custom != null && custom.containsKey(placeholder)) {
                 return custom.get(placeholder);
             }
         }
-
-        return config.getOptionalValue(placeholder, String.class).orElse(null);
+        final var invocation = id == null
+                ? invocationPlaceholders
+                : invocationPlaceholdersById.getOrDefault(id, invocationPlaceholders);
+        final var invocationValue = invocation.get(placeholder);
+        if (invocationValue != null) {
+            return invocationValue;
+        }
+        return config.get(placeholder).orElse(null);
     }
 
     private String doDecipher(final String string) {
         final var confAndValue = string.substring("bundlebee-decipher:".length());
-        final int sep = confAndValue.lastIndexOf(','); // last cause value is base64 encoded so it enables a master password placeholder with a comma
+        // last cause value is base64 encoded so it enables a master password placeholder with a comma
+        final int sep = confAndValue.lastIndexOf(',');
         if (sep < 0) {
             throw new IllegalArgumentException("Usage: {{bundlebee-decipher:$masterKeyPlaceholder,$cipheredValue}}");
         }
         // todo: enable to cache the codec but should only be for a short duration or single apply/delete command
         return new SimpleCodec(SimpleCodecConfiguration.builder()
-                .masterPassword(confAndValue.substring(0, sep))
-                .build())
+                        .masterPassword(confAndValue.substring(0, sep))
+                        .build())
                 .decrypt(confAndValue.substring(sep + 1).strip());
     }
 
@@ -432,8 +439,7 @@ public class SubstitutorProducer {
         if (Files.exists(path)) {
             return Files.readAllBytes(path);
         }
-        try (final var stream = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream(name)) {
+        try (var stream = Thread.currentThread().getContextClassLoader().getResourceAsStream(name)) {
             if (stream == null) {
                 return null;
             }
@@ -441,15 +447,20 @@ public class SubstitutorProducer {
         }
     }
 
-    private String findKubernetesValue(final String key, final String sep) {
+    private String findKubernetesValue(final String key, final Pattern sep) {
         // depending the key we should accept both
-        final var segments = key.split(sep);
+        final var segments = sep.split(key);
         switch (segments.length) {
             case 8:
-            case 9: // adds timeout in last segment
-            case 10: // adds an indent to prefix all new lines (except first one) in last segment
-                // kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry name>[.<timeout in seconds>]
-                if ("serviceaccount".equals(segments[2]) && "secrets".equals(segments[4]) && "data".equals(segments[6])) {
+            // adds timeout in last segment
+            case 9:
+            case // adds an indent to prefix all new lines (except first one) in last segment
+            10:
+                // kubernetes.<namespace>.serviceaccount.<account name>.secrets.<secret name prefix>.data.<entry
+                // name>[.<timeout in seconds>]
+                if ("serviceaccount".equals(segments[2])
+                        && "secrets".equals(segments[4])
+                        && "data".equals(segments[6])) {
                     final var namespace = segments[1];
                     final var account = segments[3];
                     final var secretPrefix = segments[5];
@@ -457,72 +468,82 @@ public class SubstitutorProducer {
                     final int timeout = segments.length == 9 ? Integer.parseInt(segments[8]) : 120;
                     final var secret = findSecret(namespace, account, secretPrefix, dataName, timeout);
                     if (segments.length == 10) {
-                        return indent(secret, IntStream.range(0, Integer.parseInt(segments[9])).mapToObj(i -> " ").collect(joining()), false);
+                        return indent(
+                                secret,
+                                IntStream.range(0, Integer.parseInt(segments[9]))
+                                        .mapToObj(i -> " ")
+                                        .collect(joining()),
+                                false);
                     }
                     return secret;
                 }
                 break;
             default:
-                // try in config
         }
         return null;
     }
 
     private String indent(final String secret, final String indent, final boolean indentFirstLine) {
-        try (final var reader = new BufferedReader(new StringReader(secret))) {
+        try (var reader = new BufferedReader(new StringReader(secret))) {
             final var lines = reader.lines().collect(toList());
             if (indentFirstLine) {
                 return lines.stream().map(l -> indent + l).collect(joining("\n"));
             }
-            return (lines.get(0) + "\n" + lines.stream().skip(1).map(l -> indent + l).collect(joining("\n"))).strip();
+            return (lines.get(0) + "\n"
+                            + lines.stream().skip(1).map(l -> indent + l).collect(joining("\n")))
+                    .strip();
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private String findSecret(final String namespace, final String account, final String secretPrefix,
-                              final String dataKey, final int timeout) {
+    private String findSecret(
+            final String namespace,
+            final String account,
+            final String secretPrefix,
+            final String dataKey,
+            final int timeout) {
         final var end = Instant.now().plusSeconds(timeout);
         int iterations = 0;
         do {
             iterations++;
             try {
-                final var secret = kubeClient
-                        .findServiceAccount(namespace, account)
-                        .thenCompose(serviceAccount -> {
-                            if (!serviceAccount.containsKey("secrets")) {
-                                return completedFuture(null);
-                            }
-                            return serviceAccount
-                                    .getJsonArray("secrets").stream()
-                                    .filter(json -> json.getValueType() == JsonValue.ValueType.OBJECT)
-                                    .map(JsonValue::asJsonObject)
-                                    .filter(it -> it.containsKey("name"))
-                                    .map(it -> it.getString("name"))
-                                    .filter(it -> it.startsWith(secretPrefix))
-                                    .sorted() // be deterministic for the same inputs
-                                    .findFirst()
-                                    .map(secretName -> kubeClient.findSecret(namespace, secretName)
-                                            .thenApply(secretJson -> {
-                                                if (!secretJson.containsKey("data")) {
-                                                    return null;
-                                                }
-                                                final var data = secretJson.getJsonObject("data");
-                                                if (!data.containsKey(dataKey)) {
-                                                    return null;
-                                                }
-                                                final var content = data.getString(dataKey);
-                                                try {
-                                                    return new String(Base64.getDecoder().decode(content), StandardCharsets.UTF_8);
-                                                } catch (final RuntimeException re) {
-                                                    return content;
-                                                }
-                                            }))
-                                    .orElseGet(() -> completedFuture(null));
-                        })
-                        .exceptionally(err -> null)
-                        .toCompletableFuture()
-                        .get();
+                final var secret = // be deterministic for the same inputs
+                        kubeClient
+                                .findServiceAccount(namespace, account)
+                                .thenCompose(serviceAccount -> {
+                                    if (!(serviceAccount.get("secrets") instanceof List<?> secrets)) {
+                                        return completedFuture(null);
+                                    }
+                                    return secrets.stream()
+                                            .filter(it -> it instanceof Map<?, ?>)
+                                            .map(it -> ((Map<?, ?>) it).get("name"))
+                                            .filter(it -> it instanceof String)
+                                            .map(String.class::cast)
+                                            .filter(it -> it.startsWith(secretPrefix))
+                                            .sorted()
+                                            .findFirst()
+                                            .map(secretName -> kubeClient
+                                                    .findSecret(namespace, secretName)
+                                                    .thenApply(secretJson -> {
+                                                        if (!(secretJson.get("data") instanceof Map<?, ?> data)
+                                                                || !(data.get(dataKey) instanceof String content)) {
+                                                            return null;
+                                                        }
+                                                        try {
+                                                            return new String(
+                                                                    Base64.getDecoder()
+                                                                            .decode(content),
+                                                                    StandardCharsets.UTF_8);
+                                                        } catch (final RuntimeException re) {
+                                                            return content;
+                                                        }
+                                                    }))
+                                            .orElseGet(() -> completedFuture(null));
+                                })
+                                .exceptionally(err -> null)
+                                .toCompletableFuture()
+                                .get();
                 if (secret != null) {
                     return secret;
                 }
@@ -538,13 +559,14 @@ public class SubstitutorProducer {
                 Thread.currentThread().interrupt();
                 return null;
             }
-            if (iterations == 20) { // each 5s is more than enough
+            if (iterations == 20) {
+                // each 5s is more than enough
                 log.info("Waiting for " + namespace + "/" + account + "/" + secretPrefix + "/" + dataKey + " secret");
                 iterations = 0;
             }
         } while (Instant.now().isBefore(end));
-        final var error = "Was not able to read secret " +
-                "namespace=" + namespace + "/account=" + account + "/prefix=" + secretPrefix + " in " + timeout + "s";
+        final var error = "Was not able to read secret " + "namespace=" + namespace + "/account=" + account + "/prefix="
+                + secretPrefix + " in " + timeout + "s";
         log.warning(error);
         throw new IllegalStateException(error);
     }
@@ -554,59 +576,79 @@ public class SubstitutorProducer {
             // no-op
         }
 
-        private static String execute(final String content, final String lang, final BeanManager beanManager) {
+        private static String execute(final String content, final String lang, final RuntimeContainer container) {
             final var lg = ofNullable(lang).orElseGet(() -> guessLang(content));
-            final var manager = new javax.script.ScriptEngineManager();
+            final var manager = new ScriptEngineManager();
             var engine = manager.getEngineByExtension(lg);
             if (engine == null) {
                 engine = manager.getEngineByName(lg);
                 if (engine == null) {
                     engine = manager.getEngineByMimeType(lg);
                     if (engine == null) {
-                        throw new IllegalStateException("" +
-                                "No engine matching lang: '" + lg + "', " +
-                                "add a comment line with `bundlebee.language: <lang>` to refine the language or " +
-                                "ensure your JSR223 implementation is in the classpath.");
+                        throw new IllegalStateException("No engine matching lang: \'" + lg + "\', "
+                                + "add a comment line with `bundlebee.language: <lang>` to refine the language or "
+                                + "ensure your JSR223 implementation is in the classpath.");
                     }
                 }
             }
             final var bindings = engine.createBindings();
-            bindings.put("lookupByName", (Function<String, Object>) name -> {
-                final Bean<?> bean = beanManager.resolve(beanManager.getBeans(name));
-                if (bean == null) {
-                    throw new IllegalArgumentException("No bean '" + name + "' found.");
-                }
-                // important: on dependent beans it will leak the creation context, accepted cause it is a script and rare but not recommended
-                return beanManager.getReference(bean, bean.getBeanClass(), beanManager.createCreationalContext(null));
-            });
+            final var instances = new ArrayList<Instance<?>>();
             bindings.put("lookupByType", (Function<Class<?>, Object>) type -> {
-                final Bean<?> bean = beanManager.resolve(beanManager.getBeans(type));
-                if (bean == null) {
-                    throw new IllegalArgumentException("No bean " + type + " found.");
-                }
-                // important: on dependent beans it will leak the creation context, accepted cause it is a script and rare but not recommended
-                return beanManager.getReference(bean, bean.getBeanClass(), beanManager.createCreationalContext(null));
+                final var instance = container.lookup(type);
+                instances.add(instance);
+                return instance.instance();
             });
+            Throwable evaluationFailure = null;
             try {
-                return ofNullable(engine.eval(content, bindings)).map(String::valueOf).orElse(null);
-            } catch (final javax.script.ScriptException e) {
+                return ofNullable(engine.eval(content, bindings))
+                        .map(String::valueOf)
+                        .orElse(null);
+            } catch (final ScriptException e) {
                 Logger.getLogger(Scripts.class.getName()).log(SEVERE, e, e::getMessage);
-                throw new IllegalStateException(e);
+                final var failure = new IllegalStateException(e);
+                evaluationFailure = failure;
+                throw failure;
+            } catch (final RuntimeException | Error e) {
+                evaluationFailure = e;
+                throw e;
+            } finally {
+                Throwable failure = null;
+                for (int i = instances.size() - 1; i >= 0; i--) {
+                    try {
+                        instances.get(i).close();
+                    } catch (final RuntimeException | Error e) {
+                        if (failure == null) {
+                            failure = e;
+                        } else {
+                            failure.addSuppressed(e);
+                        }
+                    }
+                }
+                if (failure != null) {
+                    if (evaluationFailure != null) {
+                        evaluationFailure.addSuppressed(failure);
+                    } else if (failure instanceof RuntimeException runtimeException) {
+                        throw runtimeException;
+                    } else {
+                        throw (Error) failure;
+                    }
+                }
             }
         }
 
         private static String guessLang(final String content) {
             final var marker = "bundlebee.language:";
-            return Stream.of(content.split("\n"))
+            return Stream.of(NEWLINE.split(content))
                     .map(String::trim)
                     .filter(it -> it.contains(marker))
-                    .map(it -> it.substring(it.indexOf(marker + marker.length())).trim())
+                    .map(it ->
+                            it.substring(it.indexOf(marker) + marker.length()).trim())
                     .findFirst()
                     .orElse("js");
         }
     }
 
-    private interface ThrowingBooleanSupplier {
-        boolean get() throws Throwable;
+    public Map<String, Map<String, String>> getByIdContextualPlaceholders() {
+        return this.byIdContextualPlaceholders;
     }
 }

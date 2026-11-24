@@ -15,11 +15,12 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import javax.enterprise.context.Dependent;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Set;
 
-@Dependent
+@DefaultScoped
 public class AccessToCreatePods extends AccessToResources {
+
     public AccessToCreatePods() {
         super(
                 Set.of("pods", "deployments", "statefulsets", "replicasets", "cronjob", "jobs", "daemonsets"),
@@ -34,8 +35,8 @@ public class AccessToCreatePods extends AccessToResources {
 
     @Override
     public String description() {
-        return "Indicates when a subject (Group/User/ServiceAccount) has create access to Pods.\n" +
-                "CIS Benchmark 5.1.4: The ability to create pods in a cluster opens up possibilities for privilege escalation and should be restricted, where possible.";
+        return "Indicates when a subject (Group/User/ServiceAccount) has create access to Pods.\n"
+                + "CIS Benchmark 5.1.4: The ability to create pods in a cluster opens up possibilities for privilege escalation and should be restricted, where possible.";
     }
 
     @Override

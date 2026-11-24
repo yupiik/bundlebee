@@ -15,12 +15,37 @@
  */
 package io.yupiik.bundlebee.helm;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.yupiik.bundlebee.helm.fn.B64EncFunc;
+import io.yupiik.bundlebee.helm.fn.CatFunc;
+import io.yupiik.bundlebee.helm.fn.ContainsFunc;
+import io.yupiik.bundlebee.helm.fn.DefaultFunc;
+import io.yupiik.bundlebee.helm.fn.DictFunc;
+import io.yupiik.bundlebee.helm.fn.HasPrefixFunc;
+import io.yupiik.bundlebee.helm.fn.HasSuffixFunc;
+import io.yupiik.bundlebee.helm.fn.IndentFunc;
+import io.yupiik.bundlebee.helm.fn.ListFunc;
+import io.yupiik.bundlebee.helm.fn.LowerFunc;
+import io.yupiik.bundlebee.helm.fn.NindentFunc;
+import io.yupiik.bundlebee.helm.fn.NospaceFunc;
+import io.yupiik.bundlebee.helm.fn.PluralFunc;
+import io.yupiik.bundlebee.helm.fn.QuoteFunc;
+import io.yupiik.bundlebee.helm.fn.RepeatFunc;
+import io.yupiik.bundlebee.helm.fn.ReplaceFunc;
+import io.yupiik.bundlebee.helm.fn.TitleFunc;
+import io.yupiik.bundlebee.helm.fn.TrimFunc;
+import io.yupiik.bundlebee.helm.fn.TrimPrefixFunc;
+import io.yupiik.bundlebee.helm.fn.TrimSuffixFunc;
+import io.yupiik.bundlebee.helm.fn.TruncFunc;
+import io.yupiik.bundlebee.helm.fn.UpperFunc;
+import io.yupiik.bundlebee.helm.fn.WrapFunc;
+import io.yupiik.fusion.framework.api.configuration.Configuration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class HelmRendererTest {
 
@@ -28,54 +53,45 @@ class HelmRendererTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        renderer = new HelmRenderer();
-
-        // Inject function producer
-        final var functionProducerField = HelmRenderer.class.getDeclaredField("functionProducer");
-        functionProducerField.setAccessible(true);
-        final var functionProducer = new HelmFunctionProducer();
-        final var functionsField = HelmFunctionProducer.class.getDeclaredField("functions");
-        functionsField.setAccessible(true);
-        final var functions = new java.util.LinkedHashMap<String, HelmFunction>();
-        for (final var fn : java.util.List.<HelmFunction>of(
-                new io.yupiik.bundlebee.helm.fn.TrimFunc(),
-                new io.yupiik.bundlebee.helm.fn.TrimPrefixFunc(),
-                new io.yupiik.bundlebee.helm.fn.TrimSuffixFunc(),
-                new io.yupiik.bundlebee.helm.fn.UpperFunc(),
-                new io.yupiik.bundlebee.helm.fn.LowerFunc(),
-                new io.yupiik.bundlebee.helm.fn.TitleFunc(),
-                new io.yupiik.bundlebee.helm.fn.RepeatFunc(),
-                new io.yupiik.bundlebee.helm.fn.ReplaceFunc(),
-                new io.yupiik.bundlebee.helm.fn.ContainsFunc(),
-                new io.yupiik.bundlebee.helm.fn.HasPrefixFunc(),
-                new io.yupiik.bundlebee.helm.fn.HasSuffixFunc(),
-                new io.yupiik.bundlebee.helm.fn.QuoteFunc(),
-                new io.yupiik.bundlebee.helm.fn.NospaceFunc(),
-                new io.yupiik.bundlebee.helm.fn.IndentFunc(),
-                new io.yupiik.bundlebee.helm.fn.NindentFunc(),
-                new io.yupiik.bundlebee.helm.fn.PluralFunc(),
-                new io.yupiik.bundlebee.helm.fn.CatFunc(),
-                new io.yupiik.bundlebee.helm.fn.WrapFunc(),
-                new io.yupiik.bundlebee.helm.fn.DefaultFunc(),
-                new io.yupiik.bundlebee.helm.fn.DictFunc(),
-                new io.yupiik.bundlebee.helm.fn.ListFunc(),
-                new io.yupiik.bundlebee.helm.fn.B64EncFunc(),
-                new io.yupiik.bundlebee.helm.fn.TruncFunc())) {
-            functions.put(fn.name(), fn);
+        final var functions = new ArrayList<HelmFunction>();
+        for (final var fn : List.<HelmFunction>of(
+                new TrimFunc(),
+                new TrimPrefixFunc(),
+                new TrimSuffixFunc(),
+                new UpperFunc(),
+                new LowerFunc(),
+                new TitleFunc(),
+                new RepeatFunc(),
+                new ReplaceFunc(),
+                new ContainsFunc(),
+                new HasPrefixFunc(),
+                new HasSuffixFunc(),
+                new QuoteFunc(),
+                new NospaceFunc(),
+                new IndentFunc(),
+                new NindentFunc(),
+                new PluralFunc(),
+                new CatFunc(),
+                new WrapFunc(),
+                new DefaultFunc(),
+                new DictFunc(),
+                new ListFunc(),
+                new B64EncFunc(),
+                new TruncFunc())) {
+            functions.add(fn);
         }
-        functionsField.set(functionProducer, functions);
-        functionProducerField.set(renderer, functionProducer);
-
-        // Inject chart loader
-        final var chartLoaderField = HelmRenderer.class.getDeclaredField("chartLoader");
-        chartLoaderField.setAccessible(true);
-        chartLoaderField.set(renderer, new HelmChartLoader());
+        renderer = new HelmRenderer(
+                new HelmFunctionRegistry(functions),
+                new HelmChartLoader(null, Configuration.of(Map.of())),
+                () -> "default");
     }
 
     @Test
     void renderTestChart() throws Exception {
         final var chartPath = "src/test/resources/helm/test-chart";
-        final var results = renderer.render(chartPath, Map.of(), "my-release", "default").toCompletableFuture().get();
+        final var results = renderer.render(chartPath, Map.of(), "my-release", "default")
+                .toCompletableFuture()
+                .get();
 
         final var allContent = String.join("\n---\n", results);
         assertTrue(results.size() >= 2, "Should render at least deployment and service");
@@ -92,7 +108,8 @@ class HelmRendererTest {
     void renderWithPlaceholderOverrides() throws Exception {
         final var chartPath = "src/test/resources/helm/test-chart";
         final var results = renderer.render(chartPath, Map.of("service.type", "LoadBalancer"), "test", "kube-system")
-                .toCompletableFuture().get();
+                .toCompletableFuture()
+                .get();
 
         final var allContent = String.join("\n---\n", results);
         assertTrue(allContent.contains("LoadBalancer"), "Should use overridden service type");

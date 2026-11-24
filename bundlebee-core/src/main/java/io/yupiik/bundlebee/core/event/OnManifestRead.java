@@ -16,9 +16,41 @@
 package io.yupiik.bundlebee.core.event;
 
 import io.yupiik.bundlebee.core.descriptor.Manifest;
-import lombok.Data;
+import java.util.Objects;
 
-@Data
 public class OnManifestRead {
     private final Manifest manifest;
+
+    public OnManifestRead(final Manifest manifest) {
+        this.manifest = manifest;
+    }
+
+    public Manifest getManifest() {
+        return this.manifest;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof OnManifestRead other)) {
+            return false;
+        }
+        return other.canEqual(this) && Objects.equals(this.getManifest(), other.getManifest());
+    }
+
+    protected boolean canEqual(final Object other) {
+        return other instanceof OnManifestRead;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(this.getManifest());
+    }
+
+    @Override
+    public String toString() {
+        return "OnManifestRead(manifest=" + this.getManifest() + ")";
+    }
 }

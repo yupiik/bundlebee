@@ -15,23 +15,16 @@
  */
 package io.yupiik.bundlebee.core.command.model.sarif;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.json.bind.annotation.JsonbProperty;
-import javax.json.bind.annotation.JsonbPropertyOrder;
+import io.yupiik.fusion.framework.build.api.json.JsonModel;
+import io.yupiik.fusion.framework.build.api.json.JsonProperty;
 import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@JsonbPropertyOrder({"version", "$schema", "runs"})
-public class Sarif {
-    private String version;
-
-    @JsonbProperty("$schema")
-    private String schema;
-
-    private List<Run> runs;
+@JsonModel
+public record Sarif(
+        @JsonProperty(order = 0) String version,
+        @JsonProperty(order = 1, value = "$schema") String schema,
+        @JsonProperty(order = 2) List<Run> runs) {
+    public Sarif {
+        runs = runs == null ? null : List.copyOf(runs);
+    }
 }

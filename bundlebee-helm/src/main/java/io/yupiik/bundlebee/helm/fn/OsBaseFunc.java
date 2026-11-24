@@ -15,15 +15,14 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.nio.file.Paths;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Path
-//metadata:end
+// metadata:end
 @Description("Returns the last element of a filepath (OS)")
 public class OsBaseFunc implements io.yupiik.bundlebee.helm.HelmFunction {
     @Override

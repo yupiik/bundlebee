@@ -16,13 +16,13 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonObject;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.Map;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class UnsafeProcMount extends ContainerValueValidator {
+
     @Override
     public String name() {
         return "unsafe-proc-mount";
@@ -35,9 +35,9 @@ public class UnsafeProcMount extends ContainerValueValidator {
 
     @Override
     public String remediation() {
-        return "Ensure container does not unsafely exposes parts of /proc by setting procMount=Default. \n" +
-                "Unmasked ProcMount bypasses the default masking behavior of the container runtime.\n" +
-                "See https://kubernetes.io/docs/concepts/security/pod-security-standards/ for more details.";
+        return "Ensure container does not unsafely exposes parts of /proc by setting procMount=Default. \n"
+                + "Unmasked ProcMount bypasses the default masking behavior of the container runtime.\n"
+                + "See https://kubernetes.io/docs/concepts/security/pod-security-standards/ for more details.";
     }
 
     @Override
@@ -46,9 +46,13 @@ public class UnsafeProcMount extends ContainerValueValidator {
     }
 
     @Override
-    protected Stream<LintError> validate(final JsonObject container, final LintableDescriptor descriptor) {
-        return Stream.ofNullable(container.getJsonObject("securityContext"))
-                .filter(it -> "Unmasked".equals(it.getString("procMount", "")))
+    protected Stream<LintError> validate(final Map<?, ?> container, final LintableDescriptor descriptor) {
+        return Stream.ofNullable(
+                        (container.get("securityContext") instanceof Map<?, ?> securityContextValue
+                                ? securityContextValue
+                                : null))
+                .filter(it ->
+                        "Unmasked".equals((it.get("procMount") instanceof String procMountValue ? procMountValue : "")))
                 .map(it -> new LintError(LintError.LintLevel.ERROR, "procMount=Unmasked is used"));
     }
 }

@@ -15,24 +15,23 @@
  */
 package io.yupiik.bundlebee.helm;
 
-import lombok.extern.java.Log;
-
-import java.util.ArrayList;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 /**
  * Renders a parsed Go template AST against a context.
  * Supports variable resolution, pipelines, conditionals, ranges, and function calls
  * via the CDI-discovered {@link HelmFunction} registry.
  */
-@Log
 public class HelmGoTemplateRenderer {
-
+    private final Logger log = Logger.getLogger(HelmGoTemplateRenderer.class.getName());
     private final Map<String, HelmFunction> functionsMap;
     private final Map<String, List<HelmGoTemplateNode>> defines = new LinkedHashMap<>();
     private final Deque<Map<String, Object>> scopeStack = new ArrayDeque<>();
@@ -91,8 +90,9 @@ public class HelmGoTemplateRenderer {
                     setVariableInEnclosingScope(assignNode.getVariable(), value);
                 }
             } else if (node instanceof HelmGoTemplateNode.DefineNode) {
-                // DefineNodes are handled by registerDefines() - they don't produce output
-            } else if (node instanceof HelmGoTemplateNode.TemplateNode) {
+            } else
+            // DefineNodes are handled by registerDefines() - they don't produce output
+            if (node instanceof HelmGoTemplateNode.TemplateNode) {
                 renderTemplate((HelmGoTemplateNode.TemplateNode) node, sb);
             } else if (node instanceof HelmGoTemplateNode.BlockNode) {
                 final var blockNode = (HelmGoTemplateNode.BlockNode) node;
@@ -139,11 +139,9 @@ public class HelmGoTemplateRenderer {
         if (items == null) {
             return;
         }
-
         // Check if we have key-value destructuring
         final var keyVar = rangeNode.getKeyVar();
         final var valueVar = rangeNode.getValueVar();
-
         if (iterable instanceof Map && (keyVar != null || valueVar != null)) {
             // Map iteration with key-value destructuring
             final var map = (Map<?, ?>) iterable;
@@ -170,7 +168,6 @@ public class HelmGoTemplateRenderer {
             }
             return;
         }
-
         // Single value or list iteration
         int idx = 0;
         for (final var item : items) {
@@ -212,7 +209,7 @@ public class HelmGoTemplateRenderer {
         final var name = templateNode.getName();
         final var body = defines.get(name);
         if (body == null) {
-            log.fine(() -> "Template '" + name + "' not found, skipping");
+            log.fine(() -> "Template \'" + name + "\' not found, skipping");
             return;
         }
         if (templateNode.getPipeline() != null) {
@@ -386,7 +383,7 @@ public class HelmGoTemplateRenderer {
         final var name = coerceString(evalNode(fn.getArgs().get(0)));
         final var body = defines.get(name);
         if (body == null) {
-            log.fine(() -> "Include template '" + name + "' not found");
+            log.fine(() -> "Include template \'" + name + "\' not found");
             return "";
         }
         final var data = fn.getArgs().size() > 1 ? evalNode(fn.getArgs().get(1)) : null;
@@ -413,7 +410,9 @@ public class HelmGoTemplateRenderer {
         if (templateStr.isEmpty()) {
             return "";
         }
-        final var data = fn.getArgs().size() > 1 ? evalNode(fn.getArgs().get(1)) : currentScope().get(".");
+        final var data = fn.getArgs().size() > 1
+                ? evalNode(fn.getArgs().get(1))
+                : currentScope().get(".");
         final var tplScope = new HashMap<String, Object>();
         tplScope.put(".", data);
         tplScope.put("$", scopeStack.peek().get("$"));
@@ -434,7 +433,7 @@ public class HelmGoTemplateRenderer {
     private Object evalIncludeByName(final String templateName, final Object pipedValue) {
         final var body = defines.get(templateName);
         if (body == null) {
-            log.fine(() -> "Include template '" + templateName + "' not found");
+            log.fine(() -> "Include template \'" + templateName + "\' not found");
             return "";
         }
         final var includeScope = new HashMap<String, Object>();
@@ -481,7 +480,7 @@ public class HelmGoTemplateRenderer {
         final var name = coerceString(evalNode(fn.getArgs().get(0)));
         final var body = defines.get(name);
         if (body == null) {
-            log.fine(() -> "Include template '" + name + "' not found");
+            log.fine(() -> "Include template \'" + name + "\' not found");
             return "";
         }
         final var data = fn.getArgs().size() > 1 ? evalNode(fn.getArgs().get(1)) : pipedValue;
@@ -669,7 +668,10 @@ public class HelmGoTemplateRenderer {
             return new ArrayList<>(((Map<?, ?>) obj).values());
         }
         if (obj instanceof String) {
-            return ((String) obj).chars().mapToObj(c -> String.valueOf((char) c)).collect(java.util.stream.Collectors.toList());
+            return ((String) obj)
+                    .chars()
+                    .mapToObj(c -> String.valueOf((char) c))
+                    .collect(Collectors.toList());
         }
         return null;
     }

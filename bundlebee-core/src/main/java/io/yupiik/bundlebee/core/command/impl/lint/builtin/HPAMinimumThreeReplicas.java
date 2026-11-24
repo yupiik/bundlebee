@@ -15,19 +15,17 @@
  */
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
-import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
 
-import javax.enterprise.context.Dependent;
-import javax.json.JsonNumber;
-import javax.json.JsonValue;
+import io.yupiik.bundlebee.core.command.impl.lint.LintError;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static io.yupiik.bundlebee.core.command.impl.lint.LintError.LintLevel.WARNING;
-
-@Dependent
+@DefaultScoped
 public class HPAMinimumThreeReplicas extends CheckValue {
+
     public HPAMinimumThreeReplicas() {
         super(Set.of("HorizontalPodAutoscaler"), Map.of("HorizontalPodAutoscaler", "/spec/minReplicas"), false);
     }
@@ -48,9 +46,9 @@ public class HPAMinimumThreeReplicas extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        return value.getValueType() == JsonValue.ValueType.NUMBER && ((JsonNumber) value).intValue() < 3 ?
-                Stream.of(new LintError(WARNING, "HorizontalPodAutoscaler minimum replicas too low (should be >= 3)")) :
-                Stream.empty();
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        return value instanceof Number && ((Number) value).intValue() < 3
+                ? Stream.of(new LintError(WARNING, "HorizontalPodAutoscaler minimum replicas too low (should be >= 3)"))
+                : Stream.empty();
     }
 }

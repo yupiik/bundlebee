@@ -15,10 +15,19 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static java.util.logging.Level.INFO;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.yupiik.bundlebee.core.BundleBee;
 import io.yupiik.bundlebee.core.test.BundleBeeExtension;
 import io.yupiik.bundlebee.core.test.CommandExecutor;
 import io.yupiik.bundlebee.core.test.http.SpyingResponseLocator;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -29,19 +38,9 @@ import org.talend.sdk.component.junit.http.internal.impl.ResponseImpl;
 import org.talend.sdk.component.junit.http.junit5.HttpApi;
 import org.talend.sdk.component.junit.http.junit5.HttpApiInject;
 
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.Predicate;
-
-import static java.util.logging.Level.INFO;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @HttpApi(useSsl = true)
 class HelmApplyDeleteTest {
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
@@ -52,38 +51,40 @@ class HelmApplyDeleteTest {
     void applyHelmChart(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
-                .launch("apply", "--alveolus", "ApplyCommandTest.helm"));
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee().launch("apply", "--bundlebee-apply-alveolus", "ApplyCommandTest.helm"));
         assertTrue(logs.contains("Deploying 'ApplyCommandTest.helm'"), logs);
         assertTrue(logs.contains("Applying"), logs);
         // Deployment and Service should be applied (2 resources)
-        assertTrue(spyingResponseLocator.getRequests().size() >= 2,
-                "Should apply at least deployment and service, got: " + spyingResponseLocator.getRequests().size());
+        assertTrue(
+                spyingResponseLocator.getRequests().size() >= 2,
+                "Should apply at least deployment and service, got: "
+                        + spyingResponseLocator.getRequests().size());
     }
 
     @Test
     void deleteHelmChart(final CommandExecutor executor, final TestInfo info) {
         final var spyingResponseLocator = newSpyingHandler(info);
         handler.setResponseLocator(spyingResponseLocator);
-
-        final var logs = executor.wrap(handler, INFO, () -> new BundleBee()
-                .launch("delete", "--alveolus", "DeleteCommandTest.helm"));
-
+        final var logs = executor.wrap(
+                handler,
+                INFO,
+                () -> new BundleBee().launch("delete", "--bundlebee-delete-alveolus", "DeleteCommandTest.helm"));
         assertTrue(logs.contains("Deleting 'ApplyCommandTest.helm'"), logs);
         assertTrue(logs.contains("Deleting 'DeleteCommandTest.helm'"), logs);
         // DELETE requests for the resources
-        assertTrue(spyingResponseLocator.getRequests().size() >= 2,
-                "Should delete at least deployment and service");
+        assertTrue(spyingResponseLocator.getRequests().size() >= 2, "Should delete at least deployment and service");
     }
 
     private HelmSpyingResponseLocator newSpyingHandler(final TestInfo info) {
-        return new HelmSpyingResponseLocator(info.getTestClass().orElseThrow().getName()
-                + "_" + info.getTestMethod().orElseThrow().getName());
+        return new HelmSpyingResponseLocator(info.getTestClass().orElseThrow().getName() + "_"
+                + info.getTestMethod().orElseThrow().getName());
     }
 
     private static class HelmSpyingResponseLocator extends SpyingResponseLocator {
+
         private final List<Request> requests = new CopyOnWriteArrayList<>();
 
         public HelmSpyingResponseLocator(final String s) {
@@ -95,8 +96,12 @@ class HelmApplyDeleteTest {
         }
 
         @Override
-        protected Optional<Response> doFind(final Request request, final String pref, final ClassLoader loader,
-                                            final Predicate<String> headerFilter, final boolean exactMatching) {
+        protected Optional<Response> doFind(
+                final Request request,
+                final String pref,
+                final ClassLoader loader,
+                final Predicate<String> headerFilter,
+                final boolean exactMatching) {
             switch (request.method()) {
                 case "CONNECT":
                     return Optional.empty();

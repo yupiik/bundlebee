@@ -29,25 +29,47 @@ env:
 
 jobs:
   build:
-    name: Main Build
+    name: Build JDK ${{ matrix.build-java }} / runtime Java ${{ matrix.runtime-java }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build-java: '21'
+            runtime-java: '17'
+          - build-java: '21'
+            runtime-java: '21'
+          - build-java: '25'
+            runtime-java: '25'
     steps:
       - name: Clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: Cache Maven Repository
         uses: actions/cache@v6
         with:
           path: |
             /home/runner/work/bundlebee/bundlebee/.m2
             /home/runner/work/bundlebee/bundlebee/bundlebee-documentation/src/main/minisite/assets/generated/kubernetes
-          key: m2_repository
-      - name: Set up JDK
+          key: m2_repository_build_${{ matrix.build-java }}_runtime_${{ matrix.runtime-java }}
+      - name: Set up test runtime JDK
         uses: actions/setup-java@v6
         with:
           distribution: 'zulu'
-          java-version: '21'
+          java-version: ${{ matrix.runtime-java }}
           cache: 'maven'
-      - name: Build
-        run: mvn install -Pnative -Dm2.location=/home/runner/work/bundlebee/bundlebee/.m2
+      - name: Preserve test runtime Java path
+        run: echo "TEST_JAVA=$JAVA_HOME/bin/java" >> "$GITHUB_ENV"
+      - name: Set up Maven and formatting JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'zulu'
+          java-version: ${{ matrix.build-java }}
+      - name: Build and test (separate build JDK and runtime)
+        run: mvn install -Djvm="$TEST_JAVA" -Dm2.location=/home/runner/work/bundlebee/bundlebee/.m2
+      - name: Verify executable packaging (network disabled)
+        run: mvn -B -f packaging-verification/pom.xml test -Djvm="$TEST_JAVA" -Dbundlebee.root="$PWD" -Dbundlebee.offline=true
+      - name: Native build
+        if: matrix.build-java == '21' && matrix.runtime-java == '21'
+        run: mvn package -pl bundlebee-core -am -Pnative -DskipTests -Dm2.location=/home/runner/work/bundlebee/bundlebee/.m2
       - name: Remove Snapshots Before Caching
         run: find /home/runner/work/bundlebee/bundlebee/.m2 -name '*SNAPSHOT' | xargs rm -Rf

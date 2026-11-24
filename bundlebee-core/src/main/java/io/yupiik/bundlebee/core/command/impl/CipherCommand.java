@@ -15,31 +15,33 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
-import io.yupiik.bundlebee.core.command.Executable;
-import io.yupiik.bundlebee.core.configuration.Description;
-import io.yupiik.tools.codec.simple.SimpleCodec;
-import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
-import lombok.extern.java.Log;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-
-import javax.enterprise.context.Dependent;
-import javax.inject.Inject;
-import java.util.concurrent.CompletionStage;
-
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-@Log
-@Dependent
-public class CipherCommand implements Executable {
-    @Inject
-    @Description("Master password..")
-    @ConfigProperty(name = "bundlebee.cipher.masterPassword", defaultValue = UNSET)
-    private String masterPassword;
+import io.yupiik.bundlebee.core.command.Executable;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import io.yupiik.fusion.framework.build.api.cli.Command;
+import io.yupiik.fusion.framework.build.api.configuration.Property;
+import io.yupiik.fusion.framework.build.api.configuration.RootConfiguration;
+import io.yupiik.tools.codec.simple.SimpleCodec;
+import io.yupiik.tools.codec.simple.SimpleCodecConfiguration;
+import java.util.concurrent.CompletionStage;
+import java.util.logging.Logger;
 
-    @Inject
-    @Description("Value to cipher.")
-    @ConfigProperty(name = "bundlebee.cipher.value", defaultValue = UNSET)
-    private String value;
+@DefaultScoped
+@Command(
+        name = "cipher",
+        description =
+                "Enables to cipher a value using `AES/CBC/PKCS5Padding` algorithm with a master password. It can then be used as a placeholder with the syntax `{{bundlebee-decipher:{{my.master.password}},$cipheredValue}}`.")
+public class CipherCommand implements Executable {
+    private final Logger log = Logger.getLogger(CipherCommand.class.getName());
+
+    public CipherCommand(final Options options) {
+        this.masterPassword = options.masterPassword();
+        this.value = options.value();
+    }
+
+    private final String masterPassword;
+    private final String value;
 
     @Override
     public String name() {
@@ -57,7 +59,24 @@ public class CipherCommand implements Executable {
             throw new IllegalArgumentException("Missing master password or value to decipher, ensure both are set.");
         }
         // not a lambda to fail if the ciphering fails even if it is not logged
-        log.info(new SimpleCodec(SimpleCodecConfiguration.builder().masterPassword(masterPassword).build()).encrypt(value.strip()));
+        log.info(new SimpleCodec(SimpleCodecConfiguration.builder()
+                        .masterPassword(masterPassword)
+                        .build())
+                .encrypt(value.strip()));
         return completedFuture(null);
     }
+
+    @RootConfiguration("-")
+    public record Options(
+            @Property(
+                    value = "bundlebee.cipher.masterPassword",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation = "Master password..")
+            String masterPassword,
+
+            @Property(
+                    value = "bundlebee.cipher.value",
+                    defaultValue = "\"" + UNSET + "\"",
+                    documentation = "Value to cipher.")
+            String value) {}
 }

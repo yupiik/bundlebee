@@ -36,6 +36,14 @@
             "image": "yupiik/bundlebee/operator:${project.version}",
             "env": [
               {
+                "name": "OPERATOR_ENABLED",
+                "value": "true"
+              },
+              {
+                "name": "FUSION_LAUNCHER_USEHOOK",
+                "value": "true"
+              },
+              {
                 "name": "BUNDLEBEE_KUBE_DRYRUN",
                 "value": "{{bundlebee.operator.deployment.dryRun:-false}}"
               },
@@ -56,8 +64,12 @@
                 "value": "{{bundlebee.operator.deployment.http.threads:-8}}"
               },
               {
-                "name": "KUBECONFIG",
-                "value": "{\n  \"apiVersion\": \"v1\",\n  \"kind\": \"Config\",\n  \"current-context\": \"ctx\",\n  \"clusters\": [{\"name\": \"clt\",\"cluster\": {\n    \"certificate-authority\": \"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\",\n    \"server\": \"https://kubernetes.{{bundlebee.operator.namespace:-default}}.svc\"}}],\n  \"contexts\": [{\"name\": \"ctx\",\"context\": {\"cluster\": \"clt\", \"user\": \"sa\",\n    \"namespace\": \"{{bundlebee.operator.namespace:-default}}\"}}],\n  \"users\": [{\"name\": \"sa\",\"user\": {\n    \"tokenFile\": \"/var/run/secrets/kubernetes.io/serviceaccount/token\"}}]\n}"
+                "name": "BUNDLEBEE_OPERATOR_NAMESPACES",
+                "value": "{{bundlebee.operator.namespace:-default}}"
+              },
+              {
+                "name": "BUNDLEBEE_KUBE_KUBECONFIG",
+                "value": "{\n  \"apiVersion\": \"v1\",\n  \"kind\": \"Config\",\n  \"current-context\": \"ctx\",\n  \"clusters\": [{\"name\": \"clt\",\"cluster\": {\n    \"certificate-authority\": \"/var/run/secrets/kubernetes.io/serviceaccount/ca.crt\",\n    \"server\": \"https://kubernetes.default.svc\"}}],\n  \"contexts\": [{\"name\": \"ctx\",\"context\": {\"cluster\": \"clt\", \"user\": \"sa\",\n    \"namespace\": \"{{bundlebee.operator.namespace:-default}}\"}}],\n  \"users\": [{\"name\": \"sa\",\"user\": {\n    \"tokenFile\": \"/var/run/secrets/kubernetes.io/serviceaccount/token\"}}]\n}"
               }
             ]
           }

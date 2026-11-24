@@ -15,19 +15,15 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.ArrayList;
-import java.util.List;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = List
-//metadata:end
+// metadata:end
 @Description("Generates a list of integers from 0 to n-1")
 public class UntilFunc implements HelmFunction {
     @Override
@@ -40,9 +36,7 @@ public class UntilFunc implements HelmFunction {
         if (args == null || args.length < 1 || args[0] == null) {
             throw new IllegalArgumentException("until requires one argument");
         }
-        final var n = args[0] instanceof Integer
-                ? ((Number) args[0]).intValue()
-                : Integer.parseInt(args[0].toString());
+        final var n = args[0] instanceof Integer ? ((Number) args[0]).intValue() : Integer.parseInt(args[0].toString());
         final var result = new ArrayList<Integer>();
         for (var i = 0; i < n; i++) {
             result.add(i);

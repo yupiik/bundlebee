@@ -17,7 +17,6 @@ package io.yupiik.bundlebee.junit5;
 
 import com.sun.net.httpserver.HttpExchange;
 import io.yupiik.bundlebee.junit5.impl.Injectable;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;

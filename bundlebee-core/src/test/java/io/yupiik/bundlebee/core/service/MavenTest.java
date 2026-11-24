@@ -15,49 +15,73 @@
  */
 package io.yupiik.bundlebee.core.service;
 
-import org.apache.openwebbeans.junit5.Cdi;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.AfterAllCallback;
-import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.extension.ExtensionContext;
+import static io.yupiik.bundlebee.core.command.Executable.UNSET;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import javax.inject.Inject;
+import io.yupiik.fusion.httpclient.core.DelegatingHttpClient;
+import java.io.IOException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
-import java.util.concurrent.ExecutionException;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-class SetSystemProperty implements BeforeAllCallback, AfterAllCallback {
-    @Override
-    public void beforeAll(final ExtensionContext context) {
-        System.setProperty("bundlebee.maven.cache", System.getProperty("m2.location", "auto"));
-        System.setProperty("bundlebee.maven.repositories.downloads.enabled", "true");
-        System.setProperty("bundlebee.maven.repositories.snapshot", "https://oss.sonatype.org/content/repositories/snapshots/");
-    }
-
-    @Override
-    public void afterAll(final ExtensionContext context) {
-        System.clearProperty("bundlebee.maven.cache");
-    }
-}
-
-@ExtendWith(SetSystemProperty.class)
-@Cdi
 class MavenTest {
-    @Inject
-    private Maven resolver;
-
     @Test
-    @Disabled("only for manual test with oss sonatype snapshot (when they change certificates for ex)")
-    void resolveRemote() throws ExecutionException, InterruptedException {
-        System.out.println(resolver.findOrDownload("io.yupiik.alveoli:postgres-local:1.0.12-SNAPSHOT").toCompletableFuture().get());
+    void httpTimeoutIsAppliedToTheRequest(@TempDir final Path repository) {
+        final var captured = new AtomicReference<HttpRequest>();
+        try (final var client = new DelegatingHttpClient(null) {
+            @Override
+            public <T> CompletableFuture<HttpResponse<T>> sendAsync(
+                    final HttpRequest request, final HttpResponse.BodyHandler<T> handler) {
+                captured.set(request);
+                return CompletableFuture.failedFuture(new IOException("No network needed"));
+            }
+        }) {
+            final var resolver = new Maven(
+                    client,
+                    new MavenConfiguration(
+                            1234, repository.toString(), true, true, "https://example.invalid/", UNSET, UNSET, false));
+            resolver.init();
+            resolver.findAvailableVersions("org.example", "demo")
+                    .toCompletableFuture()
+                    .join();
+            assertEquals(Duration.ofMillis(1234), captured.get().timeout().orElseThrow());
+        }
     }
 
     @Test
-    void resolveLocal() throws ExecutionException, InterruptedException {
-        assertTrue(Files.exists(resolver.findOrDownload("org.apache.geronimo.specs:geronimo-jcdi_2.0_spec:1.3")
-                .toCompletableFuture().get()));
+    void resolveLocalWithoutDownloads(@TempDir final Path repository) throws Exception {
+        final var artifact = repository.resolve("org/example/demo/1.0/demo-1.0.jar");
+        Files.createDirectories(artifact.getParent());
+        Files.writeString(artifact, "local-artifact");
+        final var resolver = new Maven(
+                HttpClient.newHttpClient(),
+                new MavenConfiguration(
+                        30000,
+                        repository.toString(),
+                        true,
+                        true,
+                        "https://repo.maven.apache.org/maven2/",
+                        UNSET,
+                        UNSET,
+                        false));
+        resolver.init();
+        assertEquals(
+                artifact,
+                resolver.findOrDownload("org.example:demo:1.0")
+                        .toCompletableFuture()
+                        .get());
+        assertThrows(
+                RuntimeException.class,
+                () -> resolver.findOrDownload("org.example:missing:1.0")
+                        .toCompletableFuture()
+                        .join());
     }
 }

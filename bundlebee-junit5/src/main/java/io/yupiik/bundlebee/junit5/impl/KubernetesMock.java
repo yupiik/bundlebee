@@ -15,19 +15,18 @@
  */
 package io.yupiik.bundlebee.junit5.impl;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.stream.Collectors.toMap;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import io.yupiik.bundlebee.junit5.KubernetesApi;
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.stream.Collectors.toMap;
 
 public class KubernetesMock implements KubernetesApi, AutoCloseable {
     private HttpServer server;
@@ -80,6 +79,7 @@ public class KubernetesMock implements KubernetesApi, AutoCloseable {
         try {
             server = HttpServer.create(new InetSocketAddress(0), 1024);
             server.createContext("/").setHandler(this::onRequest);
+            server.start();
         } catch (final IOException e) {
             throw new IllegalStateException(e);
         }
@@ -121,7 +121,8 @@ public class KubernetesMock implements KubernetesApi, AutoCloseable {
         private final String payload;
         private final Map<String, String> headers;
 
-        private DefaultRequest(final String method, final String uri, final String payload, final Map<String, String> headers) {
+        private DefaultRequest(
+                final String method, final String uri, final String payload, final Map<String, String> headers) {
             this.method = method;
             this.uri = uri;
             this.payload = payload;

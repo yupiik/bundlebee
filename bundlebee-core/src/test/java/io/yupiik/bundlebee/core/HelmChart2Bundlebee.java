@@ -15,21 +15,16 @@
  */
 package io.yupiik.bundlebee.core;
 
-import io.yupiik.bundlebee.core.json.JsonProducer;
-import io.yupiik.bundlebee.core.lang.Tuple2;
-import io.yupiik.bundlebee.core.qualifier.BundleBee;
-import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
-import io.yupiik.bundlebee.core.yaml.YamlProducer;
-import org.yaml.snakeyaml.Yaml;
+import static java.util.Locale.ROOT;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
-import javax.enterprise.inject.se.SeContainerInitializer;
-import javax.enterprise.util.AnnotationLiteral;
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonWriterFactory;
-import javax.json.stream.JsonGenerator;
+import io.yupiik.bundlebee.core.lang.Tuple2;
+import io.yupiik.bundlebee.core.yaml.Yaml2JsonConverter;
+import io.yupiik.fusion.framework.api.ConfiguringContainer;
+import io.yupiik.fusion.json.JsonMapper;
+import io.yupiik.fusion.json.pretty.PrettyJsonMapper;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -38,15 +33,13 @@ import java.util.Map;
 import java.util.logging.Logger;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
-
-import static java.util.Locale.ROOT;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import org.yaml.snakeyaml.Yaml;
 
 // dump helm output to a file:
 // $ helm template --debug . > /tmp/debug.yaml
 // then run this main with first arg being the output (/tmp/debug.yaml) and the second the bundlebee descriptor folder
 public final class HelmChart2Bundlebee {
+
     private HelmChart2Bundlebee() {
         // no-op
     }
@@ -54,43 +47,35 @@ public final class HelmChart2Bundlebee {
     public static void main(final String... args) throws IOException {
         final var from = Path.of(args[0]);
         final var to = Files.createDirectories(Path.of(args[1]));
-
-        try (final var container = SeContainerInitializer.newInstance()
-                .disableDiscovery()
-                .addBeanClasses(JsonProducer.class, YamlProducer.class, Yaml2JsonConverter.class)
-                .initialize()) {
-            final var bundleBeeAnnotationLiteral = new AnnotationLiteral<BundleBee>() {
-            };
-            final var yaml = container.select(Yaml.class, bundleBeeAnnotationLiteral).get();
-            final var converter = container.select(Yaml2JsonConverter.class).get();
-
+        try (final var container = ConfiguringContainer.of().start();
+                final var yamlInstance = container.lookup(Yaml.class);
+                final var converterInstance = container.lookup(Yaml2JsonConverter.class);
+                final var mapper = container.lookup(JsonMapper.class)) {
+            final var yaml = yamlInstance.instance();
+            final var converter = converterInstance.instance();
             final var source = normalize(Files.readAllLines(from)).replace("RELEASE-NAME-", "");
-            final var yamls = StreamSupport.stream(yaml.loadAll(source).spliterator(), false).collect(toList());
-
+            final var yamls = StreamSupport.stream(yaml.loadAll(source).spliterator(), false)
+                    .collect(toList());
             final var logger = Logger.getLogger(HelmChart2Bundlebee.class.getName());
-            final var jsonWriterFactory = Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, true));
+            final var jsonWriterFactory = new PrettyJsonMapper(mapper.instance());
             final var descriptors = new ArrayList<String>(yamls.size());
             for (final var file : yamls) {
                 final var w = toFormatted(yaml, converter, jsonWriterFactory, file);
                 if (Boolean.getBoolean("debug")) {
-                    System.out.println("---- " + w.getSecond());
-                    System.out.println(w.getFirst());
+                    System.out.println("---- " + w.second());
+                    System.out.println(w.first());
                 } else {
-                    logger.info("Write '" + Files.writeString(to.resolve(w.getSecond()), w.getFirst()) + "'");
+                    logger.info("Write '" + Files.writeString(to.resolve(w.second()), w.first()) + "'");
                 }
-                descriptors.add(w.getSecond());
+                descriptors.add(w.second());
             }
-
-            logger.info(() -> "Created alveolus descriptors\n" +
-                    "{\n" +
-                    "  \"name\": \"my-alveolus\",\n" +
-                    "  \"descriptors\": [\n" +
-                    descriptors.stream().map(it -> "    {\n" +
-                            "      \"name\": \"" + it + "\",\n" +
-                            "      \"interpolate\": true\n" +
-                            "    }").collect(joining(",\n", "", "\n")) +
-                    "  ]\n" +
-                    "}\n");
+            logger.info(() -> "Created alveolus descriptors\n" + "{\n" + "  \"name\": \"my-alveolus\",\n"
+                    + "  \"descriptors\": [\n"
+                    + descriptors.stream()
+                            .map(it -> "    {\n" + "      \"name\": \"" + it + "\",\n" + "      \"interpolate\": true\n"
+                                    + "    }")
+                            .collect(joining(",\n", "", "\n"))
+                    + "  ]\n" + "}\n");
         }
     }
 
@@ -103,7 +88,9 @@ public final class HelmChart2Bundlebee {
                     if (line.charAt(i) != ' ') {
                         if (i != labels) {
                             // inject labels now
-                            final var prefix = IntStream.rangeClosed(0, labels).mapToObj(it -> "").collect(joining(" "));
+                            final var prefix = IntStream.rangeClosed(0, labels)
+                                    .mapToObj(it -> "")
+                                    .collect(joining(" "));
                             out.add(prefix + "app.kubernetes.io/managed-by: \"bundlebee\"");
                             out.add(prefix + "deploy.by: \"{{user.name:-unknown}}\"");
                             out.add(prefix + "deploy.time: \"{{annotations.deploytime}}\"");
@@ -113,12 +100,12 @@ public final class HelmChart2Bundlebee {
                             out.add(line);
                         } else {
                             final var stripped = line.strip();
-                            if (!stripped.startsWith("helm.sh/") &&
-                                    !stripped.startsWith("app.kubernetes.io/managed-by:") &&
-                                    !stripped.startsWith("release:") &&
-                                    !stripped.startsWith("heritage:") &&
-                                    !stripped.startsWith("release:") &&
-                                    !stripped.startsWith("chart:")) {
+                            if (!stripped.startsWith("helm.sh/")
+                                    && !stripped.startsWith("app.kubernetes.io/managed-by:")
+                                    && !stripped.startsWith("release:")
+                                    && !stripped.startsWith("heritage:")
+                                    && !stripped.startsWith("release:")
+                                    && !stripped.startsWith("chart:")) {
                                 out.add(line);
                             }
                         }
@@ -127,7 +114,7 @@ public final class HelmChart2Bundlebee {
                 }
             } else if (line.strip().equals("labels:")) {
                 out.add(line);
-                labels = line.indexOf("l") + 2 /* default indent */;
+                labels = line.indexOf("l") + 2;
             } else {
                 out.add(line);
             }
@@ -135,15 +122,17 @@ public final class HelmChart2Bundlebee {
         return String.join("\n", out);
     }
 
-    private static Tuple2<String, String> toFormatted(final Yaml yaml, final Yaml2JsonConverter converter,
-                                                      final JsonWriterFactory jsonWriterFactory,
-                                                      final Object content) {
-        final var desc = converter.convert(JsonObject.class, yaml.dump(content));
-        final var stringWriter = new StringWriter();
-        try (final var writer = jsonWriterFactory.createWriter(stringWriter)) {
-            writer.write(desc);
+    private static Tuple2<String, String> toFormatted(
+            final Yaml yaml,
+            final Yaml2JsonConverter converter,
+            final JsonMapper jsonWriterFactory,
+            final Object content) {
+        final var desc = converter.convert(Map.class, yaml.dump(content));
+        if (!(desc.get("metadata") instanceof Map<?, ?> meta)
+                || !(meta.get("name") instanceof String name)
+                || !(desc.get("kind") instanceof String kind)) {
+            throw new IllegalArgumentException("Descriptor requires metadata.name and kind");
         }
-        final var meta = desc.getJsonObject("metadata");
-        return new Tuple2<>(stringWriter.toString(), meta.getString("name") + "." + desc.getString("kind").toLowerCase(ROOT) + ".json");
+        return new Tuple2<>(jsonWriterFactory.toString(desc), name + "." + kind.toLowerCase(ROOT) + ".json");
     }
 }

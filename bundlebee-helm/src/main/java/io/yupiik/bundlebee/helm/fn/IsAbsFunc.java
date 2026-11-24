@@ -15,14 +15,13 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Path
-//metadata:end
+// metadata:end
 @Description("Tests if a path is absolute (Unix)")
 public class IsAbsFunc implements io.yupiik.bundlebee.helm.HelmFunction {
     @Override

@@ -15,35 +15,31 @@
  */
 package io.yupiik.bundlebee.maven.interpolation;
 
+import io.yupiik.fusion.framework.api.configuration.ConfigurationSource;
+import java.util.Objects;
 import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluationException;
 import org.codehaus.plexus.component.configurator.expression.ExpressionEvaluator;
-import org.eclipse.microprofile.config.spi.ConfigSource;
 
-import java.util.Map;
-import java.util.Objects;
+/** A Maven expression evaluator owned exclusively by one mojo invocation. */
+public final class MavenConfigSource implements ConfigurationSource {
+    private final ExpressionEvaluator expressionEvaluator;
+    private final boolean allowForcedFiltering;
 
-public class MavenConfigSource implements ConfigSource {
-    public static ExpressionEvaluator expressionEvaluator;
-    public static Config config;
-
-    @Override
-    public Map<String, String> getProperties() {
-        return Map.of();
+    public MavenConfigSource(final ExpressionEvaluator expressionEvaluator, final boolean allowForcedFiltering) {
+        this.expressionEvaluator = Objects.requireNonNull(expressionEvaluator);
+        this.allowForcedFiltering = allowForcedFiltering;
     }
 
     @Override
-    public String getValue(final String key) {
-        if (expressionEvaluator == null) {
-            return null;
-        }
+    public String get(final String key) {
         try {
             var evaluate = expressionEvaluator.evaluate(key);
             if (wasFiltered(key, evaluate)) {
                 return String.valueOf(evaluate);
             }
-            if (config != null && config.allowForcedFiltering) {
+            if (allowForcedFiltering) {
                 evaluate = expressionEvaluator.evaluate("${" + key + "}");
-                if (wasFiltered(key, evaluate)) {
+                if (wasFiltered("${" + key + "}", evaluate)) {
                     return String.valueOf(evaluate);
                 }
             }
@@ -55,18 +51,5 @@ public class MavenConfigSource implements ConfigSource {
 
     private boolean wasFiltered(final String key, final Object evaluate) {
         return evaluate != null && !Objects.equals(key, evaluate);
-    }
-
-    @Override
-    public String getName() {
-        return "maven";
-    }
-
-    public static class Config {
-        private final boolean allowForcedFiltering;
-
-        public Config(final boolean allowForcedFiltering) {
-            this.allowForcedFiltering = allowForcedFiltering;
-        }
     }
 }

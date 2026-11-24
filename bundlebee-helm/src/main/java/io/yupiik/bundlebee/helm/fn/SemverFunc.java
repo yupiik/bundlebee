@@ -15,20 +15,20 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
+import java.util.regex.Pattern;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Semver
-//metadata:end
+// metadata:end
 @Description("Parses a semantic version string")
 public class SemverFunc implements HelmFunction {
+    private static final Pattern VERSION_SEPARATOR = Pattern.compile("\\.");
+
     @Override
     public String name() {
         return "semver";
@@ -43,7 +43,7 @@ public class SemverFunc implements HelmFunction {
         if (version.startsWith("v")) {
             version = version.substring(1);
         }
-        final var parts = version.split("\\.");
+        final var parts = VERSION_SEPARATOR.split(version);
         if (parts.length < 3) {
             throw new IllegalArgumentException("invalid semver string: " + args[0]);
         }

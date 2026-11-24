@@ -16,25 +16,30 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class PrivilegeEscalationContainer extends CheckValue {
+
     public PrivilegeEscalationContainer() {
         super(
                 Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job"),
                 Map.of(
-                        "DeploymentConfig", "/spec/template/spec/containers",
-                        "Deployment", "/spec/template/spec/containers",
-                        "CronJob", "/spec/jobTemplate/spec/template/spec/containers",
-                        "Job", "/spec/template/spec/containers",
-                        "Pod", "/spec/containers"),
+                        "DeploymentConfig",
+                        "/spec/template/spec/containers",
+                        "Deployment",
+                        "/spec/template/spec/containers",
+                        "CronJob",
+                        "/spec/jobTemplate/spec/template/spec/containers",
+                        "Job",
+                        "/spec/template/spec/containers",
+                        "Pod",
+                        "/spec/containers"),
                 true);
     }
 
@@ -50,19 +55,23 @@ public class PrivilegeEscalationContainer extends CheckValue {
 
     @Override
     public String remediation() {
-        return "Ensure containers do not allow privilege escalation by setting\n" +
-                "allowPrivilegeEscalation=false, privileged=false and removing CAP_SYS_ADMIN capability.\n" +
-                "See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for more details.";
+        return "Ensure containers do not allow privilege escalation by setting\n"
+                + "allowPrivilegeEscalation=false, privileged=false and removing CAP_SYS_ADMIN capability.\n"
+                + "See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for more details.";
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
-        return value.asJsonArray().stream()
-                .map(JsonValue::asJsonObject)
-                .map(it -> it.getJsonObject("securityContext"))
-                .filter(Objects::nonNull)
-                .anyMatch(it -> it.getBoolean("allowPrivilegeEscalation", false)) ?
-                Stream.of(new LintError(LintError.LintLevel.ERROR, "'allowPrivilegeEscalation' is set to true")) :
-                Stream.empty();
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
+        return (value instanceof List<?> values ? values : List.of())
+                        .stream()
+                                .filter(Map.class::isInstance)
+                                .<Map<?, ?>>map(it -> (Map<?, ?>) it)
+                                .map(it -> (it.get("securityContext") instanceof Map<?, ?> securityContextValue
+                                        ? securityContextValue
+                                        : null))
+                                .filter(Objects::nonNull)
+                                .anyMatch(it -> Boolean.TRUE.equals(it.get("allowPrivilegeEscalation")))
+                ? Stream.of(new LintError(LintError.LintLevel.ERROR, "'allowPrivilegeEscalation' is set to true"))
+                : Stream.empty();
     }
 }

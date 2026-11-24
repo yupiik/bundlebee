@@ -17,13 +17,12 @@ package io.yupiik.bundlebee.helm.fn;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-import javax.enterprise.context.Dependent;
-
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Defaults
-//metadata:end
+// metadata:end
 @Description("Returns the logical AND of two values, returning the last truthy value or the first falsy one")
 public class AndFunc implements HelmFunction {
     @Override

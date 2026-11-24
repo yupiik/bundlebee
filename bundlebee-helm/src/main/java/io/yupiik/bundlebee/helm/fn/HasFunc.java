@@ -17,14 +17,13 @@ package io.yupiik.bundlebee.helm.fn;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.List;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Defaults
-//metadata:end
+// metadata:end
 @Description("Returns true if a string contains a substring or a list contains an element")
 public class HasFunc implements HelmFunction {
     @Override

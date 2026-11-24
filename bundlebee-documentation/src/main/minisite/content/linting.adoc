@@ -23,7 +23,10 @@ include::content/_partials/generated/documentation/lint.checks.adoc[leveloffset=
 
 == Write your own rule
 
-To write your own rule you have to implement and add to bundlebee (core) classpath a CDI bean implementing `LintingCheck` - or `SynchronousLintingCheck` which can be easier to implement.
+To write your own rule you have to implement and add to bundlebee (core) classpath a Fusion bean implementing `LintingCheck` - or `SynchronousLintingCheck` which can be easier to implement.
+
+Compile the rule with the Fusion annotation processor and use a Fusion scope such as `@DefaultScoped`.
+See xref:extensions.adoc[Writing Java extensions] for registration and lifecycle details.
 
 === Synchronous or not
 
@@ -44,7 +47,7 @@ A check is composed of:
 
 === JSON, JSON, JSON
 
-Yaml descriptors are converted to `JsonObject` and descriptors containing a list are flattened.
+YAML and JSON descriptors are parsed with Fusion JSON into generic trees (`Map<String, Object>` for objects and `List<Object>` for arrays), and descriptors containing a list are flattened.
 
 What does it means is that you always validate a single descriptor which is an object in check code which makes it easier to work with.
 

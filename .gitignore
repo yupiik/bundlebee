@@ -1,4 +1,7 @@
+.sdkmanrc
 target
+# Artifact-specific Spotless indexes, including standalone builds.
+**/.mvn/.spotless/*-spotless-index
 .idea
 !.idea/icon.svg
 *.iws

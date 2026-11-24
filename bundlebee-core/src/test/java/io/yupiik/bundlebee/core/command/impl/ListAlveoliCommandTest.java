@@ -15,41 +15,34 @@
  */
 package io.yupiik.bundlebee.core.command.impl;
 
+import static java.util.logging.Level.INFO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import io.yupiik.bundlebee.core.BundleBee;
 import io.yupiik.bundlebee.core.test.BundleBeeExtension;
 import io.yupiik.bundlebee.core.test.CommandExecutor;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-import static java.util.logging.Level.INFO;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 class ListAlveoliCommandTest {
+
     @RegisterExtension
     BundleBeeExtension extension = new BundleBeeExtension();
 
     @Test
     void list(final CommandExecutor executor) {
         final var logs = executor.wrap(null, INFO, () -> new BundleBee().launch("list-alveoli"));
-        assertEquals("Found alveoli:\n" +
-                "- ApplyCommandTest.apply\n" +
-                "- ApplyCommandTest.applyAwait\n" +
-                "- ApplyCommandTest.applyAwaitCondition\n" +
-                "- ApplyCommandTest.applyAwaitConditionFailure\n" +
-                "- ApplyCommandTest.fromTemplate\n" +
-                "- ApplyCommandTest.helm\n" +
-                "- ApplyCommandTest.includeIfPatch\n" +
-                "- ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate\n" +
-                "- ApplyCommandTest.template\n" +
-                "- ApplyCommandTest.withdep\n" +
-                "- ApplyCommandTest.withexclude\n" +
-                "- ApplyCommandTest.withsamedep\n" +
-                "- DeleteCommandTest.deleteMaven\n" +
-                "- DeleteCommandTest.helm\n" +
-                "- RollbackCommandTest.first\n" +
-                "- RollbackCommandTest.second\n" +
-                "- customContentType\n" +
-                "- handlebars\n" +
-                "\n", logs);
+        assertEquals(
+                "Found alveoli:\n" + "- ApplyCommandTest.apply\n" + "- ApplyCommandTest.applyAwait\n"
+                        + "- ApplyCommandTest.applyAwaitCondition\n" + "- ApplyCommandTest.applyAwaitConditionFailure\n"
+                        + "- ApplyCommandTest.fromTemplate\n" + "- ApplyCommandTest.helm\n"
+                        + "- ApplyCommandTest.includeIfPatch\n"
+                        + "- ApplyCommandTest.simpleNestedDependencyWithReusingTheTemplate\n"
+                        + "- ApplyCommandTest.template\n" + "- ApplyCommandTest.withdep\n"
+                        + "- ApplyCommandTest.withexclude\n" + "- ApplyCommandTest.withsamedep\n"
+                        + "- DeleteCommandTest.deleteMaven\n" + "- DeleteCommandTest.helm\n"
+                        + "- RollbackCommandTest.first\n" + "- RollbackCommandTest.second\n" + "- customContentType\n"
+                        + "- handlebars\n" + "\n",
+                logs);
     }
 }

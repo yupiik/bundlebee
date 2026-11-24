@@ -17,16 +17,15 @@ package io.yupiik.bundlebee.helm.fn;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Map;
 
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Generic
-//metadata:end
+// metadata:end
 @Description("Returns the integer length of a given value")
 public class LenFunc implements HelmFunction {
     @Override

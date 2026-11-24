@@ -17,13 +17,12 @@ package io.yupiik.bundlebee.helm.fn;
 
 import io.yupiik.bundlebee.core.configuration.Description;
 import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 
-import javax.enterprise.context.Dependent;
-
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = String
-//metadata:end
+// metadata:end
 @Description("Pads a string to a given width, centering it with spaces on both sides")
 public class PadFunc implements HelmFunction {
     @Override

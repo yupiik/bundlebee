@@ -15,12 +15,9 @@
  */
 package io.yupiik.bundlebee.helm.fn;
 
-import io.yupiik.bundlebee.helm.HelmFunction;
-
-import javax.enterprise.context.Dependent;
-
 import io.yupiik.bundlebee.core.configuration.Description;
-
+import io.yupiik.bundlebee.helm.HelmFunction;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -32,10 +29,10 @@ import java.security.SecureRandom;
  * with htpasswd format but uses SHA-256 internally.
  * For real bcrypt, use org.mindrot.jbcrypt.BCrypt.
  */
-@Dependent
-//metadata:start
+@DefaultScoped
+// metadata:start
 // category = Crypto
-//metadata:end
+// metadata:end
 @Description("Generates a bcrypt hash of a password")
 public class BcryptFunc implements HelmFunction {
     private static final SecureRandom RANDOM = new SecureRandom();

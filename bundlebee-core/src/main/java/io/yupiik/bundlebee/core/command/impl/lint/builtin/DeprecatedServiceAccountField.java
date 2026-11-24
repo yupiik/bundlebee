@@ -16,24 +16,28 @@
 package io.yupiik.bundlebee.core.command.impl.lint.builtin;
 
 import io.yupiik.bundlebee.core.command.impl.lint.LintError;
-
-import javax.enterprise.context.Dependent;
-import javax.json.JsonValue;
+import io.yupiik.fusion.framework.api.scope.DefaultScoped;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-@Dependent
+@DefaultScoped
 public class DeprecatedServiceAccountField extends CheckValue {
+
     public DeprecatedServiceAccountField() {
         super(
                 Set.of("DeploymentConfig", "Deployment", "CronJob", "Pod", "Job"),
-                Map.of(
-                        "DeploymentConfig", "/spec/template/spec/serviceAccount", // openshift
-                        "Deployment", "/spec/template/spec/serviceAccount",
-                        "CronJob", "/spec/jobTemplate/spec/template/spec/serviceAccount",
-                        "Job", "/spec/template/spec/serviceAccount",
-                        "Pod", "/spec/serviceAccount"),
+                Map.of( // openshift
+                        "DeploymentConfig", // openshift
+                        "/spec/template/spec/serviceAccount",
+                        "Deployment",
+                        "/spec/template/spec/serviceAccount",
+                        "CronJob",
+                        "/spec/jobTemplate/spec/template/spec/serviceAccount",
+                        "Job",
+                        "/spec/template/spec/serviceAccount",
+                        "Pod",
+                        "/spec/serviceAccount"),
                 true);
     }
 
@@ -53,7 +57,7 @@ public class DeprecatedServiceAccountField extends CheckValue {
     }
 
     @Override
-    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final JsonValue value) {
+    protected Stream<LintError> doValidate(final LintableDescriptor descriptor, final Object value) {
         return Stream.of(new LintError(LintError.LintLevel.WARNING, "'serviceAccount' field is deprecated"));
     }
 }

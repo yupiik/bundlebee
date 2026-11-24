@@ -1,6 +1,6 @@
 import 'jsonjoy-builder/styles.css';
-import { createRoot } from 'react-dom/client';
-import { SchemaVisualEditor } from 'jsonjoy-builder';
+import {createRoot} from 'react-dom/client';
+import {SchemaFieldsEditor} from 'jsonjoy-builder';
 
 (function injectCssLink(url) {
   const id = 'kubernetes-schema-css';
@@ -25,5 +25,5 @@ import { SchemaVisualEditor } from 'jsonjoy-builder';
 
 createRoot(document.getElementById('main'))
   .render(
-      <SchemaVisualEditor readOnly={true} schema={window.jsonSchemaViewerOpts.schema} />
+      <SchemaFieldsEditor readOnly={true} value={window.jsonSchemaViewerOpts.schema} />
   );
